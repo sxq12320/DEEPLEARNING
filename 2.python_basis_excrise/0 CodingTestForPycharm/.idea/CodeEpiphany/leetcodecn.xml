@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.wenjun.codeepiphany.leetcodecn.settings">
+    <option name="languageSettings">
+      <list>
+        <LanguageSettingsState sourceFolder="E:\code\2.python_basis_excrise\0 CodingTestForPycharm\LeetCodeCN" language="python" languageVersion="3" fileNameTemplate="${velocity.camelCaseName(${challenge.slug})}" codeTemplate="$challenge.code" />
+      </list>
+    </option>
+    <option name="queryCriteria">
+      <map>
+        <entry key="LeetCodeChallengesView-lastUI" value="QueryParameters" />
+        <entry key="LeetCodeParametersQueryPresenter-criteria" value="{&quot;selectedCategory&quot;:null,&quot;selectedFavorite&quot;:null,&quot;selectedDifficulty&quot;:null,&quot;selectedStatus&quot;:null,&quot;tags&quot;:[],&quot;orderBy&quot;:null}" />
+        <entry key="LeetCodeParametersQueryPresenter-pageSize" value="20" />
+      </map>
+    </option>
+  </component>
+</project>

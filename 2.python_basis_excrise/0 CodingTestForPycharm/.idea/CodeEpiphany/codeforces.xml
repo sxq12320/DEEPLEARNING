@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.wenjun.codeepiphany.codeforces.settings">
+    <option name="languageSettings">
+      <list>
+        <LanguageSettingsState sourceFolder="E:\code\2.python_basis_excrise\0 CodingTestForPycharm\CodeForces" language="pypy" languageVersion="3.10(7.3.15 64bit)" fileNameTemplate="#if($challenge.slug)    $!velocity.camelCaseName($challenge.slug)#elseif($challenge.name)    $!velocity.camelCaseName($challenge.name)#elseif($challenge.title)    $!velocity.camelCaseName($challenge.title)#else    &quot;Unknown&quot;#end" codeTemplate="${beginRegion}&#10;&#10;${endRegion}" />
+      </list>
+    </option>
+    <option name="queryCriteria">
+      <map>
+        <entry key="CodeForcesChallengesView-lastUI" value="QueryParameters" />
+        <entry key="CodeForcesParametersQueryPresenter-criteria" value="{&quot;selectedDifficulty&quot;:&quot;easy&quot;,&quot;selectedTags&quot;:[],&quot;orderBy&quot;:null}" />
+        <entry key="CodeForcesParametersQueryPresenter-pageSize" value="20" />
+      </map>
+    </option>
+  </component>
+</project>
