@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 def target_f(x):
+    
     """定义任务一的目标函数
     Args:
         x: 自变量
