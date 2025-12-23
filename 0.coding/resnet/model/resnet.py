@@ -30,7 +30,7 @@ class BasicBlock(nn.Module):#定义一个block类继承至nn.Module，使用resn
         out = self.relu(out)
 
         return out
-    
+
 class bottleneck(nn.Module):
     expansion = 4
 
@@ -61,6 +61,3 @@ class bottleneck(nn.Module):
         out = out+identity
         out = self.relu(out)
         return out
-
-
-        
