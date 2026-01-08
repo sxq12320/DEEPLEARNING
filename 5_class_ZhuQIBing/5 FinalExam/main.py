@@ -199,7 +199,7 @@ if __name__ == "__main__":
     num_classes = 5
     learning_rate = 0.001
     batch_size = 32
-    num_epochs = 15 #稍微增加轮数，曲线更好看
+    num_epochs = 50 #稍微增加轮数，曲线更好看
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"当前运行设备: {device}")
