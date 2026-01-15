@@ -10,7 +10,7 @@ import numpy as np
 import gzip
 import sys
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class LeNet5(nn.Module):
     def __init__(self , num_classes = 10):
         """
@@ -22,7 +22,7 @@ class LeNet5(nn.Module):
         """
         super(LeNet5 , self).__init__()
 
-        self.conv1 = nn.Conv2d(1 , 6 , kernel_size=5 ,stride = 1 , padding = 0)
+        self.conv1 = nn.Conv2d(3 , 6 , kernel_size=5 ,stride = 1 , padding = 0)
         # 卷积层1
         self.pool1 = nn.AvgPool2d(kernel_size = 2 , stride=2)
         # 平均池化层1
@@ -30,7 +30,7 @@ class LeNet5(nn.Module):
         # 卷积层2
         self.pool2 = nn.AvgPool2d(kernel_size=2 , stride=2)
         # 平均池化层2
-        self.fc1 = nn.Linear(16*4*4 , 120)
+        self.fc1 = nn.Linear(16*5*5 , 120)
         # 全连接层1
         self.fc2 = nn.Linear(120 , 84)
         # 全连接层2
@@ -46,7 +46,7 @@ class LeNet5(nn.Module):
         x = self.conv2(x)
         x = self.relu(x)
         x = self.pool2(x)
-        x = x.view(-1 , 16*4*4)# 展平操作,变成全连接层
+        x = x.view(-1 , 16*5*5)# 展平操作,变成全连接层
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
@@ -54,16 +54,16 @@ class LeNet5(nn.Module):
         x = self.fc3(x)
         return x
 
-# 加载MNIST数据集
-train_dataset = datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
-test_dataset = datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor())
+# 加载CIFAR10数据集
+train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transforms.ToTensor(), download=True)
+test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.ToTensor())
 
 # 定义数据加载器
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
 
 # 定义模型、损失函数和优化器
-model = LeNet5()
+model = LeNet5().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters())
 

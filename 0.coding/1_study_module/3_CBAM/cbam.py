@@ -6,6 +6,8 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import numpy as np
+from PIL import Image
+from tqdm import tqdm
 
 class CBAMBlock(nn.Module):
     '''CBAM注意力机制模块
@@ -49,11 +51,12 @@ class CBAMBlock(nn.Module):
         F_max = self.fc2(self.relu(self.fc1(maxpool_out)))       
         F_avg = self.fc2(self.relu(self.fc1(avgpool_out)))
 
-        channel_attention_out = self.sigmoid(F_max+F_avg).unsqueeze(2).unsqueeze(3)  # [B , C , 1 , 1] , add操作
+        channel_attention_out = self.sigmoid(F_max + F_avg)
+        channel_attention_out = channel_attention_out.view(-1, x.size(1), 1, 1)  # 正确重塑为4D张量
         F_1 = channel_attention_out * x
 
         # 空间注意力机制模块
-        spatial_maxpool , _ = torch.max(F_1 , dim=1 , keepdim = True)                       # [B , 1 , H , W]
+        spatial_maxpool= torch.max(F_1 , dim=1 , keepdim = True)[0]                       # [B , 1 , H , W]
         spatial_avgpool = torch.mean(F_1 , dim=1 , keepdim = True)                          # [B , 1 , H , W]
         spatial_attention_out = torch.cat([spatial_maxpool , spatial_avgpool] , dim = 1)    # [B , 2 , H , W] , concat操作
         spatial_attention_out = self.sigmoid(self.conv(spatial_attention_out))              # [B , 1 , H , W]
@@ -73,7 +76,7 @@ class LeNet5(nn.Module):
         """
         super(LeNet5 , self).__init__()
 
-        self.conv1 = nn.Conv2d(1 , 6 , kernel_size=5 ,stride = 1 , padding = 0)
+        self.conv1 = nn.Conv2d(3 , 6 , kernel_size=5 ,stride = 1 , padding = 0)
         # 卷积层1
         self.pool1 = nn.AvgPool2d(kernel_size = 2 , stride=2)
         # 平均池化层1
@@ -81,7 +84,7 @@ class LeNet5(nn.Module):
         # 卷积层2
         self.pool2 = nn.AvgPool2d(kernel_size=2 , stride=2)
         # 平均池化层2
-        self.fc1 = nn.Linear(16*4*4 , 120)
+        self.fc1 = nn.Linear(16*5*5 , 120)
         # 全连接层1
         self.fc2 = nn.Linear(120 , 84)
         # 全连接层2
@@ -97,7 +100,7 @@ class LeNet5(nn.Module):
         x = self.conv2(x)
         x = self.relu(x)
         x = self.pool2(x)
-        x = x.view(-1 , 16*4*4)# 展平操作,变成全连接层
+        x = x.view(-1 , 16*5*5)# 展平操作,变成全连接层
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
@@ -124,7 +127,7 @@ class CBAMlenet(nn.Module):
         x = self.lenet.relu(x)
         x = self.lenet.pool2(x)
 
-        x = x.view(-1 , 16*4*4)# 展平操作,变成全连接层
+        x = x.view(-1 , 16*5*5)# 展平操作,变成全连接层
         x = self.lenet.fc1(x)
         x = self.lenet.relu(x)
         x = self.lenet.fc2(x)
@@ -133,16 +136,22 @@ class CBAMlenet(nn.Module):
         return x
     
 if __name__ == "__main__":
-        # 加载MNIST数据集
-    train_dataset = datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
-    test_dataset = datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor())
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # 数据预处理
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # CIFAR10标准化
+    ])
+    # 加载CIFAR10数据集
+    train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform, download=True)
+    test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform)
 
     # 定义数据加载器
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
 
     # 定义模型、损失函数和优化器
-    model = CBAMlenet()
+    model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters() , lr = 0.001)
 
@@ -152,9 +161,13 @@ if __name__ == "__main__":
     TRAIN_ACC = []
 
     # 训练模型
-    for epoch in range(10):
+    for epoch in range(50):
         model.train()
         for i, (images, labels) in enumerate(train_loader):
+            #  迁移到GPU
+            images = images.to(device)
+            labels = labels.to(device)
+
             optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, labels)
@@ -172,6 +185,10 @@ if __name__ == "__main__":
             total = 0
             test_loss = 0
             for images, labels in test_loader:
+                #  迁移到GPU
+                images = images.to(device)
+                labels = labels.to(device)
+
                 outputs = model(images)
                 test_loss += criterion(outputs, labels).item()
                 _, predicted = torch.max(outputs.data, 1)
@@ -182,11 +199,11 @@ if __name__ == "__main__":
             TEST_ACC.append(100 * correct / total)
 
             print('Epoch [{}/{}], Test Accuracy: {:.2f}%, Test Loss: {:.4f}'
-                .format(epoch+1, 10, TEST_ACC[-1], TEST_LOSS[-1]))
+                .format(epoch+1, 50, TEST_ACC[-1], TEST_LOSS[-1]))
 
 
     plt.figure(figsize=(12,5))
-    plt.title('SE_LENET on MNIST')
+    plt.title('CBAM_LENET on CIFAR10')
     plt.subplot(1,2,1)
     plt.plot(TRAIN_LOSS , label = 'Train Loss')
     plt.plot(TEST_LOSS , label = 'Test Loss')
