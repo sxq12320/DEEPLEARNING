@@ -1,6 +1,5 @@
 # 忽略所有 Word 文档
-*.doc
-*.docx
+5_class_ZhuQIBing/3_DNN/6250809035-石晓强.docx
 *.docm  # 包含宏的 Word 文件（可选）
 *.dotx  # Word 模板文件（可选）
 
