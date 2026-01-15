@@ -9,12 +9,10 @@
 *.rar       # RAR 压缩包
 *.7z        # 7-Zip 压缩包
 
-.pth
+*.pth
 
-
-6_class_ZhuQIBing/4_CNN/data/
-6_class_ZhuQIBing/3_CNN/data/
-5_class_ZhuQIBing/5 FinalExam/dataset
 data/
+5_class_ZhuQIBing/5 FinalExam/dataset/
+
 
 __pycache__/
