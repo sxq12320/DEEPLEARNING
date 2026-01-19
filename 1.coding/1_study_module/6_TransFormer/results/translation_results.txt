@@ -1,0 +1,9 @@
+Transformer 翻译结果
+==================================================
+'I love machine learning' → 'ich liebe maschinelles lernen'
+'The weather is nice' → 'das ist'
+'Hello world' → 'hallo welt'
+'How are you today' → 'wie geht es'
+'This is a test sentence' → 'dies ist testsatz'
+'I need a coffee' → 'ich brauche'
+'Where is the bathroom' → 'wo ist die'

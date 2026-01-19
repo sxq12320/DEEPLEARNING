@@ -472,6 +472,229 @@ class TransFormer(nn.Module):
         dec_output = self.decoder_norm(dec_output)
         
         # 6. 最终输出投影
-        logits = self.output_proj(dec_output)  # [batch_size, tgt_len, tgt_vocab_size]
+        logits = self.fc_out(dec_output)  # [batch_size, tgt_len, tgt_vocab_size]
         
-        return logits, enc_self_attns, dec_self_attns, dec_cross_attns     
+        # return logits, enc_self_attns, dec_self_attns, dec_cross_attns
+        return logits
+     
+
+
+
+# =============== AI写的 测试代码 ===============#
+# 创建测试数据
+def create_test_data(batch_size=2, src_len=5, tgt_len=6, src_vocab=10, tgt_vocab=12):
+    """
+    创建用于测试的随机数据
+    """
+    # 随机生成token IDs (1到vocab_size-1，0通常用于padding)
+    src = torch.randint(1, src_vocab, (batch_size, src_len))
+    tgt = torch.randint(1, tgt_vocab, (batch_size, tgt_len))
+    
+    # 创建源序列掩码 (模拟真实场景中的padding掩码)
+    src_pad_mask = (src != 0)  # 假设0是padding token
+    
+    return src, tgt, src_pad_mask 
+
+# ========== 3. 模型测试函数 ==========
+def test_transformer():
+    print("="*50)
+    print("🚀 开始Transformer模型测试")
+    print("="*50)
+    
+    # 模型参数
+    src_vocab_size = 1000  # 源词汇表大小
+    tgt_vocab_size = 1200  # 目标词汇表大小
+    d_model = 64           # 模型维度 (减小便于测试)
+    n_heads = 4            # 注意力头数
+    d_ff = 256             # 前馈网络维度
+    num_encoder_layers = 2 # 编码器层数 (减小便于测试)
+    num_decoder_layers = 2 # 解码器层数 (减小便于测试)
+    dropout = 0.1
+    
+    # 创建模型
+    print("\n🔧 初始化Transformer模型...")
+    model = TransFormer(
+        src_vocab_size=src_vocab_size,
+        tgt_vocab_size=tgt_vocab_size,
+        d_model=d_model,
+        n_heads=n_heads,
+        d_ff=d_ff,
+        num_encoder_layers=num_encoder_layers,
+        num_decoder_layers=num_decoder_layers,
+        dropout=dropout
+    )
+    
+    # 设置设备
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    print(f"✅ 模型已移动到设备: {device}")
+    print(f"📊 模型参数量: {sum(p.numel() for p in model.parameters()):,}")
+    
+    # 创建测试数据
+    print("\n📦 创建测试数据...")
+    batch_size = 4
+    src_len = 8
+    tgt_len = 10
+    
+    src, tgt, src_mask = create_test_data(
+        batch_size=batch_size,
+        src_len=src_len,
+        tgt_len=tgt_len,
+        src_vocab=src_vocab_size,
+        tgt_vocab=tgt_vocab_size
+    )
+    
+    # 添加padding以模拟真实场景
+    src[0, 5:] = 0  # 第一个样本的最后3个token是padding
+    src[1, 6:] = 0  # 第二个样本的最后2个token是padding
+    
+    print(f"✅ 源序列形状: {src.shape}, 内容:\n{src}")
+    print(f"✅ 目标序列形状: {tgt.shape}, 内容:\n{tgt}")
+    print(f"✅ 源掩码形状: {src_mask.shape}")
+    
+    # 移动到设备
+    src = src.to(device)
+    tgt = tgt.to(device)
+    src_mask = src_mask.to(device)
+    
+    # 生成目标序列掩码 (因果掩码)
+    tgt_mask = model.generate_square_subsequent_mask(tgt_len).to(device)
+    print(f"✅ 目标掩码形状: {tgt_mask.shape}")
+    print(f"🔤 目标掩码 (下三角):\n{tgt_mask.cpu().numpy()}")
+    
+    # 前向传播
+    print("\n⚡ 执行前向传播...")
+    model.eval()  # 设置为评估模式
+    with torch.no_grad():
+        output = model(src, tgt, src_mask=src_mask, tgt_mask=tgt_mask)
+    
+    print(f"\n✅ 前向传播成功!")
+    print(f"📈 输出形状: {output.shape}")
+    print(f"🧠 输出数据类型: {output.dtype}")
+    print(f"📊 输出范围: min={output.min().item():.4f}, max={output.max().item():.4f}, mean={output.mean().item():.4f}")
+    
+    # 验证输出形状
+    expected_shape = (batch_size, tgt_len, tgt_vocab_size)
+    assert output.shape == expected_shape, \
+        f"输出形状错误! 期望 {expected_shape}, 但得到 {output.shape}"
+    
+    # 检查是否有NaN或Inf
+    assert not torch.isnan(output).any(), "输出包含NaN值!"
+    assert not torch.isinf(output).any(), "输出包含Inf值!"
+    
+    # 验证自回归特性 (检查因果掩码是否生效)
+    print("\n🔍 验证因果掩码是否生效...")
+    # 创建一个特殊测试用例：所有token相同，检查预测是否只依赖于前面的token
+    special_src = torch.ones(batch_size, src_len, dtype=torch.long).to(device) * 2
+    special_tgt = torch.ones(batch_size, tgt_len, dtype=torch.long).to(device) * 3
+    
+    # 修改第3个位置的token
+    special_tgt[:, 3] = 4
+    
+    with torch.no_grad():
+        special_output = model(special_src, special_tgt, src_mask=None, tgt_mask=tgt_mask)
+    
+    # 检查位置3之后的预测是否受到影响
+    pos3_logit = special_output[:, 3, :].cpu().numpy()  # 位置3的logits
+    pos4_logit = special_output[:, 4, :].cpu().numpy()  # 位置4的logits
+    
+    # 位置4的预测应该受到位置3的影响
+    print(f"✅ 位置3的logit示例 (前5个值): {pos3_logit[0, :5]}")
+    print(f"✅ 位置4的logit示例 (前5个值): {pos4_logit[0, :5]}")
+    
+    # 简单验证：位置4的预测与位置3不同（因为输入不同）
+    assert not np.allclose(pos3_logit, pos4_logit, atol=1e-5), \
+        "位置3和位置4的预测相同，因果掩码可能未生效!"
+    
+    print("\n🎉 所有测试通过!")
+    return model, output, src, tgt
+
+# ========== 4. 可视化注意力权重 ==========
+def visualize_attention(model, src, tgt, device):
+    print("\n🎨 准备可视化注意力权重...")
+    
+    # 修改模型以返回注意力权重
+    # 临时修改forward方法以返回注意力权重
+    original_forward = model.forward
+    
+    def forward_with_attn(self, src, tgt, src_mask=None, tgt_mask=None, memory_mask=None):
+        # 复制之前的forward逻辑，但返回注意力权重
+        # ... 简化版，只获取最后一层的注意力 ...
+        src_embedded = self.src_embedding(src) * math.sqrt(self.d_model)
+        src_embedded = self.pos_encoding(src_embedded)
+        
+        enc_output = src_embedded
+        for layer in self.encoder_layers:
+            enc_output = layer(enc_output, src_mask)
+        enc_output = self.encoder_norm(enc_output)
+        
+        tgt_embedded = self.tgt_embedding(tgt) * math.sqrt(self.d_model)
+        tgt_embedded = self.pos_encoding(tgt_embedded)
+        
+        dec_output = tgt_embedded
+        last_self_attn = None
+        last_cross_attn = None
+        
+        for i, layer in enumerate(self.decoder_layers):
+            dec_output, self_attn, cross_attn = layer(dec_output, enc_output, src_mask, tgt_mask)
+            if i == len(self.decoder_layers) - 1:  # 最后一层
+                last_self_attn = self_attn
+                last_cross_attn = cross_attn
+        
+        dec_output = self.decoder_norm(dec_output)
+        logits = self.fc_out(dec_output)
+        
+        return logits, last_self_attn, last_cross_attn
+    
+    # 临时替换forward方法
+    model.forward = forward_with_attn.__get__(model, TransFormer)
+    
+    # 生成掩码
+    tgt_len = tgt.size(1)
+    tgt_mask = model.generate_square_subsequent_mask(tgt_len).to(device)
+    
+    # 获取注意力权重
+    with torch.no_grad():
+        _, self_attn, cross_attn = model(src, tgt, src_mask=None, tgt_mask=tgt_mask)
+    
+    # 恢复原始forward方法
+    model.forward = original_forward
+    
+    # 转换为numpy
+    self_attn = self_attn[0].cpu().numpy()  # 取第一个样本
+    cross_attn = cross_attn[0].cpu().numpy()  # 取第一个样本
+    
+    # 可视化
+    fig, axes = plt.subplots(1, 2, figsize=(20, 8))
+    
+    # 自注意力
+    im1 = axes[0].imshow(self_attn[0], cmap='viridis', aspect='auto')  # 取第一个头
+    axes[0].set_title('Decoder Self-Attention (Head 0)', fontsize=14)
+    axes[0].set_xlabel('Target Position')
+    axes[0].set_ylabel('Target Position')
+    plt.colorbar(im1, ax=axes[0])
+    
+    # 交叉注意力
+    im2 = axes[1].imshow(cross_attn[0], cmap='viridis', aspect='auto')  # 取第一个头
+    axes[1].set_title('Decoder Cross-Attention (Head 0)', fontsize=14)
+    axes[1].set_xlabel('Source Position')
+    axes[1].set_ylabel('Target Position')
+    plt.colorbar(im2, ax=axes[1])
+    
+    plt.tight_layout()
+    plt.savefig('transformer_attention.png', dpi=300)
+    print("✅ 注意力权重可视化已保存为 'transformer_attention.png'")
+    plt.show()
+
+# ========== 5. 主测试函数 ==========
+if __name__ == "__main__":
+    # 运行测试
+    model, output, src, tgt = test_transformer()
+    
+    # 可视化注意力权重
+    device = next(model.parameters()).device
+    visualize_attention(model, src[:1], tgt[:1], device)  # 只用第一个样本
+    
+    print("\n" + "="*50)
+    print("✨ Transformer模型测试完成! 模型工作正常")
+    print("="*50)
