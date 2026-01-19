@@ -10,7 +10,7 @@ import numpy as np
 import gzip
 import sys
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 class LeNet5(nn.Module):
     def __init__(self , num_classes = 10):
         """
@@ -61,7 +61,7 @@ test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms
 # 定义数据加载器
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 定义模型、损失函数和优化器
 model = LeNet5().to(device)
 criterion = nn.CrossEntropyLoss()
@@ -76,6 +76,8 @@ TRAIN_ACC = []
 for epoch in range(10):
     model.train()
     for i, (images, labels) in enumerate(train_loader):
+        images = images.to(device)
+        labels = labels.to(device)
         optimizer.zero_grad()
         outputs = model(images)
         loss = criterion(outputs, labels)
@@ -93,6 +95,8 @@ for epoch in range(10):
         total = 0
         test_loss = 0
         for images, labels in test_loader:
+            images = images.to(device)
+            labels = labels.to(device)
             outputs = model(images)
             test_loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.data, 1)
