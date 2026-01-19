@@ -102,7 +102,7 @@ for epoch in range(10):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-        
+            test_loss.append(test_loss / len(test_loader))
         TEST_LOSS.append(test_loss / len(test_loader))
         TEST_ACC.append(100 * correct / total)
 
