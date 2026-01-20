@@ -11,7 +11,7 @@ import os
 from torch.cuda.amp import autocast, GradScaler
 
 class AlexNet(nn.Module):
-    '''AlexNet 神经网络模块，这里就不再分两个GPU训练了，直接写在单个GPU上面进行训练
+    '''AlexNet 神经网络模块,这里就不再分两个GPU训练了,直接写在单个GPU上面进行训练
     '''
     def __init__(self , num_classes= 20):
         super(AlexNet , self).__init__()
@@ -178,7 +178,7 @@ def train_model():
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # 训练参数
-    epochs = 10
+    epochs = 50
     train_losses, test_losses = [], []
     train_accs, test_accs = [], []
 
