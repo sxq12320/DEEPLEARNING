@@ -9,8 +9,10 @@ import time
 from tqdm import tqdm
 import os
 from torch.cuda.amp import autocast, GradScaler
-from VGGNet_A import VGGNetA_CIFAR10
-# from VGGNet_A_LRn import VGGNetALRn
+from VGGNet_A import VGGNetA_CIFAR10 , VGGNetA
+from VGGNet_A_LRn import VGGNetALRn , VGGNetALRn_CIFAR10
+from VGGNet_B import VGGNetB_CIFAR10 , VGGNetB
+
 
 def train_model():
     # 数据预处理 (使用32x32原始尺寸)
