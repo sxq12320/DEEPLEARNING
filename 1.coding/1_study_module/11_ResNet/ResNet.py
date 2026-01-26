@@ -57,7 +57,7 @@ class ResNetBlock_50(nn.Module):
         Returns:
             输出特征图
     '''
-    def __init__(self , in_channels , out_channels , stride = 1 , padding = 0):
+    def __init__(self , in_channels , out_channels , stride = 1):
         super(ResNetBlock_50 ,self ).__init__()
         self.conv1 = nn.Conv2d(in_channels=in_channels , out_channels=out_channels , stride=1 , padding = 0 , kernel_size = 1 , bias = False)
         self.bn1 = nn.BatchNorm2d(out_channels)
