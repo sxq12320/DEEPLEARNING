@@ -297,8 +297,6 @@ class ResNet_50(nn.Module):
         x = self.layer5(x)
         x = self.layer6(x)
         return x
-    
-
 
 class ResNet_101(nn.Module):
     '''ResNet-101网络结构'''
