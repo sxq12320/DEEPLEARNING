@@ -59,6 +59,7 @@ from .block import (
     ResNetLayer,
     SCDown,
     TorchVision,
+    MyCBAM,#这里增加了一个注意力机制模块
 )
 from .conv import (
     CBAM,
@@ -187,4 +188,5 @@ __all__ = (
     "YOLOESegment",
     "YOLOESegment26",
     "v10Detect",
+    "MyCBAM",#增加了一个注意力机制模块
 )
