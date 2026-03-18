@@ -3,8 +3,5 @@ train: images/train
 val: images/val
 test: images/test
 
-nc: 20
-names: ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle',
-        'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
-        'dog', 'horse', 'motorbike', 'person', 'pottedplant',
-        'sheep', 'sofa', 'train', 'tvmonitor']
+nc: 7
+names: ['Angular Leafspot', 'Anthracnose Fruit Rot', 'Blossom Blight', 'Gray Mold', 'Leaf Spot', 'Powdery Mildew Fruit', 'Powdery Mildew Leaf']

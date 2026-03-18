@@ -63,6 +63,8 @@ from .block import (
     DWSConv,
     DWBottleneck,
     C3k2DW,
+    GAM,
+    Conv_DCN,
 )
 from .conv import (
     CBAM,
@@ -195,5 +197,7 @@ __all__ = (
     "DWSConv",
     "DWBottleneck",
     "C3k2DW",
+    "GAM",
+    "Conv_DCN",
 
 )

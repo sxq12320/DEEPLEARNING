@@ -76,6 +76,8 @@ from ultralytics.nn.modules import (
     DWSConv,
     C3k2DW,
     DWBottleneck,
+    GAM,
+    Conv_DCN,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1616,6 +1618,8 @@ def parse_model(d, ch, verbose=True):
             DWSConv,
             DWBottleneck,
             C3k2DW,
+            GAM,
+            Conv_DCN,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments

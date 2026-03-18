@@ -272,7 +272,7 @@ class Segment(Detect):
         >>> outputs = segment(x)
     """
 
-    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+    def __init__(self, nc: int = 80, nm: int = 64, npr: int = 512, reg_max=16, end2end=False, ch: tuple = ()):
         """Initialize the YOLO model attributes such as the number of masks, prototypes, and the convolution layers.
 
         Args:

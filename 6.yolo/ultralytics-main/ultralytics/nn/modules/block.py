@@ -6,6 +6,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.ops as ops
 
 from ultralytics.utils.torch_utils import fuse_conv_and_bn
 
@@ -57,6 +58,118 @@ __all__ = (
     "C3k2DW"
 
 )
+
+###################################################
+#                                                 #
+#                                                 #
+##                 加上可变性卷积看看效果            ##
+#                                                 #
+#                                                 #
+###################################################
+class DCNv2(nn.Module):
+    def __init__(self, c1, c2, k=3, s=1, p=None, g=1):
+        super().__init__()
+        self.k = k
+        p = autopad(k, p)
+        self.dcn = ops.DeformConv2d(c1, c2, k, s, p, groups=g)
+        self.offset_mask = nn.Conv2d(c1, 3 * k * k, k, s, p)
+        nn.init.constant_(self.offset_mask.weight, 0.)
+        nn.init.constant_(self.offset_mask.bias, 0.)
+
+    def forward(self, x):
+        out = self.offset_mask(x)
+        # ✅ 正确切分：前 2*k*k 为 offset，后 k*k 为 mask
+        offset = out[:, :2 * self.k * self.k, :, :]
+        mask   = torch.sigmoid(out[:, 2 * self.k * self.k:, :, :])
+
+        expected_dtype = x.dtype
+        x_c      = x.float().contiguous()
+        offset_c = offset.float().contiguous()
+        mask_c   = mask.float().contiguous()
+
+        out = self.dcn(x_c, offset_c, mask_c)
+        return out.to(expected_dtype)
+
+
+def autopad(k, p=None, d=1):
+    if d > 1:
+        k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]
+    if p is None:
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]
+    return p
+
+
+class Conv_DCN(nn.Module):
+    def __init__(self, c1, c2, k=3, s=1, p=None, g=1, act=True):
+        super().__init__()
+        # autopad 在 DCNv2 内部处理，这里不再单独计算
+        self.dcn = DCNv2(c1, c2, k, s, p, g)
+        self.bn  = nn.BatchNorm2d(c2)
+        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+    def forward(self, x):
+        return self.act(self.bn(self.dcn(x)))
+
+
+
+
+
+###################################################
+#                                                 #
+#                                                 #
+##               使用GAM的注意力机制模块            ##
+#GDA-YOLO11: Amodal Instance Segmentation for Occlusion-Robust Robotic Fruit Harvesting                                               #
+#                                                 #
+###################################################
+class ChannelAttention(nn.Module):
+    def __init__(self, in_planes, ratio=16):
+        super(ChannelAttention, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        
+        # 对应论文中的 Shared MLP
+        self.fc1   = nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False)
+        self.relu1 = nn.ReLU()
+        self.fc2   = nn.Conv2d(in_planes // ratio, in_planes, 1, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+        max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
+        out = avg_out + max_out # 公式 (3)
+        return self.sigmoid(out)
+
+class SpatialAttention(nn.Module):
+    def __init__(self, kernel_size=7):
+        super(SpatialAttention, self).__init__()
+        padding = 3 if kernel_size == 7 else 1
+        # 对应论文中使用 7x7 卷积核捕获空间关系
+        self.conv1 = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        x_cat = torch.cat([avg_out, max_out], dim=1)
+        out = self.conv1(x_cat) # 公式 (4)
+        return self.sigmoid(out)
+
+class GAM(nn.Module):
+    # YOLO 架构要求模块通常具有 (c1, c2, ...) 形式的初始化
+    def __init__(self, c1, c2, ratio=16):
+        super(GAM, self).__init__()
+        # 为了保证通道数一致，必要时可以加一个 1x1 卷积调整维度
+        self.cv = nn.Conv2d(c1, c2, 1, 1) if c1 != c2 else nn.Identity()
+        self.ca = ChannelAttention(c2, ratio)
+        self.sa = SpatialAttention(kernel_size=7)
+
+    def forward(self, x):
+        x = self.cv(x)
+        x_out = x * self.ca(x)       # 结合通道注意力，公式 (1)
+        x_out = x_out * self.sa(x_out) # 结合空间注意力，公式 (2)
+        return x_out
+
+
 ###################################################
 #                                                 #
 #                                                 #
