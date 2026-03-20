@@ -58,7 +58,68 @@ __all__ = (
     "C3k2DW"
 
 )
+###################################################
+#                                                 #
+#                                                 #
+##                 自定义池化函数                   ##
+#                                                 #
+#                                                 #
+###################################################
 
+class MyAdaptivePool(nn.Module):
+    def __init__(self, in_ch, scale_factor):
+        super().__init__()
+        self.scale = scale_factor
+
+    def forward(self, x):
+        # 用 avg_pool2d 替代 adaptive_avg_pool2d
+        return F.avg_pool2d(x, kernel_size=self.scale, stride=self.scale)
+###################################################
+#                                                 #
+#                                                 #
+##                 通道注意力机制魔魁啊              ##
+#                                                 #
+#                                                 #
+###################################################
+class MyChannelAttention(nn.Module):
+    def __init__(self, in_ch, reduction=16):
+        super().__init__()
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        mid = max(in_ch // reduction, 4)
+        self.fc = nn.Sequential(
+            nn.Linear(in_ch, mid, bias=False),
+            nn.ReLU(),
+            nn.Linear(mid, in_ch, bias=False),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.shape
+        w = self.fc(self.pool(x).view(b, c))
+        return x * w.view(b, c, 1, 1)
+
+
+
+###################################################
+#                                                 #
+#                                                 #
+##                 跳线但是有权重的那种              ##
+#                                                 #
+#                                                 #
+###################################################
+class ScalarAttention(nn.Module):
+    def __init__(self, in_ch):
+        super().__init__()
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(in_ch, 1, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.shape
+        alpha = self.fc(self.pool(x).view(b, c))
+        return x * alpha.view(b, 1, 1, 1)
 ###################################################
 #                                                 #
 #                                                 #

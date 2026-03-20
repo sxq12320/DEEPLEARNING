@@ -65,6 +65,9 @@ from .block import (
     C3k2DW,
     GAM,
     Conv_DCN,
+    ScalarAttention,
+    MyChannelAttention,
+    MyAdaptivePool,
 )
 from .conv import (
     CBAM,
@@ -199,5 +202,8 @@ __all__ = (
     "C3k2DW",
     "GAM",
     "Conv_DCN",
+    "ScalarAttention",
+    "MyChannelAttention",
+    "MyAdaptivePool",
 
 )

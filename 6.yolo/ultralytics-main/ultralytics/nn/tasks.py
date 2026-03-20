@@ -78,6 +78,11 @@ from ultralytics.nn.modules import (
     DWBottleneck,
     GAM,
     Conv_DCN,
+    ScalarAttention,
+    MyChannelAttention,
+    Proto,
+    MyAdaptivePool,
+
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1620,6 +1625,10 @@ def parse_model(d, ch, verbose=True):
             C3k2DW,
             GAM,
             Conv_DCN,
+            # ScalarAttention,
+            # MyChannelAttention,
+            Proto,
+            # MyAdaptivePool,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1726,6 +1735,19 @@ def parse_model(d, ch, verbose=True):
             c2 = args[0]
             c1 = ch[f]
             args = [*args[1:]]
+        elif m in frozenset({TorchVision, Index}):
+            c2 = args[0]
+            c1 = ch[f]
+            args = [*args[1:]]
+        elif m in {ScalarAttention, MyChannelAttention}:
+            # 这两个只需要 in_ch，不需要额外 args
+            c2 = ch[f]
+            args = [c2]  # 把 in_ch 作为唯一参数传进去
+
+        elif m is MyAdaptivePool:
+            # 需要 in_ch + output_size，args 里保留 [output_size]
+            c2 = ch[f]
+            args = [c2, *args]  # 变成 [in_ch, output_size]
         else:
             c2 = ch[f]
 
