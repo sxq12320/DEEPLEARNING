@@ -233,5 +233,8 @@ calibration_*.npy
 # Training logs
 args.yaml
 results.csv
-.path
+*.path
+*.pth
+*.pt
+*.pkl
 
