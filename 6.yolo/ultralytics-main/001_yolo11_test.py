@@ -4,7 +4,8 @@ from ultralytics import YOLO
 
 if __name__ == '__main__':
     # yolo = YOLO(r'E:\mastercode\6.yolo\ultralytics-main\ultralytics\cfg\models\11\yolo11n-seg.yaml')
-    yolo = YOLO(r'E:\mastercode\6.yolo\ultralytics-main\ultralytics\cfg\models\11\yolo11n-seg-sxq_2.yaml')
+    # yolo = YOLO(r'E:\mastercode\6.yolo\ultralytics-main\ultralytics\cfg\models\11\yolo11n-seg-sxq_2.yaml')
+    yolo = YOLO(r'E:\mastercode\6.yolo\ultralytics-main\ultralytics\cfg\models\11\yolo11n-seg-sxq_3.yaml')
     yolo.train(
         data=r'E:\mastercode\6.yolo\ultralytics-main\201_caomei_data.yaml',
         project=r'E:/mastercode/6.yolo/runs/segment',

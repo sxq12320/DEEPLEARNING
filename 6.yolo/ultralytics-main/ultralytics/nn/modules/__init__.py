@@ -68,6 +68,7 @@ from .block import (
     ScalarAttention,
     MyChannelAttention,
     MyAdaptivePool,
+    WeightedFusion,
 )
 from .conv import (
     CBAM,
@@ -205,5 +206,6 @@ __all__ = (
     "ScalarAttention",
     "MyChannelAttention",
     "MyAdaptivePool",
+    "WeightedFusion",
 
 )

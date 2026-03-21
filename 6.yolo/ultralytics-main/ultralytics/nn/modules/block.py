@@ -58,6 +58,35 @@ __all__ = (
     "C3k2DW"
 
 )
+
+###################################################
+#                                                 #
+#                                                 #
+##                 加权融合模块                     ##
+#                                                 #
+#                                                 #
+###################################################
+class WeightedFusion(nn.Module):
+    """
+    两路特征加权融合（不是Concat，是加权相加）
+    x_shallow: 浅层特征，初始权重大
+    x_deep:    深层特征，初始权重小
+    """
+    def __init__(self, in_ch):
+        super().__init__()
+        # 初始化：浅层权重大，深层权重小
+        self.w_shallow = nn.Parameter(torch.tensor(2.0))
+        self.w_deep    = nn.Parameter(torch.tensor(1.0))
+
+    def forward(self, x):
+        # x 是列表 [x_shallow, x_deep]，由 yaml 的 Concat 机制传入
+        x_shallow, x_deep = x[0], x[1]
+        w1 = torch.relu(self.w_shallow)
+        w2 = torch.relu(self.w_deep)
+        norm = w1 + w2 + 1e-4
+        return (w1 / norm) * x_shallow + (w2 / norm) * x_deep
+
+
 ###################################################
 #                                                 #
 #                                                 #

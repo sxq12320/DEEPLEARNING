@@ -82,6 +82,7 @@ from ultralytics.nn.modules import (
     MyChannelAttention,
     Proto,
     MyAdaptivePool,
+    WeightedFusion,
 
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
@@ -1629,6 +1630,7 @@ def parse_model(d, ch, verbose=True):
             # MyChannelAttention,
             Proto,
             # MyAdaptivePool,
+            WeightedFusion,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
