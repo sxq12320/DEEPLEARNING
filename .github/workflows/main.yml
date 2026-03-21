@@ -1,0 +1,37 @@
+name: Update README on Issue
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    # 可选：只处理特定 label 的 issue，比如 "blog"
+    if: contains(github.event.issue.labels.*.name, 'blog')
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update README
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_CREATED_AT: ${{ github.event.issue.created_at }}
+        run: python scripts/update_readme.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --staged --quiet || git commit -m "docs: update blog list from issue #${{ github.event.issue.number }}"
+          git push
