@@ -55,9 +55,32 @@ __all__ = (
     "TorchVision",
     "DWSConv",
     "DWBottleneck",
-    "C3k2DW"
+    "C3k2DW",
+    "DSConv",
 
 )
+###################################################
+#                                                 #
+#                                                 #
+##            增加深度可分离卷积                    ##
+#                                                 #
+#                                                 #
+###################################################
+class DSConv(nn.Module):
+    """
+    深度可分离卷积 (Depthwise Separable Convolution)
+    由一个深度卷积 (DWConv) 和一个逐点卷积 (PWConv) 组成。
+    """
+    def __init__(self, c1, c2, k=3, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        # 1. 深度卷积 (Depthwise Convolution): groups=c1, 提取空间特征
+        self.dwconv = Conv(c1, c1, k, s, p, g=c1, d=d, act=act)
+        # 2. 逐点卷积 (Pointwise Convolution): k=1, 融合通道特征并改变通道数到 c2
+        self.pwconv = Conv(c1, c2, 1, 1, 0, g=1, d=1, act=act)
+
+    def forward(self, x):
+        return self.pwconv(self.dwconv(x))
+
 
 
 ###################################################

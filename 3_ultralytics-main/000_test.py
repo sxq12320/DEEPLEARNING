@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-
+# 将模型尝试着看看是否实现了要求，看看效果的样子而已
 # 加载模型
 model = YOLO(r"E:\mastercode\3_ultralytics-main\results\segment\1_caomei_test\train4\weights\best.pt")
 
@@ -13,5 +13,5 @@ results = model.predict(
 )
 
 # 查看结果
-for r in results:
-    print(r.masks)   # 分割结果
+# for r in results:
+#     print(r.masks)   # 分割结果

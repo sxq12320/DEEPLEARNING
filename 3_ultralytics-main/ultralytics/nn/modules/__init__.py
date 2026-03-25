@@ -63,6 +63,7 @@ from .block import (
     WeightedFusion,
     MyChannelAttention,
     ScalarAttention,
+    DSConv,
 )
 from .conv import (
     CBAM,
@@ -195,4 +196,5 @@ __all__ = (
     "WeightedFusion",
     "MyChannelAttention",
     "ScalarAttention",
+    "DSConv",
 )

@@ -77,6 +77,7 @@ from ultralytics.nn.modules import (
     MyChannelAttention,
     ScalarAttention,
     Proto,
+    DSConv,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1618,6 +1619,7 @@ def parse_model(d, ch, verbose=True):
             # MyChannelAttention,
             # ScalarAttention,
             Proto,
+            DSConv,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
