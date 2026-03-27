@@ -23,6 +23,7 @@ import numpy as np
 import torch
 from torch import distributed as dist
 from torch import nn, optim
+from torch.optim.optimizer import Optimizer
 
 from ultralytics import __version__
 from ultralytics.cfg import get_cfg, get_save_dir
@@ -63,6 +64,115 @@ from ultralytics.utils.torch_utils import (
     unwrap_model,
 )
 
+import math
+import torch
+from torch.optim import Optimizer
+
+
+class PIDAO(Optimizer):
+    """
+    基于 Nature Communications 2024 (Chen et al.) 官方开源逻辑重构。
+    采用半隐式欧拉(Semi-Implicit Euler)离散化，并针对深度学习框架(如YOLO)的
+    动态学习率(Warmup/Scheduler)进行了工程上的鲁棒性增强。
+    """
+
+    def __init__(self, params, lr=1e-3, eq_momentum=0.9, weight_decay=0.0,
+                 kp=None, ki=3.0, kd=0.3):
+        if lr < 0.0:
+            raise ValueError(f"Invalid learning rate: {lr}")
+
+        # 记录是否需要动态推导基准 kp
+        self.auto_kp = (kp is None)
+
+        defaults = dict(
+            lr=lr, eq_momentum=eq_momentum, weight_decay=weight_decay,
+            kp=kp if kp is not None else 1.0,  # 初始占位，step中会基于动力学方程严格重算
+            ki=ki, kd=kd
+        )
+        super(PIDAO, self).__init__(params, defaults)
+
+    @torch.no_grad()
+    def step(self, closure=None):
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
+        for group in self.param_groups:
+            h = group['lr']
+            # 防御性限制：当 YOLO 传入极小或为 0 的学习率时，跳过离散化更新以防止除零溢出
+            if h <= 1e-8:
+                continue
+
+            eq_momentum = group['eq_momentum']
+            ki = group['ki']
+            kd = group['kd']
+            weight_decay = group['weight_decay']
+
+            # 1. 严格映射连续时间阻尼系数 a
+            # 根据 \ddot{X} + a\dot{X} + b\nabla f(X) = 0 推导
+            a = (1 - eq_momentum) / math.sqrt(h)
+
+            # 2. 推导当前物理状态下的比例系数 kp
+            if self.auto_kp:
+                kp = 1.0 / (eq_momentum * h)
+            else:
+                kp = group['kp']
+
+            # 3. 李雅普诺夫(Lyapunov)稳定性动态锁
+            # 必须满足硬约束: k_p > k_i/a + a*k_d 才能保证系统收敛
+            constraint_boundary = (ki / a) + (a * kd)
+            if kp <= constraint_boundary:
+                # 当 YOLO 的 warmup 导致步长 h 突变时，自适应抬高小球的驱动力 (kp)
+                # 确保系统强制处于理论收敛域内，而不是抛出异常中断训练
+                kp = constraint_boundary + 1e-3
+
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+
+                d_p = p.grad
+                if weight_decay != 0:
+                    d_p = d_p.add(p, alpha=weight_decay)
+
+                state = self.state[p]
+
+                # 动力学状态初始化
+                if len(state) == 0:
+                    state['step'] = 0
+                    state['v'] = torch.zeros_like(p)  # 速度 \dot{X}
+                    state['z'] = torch.zeros_like(p)  # 纯积分累积 \int \nabla f(X)
+                    state['prev_grad'] = torch.clone(d_p).detach()
+
+                state['step'] += 1
+                v = state['v']
+                z = state['z']
+                prev_grad = state['prev_grad']
+
+                # ==========================================================
+                # 核心控制律：严格对照原作者连续时间动力学的半隐式欧拉(SI)离散化
+                # ==========================================================
+
+                # I项: 纯积分累积 z_{k+1} = z_k + h * \nabla f(\theta_k)
+                z.add_(d_p, alpha=h)
+
+                # D项: 连续时间导数的离散化近似 (\nabla f(\theta_k) - \nabla f(\theta_{k-1})) / h
+                d_term = (d_p - prev_grad) / h
+
+                # 更新系统速度 v_{k+1} = (1 - ah)v_k - h*(kp*P + ki*I + kd*D)
+                # 注：利用 add_ 的原地操作大幅降低显存开销
+                v.mul_(1 - a * h) \
+                    .add_(d_p, alpha=-h * kp) \
+                    .add_(z, alpha=-h * ki) \
+                    .add_(d_term, alpha=-h * kd)
+
+                # 推进物理坐标(权重参数) \theta_{k+1} = \theta_k + h * v_{k+1}
+                p.add_(v, alpha=h)
+
+                # 记录当前梯度 \nabla f(\theta_k) 供下一步微分项使用
+                prev_grad.copy_(d_p)
+
+        return loss
 
 class BaseTrainer:
     """A base class for creating trainers.
@@ -999,14 +1109,20 @@ class BaseTrainer:
         if not use_muon:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto"}
+            # 👉 第一处修改：必须把 PIDAO 字符串加进这个白名单集合里，不然下面 get() 会返回 None
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
+
         if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam"}:
             optim_args = dict(lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         elif name == "RMSProp":
             optim_args = dict(lr=lr, momentum=momentum)
         elif name == "SGD" or name == "MuSGD":
             optim_args = dict(lr=lr, momentum=momentum, nesterov=True)
+        # 👉 这里只传基础的字典参数给 YOLO 去做参数分组
+        elif name == "PIDAO":
+            # 将 YOLO 传进来的 momentum 映射给 PIDAO 需要的 eq_momentum
+            optim_args = dict(lr=lr, eq_momentum=momentum)
         else:
             raise NotImplementedError(
                 f"Optimizer '{name}' not found in list of available optimizers {optimizers}. "
@@ -1018,6 +1134,7 @@ class BaseTrainer:
         g[0] = {"params": g[0], **optim_args, "weight_decay": decay, "param_group": "weight"}
         g[1] = {"params": g[1], **optim_args, "weight_decay": 0.0, "param_group": "bn"}
         muon, sgd = (0.2, 1.0)
+
         if use_muon:
             num_params[0] = len(g[3])  # update number of params
             g[3] = {"params": g[3], **optim_args, "weight_decay": decay, "use_muon": True, "param_group": "muon"}
@@ -1032,7 +1149,14 @@ class BaseTrainer:
                 p2 = [v for k, v in p.items() if not pattern.search(k)]
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
-        optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
+
+        # 👉 第二处修改：拦截 YOLO 的默认实例化方法，强制使用我们的 PIDAO 类
+        if name == "PIDAO":
+            # 将 kp 设为 None，把控制权交给底层动力学方程，让它随 h 动态推导
+            # 同时显式传入 lr 和 eq_momentum 以初始化物理环境
+            optimizer = PIDAO(params=g, lr=lr, eq_momentum=momentum, kp=None, ki=1.0, kd=0.1)
+        else:
+            optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
         LOGGER.info(
             f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}, momentum={momentum}) with parameter groups "
