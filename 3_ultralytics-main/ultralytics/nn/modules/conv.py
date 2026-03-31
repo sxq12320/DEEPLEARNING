@@ -27,6 +27,63 @@ __all__ = (
 )
 
 
+
+
+# LSnet网络模块基础架构
+
+class LSConv(nn.Module):
+    """Large-Small Convolution based on CVPR 2025 LSNet"""
+
+    def __init__(self, c1, c2, k_l=7, k_s=3, reduction=4):
+        super().__init__()
+        mid_channels = max(c1 // reduction, 16)
+
+        # Large-Kernel Perception (LKP)
+        self.lkp_pw1 = nn.Conv2d(c1, mid_channels, 1, bias=False)
+        self.lkp_dw = nn.Conv2d(mid_channels, mid_channels, k_l, padding=k_l // 2, groups=mid_channels, bias=False)
+        self.lkp_pw2 = nn.Conv2d(mid_channels, c1, 1, bias=False)
+        self.act = nn.Sigmoid()
+
+        # Small-Kernel Aggregation (SKA)
+        self.ska_dw = nn.Conv2d(c1, c1, k_s, padding=k_s // 2, groups=c1, bias=False)
+
+        # Projection (包含了 BatchNorm 和 SiLU)
+        self.proj = Conv(c1, c2, 1)
+
+    def forward(self, x):
+        # Generate Aggregation Weights (See Large)
+        w = self.lkp_pw1(x)
+        w = self.lkp_dw(w)
+        w = self.lkp_pw2(w)
+        w = self.act(w)
+
+        # Extract Local Features (Focus Small)
+        x_s = self.ska_dw(x)
+
+        # Dynamic Fusion and Projection
+        return self.proj(x_s * w)
+
+
+class C3k2_LS(nn.Module):
+    """YOLO11 C3k2 module empowered by LSConv"""
+
+    def __init__(self, c1, c2, n=1, c3k=False, e=0.5, g=1, shortcut=True):
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = Conv(c1, c_, 1, 1)
+        # 核心修改：将内部循环堆叠的模块替换为 LSConv
+        self.m = nn.ModuleList(LSConv(c_, c_) for _ in range(n))
+        self.cv3 = Conv(c_ * 2, c2, 1)
+
+    def forward(self, x):
+        y1 = self.cv1(x)
+        y2 = self.cv2(x)
+        for m in self.m:
+            y1 = m(y1)
+        return self.cv3(torch.cat((y1, y2), 1))
+
+
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     """Pad to 'same' shape outputs."""
     if d > 1:

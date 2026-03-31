@@ -80,6 +80,7 @@ from ultralytics.nn.modules import (
     DSConv,
     LightConv,
     C3k2DW,
+    C3k2_LS,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1624,6 +1625,7 @@ def parse_model(d, ch, verbose=True):
             DSConv,
             LightConv,
             C3k2DW,
+            C3k2_LS,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments

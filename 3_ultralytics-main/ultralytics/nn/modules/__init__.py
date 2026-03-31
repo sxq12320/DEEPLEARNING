@@ -81,6 +81,7 @@ from .conv import (
     LightConv,
     RepConv,
     SpatialAttention,
+    C3k2_LS,
 )
 from .head import (
     OBB,
@@ -200,4 +201,5 @@ __all__ = (
     "DSConv",
     "LightConv",
     "C3k2DW",
+    "C3k2_LS",
 )
