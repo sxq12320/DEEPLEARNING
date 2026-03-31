@@ -412,11 +412,11 @@ class DWSConv(nn.Module):
 class DWBottleneck(nn.Module):
     """内部 3×3 Conv → DWSConv，1×1 保持不变"""
 
-    def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
+    def __init__(self, c1, c2, shortcut=True, k=3, e=0.5):
         super().__init__()
         c_ = int(c2 * e)
-        self.cv1 = Conv(c1, c_, 1, 1)  # 1×1 不变
-        self.cv2 = DWSConv(c_, c2, k[1], 1)  # 3×3 → DW+PW
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = DWConv(c_, c2, k, 1)  # 深度可分离卷积
         self.add = shortcut and c1 == c2
 
     def forward(self, x):
@@ -435,9 +435,9 @@ class C3k2DW(nn.Module):
         c_ = int(c2 * e)
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c1, c_, 1, 1)
-        self.cv3 = Conv(2 * c_, c2, 1)  # 融合用 1×1，不改
+        self.cv3 = Conv(2 * c_, c2, 1)
         self.m = nn.Sequential(*(
-            DWBottleneck(c_, c_, shortcut=shortcut, g=g, e=1.0)
+            DWBottleneck(c_, c_, shortcut=shortcut, e=1.0)
             for _ in range(n)
         ))
 

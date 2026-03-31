@@ -64,6 +64,7 @@ from .block import (
     MyChannelAttention,
     ScalarAttention,
     DSConv,
+    C3k2DW,
 )
 from .conv import (
     CBAM,
@@ -197,4 +198,6 @@ __all__ = (
     "MyChannelAttention",
     "ScalarAttention",
     "DSConv",
+    "LightConv",
+    "C3k2DW",
 )
