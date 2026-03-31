@@ -1,8 +1,0 @@
-train: E:\mastercode\data\KOUZHAO\FINAL\train  # train images (relative to 'path') 128 images
-val: E:\mastercode\data\KOUZHAO\FINAL\val  # val images (relative to 'path') 128 images
-test: E:\mastercode\data\KOUZHAO\FINAL\test
- 
-nc: 3
- 
-# Classes
-names: ['with_mask','without_mask','mask_weared_incorrect']

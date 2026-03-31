@@ -1,16 +1,17 @@
+import numpy as np
 from pandas.core.aggregation import transform
 from torch.utils.data import Dataset
 import os
+import torch
+from utils import keep_image_size_open , keep_seg_size_open
 
 from torchvision import transforms
 
-from utils import keep_image_size_open
+from utils import keep_image_size_open, enhance_image
 import matplotlib.pyplot as plt
 
 
-transform = transforms.Compose([
-    transforms.ToTensor() # 转换成pytorch看的懂得格式
-])
+transform = transforms.Compose([transforms.ToTensor()]) # 转换成pytorch看的懂得格式
 
 class MyDataset(Dataset):
     def __init__(self, path):
@@ -51,9 +52,16 @@ class MyDataset(Dataset):
         segmentation_name = self.name[index]
         segmentation_path = os.path.join(self.path , 'SegmentationClass' , segmentation_name) # 掩码图片地址
         image_path = os.path.join(self.path , 'JPEGImages' , segmentation_name.replace('png', 'jpg')) # 原图地址
-        segmentation_image = keep_image_size_open(segmentation_path , size)
+        # segmentation_image = keep_image_size_open(segmentation_path , size)
         image = keep_image_size_open(image_path , size)
-        return transform(image) , transform(segmentation_image)
+        image = enhance_image(image)
+
+        seg = keep_seg_size_open(segmentation_path, size)  # 直接拿到正确的 P 模式图
+        seg_np = np.array(seg, dtype=np.int64)
+        seg_np[seg_np == 255] = 0
+        seg_tensor = torch.from_numpy(seg_np)  # shape: (H, W)
+
+        return transform(image) , seg_tensor
 
 
 # if __name__ == '__main__':

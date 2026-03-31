@@ -16,7 +16,7 @@ data_path = r'E:\mastercode\data\VOC\VOCtrainval_06-Nov-2007\VOCdevkit\VOC2007'
 save_path = 'train_images'
 
 def train_mine(EPOCHS:int):
-    data_loader = DataLoader(MyDataset(data_path) , batch_size = 1 , shuffle = True)
+    data_loader = DataLoader(MyDataset(data_path) , batch_size = 4 , shuffle = True)
     net = unet()
     net = net.to(device)
 
@@ -27,19 +27,20 @@ def train_mine(EPOCHS:int):
         print("the weight path is not existed")
 
 
-    optimizer = optim.AdamW(net.parameters(), lr = 0.01)
-    loss_func = nn.BCELoss()
+    optimizer = optim.AdamW(net.parameters(), lr = 0.001)
+    loss_func = nn.CrossEntropyLoss(ignore_index=255)
 
     for epoch in range(EPOCHS):
         for i , (image, segment_iamge) in enumerate(data_loader):
             image = image.to(device)
             segment_iamge = segment_iamge.to(device)
 
-            out_image = torch.sigmoid(net(image))
+            out_image = net(image)
             train_loss = loss_func(out_image, segment_iamge)
             optimizer.zero_grad()
             train_loss.backward()
             optimizer.step()
+            pred_vis = out_image[0].argmax(dim=0).float() / 20.0
             if epoch % 1 == 0 :
                 print(f'{epoch} -- train_loss=====>: {train_loss.item()}')
 
@@ -64,9 +65,9 @@ def train(EPOCHS: int):
     else:
         print("[!] The weight path does not exist, starting from scratch")
 
-    optimizer = optim.AdamW(net.parameters(), lr=0.01)
+    optimizer = optim.AdamW(net.parameters(), lr=lrs)
     # 💡 友情提示：上个问题中提到的，更推荐使用 BCEWithLogitsLoss() 替代 BCELoss() + sigmoid
-    loss_func = nn.BCELoss()
+    loss_func = nn.CrossEntropyLoss(ignore_index=255)
 
     # 模仿 YOLO 的表头打印
     print(f"\n{'Epoch':>10} {'GPU_mem':>10} {'Train_Loss':>12} {'Learn_Rate':>12} {'Img_Size':>10}")
@@ -77,14 +78,14 @@ def train(EPOCHS: int):
         # 使用 tqdm 包装 data_loader，生成动态进度条
         pbar = tqdm(enumerate(data_loader), total=len(data_loader), bar_format='{l_bar}{bar:10}{r_bar}')
 
-        for i, (image, segment_iamge) in pbar:
+        for i, (image, segment_image) in pbar:
             image = image.to(device)
-            segment_iamge = segment_iamge.to(device)
+            segment_image = segment_image.to(device)
 
             # 前向传播与反向传播
             optimizer.zero_grad()  # 建议放到 forward 之前
-            out_image = torch.sigmoid(net(image))
-            train_loss = loss_func(out_image, segment_iamge)
+            out_image = net(image)
+            train_loss = loss_func(out_image, segment_image)
             train_loss.backward()
             optimizer.step()
 
@@ -118,13 +119,23 @@ def train(EPOCHS: int):
             # 保存图片 (为了不拖慢训练速度，可以考虑降低保存频率，比如 if i % 100 == 0)
             if i == 0 or i == 10 or i== 50 or i==100 or i== 150 or i==200:
                 _img = image[0]
-                _seg = segment_iamge[0]
-                _out_img = out_image[0]
-                img = torch.stack([_img, _seg, _out_img], dim=0)
+                _seg = segment_image[0].float().unsqueeze(0)/20.0
+                _seg = _seg.expand(3, -1, -1)
+                _pred = out_image[0].argmax(dim=0).float().unsqueeze(0) / 20.0
+                _pred = _pred.expand(3, -1, -1)  # (3, H, W)
+                img = torch.stack([_img, _seg, _pred], dim=0)  # (3, 3, H, W)
                 save_image(img, f'{save_path}/{epoch}_{i}.png')
 
+            mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'
+            current_lr = optimizer.param_groups[0]['lr']
+            pbar.set_description(
+                f"{f'{epoch + 1}/{EPOCHS}':>8} {mem:>8} "
+                f"loss:{train_loss.item():.4f} lr:{current_lr:.6f}"
+            )
 
+        torch.save(net.state_dict(), weight_path)  # 每个 epoch 结束再保存，而不是每步
 
 if __name__ == '__main__':
     EPOCHS = 10
+    lrs = 0.001
     train(EPOCHS)

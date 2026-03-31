@@ -19,12 +19,12 @@ class ConvBlock(nn.Module):
         self.layer = nn.Sequential(
             nn.Conv2d(in_channel , out_channel , kernel_size = 3 , stride = 1 , padding = 1 , padding_mode='reflect' , bias = False ),
             nn.BatchNorm2d(out_channel),
-            nn.Dropout(0.3),
+            nn.Dropout(0.1),
             nn.LeakyReLU(),
 
             nn.Conv2d(out_channel, out_channel, kernel_size=3, stride=1, padding=1, padding_mode='reflect',bias=False),
             nn.BatchNorm2d(out_channel),
-            nn.Dropout(0.3),
+            nn.Dropout(0.1),
             nn.LeakyReLU(),
         )
 
@@ -93,8 +93,8 @@ class unet(nn.Module):
         self.c8 = ConvBlock(256, 128)
         self.u4 = UpSampleBlock(128)
         self.c9 = ConvBlock(128, 64)
-        self.out = nn.Conv2d(64, 3, kernel_size=1, stride=1, padding=0)
-
+        # self.out = nn.Conv2d(64, 3, kernel_size=1, stride=1, padding=0)
+        self.out = nn.Conv2d(64, 21, kernel_size=1, stride=1, padding=0)
     def forward(self , x):
         c1 = self.c1(x)
         d1 = self.d1(c1)
