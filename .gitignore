@@ -218,7 +218,7 @@ calibration_*.npy
 *.mov
 *.mkv
 *.webm
-*.jpg
+# *.jpg
 *.jpeg
 *.png
 *.bmp
@@ -232,7 +232,7 @@ calibration_*.npy
 
 # Training logs
 args.yaml
-results.csv
+# results.csv
 *.path
 *.pth
 *.pt
