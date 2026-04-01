@@ -188,9 +188,9 @@ calibration_*.npy
 *.mov
 *.mkv
 *.webm
-*.jpg
+# *.jpg
 *.jpeg
-*.png
+# *.png
 *.bmp
 *.tiff
 *.gif
@@ -202,4 +202,4 @@ calibration_*.npy
 
 # Training logs
 args.yaml
-results.csv
+# results.csv
