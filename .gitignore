@@ -220,7 +220,7 @@ calibration_*.npy
 *.webm
 # *.jpg
 *.jpeg
-*.png
+# *.png
 *.bmp
 *.tiff
 *.gif
