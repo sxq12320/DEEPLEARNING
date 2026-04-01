@@ -1,22 +1,22 @@
 
 """
 Kvasir-SEG 完整转换脚本
-支持：
-  1. 目标检测（bbox → YOLO det格式）
-  2. 实例分割（mask → YOLO seg格式 polygon）
+支持:
+  1. 目标检测(bbox → YOLO det格式)
+  2. 实例分割(mask → YOLO seg格式 polygon)
 
-数据集目录结构（你的现有结构）：
+数据集目录结构(你的现有结构):
     E:/mastercode/data/Kvasir-SEG/
     ├── images/                  ← 原始图片
-    ├── masks/                   ← 二值掩码图（白色=息肉区域）
+    ├── masks/                   ← 二值掩码图(白色=息肉区域)
     └── kavsir_bboxes.json       ← bbox标注
 
-用法：
+用法:
     1. 修改下方【配置区】的路径
     2. 选择 MODE = "det" 或 "seg"
     3. python kvasir2yolo.py
 
-输出目录结构：
+输出目录结构:
     Kvasir-SEG-yolo-seg/  或  Kvasir-SEG-yolo-det/
     ├── images/
     │   ├── yolo26n_origin/
@@ -36,7 +36,7 @@ import cv2
 from pathlib import Path
 
 
-# ========== 配置区（修改为你的实际路径）==========
+# ========== 配置区(修改为你的实际路径)==========
 DATA_ROOT    = r"E:\mastercode\data\Kvasir-SEG"  # 数据集根目录
 JSON_FILE    = "kavsir_bboxes.json"              # JSON文件名
 IMAGE_SUBDIR = "images"                          # 图片子目录名
@@ -44,12 +44,12 @@ MASK_SUBDIR  = "masks"                           # mask子目录名
 
 MODE         = "seg"   # "det" = 目标检测  |  "seg" = 实例分割
 
-# 数据集划分比例（三者之和必须 = 1.0）
+# 数据集划分比例(三者之和必须 = 1.0)
 TRAIN_RATIO  = 0.80    # 训练集 70%
 VAL_RATIO    = 0.1    # 验证集 15%
 TEST_RATIO   = 0.1    # 测试集 15%
 
-RANDOM_SEED  = 42      # 随机种子（保证可复现）
+RANDOM_SEED  = 42      # 随机种子(保证可复现)
 # ================================================
 
 
