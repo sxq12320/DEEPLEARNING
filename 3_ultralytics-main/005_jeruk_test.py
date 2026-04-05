@@ -7,11 +7,11 @@ if __name__ == '__main__':
     # yolo = YOLO(r"E:\mastercode\3_ultralytics-main\ultralytics\cfg\models\11\3_yolo11n-seg-DWany.yaml") # 将全部的卷积都替换成深度可分离卷积，包括里面的那个C3K2模块也替换掉
     # yolo = YOLO(r"E:\mastercode\3_ultralytics-main\ultralytics\cfg\models\11\4_yolo11n-seg-LSNET.yaml") # 将C3K2模块编程LSnet的模块，看看效果
     # yolo = YOLO(r"E:\mastercode\3_ultralytics-main\ultralytics\cfg\models\11\5_yolo11n-seg-DWConv_haldchannel.yaml") # 将C3K2模块编程LSnet的模块 同时将通道数量变为原来的一半，看看效果
-    yolo = YOLO(r"E:\mastercode\3_ultralytics-main\ultralytics\cfg\models\11\6_yolo11n-seg-Dense_Skip.yaml")  # 将模块修改成这种DenseNet的Skip连接效果
+    yolo = YOLO(r"E:\mastercode\3_ultralytics-main\ultralytics\cfg\models\11\7_yolo11n-seg-Dense_skip-halfchannel.yaml")  # 将模块修改成这种DenseNet的Skip连接效果 ,同时通道数变为原来的一半
     yolo.train(
         data=r'E:\mastercode\3_ultralytics-main\205_jeurk_spilt_data.yaml',
         project=r'E:\mastercode\3_ultralytics-main\results\segment\4_jeurk_test_mini',
-        name='7-yolo11n_Dense_Skip',
+        name='8-yolo11n_Dense_Skip_half channel',
         epochs=200,
         imgsz=640,
         batch=8,
