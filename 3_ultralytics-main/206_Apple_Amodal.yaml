@@ -1,0 +1,9 @@
+path: E:/mastercode/data/Apple_RGB_D_Amoal/yolo
+
+train: train/images
+val: val/images
+test: test/images
+
+channels: 4
+nc: 1
+names: ["apple"]

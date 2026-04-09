@@ -1,80 +1,72 @@
 import json
 import os
+import re
+from PIL import Image
 
+def clean_filename(via_key):
+    """去除VIA键名中的数字后缀"""
+    match = re.match(r'(.+\.png)\d+$', via_key, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return via_key
 
-def coco_seg_to_yolo(json_path, output_dir):
-    # 读取 JSON 文件
+def via_json_to_yolo_seg(json_path, image_dir, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # 如果输出目录不存在则创建
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    # 只需要一个类别：苹果
+    class_id = 0 
+    print("设定总类别数 (nc): 1")
+    print("类别映射: {0: 'apple'}")
 
-    # 1. 建立 image_id 到 宽高的映射字典
-    images_info = {}
-    for image in data['images']:
-        images_info[image['id']] = {
-            'file_name': image['file_name'],
-            'width': image['width'],
-            'height': image['height']
-        }
+    for via_key, info in data.items():
+        img_filename = clean_filename(via_key)
+        img_path = os.path.join(image_dir, img_filename)
 
-    # 2. 遍历 annotations 提取分割坐标
-    count = 0
-    for ann in data['annotations']:
-        # 检查是否包含 segmentation 数据
-        if 'segmentation' not in ann or not ann['segmentation']:
+        try:
+            with Image.open(img_path) as img:
+                img_w, img_h = img.size
+        except Exception as e:
+            print(f"跳过 {img_path}: {e}")
             continue
 
-        # 如果 segmentation 是 RLE 格式（通常是字典，跳过）
-        if isinstance(ann['segmentation'], dict):
-            print(f"⚠️ 警告：跳过 RLE 格式的标注 (ID: {ann['id']})")
-            continue
+        yolo_lines = []
+        for region in info.get('regions', {}).values():
+            shape = region.get('shape_attributes', {})
+            if shape.get('name') != 'polygon':
+                continue
 
-        image_id = ann['image_id']
-        category_id = ann['category_id']
+            xs = shape.get('all_points_x', [])
+            ys = shape.get('all_points_y', [])
+            if not xs or not ys:
+                continue
 
-        # YOLO 类别索引从 0 开始
-        yolo_class_id = category_id - 1
+            # 归一化坐标
+            norm_points = []
+            for x, y in zip(xs, ys):
+                norm_points.append(f"{x/img_w:.6f}")
+                norm_points.append(f"{y/img_h:.6f}")
 
-        # 获取当前图片的实际宽和高
-        image_w = images_info[image_id]['width']
-        image_h = images_info[image_id]['height']
+            # 核心修改：不再读取 apple_ID 作为类别，直接统一定义为 class_id (0)
+            yolo_lines.append(f"{class_id} " + " ".join(norm_points))
 
-        # 获取对应的文件名，把后缀换成 .txt
-        file_name = images_info[image_id]['file_name']
-        txt_name = os.path.splitext(file_name)[0] + '.txt'
+        txt_name = os.path.splitext(img_filename)[0] + ".txt"
         txt_path = os.path.join(output_dir, txt_name)
+        with open(txt_path, 'w') as f_out:
+            f_out.write("\n".join(yolo_lines))
 
-        # 写入文件（'a' 模式表示追加）
-        with open(txt_path, 'a') as txt_file:
-            # segmentation 通常是一个列表的列表，例如 [[x1, y1, x2, y2, ...]]
-            for polygon in ann['segmentation']:
-                # 过滤掉点数太少无法构成多边形的异常数据 (至少得有3个点，即6个坐标值)
-                if len(polygon) < 6:
-                    continue
+        print(f"已生成: {txt_path}")
 
-                normalized_coords = []
-                # 步长为 2 遍历坐标点，进行归一化 (x除以宽，y除以高)
-                for i in range(0, len(polygon), 2):
-                    x_norm = polygon[i] / image_w
-                    y_norm = polygon[i + 1] / image_h
-                    normalized_coords.append(f"{x_norm:.6f} {y_norm:.6f}")
+    print("\n请在 data.yaml 中设置:")
+    print("nc: 1")
+    print("names: [\"apple\"]")
 
-                # 将类别 ID 和归一化后的坐标组合成 YOLO 分割格式
-                line = f"{yolo_class_id} " + " ".join(normalized_coords) + "\n"
-                txt_file.write(line)
-                count += 1
-
-    print(f"✅ 转换完成！共处理了 {count} 个多边形轮廓。")
-    print(f"📁 YOLO 分割格式的 txt 文件已保存在: {output_dir}")
-
-
-# --- 运行代码 ---
-# 把 'your_dataset.json' 换成你这个 JSON 文件的实际路径
-# 把 'yolo_seg_labels_output' 换成你想要保存新 txt 标签的文件夹路径
-json_file_path = r"E:\mastercode\data\jeruk_split\annotations\instances_val.json"
-output_folder = r'E:\mastercode\data\jeruk_split\labels\val'
-
-coco_seg_to_yolo(json_file_path, output_folder)
+# 使用示例
+if __name__ == "__main__":
+    via_json_to_yolo_seg(
+        json_path=r"E:\mastercode\data\Apple_RGB_D_Amoal\gt_json\test\via_region_data_amodal.json",   # 你的 JSON 文件路径
+        image_dir=r"E:\\mastercode\\data\\Apple_RGB_D_Amoal\\yolo\\test\\images",         # 原始图片所在目录
+        output_dir=r"E:\\mastercode\\data\\Apple_RGB_D_Amoal\\yolo\\test\\labels"        # 输出目录
+    )
