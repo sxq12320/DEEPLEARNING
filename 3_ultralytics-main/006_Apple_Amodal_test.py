@@ -26,15 +26,13 @@ if __name__ == '__main__':
         
     '''
     yolo = YOLO(r"3_ultralytics-main/ultralytics/cfg/models/11/5_yolo11_seg_Dense_and_C3K2LS.yaml")
-    # yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/4_yolo11-seg-Dense-skiplink.yaml")
-    # yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/3_yolo11-seg-RGBD_C3K2LS.yaml")
     yolo.train(
         data=r'3_ultralytics-main/206_Apple_Amodal.yaml',
         project=r'3_ultralytics-main/results/Amodal_Segment/Apple',
         name='5_yolo11n-seg-Dense-and-C3K2_ls',
         epochs=500,
         imgsz=640,
-        batch=4,
+        batch=2,
         lr0=0.0001,
         momentum=0.9,
         weight_decay=0.0005,
@@ -42,6 +40,7 @@ if __name__ == '__main__':
         amp = False,
         cache=True,
         device = 0,
+        workers=2,
     )
 
 
