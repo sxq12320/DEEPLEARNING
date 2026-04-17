@@ -102,6 +102,14 @@ warmup_bias_lr: 0.1 # (float) bias learning rate during warmup
 box: 7.5 # (float) box loss gain
 cls: 0.5 # (float) classification loss gain
 dfl: 1.5 # (float) distribution focal loss gain
+
+
+# 增加椭圆形的形状先验
+ellipse_param_weight: 0.05 # (float) ellipse parameter consistency loss gain (segment)
+ellipse_dice_weight: 0.01 # (float) soft ellipse Dice prior loss gain (segment)
+ellipse_softness: 8.0 # (float) boundary sharpness for soft ellipse rasterization (segment)
+
+
 pose: 12.0 # (float) pose loss gain (pose tasks)
 kobj: 1.0 # (float) keypoint objectness loss gain (pose tasks)
 rle: 1.0 # (float) rle loss gain (pose tasks)

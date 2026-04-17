@@ -22,14 +22,33 @@ if __name__ == '__main__':
     yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/5_yolo11_seg_Dense_and_C3K2LS.yaml")
         6.在上面的基础之上,也就是已经做过主干修改DenseSkip后东西,将其中的C3K2模块替换成C3K2_LS模块并进行运算
     
-        
-    '''
+    yolo = YOLO(r"ultralytics/cfg/models/11/yolo11n-seg.yaml") 
+        7.在原始的yolo11n以及深度信息進入的基礎之上將原本的AdamW優化器變爲現在的PIDAO優化器
+
+    yolo = YOLO(r"/data/sxq/code/ultralytics-main/ultralytics/cfg/models/11/1_yolo11-seg-DWconv.yaml")
+        8.在後面也就是2的基礎上將原本的AdamW優化器變爲現在的PIDAO優化器
+
+    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/2_yolo11-seg-DWAny.yaml")
+        9.同樣也是將之前的全部換成深度可分裏卷積的哪一個版本的優化器變成PIDAO優化器
+
+    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/3_yolo11-seg-RGBD_C3K2LS.yaml")
+        10.同樣在之前的基礎之上將C3K2_LS的網絡架構的優化器變成後面的PIDAO的優化器
+
+    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/4_yolo11-seg-Dense-skiplink.yaml")
+        11.同樣在之前的基礎之上將DesneSkip爲主幹的網絡架構的優化器變成後面的PIDAO的優化器
+
     yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/5_yolo11_seg_Dense_and_C3K2LS.yaml")
+        12.同樣在之前的基礎之上將C3K2_LS配合DesneSkip架構的網絡架構的優化器變成後面的PIDAO的優化器
+
+    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+    
+    '''
+    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
     yolo.train(
         data=r'206_Apple_Amodal.yaml',
         project=r'/data/sxq/code/ultralytics-main/results',
-        name='5_yolo11n-seg-Dense-and-C3K2_ls',
-        epochs=500,
+        name='12_yolo11n-seg-origin-circle-predicted',
+        epochs=400,
         imgsz=640,
         batch=32,
         lr0=0.0001,
@@ -38,7 +57,11 @@ if __name__ == '__main__':
         optimizer='AdamW',
         amp = False,
         cache=True,
-        device = 1,
+        device = 0,
+
+        # ellipse_param_weight = 0.01, # (float) ellipse parameter consistency loss gain (segment)
+        # ellipse_dice_weight = 0.1, # (float) soft ellipse Dice prior loss gain (segment)
+        # ellipse_softness = 8.0, # (float) boundary sharpness for soft ellipse rasterization (segment)
     )
 
 

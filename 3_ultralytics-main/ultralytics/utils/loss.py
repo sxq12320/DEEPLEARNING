@@ -468,18 +468,186 @@ class v8DetectionLoss:
         loss, loss_detach = self.get_assigned_targets_and_loss(preds, batch)[1:]
         return loss * batch_size, loss_detach
 
+# class v8SegmentationLoss(v8DetectionLoss):
+#     """Criterion class for computing training losses for YOLOv8 segmentation."""
 
+#     def __init__(self, model, tal_topk: int = 10, tal_topk2: int | None = None):  # model must be de-paralleled
+#         """Initialize the v8SegmentationLoss class with model parameters and mask overlap setting."""
+#         super().__init__(model, tal_topk, tal_topk2)
+#         self.overlap = model.args.overlap_mask
+#         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
+
+#     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
+#         """Calculate and return the combined loss for detection and segmentation."""
+#         pred_masks, proto = preds["mask_coefficient"].permute(0, 2, 1).contiguous(), preds["proto"]
+#         loss = torch.zeros(5, device=self.device)  # box, seg, cls, dfl, semseg
+#         if isinstance(proto, tuple) and len(proto) == 2:
+#             proto, pred_semseg = proto
+#         else:
+#             pred_semseg = None
+#         (fg_mask, target_gt_idx, target_bboxes, _, _), det_loss, _ = self.get_assigned_targets_and_loss(preds, batch)
+#         # NOTE: re-assign index for consistency for now. Need to be removed in the future.
+#         loss[0], loss[2], loss[3] = det_loss[0], det_loss[1], det_loss[2]
+
+#         batch_size, _, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
+#         if fg_mask.sum():
+#             # Masks loss
+#             masks = batch["masks"].to(self.device).float()
+#             if tuple(masks.shape[-2:]) != (mask_h, mask_w):  # downsample
+#                 # masks = F.interpolate(masks[None], (mask_h, mask_w), mode="nearest")[0]
+#                 proto = F.interpolate(proto, masks.shape[-2:], mode="bilinear", align_corners=False)
+
+#             imgsz = (
+#                 torch.tensor(preds["feats"][0].shape[2:], device=self.device, dtype=pred_masks.dtype) * self.stride[0]
+#             )
+#             loss[1] = self.calculate_segmentation_loss(
+#                 fg_mask,
+#                 masks,
+#                 target_gt_idx,
+#                 target_bboxes,
+#                 batch["batch_idx"].view(-1, 1),
+#                 proto,
+#                 pred_masks,
+#                 imgsz,
+#             )
+#             if pred_semseg is not None:
+#                 sem_masks = batch["sem_masks"].to(self.device)  # NxHxW
+#                 sem_masks = F.one_hot(sem_masks.long(), num_classes=self.nc).permute(0, 3, 1, 2).float()  # NxCxHxW
+
+#                 if self.overlap:
+#                     mask_zero = masks == 0  # NxHxW
+#                     sem_masks[mask_zero.unsqueeze(1).expand_as(sem_masks)] = 0
+#                 else:
+#                     batch_idx = batch["batch_idx"].view(-1)  # [total_instances]
+#                     for i in range(batch_size):
+#                         instance_mask_i = masks[batch_idx == i]  # [num_instances_i, H, W]
+#                         if len(instance_mask_i) == 0:
+#                             continue
+#                         sem_masks[i, :, instance_mask_i.sum(dim=0) == 0] = 0
+
+#                 loss[4] = self.bcedice_loss(pred_semseg, sem_masks)
+#                 loss[4] *= self.hyp.box  # seg gain
+
+#         # WARNING: lines below prevent Multi-GPU DDP 'unused gradient' PyTorch errors, do not remove
+#         else:
+#             loss[1] += (proto * 0).sum() + (pred_masks * 0).sum()  # inf sums may lead to nan loss
+#             if pred_semseg is not None:
+#                 loss[4] += (pred_semseg * 0).sum()
+
+#         loss[1] *= self.hyp.box  # seg gain
+#         return loss * batch_size, loss.detach()  # loss(box, seg, cls, dfl, semseg)
+
+#     @staticmethod
+#     def single_mask_loss(
+#         gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
+#     ) -> torch.Tensor:
+#         """Compute the instance segmentation loss for a single image.
+
+#         Args:
+#             gt_mask (torch.Tensor): Ground truth mask of shape (N, H, W), where N is the number of objects.
+#             pred (torch.Tensor): Predicted mask coefficients of shape (N, 32).
+#             proto (torch.Tensor): Prototype masks of shape (32, H, W).
+#             xyxy (torch.Tensor): Ground truth bounding boxes in xyxy format, normalized to [0, 1], of shape (N, 4).
+#             area (torch.Tensor): Area of each ground truth bounding box of shape (N,).
+
+#         Returns:
+#             (torch.Tensor): The calculated mask loss for a single image.
+
+#         Notes:
+#             The function uses the equation pred_mask = torch.einsum('in,nhw->ihw', pred, proto) to produce the
+#             predicted masks from the prototype masks and predicted mask coefficients.
+#         """
+#         pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
+#         loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
+#         return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
+
+#     def calculate_segmentation_loss(
+#         self,
+#         fg_mask: torch.Tensor,
+#         masks: torch.Tensor,
+#         target_gt_idx: torch.Tensor,
+#         target_bboxes: torch.Tensor,
+#         batch_idx: torch.Tensor,
+#         proto: torch.Tensor,
+#         pred_masks: torch.Tensor,
+#         imgsz: torch.Tensor,
+#     ) -> torch.Tensor:
+#         """Calculate the loss for instance segmentation.
+
+#         Args:
+#             fg_mask (torch.Tensor): A binary tensor of shape (BS, N_anchors) indicating which anchors are positive.
+#             masks (torch.Tensor): Ground truth masks of shape (BS, H, W) if `overlap` is False, otherwise (BS, ?, H, W).
+#             target_gt_idx (torch.Tensor): Indexes of ground truth objects for each anchor of shape (BS, N_anchors).
+#             target_bboxes (torch.Tensor): Ground truth bounding boxes for each anchor of shape (BS, N_anchors, 4).
+#             batch_idx (torch.Tensor): Batch indices of shape (N_labels_in_batch, 1).
+#             proto (torch.Tensor): Prototype masks of shape (BS, 32, H, W).
+#             pred_masks (torch.Tensor): Predicted masks for each anchor of shape (BS, N_anchors, 32).
+#             imgsz (torch.Tensor): Size of the input image as a tensor of shape (2), i.e., (H, W).
+
+#         Returns:
+#             (torch.Tensor): The calculated loss for instance segmentation.
+
+#         Notes:
+#             The batch loss can be computed for improved speed at higher memory usage.
+#             For example, pred_mask can be computed as follows:
+#                 pred_mask = torch.einsum('in,nhw->ihw', pred, proto)  # (i, 32) @ (32, 160, 160) -> (i, 160, 160)
+#         """
+#         _, _, mask_h, mask_w = proto.shape
+#         loss = 0
+
+#         # Normalize to 0-1
+#         target_bboxes_normalized = target_bboxes / imgsz[[1, 0, 1, 0]]
+
+#         # Areas of target bboxes
+#         marea = xyxy2xywh(target_bboxes_normalized)[..., 2:].prod(2)
+
+#         # Normalize to mask size
+#         mxyxy = target_bboxes_normalized * torch.tensor([mask_w, mask_h, mask_w, mask_h], device=proto.device)
+
+#         for i, single_i in enumerate(zip(fg_mask, target_gt_idx, pred_masks, proto, mxyxy, marea, masks)):
+#             fg_mask_i, target_gt_idx_i, pred_masks_i, proto_i, mxyxy_i, marea_i, masks_i = single_i
+#             if fg_mask_i.any():
+#                 mask_idx = target_gt_idx_i[fg_mask_i]
+#                 if self.overlap:
+#                     gt_mask = masks_i == (mask_idx + 1).view(-1, 1, 1)
+#                     gt_mask = gt_mask.float()
+#                 else:
+#                     gt_mask = masks[batch_idx.view(-1) == i][mask_idx]
+
+#                 loss += self.single_mask_loss(
+#                     gt_mask, pred_masks_i[fg_mask_i], proto_i, mxyxy_i[fg_mask_i], marea_i[fg_mask_i]
+#                 )
+
+#             # WARNING: lines below prevents Multi-GPU DDP 'unused gradient' PyTorch errors, do not remove
+#             else:
+#                 loss += (proto * 0).sum() + (pred_masks * 0).sum()  # inf sums may lead to nan loss
+
+#         return loss / fg_mask.sum()
 class v8SegmentationLoss(v8DetectionLoss):
-    """Criterion class for computing training losses for YOLOv8 segmentation."""
+    """YOLO 分割任务损失，包含检测损失与实例分割损失。"""
 
     def __init__(self, model, tal_topk: int = 10, tal_topk2: int | None = None):  # model must be de-paralleled
-        """Initialize the v8SegmentationLoss class with model parameters and mask overlap setting."""
+        """初始化分割损失。
+
+        除了继承检测损失外，这里还初始化了：
+        1) 语义分割分支的 BCE+Dice（若网络启用 semseg）
+        2) 椭圆先验相关超参（默认关闭，权重为 0）
+        """
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
+        # 椭圆形状先验（默认关闭）。将权重设置为非 0 即可启用。
+        self.ellipse_param_weight = float(getattr(model.args, "ellipse_param_weight", 0.0))
+        self.ellipse_dice_weight = float(getattr(model.args, "ellipse_dice_weight", 0.0))
+        self.ellipse_softness = float(getattr(model.args, "ellipse_softness", 8.0))
+        self.ellipse_eps = 1e-6
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-        """Calculate and return the combined loss for detection and segmentation."""
+        """计算并返回总损失。
+
+        返回的 5 个分量顺序为：
+        box, seg, cls, dfl, semseg
+        """
         pred_masks, proto = preds["mask_coefficient"].permute(0, 2, 1).contiguous(), preds["proto"]
         loss = torch.zeros(5, device=self.device)  # box, seg, cls, dfl, semseg
         if isinstance(proto, tuple) and len(proto) == 2:
@@ -487,7 +655,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         else:
             pred_semseg = None
         (fg_mask, target_gt_idx, target_bboxes, _, _), det_loss, _ = self.get_assigned_targets_and_loss(preds, batch)
-        # NOTE: re-assign index for consistency for now. Need to be removed in the future.
+        # 与现有日志顺序保持一致：box, cls, dfl
         loss[0], loss[2], loss[3] = det_loss[0], det_loss[1], det_loss[2]
 
         batch_size, _, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
@@ -542,25 +710,204 @@ class v8SegmentationLoss(v8DetectionLoss):
     def single_mask_loss(
         gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
-        """Compute the instance segmentation loss for a single image.
+        """单张图的基础实例分割损失（原始 YOLO 分割损失）。
 
-        Args:
-            gt_mask (torch.Tensor): Ground truth mask of shape (N, H, W), where N is the number of objects.
-            pred (torch.Tensor): Predicted mask coefficients of shape (N, 32).
-            proto (torch.Tensor): Prototype masks of shape (32, H, W).
-            xyxy (torch.Tensor): Ground truth bounding boxes in xyxy format, normalized to [0, 1], of shape (N, 4).
-            area (torch.Tensor): Area of each ground truth bounding box of shape (N,).
-
-        Returns:
-            (torch.Tensor): The calculated mask loss for a single image.
-
-        Notes:
-            The function uses the equation pred_mask = torch.einsum('in,nhw->ihw', pred, proto) to produce the
-            predicted masks from the prototype masks and predicted mask coefficients.
+        公式流程：
+        1) 用 mask 系数与 proto 重建实例掩码
+        2) 计算 BCEWithLogits
+        3) 仅在目标框区域内取均值，并按目标框面积归一化
         """
         pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
         loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
         return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
+
+    # @staticmethod
+    # def _fit_ellipse_from_soft_masks(masks: torch.Tensor, eps: float = 1e-6) -> tuple[torch.Tensor, ...]:
+    #     """从软掩码中拟合椭圆参数。
+
+    #     使用二阶中心矩构建 2x2 协方差矩阵，再通过特征分解得到主轴方向和轴长。
+
+    #     Args:
+    #         masks (torch.Tensor): 形状为 (N, H, W) 的软掩码，取值建议在 [0, 1]。
+    #         eps (float): 数值稳定项，避免除零和开方负数。
+
+    #     Returns:
+    #         tuple[torch.Tensor, ...]: (cx, cy, a, b, theta)
+    #             - cx, cy: 椭圆中心
+    #             - a, b: 长短轴半径（按主轴/次轴）
+    #             - theta: 主轴方向角（弧度）
+    #     """
+    #     n, h, w = masks.shape
+    #     # 构建像素坐标网格，后续用于计算几何矩
+    #     yy, xx = torch.meshgrid(
+    #         torch.arange(h, device=masks.device, dtype=masks.dtype),
+    #         torch.arange(w, device=masks.device, dtype=masks.dtype),
+    #         indexing="ij",
+    #     )
+    #     xx = xx.unsqueeze(0).expand(n, -1, -1)
+    #     yy = yy.unsqueeze(0).expand(n, -1, -1)
+
+    #     # 0 阶矩（总质量）与 1 阶矩（质心）
+    #     # mass = masks.sum(dim=(1, 2)).clamp_min(eps)
+    #     # cx = (masks * xx).sum(dim=(1, 2)) / mass
+    #     # cy = (masks * yy).sum(dim=(1, 2)) / mass
+    #     # 用更大的 eps，且对 cx/cy 做 clamp
+    #     mass = masks.sum(dim=(1, 2)).clamp_min(1.0)  # 至少 1 个像素的质量，避免 cx/cy 飞掉
+    #     cx = (masks * xx).sum(dim=(1, 2)) / mass
+    #     cy = (masks * yy).sum(dim=(1, 2)) / mass
+    #     # center clamp 防止越界
+    #     cx = cx.clamp(0, w - 1)
+    #     cy = cy.clamp(0, h - 1)
+
+    #     # 2 阶中心矩
+    #     dx = xx - cx[:, None, None]
+    #     dy = yy - cy[:, None, None]
+    #     mu20 = (masks * dx * dx).sum(dim=(1, 2)) / mass
+    #     mu02 = (masks * dy * dy).sum(dim=(1, 2)) / mass
+    #     mu11 = (masks * dx * dy).sum(dim=(1, 2)) / mass
+
+    #     # 协方差矩阵：[[mu20, mu11], [mu11, mu02]]
+    #     cov = torch.stack(
+    #         (
+    #             torch.stack((mu20 + eps, mu11), dim=-1),
+    #             torch.stack((mu11, mu02 + eps), dim=-1),
+    #         ),
+    #         dim=-2,
+    #     )  # (N, 2, 2)
+    #     eigvals, eigvecs = torch.linalg.eigh(cov)  # 特征值升序，索引 1 为主轴
+    #     major_vec = eigvecs[:, :, 1]
+
+    #     # 轴长与方向角
+    #     # a = torch.sqrt(eigvals[:, 1].clamp_min(eps))
+    #     # b = torch.sqrt(eigvals[:, 0].clamp_min(eps))
+    #     # 用更大的 clamp，避免 sqrt 在接近 0 时梯度爆炸
+    #     a = torch.sqrt(eigvals[:, 1].clamp_min(1e-3))
+    #     b = torch.sqrt(eigvals[:, 0].clamp_min(1e-3))
+    #     theta = torch.atan2(major_vec[:, 1], major_vec[:, 0])
+        # return cx, cy, a, b, theta
+    @staticmethod
+    def _fit_ellipse_from_soft_masks(masks: torch.Tensor, eps: float = 1e-6) -> tuple[torch.Tensor, ...]:
+        n, h, w = masks.shape
+        yy, xx = torch.meshgrid(
+            torch.arange(h, device=masks.device, dtype=masks.dtype),
+            torch.arange(w, device=masks.device, dtype=masks.dtype),
+            indexing="ij",
+        )
+        xx = xx.unsqueeze(0).expand(n, -1, -1)
+        yy = yy.unsqueeze(0).expand(n, -1, -1)
+
+        mass = masks.sum(dim=(1, 2)).clamp_min(1.0)
+        cx = ((masks * xx).sum(dim=(1, 2)) / mass).clamp(0, w - 1)
+        cy = ((masks * yy).sum(dim=(1, 2)) / mass).clamp(0, h - 1)
+
+        dx = xx - cx[:, None, None]
+        dy = yy - cy[:, None, None]
+        mu20 = (masks * dx * dx).sum(dim=(1, 2)) / mass
+        mu02 = (masks * dy * dy).sum(dim=(1, 2)) / mass
+        mu11 = (masks * dx * dy).sum(dim=(1, 2)) / mass
+
+        cov = torch.stack(
+            (
+                torch.stack((mu20.clamp_min(0) + eps, mu11), dim=-1),  # 对角线强制非负
+                torch.stack((mu11, mu02.clamp_min(0) + eps), dim=-1),
+            ),
+            dim=-2,
+        )
+        eigvals, eigvecs = torch.linalg.eigh(cov)
+        major_vec = eigvecs[:, :, 1]
+
+        a = torch.sqrt(eigvals[:, 1].clamp_min(1e-3))
+        b = torch.sqrt(eigvals[:, 0].clamp_min(1e-3))
+        theta = torch.atan2(major_vec[:, 1], major_vec[:, 0])
+        return cx, cy, a, b, theta
+
+    @staticmethod
+    def _soft_ellipse_mask(
+        cx: torch.Tensor,
+        cy: torch.Tensor,
+        a: torch.Tensor,
+        b: torch.Tensor,
+        theta: torch.Tensor,
+        h: int,
+        w: int,
+        softness: float = 8.0,
+        eps: float = 1e-6,
+    ) -> torch.Tensor:
+        """将椭圆参数渲染为可微分的软椭圆掩码。
+
+        通过椭圆隐式方程 d<=1 表示内点，使用 sigmoid((1-d)*softness)
+        将硬边界转成平滑边界，便于反向传播。
+        """
+        n = cx.shape[0]
+        yy, xx = torch.meshgrid(
+            torch.arange(h, device=cx.device, dtype=cx.dtype),
+            torch.arange(w, device=cx.device, dtype=cx.dtype),
+            indexing="ij",
+        )
+        xx = xx.unsqueeze(0).expand(n, -1, -1)
+        yy = yy.unsqueeze(0).expand(n, -1, -1)
+
+        cos_t = torch.cos(theta)[:, None, None]
+        sin_t = torch.sin(theta)[:, None, None]
+        x = xx - cx[:, None, None]
+        y = yy - cy[:, None, None]
+        x_rot = cos_t * x + sin_t * y
+        y_rot = -sin_t * x + cos_t * y
+
+        # 椭圆隐式距离，d=1 为边界
+        d = (x_rot * x_rot) / (a[:, None, None].clamp_min(eps) ** 2) + (y_rot * y_rot) / (
+            b[:, None, None].clamp_min(eps) ** 2
+        )
+        return torch.sigmoid((1.0 - d) * softness)
+
+    def _ellipse_shape_prior_loss(
+    self,
+    gt_mask: torch.Tensor,
+    pred: torch.Tensor,
+    proto: torch.Tensor,
+    xyxy: torch.Tensor,
+    ) -> torch.Tensor:
+        if self.ellipse_param_weight <= 0 and self.ellipse_dice_weight <= 0:
+            return gt_mask.new_zeros(())
+
+        with torch.cuda.amp.autocast(enabled=False):
+            # 全部强制转 float32，在 crop 之前就转好
+            pred_f = pred.float()
+            proto_f = proto.float()
+            gt_mask_f = gt_mask.float()
+
+            pred_logits = torch.einsum("in,nhw->ihw", pred_f, proto_f)
+            pred_prob = pred_logits.sigmoid().clamp(self.ellipse_eps, 1.0 - self.ellipse_eps)
+            gt_prob = gt_mask_f.clamp(self.ellipse_eps, 1.0)
+
+            pred_crop = crop_mask(pred_prob, xyxy)
+            gt_crop = crop_mask(gt_prob, xyxy)
+
+            h_c, w_c = gt_crop.shape[-2], gt_crop.shape[-1]
+
+            cx_p, cy_p, a_p, b_p, t_p = self._fit_ellipse_from_soft_masks(pred_crop, self.ellipse_eps)
+            cx_g, cy_g, a_g, b_g, t_g = self._fit_ellipse_from_soft_masks(gt_crop, self.ellipse_eps)
+
+            # 归一化中心误差到 [0,1] 量级
+            center_loss = (cx_p - cx_g).abs() / max(w_c, 1) + (cy_p - cy_g).abs() / max(h_c, 1)
+            axis_loss = (
+                (torch.log(a_p + self.ellipse_eps) - torch.log(a_g + self.ellipse_eps)).abs()
+                + (torch.log(b_p + self.ellipse_eps) - torch.log(b_g + self.ellipse_eps)).abs()
+            )
+            angle_loss = (torch.sin(t_p) - torch.sin(t_g)).abs() + (torch.cos(t_p) - torch.cos(t_g)).abs()
+            param_loss = (center_loss + axis_loss + 0.5 * angle_loss).mean()
+
+            ellipse_gt = self._soft_ellipse_mask(
+                cx_g, cy_g, a_g, b_g, t_g,
+                h_c, w_c,
+                self.ellipse_softness,
+                1e-3,  # 与 sqrt clamp 保持一致，防止除以极小值
+            )
+            inter = (pred_crop * ellipse_gt).sum(dim=(1, 2))
+            union = pred_crop.sum(dim=(1, 2)) + ellipse_gt.sum(dim=(1, 2))
+            dice_loss = (1.0 - (2.0 * inter + self.ellipse_eps) / (union + self.ellipse_eps)).mean()
+
+        return self.ellipse_param_weight * param_loss + self.ellipse_dice_weight * dice_loss
 
     def calculate_segmentation_loss(
         self,
@@ -573,36 +920,31 @@ class v8SegmentationLoss(v8DetectionLoss):
         pred_masks: torch.Tensor,
         imgsz: torch.Tensor,
     ) -> torch.Tensor:
-        """Calculate the loss for instance segmentation.
+        """计算实例分割损失（含可选椭圆先验）。
 
         Args:
-            fg_mask (torch.Tensor): A binary tensor of shape (BS, N_anchors) indicating which anchors are positive.
-            masks (torch.Tensor): Ground truth masks of shape (BS, H, W) if `overlap` is False, otherwise (BS, ?, H, W).
-            target_gt_idx (torch.Tensor): Indexes of ground truth objects for each anchor of shape (BS, N_anchors).
-            target_bboxes (torch.Tensor): Ground truth bounding boxes for each anchor of shape (BS, N_anchors, 4).
-            batch_idx (torch.Tensor): Batch indices of shape (N_labels_in_batch, 1).
-            proto (torch.Tensor): Prototype masks of shape (BS, 32, H, W).
-            pred_masks (torch.Tensor): Predicted masks for each anchor of shape (BS, N_anchors, 32).
-            imgsz (torch.Tensor): Size of the input image as a tensor of shape (2), i.e., (H, W).
+            fg_mask (torch.Tensor): 正样本 anchor 掩码，形状 (BS, N_anchors)。
+            masks (torch.Tensor): GT 掩码；overlap=False 时是 (BS, H, W)。
+            target_gt_idx (torch.Tensor): 每个 anchor 对应的 GT 索引，形状 (BS, N_anchors)。
+            target_bboxes (torch.Tensor): 每个 anchor 对应目标框，形状 (BS, N_anchors, 4)。
+            batch_idx (torch.Tensor): 标签所属图片索引，形状 (N_labels_in_batch, 1)。
+            proto (torch.Tensor): 原型掩码，形状 (BS, 32, H, W)。
+            pred_masks (torch.Tensor): mask 系数，形状 (BS, N_anchors, 32)。
+            imgsz (torch.Tensor): 输入图像尺寸 (H, W)。
 
         Returns:
-            (torch.Tensor): The calculated loss for instance segmentation.
-
-        Notes:
-            The batch loss can be computed for improved speed at higher memory usage.
-            For example, pred_mask can be computed as follows:
-                pred_mask = torch.einsum('in,nhw->ihw', pred, proto)  # (i, 32) @ (32, 160, 160) -> (i, 160, 160)
+            (torch.Tensor): 当前 batch 的分割损失。
         """
         _, _, mask_h, mask_w = proto.shape
         loss = 0
 
-        # Normalize to 0-1
+        # 目标框归一化到 [0, 1]
         target_bboxes_normalized = target_bboxes / imgsz[[1, 0, 1, 0]]
 
-        # Areas of target bboxes
+        # 计算目标框面积，用于原始 single_mask_loss 的面积归一化
         marea = xyxy2xywh(target_bboxes_normalized)[..., 2:].prod(2)
 
-        # Normalize to mask size
+        # 将归一化框映射到掩码分辨率
         mxyxy = target_bboxes_normalized * torch.tensor([mask_w, mask_h, mask_w, mask_h], device=proto.device)
 
         for i, single_i in enumerate(zip(fg_mask, target_gt_idx, pred_masks, proto, mxyxy, marea, masks)):
@@ -618,6 +960,8 @@ class v8SegmentationLoss(v8DetectionLoss):
                 loss += self.single_mask_loss(
                     gt_mask, pred_masks_i[fg_mask_i], proto_i, mxyxy_i[fg_mask_i], marea_i[fg_mask_i]
                 )
+                # 在基础分割损失上叠加椭圆先验（权重为 0 时该项自动为 0）
+                loss += self._ellipse_shape_prior_loss(gt_mask, pred_masks_i[fg_mask_i], proto_i, mxyxy_i[fg_mask_i])
 
             # WARNING: lines below prevents Multi-GPU DDP 'unused gradient' PyTorch errors, do not remove
             else:
