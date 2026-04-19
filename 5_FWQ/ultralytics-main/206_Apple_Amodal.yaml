@@ -1,4 +1,16 @@
-path: /data/sxq/datasets/apple/yolo
+# path: /data/sxq/datasets/apple/yolo
+
+# train: train/images
+# val: val/images
+# test: test/images
+
+# channels: 4
+# nc: 1
+# names: ["apple"]
+
+# depth_dir: /data/sxq/datasets/apple/depth_pic
+
+path: E:/mastercode/data/Apple_RGB_D_Amoal/yolo
 
 train: train/images
 val: val/images
@@ -7,5 +19,4 @@ test: test/images
 channels: 4
 nc: 1
 names: ["apple"]
-
-depth_dir: /data/sxq/datasets/apple/depth_pic
+depth_dir: E:/mastercode/data/Apple_RGB_D_Amoal/depth_pic

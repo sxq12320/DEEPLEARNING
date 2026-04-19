@@ -41,22 +41,24 @@ if __name__ == '__main__':
         12.同樣在之前的基礎之上將C3K2_LS配合DesneSkip架構的網絡架構的優化器變成後面的PIDAO的優化器
 
     yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+        13.在原本的基础之上使用AdamW优化器同时在不改变yolo11n的架构的条件之下增加一个圆形的形状先验
     
     '''
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+    # yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+    yolo = YOLO(r"5_FWQ/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
     yolo.train(
-        data=r'206_Apple_Amodal.yaml',
-        project=r'/data/sxq/code/ultralytics-main/results',
+        data=r'5_FWQ/ultralytics-main/206_Apple_Amodal.yaml',
+        project=r'5_FWQ/ultralytics-main/results',
         name='12_yolo11n-seg-origin-circle-predicted',
         epochs=400,
         imgsz=640,
-        batch=32,
+        batch=1,
         lr0=0.0001,
         momentum=0.9,
         weight_decay=0.0005,
         optimizer='AdamW',
         amp = False,
-        cache=True,
+        cache=False,
         device = 0,
 
         # ellipse_param_weight = 0.01, # (float) ellipse parameter consistency loss gain (segment)
