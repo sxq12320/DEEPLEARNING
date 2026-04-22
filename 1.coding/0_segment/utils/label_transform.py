@@ -39,7 +39,6 @@ def TXT2MASK(label_dir, image_name, target_size):
             cls_id = int(vals[0])
             
             if len(vals) == 5:
-                # YOLO bbox: class cx cy bw bh (支持归一化或像素值)
                 cx, cy, bw, bh = vals[1:5]
                 if max(cx, cy, bw, bh) <= 1.0:
                     cx, cy, bw, bh = cx * w, cy * h, bw * w, bh * h
