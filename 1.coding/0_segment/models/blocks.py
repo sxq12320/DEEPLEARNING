@@ -149,7 +149,8 @@ class DepthWise_Conv(nn.Module):
                 stride=s,
                 padding=p,
                 dilation=d,
-                groups=in_ch
+                groups=in_ch,
+                bias=False
             )
         )
 
@@ -191,6 +192,7 @@ class PointWise_Conv(nn.Module):
                 kernel_size= 1,
                 stride = s,
                 padding= 0,
+                bias=False
                 # dilation= d,
                 # groups= g
             )
@@ -214,19 +216,61 @@ class DepthWiseSeparable_Conv(nn.Module):
     深度可分离卷积，综合大块
 
     Args:
-        in_ch 
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 深度卷积的卷积核大小。
+        p (int):深度卷积的填充大小。
+        s_D (int): 深度卷积的步长。
+        s_P (int): 逐点卷积的步长。
+        d_D (int): 深度卷积的膨胀率。
+        activation (str): 激活函数名称，大小写不敏感
+
+    Notes:
+            前向传播输出说明见 forward 方法。
     '''
     def __init__(
             self,
             in_ch:int,
             out_ch:int,
             k:int,
+            p:int,
             s_D:int,
             s_P:int,
             d_D:int,
+            activation:str
+    ):
+        super(DepthWiseSeparable_Conv , self).__init__()
+        self.forward_basic = nn.Sequential(
+            DepthWise_Conv(
+                in_ch=in_ch,
+                k = k,
+                s = s_D,
+                p = p,
+                d = d_D
+            ),
+            nn.BatchNorm2d(in_ch),
+            get_activation(activation , ACTIVATION_MAP),
+            PointWise_Conv(
+                in_ch=in_ch,
+                out_ch=out_ch,
+                s=s_P
+            ),
+            nn.BatchNorm2d(out_ch),
+            get_activation(activation , ACTIVATION_MAP) 
+        )        
+    def forward(self , x):
+        '''
+        深度可分离卷积的前向传播函数
+
+        Args:
+            x (torch.Tensor): 输入张量,形状通常为 (N, C, H, W)。
+
+        Returns:
+            torch.Tensor: 经过深度可分离卷积后生成的张量。
+        '''
+        return self.forward_basic(x)
 
 
-    )
 
 
 
@@ -251,6 +295,7 @@ def get_activation(act_name:str , activation_map:dict):
     Raises:
         ValueError: act_name 不在 activation_map 中时抛出。
     '''
+    act_name = act_name.strip().lower()
     if act_name not in activation_map:
         supported = ",".join(sorted(activation_map.keys()))
         raise ValueError(f"Unsupported activation: {act_name}. Supported activations: {supported}")
