@@ -6,6 +6,13 @@ from utils.Block_function import get_activation,autopad
 import numpy as np
 
 
+############################################################
+#                                                          #
+#                                                          #
+#               下面全都是基本卷积相关的模块                    #
+#                                                          #
+#                                                          #
+############################################################
 class Basic_Conv_Block(nn.Module):
     '''
         基本卷积块：二维卷积 + 批量归一化 + 激活函数。
@@ -274,6 +281,103 @@ class DepthWiseSeparable_Conv(nn.Module):
         return self.forward_basic(x)
 
 
+class ResNetBlock_34(nn.Module):
+    '''
+    ResNet网络的基本模块组,在其34层以及18层使用的基本块儿
+
+    Args:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        s (int): 卷积步长。
+        activation_1 (str): 第一个激活函数名称。
+        activation_2 (str): 第二个激活函数名称。
+
+    Returns:
+        torch.Tensor: 经过ResNet块后生成的张量。
+    '''
+    def __init__(
+            self,
+            in_ch:int,
+            out_ch:int,
+            s:int,
+            activation_1='relu',
+            activation_2='relu',
+            ):
+        super(ResNetBlock_34, self).__init__()
+        self.forward_basic_1 = nn.Sequential(
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                stride=s,
+                padding=1,
+                kernel_size=3,
+                bias=False
+            ),
+            nn.BatchNorm2d(out_ch),
+            get_activation(activation_1 , ACTIVATION_MAP),
+            nn.Conv2d(
+                in_channels=out_ch,
+                out_channels=out_ch,
+                stride=1,
+                padding=1,
+                kernel_size=3,
+                bias=False
+            ),
+            nn.BatchNorm2d(out_ch),
+        )
+        self.downsample = None
+
+        if s != 1 or in_ch != out_ch:
+            # 如果输入输出的通道不匹配，或者是步长不唯1，那么就需要进行下采样的操作
+            self.downsample = nn.Sequential(
+                nn.Conv2d(
+                    in_channels=in_ch,
+                    out_channels=out_ch,
+                    stride= s,
+                    kernel_size=1,
+                    bias=False
+                ),
+                nn.BatchNorm2d(out_ch),
+            )
+        self.act = get_activation(activation_2 , ACTIVATION_MAP)
+    def forward(self , x):
+        '''
+        ResNet_34的基本块儿前向传播的基本函数。
+
+        Args:
+            x (torch.Tensor): 输入张量,形状通常为 (N, C, H, W)。
+
+        Returns:
+            torch.Tensor: 经过ResNet块后生成的张量。
+        '''
+        identity = x
+        n , c , h , w = x.size()
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        out = self.forward_basic_1(x)
+        out = out + identity
+        out = self.act(out)
+        return out
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################
+#                                                          #
+#                                                          #
+#               下面全都是注意力机制相关的模块                  #
+#                                                          #
+#                                                          #
+############################################################
 class CBAM_Channel_Attention(nn.Module):
     '''
     CBAM注意力机制的子模块,通道注意力机制模块
@@ -409,4 +513,7 @@ class CBAM(nn.Module):
         x = self.channel_attention(x)
         x = self.spatial_attention(x)
         return x
+    
+
+
 

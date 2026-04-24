@@ -17,5 +17,4 @@ ACTIVATION_MAP = {
     "tanh": nn.Tanh(),
     "identity": nn.Identity(),
     "none": nn.Identity(),
-
 }
