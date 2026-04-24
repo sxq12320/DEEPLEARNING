@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from configs.config import ACTIVATION_MAP
 from utils.Block_function import get_activation,autopad
+import numpy as np
+
 
 class Basic_Conv_Block(nn.Module):
     '''
@@ -214,7 +216,7 @@ class PointWise_Conv(nn.Module):
 
 class DepthWiseSeparable_Conv(nn.Module):
     '''
-    深度可分离卷积，综合大块
+    深度可分离卷积,综合大块
 
     Args:
         in_ch (int): 输入通道数。
@@ -224,7 +226,7 @@ class DepthWiseSeparable_Conv(nn.Module):
         s_D (int): 深度卷积的步长。
         s_P (int): 逐点卷积的步长。
         d_D (int): 深度卷积的膨胀率。
-        activation (str): 激活函数名称，大小写不敏感
+        activation (str): 激活函数名称,大小写不敏感
 
     Notes:
             前向传播输出说明见 forward 方法。
@@ -270,3 +272,141 @@ class DepthWiseSeparable_Conv(nn.Module):
             torch.Tensor: 经过深度可分离卷积后生成的张量。
         '''
         return self.forward_basic(x)
+
+
+class CBAM_Channel_Attention(nn.Module):
+    '''
+    CBAM注意力机制的子模块,通道注意力机制模块
+
+    Args:
+        in_ch (int): 输入通道数。
+        reduction_radio (int): 通道缩减比例。
+        activation (str): 激活函数名称。
+
+    Notes:
+        其他的具体运行过程请看Forward函数的说明
+
+    '''
+    def __init__(
+            self,
+            in_ch:int,
+            reduction_ratio:int,
+            activation:str
+        ):
+        super(CBAM_Channel_Attention , self).__init__()
+        self.maxpool = nn.AdaptiveMaxPool2d(1)
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.MLP_shared = nn.Sequential(
+            nn.Linear(
+                in_features = in_ch,
+                out_features = in_ch//reduction_ratio,
+                bias = False
+            ),
+            get_activation(activation, ACTIVATION_MAP),
+            nn.Linear(
+                in_features = in_ch//reduction_ratio,
+                out_features = in_ch,
+                bias = False
+            ),
+        )
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self , x):
+        '''
+        CBAM注意力机制子模块,也就是通道注意力机制模块的前向传播函数
+                  |-->平均池化->|
+        input x --|            |->共享全连接层->相加->和x相乘
+                  |-->最大池化->|
+
+        Args:
+            x (torch.Tensor): 输入张量,形状通常为 (N, C, H, W)。
+
+        Returns:
+            torch.Tensor: 经过通道注意力机制后生成的张量。
+
+        '''
+        avg_weight = self.MLP_shared(self.avgpool(x).view(x.size(0) , x.size(1)))
+        max_weight = self.MLP_shared(self.maxpool(x).view(x.size(0) , x.size(1)))
+        attn = self.sigmoid(avg_weight + max_weight).view(x.size(0) , x.size(1) , 1 , 1)
+        return attn * x
+
+
+
+class CBAM_Spatial_Attention(nn.Module):
+    '''
+    CBAM注意力机制的子模块,空间注意力机制模块
+
+    Args:
+        k(int) : 卷积核的大小
+
+    Notes:  
+        其他的请参见forward函数的具体说明。
+
+    '''
+    def __init__(
+            self,
+            k:int, 
+            ):
+        super(CBAM_Spatial_Attention , self).__init__()
+        self.conv = nn.Conv2d(
+            in_channels=2, 
+            out_channels=1 , 
+            kernel_size=k,
+            padding=k//2,
+            bias=False
+        )
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self , x):
+        '''
+        CBAM空间注意力机制的前向传播函数
+
+        Args:
+            x (torch.Tensor): 输入张量,形状通常为 (N, C, H, W)。
+
+        Returns:
+            torch.Tensor: 经过空间注意力机制后生成的张量。
+        '''
+        avg_weight = torch.mean(x , dim= 1 , keepdim=True)
+        max_weight , _ = torch.max(x , dim= 1 , keepdim=True)
+        out = torch.cat([avg_weight , max_weight ] ,dim=1)
+        out = self.conv(out)
+        out = self.sigmoid(out)
+        return out * x
+
+
+class CBAM(nn.Module):
+    '''
+    CBAM注意力机制模块
+
+    Args:
+        in_ch (int) : 输入通道数量
+        reduction_ratio (int) : 通道缩减比例
+        activation (str) : 激活函数名称
+        k (int) : 卷积核大小
+
+    Returns:
+        torch.Tensor: 经过CBAM注意力机制后生成的张量。
+    '''
+    def __init__(
+            self,
+            in_ch:int,
+            reduction_ratio:int,
+            activation:str,
+            k:int,
+            ):
+        super(CBAM , self).__init__()
+        self.channel_attention = CBAM_Channel_Attention(
+            in_ch=in_ch,
+            reduction_ratio=reduction_ratio,
+            activation=activation
+        )
+        self.spatial_attention = CBAM_Spatial_Attention(
+            k=k
+        )
+        
+    def forward(self , x):
+        x = self.channel_attention(x)
+        x = self.spatial_attention(x)
+        return x
+
