@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from configs.config import ACTIVATION_MAP
+from utils.Block_function import get_activation,autopad
 
 class Basic_Conv_Block(nn.Module):
     '''
@@ -269,54 +270,3 @@ class DepthWiseSeparable_Conv(nn.Module):
             torch.Tensor: 经过深度可分离卷积后生成的张量。
         '''
         return self.forward_basic(x)
-
-
-
-
-
-
-
-
-
-
-
-
-def get_activation(act_name:str , activation_map:dict):
-    '''
-    根据名称从映射表中获取激活函数模块。
-
-    Args:
-        act_name (str): 激活函数名称,函数内部会转为小写并去除首尾空格。
-        activation_map (dict): 激活函数映射表,键为名称,值为激活模块实例。
-
-    Returns:
-        nn.Module: 对应的激活函数模块实例。
-
-    Raises:
-        ValueError: act_name 不在 activation_map 中时抛出。
-    '''
-    act_name = act_name.strip().lower()
-    if act_name not in activation_map:
-        supported = ",".join(sorted(activation_map.keys()))
-        raise ValueError(f"Unsupported activation: {act_name}. Supported activations: {supported}")
-    return activation_map[act_name]
-
-
-
-
-
-# if __name__ == "__main__":
-#     x = torch.randn(1 , 3 , 640 , 640)
-#     model = Basic_Conv_Block(
-#         in_channels=3,
-#         out_channels=64,
-#         kernel_size=3,
-#         stride=1,
-#         padding=1,
-#         dilated=1,
-#         groups=1,
-#         activation="relu"
-#     )
-
-#     output = model(x)
-#     print(output.size())
