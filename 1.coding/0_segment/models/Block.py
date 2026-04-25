@@ -440,7 +440,7 @@ class CBAM_Channel_Attention(nn.Module):
 
     Args:
         in_ch (int): 输入通道数。
-        reduction_radio (int): 通道缩减比例。
+        reduction_ratio (int): 通道缩减比例。
         activation (str): 激活函数名称。
 
     Notes:

@@ -9,6 +9,8 @@ from .Block import (
                   CBAM_Channel_Attention,
                   CBAM_Spatial_Attention,
                   CBAM,
+
+                  ResNetBlock_34,
                     )
 
 from .BackBone import (

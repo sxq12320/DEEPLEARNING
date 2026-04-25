@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import models
 
+
 def get_activation(act_name:str , activation_map:dict):
     '''
     根据名称从映射表中获取激活函数模块。
@@ -59,21 +60,25 @@ def autopad(k, p=None, d=1):
 
 def make_layers(cfg):
     '''
-    简化模块构建的繁琐方式，后续在进行构建的时候只需要做下面的例子即可
-    
-    Example: 
-    cfg = [
-    ['res34', 64, 128, 2, 'relu', 'relu', 2],
-    ['basic_conv_block', 128, 256, 2, 3, 1, 1, 1, 'relu', 2],
-    ]
-    即可构建整个架构
+    简化模块构建的繁琐方式，具体的模块包括:
+
+    "conv" :in_channels , out_channels , kernel_size , stride_size , padding_size , dilation_size , groups_size , bias
+    "basic_conv_block" :in_channels , out_channels , kernel_size , stride_size , padding_size , dilation_size , groups_size , activation
+    "conv_block_nonb" :in_channels , out_channels , kernel_size , stride_size , padding_size , dilation_size , groups_size , activation
+    "depthwise_conv":in_channels , kernel_size , stride_size , padding_size , dilation_size 
+    "pointwise_conv":in_channels , out_channels , stride_size 
+    "depthwise_separable_conv":in_channels , out_channels , kernel_size , padding_size , stride_size_D , stride_size_P , dilation_size_D , activation
+    "resnet_block_34":in_channels , out_channels , stride_size , activation_1  , activation_2
+    "cbam_channel_attention":in_channels , reductiaon_ratio , activation
+    "cbam_spatial_attention":kernel_size
+    "cbam":in_channels , reduction_ratio , activation , kernel_size
 
     Args:
         各种类型的参数，需要后续自行进行配置即可
     
     Returns:
         nn.Sequential: 构建好的网络层
-
+  
     '''
     layers = []     
     for idx, item in enumerate(cfg):
@@ -118,7 +123,7 @@ def make_layers(cfg):
                         b=bias
                     )
                 )
-                
+
         elif block_type == 'basic_conv_block':
             '''
             构建基本卷积块 
@@ -211,6 +216,9 @@ def make_layers(cfg):
                 )
         
         elif block_type == "pointwise_conv":
+            '''
+            逐点卷积的基本模块
+            '''
             if len(item) != 5:
                 raise ValueError(f"cfg[{idx}] pointwise_conv 期望的参数个数为5, 现在输入的参数是{len(item)}: {item}")
             name_block , in_channels , out_channels , stride_size , repeat = item
@@ -231,6 +239,9 @@ def make_layers(cfg):
                 )
         
         elif block_type == 'depthwise_separable_conv':
+            '''
+            深度可分离卷积的基本模块
+            '''
             if len(item) != 10:
                 raise ValueError(f"cfg[{idx}] depthwise_separable_conv 期望的参数个数为10, 现在输入的参数是{len(item)}: {item}")
             name_block , in_channels , out_channels , kernel_size , padding_size , stride_size_D , stride_size_P , dilation_size_D , activation , repeat = item
@@ -260,7 +271,100 @@ def make_layers(cfg):
                     )
                 )
 
+        elif block_type == "resnet_block_34":
+            '''
+            ResNet-34 基本模块
+            '''
+            if len(item) != 7:
+                raise ValueError(f"cfg[{idx}] resnet_block_34 期望的参数个数为7, 现在输入的参数是{len(item)}: {item}")
+            name_block , in_channels , out_channels , stride_size , activation_1  , activation_2 , repeat = item
+            layers.append(
+                models.ResNetBlock_34(
+                    in_ch = in_channels,
+                    out_ch=out_channels,
+                    s = stride_size,
+                    activation_1 = activation_1,
+                    activation_2 = activation_2
+                )
+            )
+            for _ in range(1 , repeat):
+                layers.append(
+                    models.ResNetBlock_34(
+                    in_ch = in_channels,
+                    out_ch=out_channels,
+                    s = 1,
+                    activation_1 = activation_1,
+                    activation_2 = activation_2
+                    )
+                )
 
+        elif block_type == "cbam_channel_attention":
+            '''
+            CBAM通道注意力机制
+            '''
+            if len(item) != 5:
+                raise ValueError(f"cfg[{idx}] cbam_channel_attention 期望的参数个数为4, 现在输入的参数是{len(item)}: {item}")
+            name_block , in_channels , reductiaon_ratio , activation ,  repeat = item
+            layers.append(
+                models.CBAM_Channel_Attention(
+                    in_ch=in_channels,
+                    reduction_ratio=reductiaon_ratio,
+                    activation= activation
+                )
+            )
+            for _ in range(1 , repeat):
+                layers.append(
+                    models.CBAM_Channel_Attention(
+                        in_ch=in_channels,
+                        reduction_ratio=reductiaon_ratio,
+                        activation= activation
+                    )
+                )
+
+        elif block_type == "cbam_spatial_attention":
+            '''
+            CBAM空间注意力机制
+            '''
+            if len(item) != 3:
+                raise ValueError(f"cfg[{idx}] cbam_spatial_attention 期望的参数个数为4, 现在输入的参数是{len(item)}: {item}")
+            name_block  , kernel_size ,  repeat = item
+            layers.append(
+                models.CBAM_Spatial_Attention(
+                    k=kernel_size
+                )
+            )
+            for _ in range(1 , repeat):
+                layers.append(
+                    models.CBAM_Spatial_Attention(
+                        k=kernel_size
+                    )
+                )
+
+        elif block_type == "cbam":
+            '''
+            CBAM注意力机制
+            '''
+            if len(item) != 6:
+                raise ValueError(f"cfg[{idx}] cbam 期望的参数个数为6, 现在输入的参数是{len(item)}: {item}")
+            name_block , in_channels , reduction_ratio , activation , kernel_size ,  repeat = item
+            layers.append(
+                models.CBAM(
+                    in_ch=in_channels,
+                    reduction_ratio=reduction_ratio,
+                    activation=activation,
+                    k=kernel_size
+                )
+            )
+            for _ in range(1 , repeat):
+                layers.append(
+                    models.CBAM(
+                        in_ch=in_channels,
+                        reduction_ratio=reduction_ratio,
+                        activation=activation,
+                        k=kernel_size
+                    )
+                )
+        
         else:
             raise ValueError(
                 f"Unsupported block type at cfg[{idx}]: {item[0]}. "
@@ -271,9 +375,9 @@ def make_layers(cfg):
     return nn.Sequential(*layers)
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     cfg = [
-#     ]
-#     model = make_layers(cfg)
-#     print(model)
+    cfg = [
+    ]
+    model = make_layers(cfg)
+    print(model)
