@@ -13,18 +13,74 @@ import numpy as np
 #                                                          #
 #                                                          #
 ############################################################
+class Conv(nn.Module):
+    '''
+    最最普通的二维卷积操作
+
+    Args:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 卷积核大小。
+        s (int): 卷积步长。
+        p (int): 填充大小。
+        d (int): 膨胀率(dilation)。
+        g (int): 分组卷积组数。
+        b (bool): 是否使用偏置。
+    
+    Notes:
+        具体运算过程请看forward函数的说明
+
+    '''
+    def __init__(
+            self,
+            in_ch:int,
+            out_ch:int,
+            k:int,
+            s:int,
+            p:int,
+            d:int,
+            g:int,
+            b:bool,
+            ):
+        super(Conv , self).__init__()
+        self.forward_basic = nn.Sequential(
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=k,
+                stride=s,
+                padding=p,
+                dilation=d,
+                groups = g,
+                bias = b,
+            )
+        )
+
+    def forward(self , x):
+        '''
+        普通卷积的前向传播函数
+
+        Args:
+            x (torch.Tensor): 输入张量,形状通常为 (N, C, H, W)。
+
+        Returns:
+            torch.Tensor: 经过卷积后的输出张量。
+        '''
+        return self.forward_basic(x)
+
+
 class Basic_Conv_Block(nn.Module):
     '''
         基本卷积块：二维卷积 + 批量归一化 + 激活函数。
 
         Args:
-            in_channels (int): 输入通道数。
-            out_channels (int): 输出通道数。
-            kernel_size (int): 卷积核大小。
-            stride (int): 卷积步长。
-            padding (int): 填充大小。
-            dilated (int): 膨胀率(dilation)。
-            groups (int): 分组卷积组数。
+            in_ch (int): 输入通道数。
+            out_ch (int): 输出通道数。
+            k (int): 卷积核大小。
+            s (int): 卷积步长。
+            p (int): 填充大小。
+            d (int): 膨胀率(dilation)。
+            g (int): 分组卷积组数。
             activation (str): 激活函数名称,大小写不敏感,取值由 ACTIVATION_MAP 决定。
 
         Notes:
