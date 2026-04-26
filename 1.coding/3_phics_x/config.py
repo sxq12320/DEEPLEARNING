@@ -18,15 +18,3 @@ ACTIVATION_MAP = {
     "identity": nn.Identity(),
     "none": nn.Identity(),
 }
-
-RESNET_18_CFG = [
-    ["basic_conv_block" , 3 , 64 , 7 , 2 , 3 , 1 , 1 , "relu" , 1],
-    ["maxpool" , 3 , 2 , 1 , 1],
-    ["resnet_block_34" , 64 , 64 , 1 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 64 , 128 , 2 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 128 , 256 , 2 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 256 , 512 , 2 , "relu" , "relu" , 2],
-    ["adaptive_avg_pool" , (1, 1) , 1],
-    ["flatten" , 1],
-    ["linear" , 512 , 1000 , True , 1]
-]
