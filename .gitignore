@@ -10,7 +10,8 @@
 
 *.pth
 
-data/
+# 仅忽略仓库根目录下的数据集目录，避免误伤其他同名 data 目录
+/data/
 4_class_ZhuQIBing/5 FinalExam/dataset/
 
 
@@ -18,13 +19,6 @@ __pycache__/
 
 *.mp4
 *.avi
-
-
-
-
-
-
-
 
 
 
