@@ -7,7 +7,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
 from models.blocks import Basic_Conv_Block
-
+from models.builders import make_layers
+from configs import RESNET_18_CFG
+import torch.nn.functional as F
 
 class SyntheticSegDataset(Dataset):
     '''
@@ -69,11 +71,8 @@ class MiniSegNet(nn.Module):
         初始化最小分割网络结构。
         '''
         super().__init__()
-        self.net = nn.Sequential(
-            Basic_Conv_Block(3, 16, 3, 1, 1, 1, 1, "relu"),
-            Basic_Conv_Block(16, 32, 3, 1, 1, 1, 1, "relu"),
-            nn.Conv2d(32, 1, kernel_size=1),
-        )
+        self.backbone = make_layers(RESNET_18_CFG)
+        self.head = nn.Conv2d(512, 1, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''
@@ -85,7 +84,10 @@ class MiniSegNet(nn.Module):
         Returns:
             torch.Tensor: 输出 logits, 形状通常为 (N, 1, H, W)。
         '''
-        return self.net(x)
+        feat = self.backbone(x)
+        logits = self.head(feat)
+        logits = F.interpolate(logits, size=x.shape[2:], mode='bilinear', align_corners=False)
+        return logits
 
 
 def build_dataloader(args) -> DataLoader:

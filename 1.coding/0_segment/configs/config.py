@@ -19,14 +19,29 @@ ACTIVATION_MAP = {
     "none": nn.Identity(),
 }
 
+# resnet18的主干网络生成
 RESNET_18_CFG = [
-    ["basic_conv_block" , 3 , 64 , 7 , 2 , 3 , 1 , 1 , "relu" , 1],
-    ["maxpool" , 3 , 2 , 1 , 1],
-    ["resnet_block_34" , 64 , 64 , 1 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 64 , 128 , 2 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 128 , 256 , 2 , "relu" , "relu" , 2],
-    ["resnet_block_34" , 256 , 512 , 2 , "relu" , "relu" , 2],
-    ["adaptive_avg_pool" , (1, 1) , 1],
-    ["flatten" , 1],
-    ["linear" , 512 , 1000 , True , 1]
+    ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
+    ["maxpool", 3, 2, 1, 1],
+    
+    # Stage 1: 两个 block，尺寸和通道均不变
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+    
+    # Stage 2: 第一个 block 下采样 + 升通道，第二个保持
+    ["resnet_block_34", 64, 128, 2, "relu", "relu"],
+    ["resnet_block_34", 128, 128, 1, "relu", "relu"],
+    
+    # Stage 3
+    ["resnet_block_34", 128, 256, 2, "relu", "relu"],
+    ["resnet_block_34", 256, 256, 1, "relu", "relu"],
+    
+    # Stage 4
+    ["resnet_block_34", 256, 512, 2, "relu", "relu"],
+    ["resnet_block_34", 512, 512, 1, "relu", "relu"],
+    
+    ["adaptive_avg_pool", (1, 1)],
+    ["flatten"],
+    ["linear", 512, 1000, True]
 ]
+
