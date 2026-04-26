@@ -1,23 +1,55 @@
-# from model import (
-#                   MaxPool,
-#                   AdaptiveAvgPool,
-#                   Conv,
-#                   Basic_Conv_Block,
-#                   Conv_Block_NONB,
-#                   DepthWise_Conv,
-#                   PointWise_Conv,
-#                   DepthWiseSeparable_Conv,
-#                   ResNetBlock_34,
-#                   ResNetBlock_50,
-#                   CBAM_Channel_Attention,
-#                   CBAM_Spatial_Attention,
-#                   CBAM,
-#                   Flatten,
-#                   Linear,
-#                     )
 import torch
 import torch.nn as nn
 from ..registries.registry import BLOCK_REGISTRY
+
+def make_layers(cfg):
+    '''
+    根据配置列表构建网络层序列。
+
+    Args:
+        cfg (list): 网络结构配置列表, 每个元素描述一个模块及其参数。
+
+    Returns:
+        nn.Sequential: 按配置构建得到的层序列。
+
+    Raises:
+        ValueError: 当配置项格式错误或 block 类型未注册时抛出。
+    '''
+    layers = []
+    for idx, item in enumerate(cfg):
+        if not isinstance(item, (list, tuple)) or len(item) == 0:
+            raise ValueError(f"cfg[{idx}] must be a non-empty list/tuple, got: {item}")
+
+        block_type = str(item[0]).strip().lower()
+        repeat = int(item[-1]) if len(item) > 1 and isinstance(item[-1], int) else 1
+        if repeat < 1:
+            raise ValueError(f"cfg[{idx}] repeat must be >= 1, got: {repeat}")
+
+        builder = BLOCK_REGISTRY.get(block_type)
+        if builder is None:
+            raise ValueError(
+                f"Unsupported block type at cfg[{idx}]: {item[0]}. "
+                f"Supported: {list(BLOCK_REGISTRY.keys())}"
+            )
+
+        # 第一次构建
+        block = builder(item)
+        layers.append(block)
+
+        # 重复构建
+        for _ in range(1, repeat):
+            # 对于重复层，你可能需要调整参数（比如 stride 置 1）
+            # 可以在这里处理，或者在 builder 内部根据 repeat 判断
+            # 简单起见，这里直接复用同一个 builder，你可以根据需求修改
+            layers.append(builder(item))
+
+    return nn.Sequential(*layers)
+
+
+
+
+
+
 
 # def make_layers(cfg):
 
@@ -445,47 +477,3 @@ from ..registries.registry import BLOCK_REGISTRY
 
 #     return nn.Sequential(*layers)
 
-
-
-def make_layers(cfg):
-    '''
-    根据配置列表构建网络层序列。
-
-    Args:
-        cfg (list): 网络结构配置列表, 每个元素描述一个模块及其参数。
-
-    Returns:
-        nn.Sequential: 按配置构建得到的层序列。
-
-    Raises:
-        ValueError: 当配置项格式错误或 block 类型未注册时抛出。
-    '''
-    layers = []
-    for idx, item in enumerate(cfg):
-        if not isinstance(item, (list, tuple)) or len(item) == 0:
-            raise ValueError(f"cfg[{idx}] must be a non-empty list/tuple, got: {item}")
-
-        block_type = str(item[0]).strip().lower()
-        repeat = int(item[-1]) if len(item) > 1 and isinstance(item[-1], int) else 1
-        if repeat < 1:
-            raise ValueError(f"cfg[{idx}] repeat must be >= 1, got: {repeat}")
-
-        builder = BLOCK_REGISTRY.get(block_type)
-        if builder is None:
-            raise ValueError(
-                f"Unsupported block type at cfg[{idx}]: {item[0]}. "
-                f"Supported: {list(BLOCK_REGISTRY.keys())}"
-            )
-
-        # 第一次构建
-        block = builder(item)
-        layers.append(block)
-
-        # 重复构建
-        for _ in range(1, repeat):
-            # 对于重复层，你可能需要调整参数（比如 stride 置 1）
-            # 可以在这里处理，或者在 builder 内部根据 repeat 判断
-            # 简单起见，这里直接复用同一个 builder，你可以根据需求修改
-            layers.append(builder(item))
-
-    return nn.Sequential(*layers)
