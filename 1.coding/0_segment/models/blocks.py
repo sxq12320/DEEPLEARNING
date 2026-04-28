@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from configs.config import ACTIVATION_MAP
 from utils.common import get_activation, autopad
 from .registry import register_block
+from models import registry
 
 
 ############################################################
@@ -18,6 +19,18 @@ class MaxPool(nn.Module):
         )
 
     def forward(self, x):
+        return self.forward_basic(x)
+
+@register_block('adaptive_max_pool')
+class AdaptiveMaxPool(nn.Module):
+    def __init__(self, output_size:int):
+        super(AdaptiveMaxPool , self).__init__()
+        self.forward_basic = nn.Sequential(
+            nn.AdaptiveMaxPool2d(
+                output_size=output_size
+            )
+        )
+    def forward(self , x):
         return self.forward_basic(x)
 
 
