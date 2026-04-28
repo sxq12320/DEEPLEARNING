@@ -45,3 +45,20 @@ RESNET_18_CFG = [
     ["linear", 512, 1000, True]
 ]
 
+# ResNet-18 骨干网络配置（不含分类头，用于分割等密集预测任务）
+RESNET_18_BACKBONE_CFG = [
+    ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
+    ["maxpool", 3, 2, 1, 1],
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+    ["resnet_block_34", 64, 128, 2, "relu", "relu"],
+    ["resnet_block_34", 128, 128, 1, "relu", "relu"],
+    ["resnet_block_34", 128, 256, 2, "relu", "relu"],
+    ["resnet_block_34", 256, 256, 1, "relu", "relu"],
+    ["resnet_block_34", 256, 512, 2, "relu", "relu"],
+    ["resnet_block_34", 512, 512, 1, "relu", "relu"],
+]
+
+RESNET_34_CFG = [
+    ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
+]
