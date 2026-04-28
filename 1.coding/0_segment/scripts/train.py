@@ -1,5 +1,9 @@
 """分割模型训练 CLI 入口。"""
 import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from engine.trainer import Trainer
 

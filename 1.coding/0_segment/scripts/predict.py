@@ -1,11 +1,14 @@
 """分割模型预测 CLI 入口。"""
 import argparse
 import os
+import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from models import MiniSegNet
 
