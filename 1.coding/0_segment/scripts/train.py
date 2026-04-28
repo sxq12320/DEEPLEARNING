@@ -1,7 +1,11 @@
 """分割模型训练 CLI 入口。"""
 import argparse
+from ast import Name
+from email.mime import image
 import sys
 from pathlib import Path
+
+from numpy import argsort, imag
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -28,6 +32,13 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    from argparse import Namespace
+    args = Namespace(
+        imgsz = 640,
+        lr = 1e-3,
+        epochs = 10,
+        batch = 4,
+        cpu = False,
+    )
     trainer = Trainer(args)
     trainer.train()
