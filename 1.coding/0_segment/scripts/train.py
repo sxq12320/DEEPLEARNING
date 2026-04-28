@@ -13,6 +13,11 @@ from engine.trainer import Trainer
 
 
 def parse_args():
+    """解析训练命令行参数。
+
+    Returns:
+        argparse.Namespace: 解析后的参数对象。
+    """
     parser = argparse.ArgumentParser(description="Segmentation model training")
     parser.add_argument("--image-dir", type=str, default="", help="Training image directory")
     parser.add_argument("--mask-dir", type=str, default="", help="Training mask directory")

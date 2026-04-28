@@ -12,7 +12,17 @@ from .transforms import image_transform, TXT2MASK, JSON2MASK, NPY2MASK
 
 
 class SegmentationDataset(Dataset):
-    """RGB 图像分割数据集，支持多种标签格式和合成数据回退。"""
+    """RGB 图像分割数据集，支持多种标签格式与合成数据回退。
+
+    Attributes:
+        image_dir (Path | None): 图像目录路径对象。
+        label_dir (str | None): 标签目录或标签文件路径。
+        label_type (str): 标签类型（mask/txt/json/npy）。
+        target_size (Tuple[int, int]): 目标图像尺寸 (W, H)。
+        augment (bool): 是否启用数据增强。
+        synthetic (bool): 是否使用合成数据模式。
+        synthetic_length (int): 合成数据长度。
+    """
 
     def __init__(
         self,
@@ -24,6 +34,17 @@ class SegmentationDataset(Dataset):
         synthetic_length: int = 32,
         augment: bool = False,
     ):
+        """初始化分割数据集。
+
+        Args:
+            image_dir (str | Path | None): 图像目录路径。
+            label_dir (str | None): 标签目录或标签文件路径。
+            label_type (str): 标签类型（mask/txt/json/npy）。
+            target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+            file_list (List[str] | None): 指定样本列表（不含后缀）。
+            synthetic_length (int): 合成数据长度。
+            augment (bool): 是否启用简单增强。
+        """
         self.image_dir = Path(image_dir) if image_dir else None
         self.label_dir = label_dir
         self.label_type = label_type
@@ -44,9 +65,26 @@ class SegmentationDataset(Dataset):
             self.synthetic_length = synthetic_length
 
     def __len__(self):
+        """返回数据集长度。
+
+        Returns:
+            int: 样本数量。
+        """
         return self.synthetic_length if self.synthetic else len(self.ids)
 
     def __getitem__(self, idx):
+        """根据索引读取样本。
+
+        Args:
+            idx (int): 样本索引。
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: 图像张量与掩码张量。
+
+        Raises:
+            FileNotFoundError: 图像文件不存在时抛出。
+            IOError: 图像读取失败时抛出。
+        """
         if self.synthetic:
             h, w = self.target_size[1], self.target_size[0]
             image = torch.rand(3, h, w)
@@ -76,6 +114,14 @@ class SegmentationDataset(Dataset):
         return img_tensor, mask_tensor
 
     def _find_image(self, stem):
+        """根据文件名主体查找图像文件。
+
+        Args:
+            stem (str): 文件名主体（不含后缀）。
+
+        Returns:
+            Path | None: 命中的图像路径，未找到则返回 None。
+        """
         for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']:
             candidate = self.image_dir / f"{stem}{ext}"
             if candidate.exists():
@@ -83,6 +129,14 @@ class SegmentationDataset(Dataset):
         return None
 
     def _get_mask(self, image_stem):
+        """根据标签类型读取并生成掩码。
+
+        Args:
+            image_stem (str): 图像文件名主体。
+
+        Returns:
+            np.ndarray: 掩码数组。
+        """
         if self.label_type == "txt":
             return TXT2MASK(self.label_dir, image_stem, self.target_size)
         elif self.label_type == "json":
@@ -93,6 +147,14 @@ class SegmentationDataset(Dataset):
             return self._read_mask_file(image_stem)
 
     def _read_mask_file(self, stem):
+        """从常见掩码文件中读取标签。
+
+        Args:
+            stem (str): 文件名主体。
+
+        Returns:
+            np.ndarray: 掩码数组。
+        """
         for ext in ['.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff', '.npy']:
             candidate = os.path.join(self.label_dir, stem + ext)
             if os.path.exists(candidate):
@@ -103,6 +165,15 @@ class SegmentationDataset(Dataset):
         return np.zeros((self.target_size[1], self.target_size[0]), dtype=np.uint8)
 
     def _apply_augmentation(self, image, mask):
+        """对图像与掩码应用简单的翻转增强。
+
+        Args:
+            image (np.ndarray): 输入图像。
+            mask (np.ndarray): 输入掩码。
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: 增强后的图像与掩码。
+        """
         if np.random.random() > 0.5:
             image = cv2.flip(image, 1)
             mask = cv2.flip(mask, 1)

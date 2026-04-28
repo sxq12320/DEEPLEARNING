@@ -13,10 +13,20 @@ class Evaluator:
     """分割模型评估器。"""
 
     def __init__(self, args):
+        """初始化评估器。
+
+        Args:
+            args (argparse.Namespace): 评估参数配置。
+        """
         self.args = args
         self.device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
 
     def build_dataloader(self):
+        """构建评估数据加载器。
+
+        Returns:
+            torch.utils.data.DataLoader: 评估数据加载器。
+        """
         dataset = SegmentationDataset(
             image_dir=self.args.image_dir or None,
             label_dir=self.args.mask_dir or self.args.label_dir or None,
@@ -28,6 +38,14 @@ class Evaluator:
 
     @torch.no_grad()
     def evaluate(self):
+        """执行评估并返回平均损失与 IoU。
+
+        Returns:
+            Tuple[float, float]: 平均损失与平均 IoU。
+
+        Raises:
+            FileNotFoundError: 权重文件不存在时抛出。
+        """
         if not os.path.isfile(self.args.weights):
             raise FileNotFoundError(f"Checkpoint not found: {self.args.weights}")
 
@@ -69,6 +87,14 @@ class Evaluator:
         return avg_loss, avg_iou
 
     def _normalize_mask(self, mask: torch.Tensor) -> torch.Tensor:
+        """将掩码转换为 (N, 1, H, W) 形状。
+
+        Args:
+            mask (torch.Tensor): 输入掩码张量。
+
+        Returns:
+            torch.Tensor: 规范化后的掩码张量。
+        """
         if mask.ndim == 3:
             mask = mask.unsqueeze(1)
         elif mask.ndim == 4 and mask.shape[-1] == 1:

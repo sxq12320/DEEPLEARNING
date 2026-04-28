@@ -14,6 +14,11 @@ from models import MiniSegNet
 
 
 def parse_args():
+    """解析预测命令行参数。
+
+    Returns:
+        argparse.Namespace: 解析后的参数对象。
+    """
     parser = argparse.ArgumentParser(description="Segmentation model prediction")
     parser.add_argument("--source", type=str, required=True, help="Input image path")
     parser.add_argument("--weights", type=str, default="runs/train/exp/weights/best.pt")
@@ -26,6 +31,14 @@ def parse_args():
 
 
 def predict(args):
+    """执行单张图像分割预测并保存可视化结果。
+
+    Args:
+        args (argparse.Namespace): 预测配置参数。
+
+    Returns:
+        None: 本函数无显式返回值。
+    """
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
     print(f"Device: {device}")
 

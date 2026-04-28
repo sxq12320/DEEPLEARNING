@@ -8,7 +8,12 @@ import numpy as np
 
 
 def plot_loss_curve(losses: List[float], save_path: str):
-    """绘制并保存 loss 曲线。"""
+    """绘制并保存训练损失曲线。
+
+    Args:
+        losses (List[float]): 每个 epoch 的损失列表。
+        save_path (str): 保存路径。
+    """
     plt.figure(figsize=(8, 5))
     plt.plot(losses, marker='o', linestyle='-', linewidth=2, markersize=4)
     plt.xlabel('Epoch')
@@ -21,7 +26,14 @@ def plot_loss_curve(losses: List[float], save_path: str):
 
 
 def plot_sample_prediction(image: np.ndarray, mask_gt: np.ndarray, mask_pred: np.ndarray, save_path: str):
-    """绘制原图、真值掩码、预测掩码对比图。"""
+    """绘制原图、真值掩码与预测掩码对比图。
+
+    Args:
+        image (np.ndarray): 原始图像（BGR）。
+        mask_gt (np.ndarray): 真值掩码。
+        mask_pred (np.ndarray): 预测掩码。
+        save_path (str): 保存路径。
+    """
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
     axes[0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     axes[0].set_title('Image')

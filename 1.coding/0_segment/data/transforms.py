@@ -8,7 +8,15 @@ from PIL import Image
 
 
 def image_transform(image_path, target_size=(640, 640)):
-    """修改图片大小使其与目标大小一致（letterbox 方式）。"""
+    """将图像按 letterbox 方式缩放到目标大小。
+
+    Args:
+        image_path (str | Path): 图像路径。
+        target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+
+    Returns:
+        PIL.Image.Image: 处理后的图像。
+    """
     image = Image.open(image_path)
     w, h = image.size
     max_len = max(w, h)
@@ -18,7 +26,16 @@ def image_transform(image_path, target_size=(640, 640)):
 
 
 def TXT2MASK(label_dir, image_name, target_size):
-    """读取 YOLO 格式 TXT 标签并渲染为 mask。"""
+    """读取 YOLO TXT 标签并渲染为掩码。
+
+    Args:
+        label_dir (str): 标签目录。
+        image_name (str): 图像文件名或主体名。
+        target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+
+    Returns:
+        np.ndarray: 渲染后的掩码，形状为 (H, W, 1)。
+    """
     stem = Path(image_name).stem
     txt_path = os.path.join(label_dir, f"{stem}.txt")
     w, h = target_size[0], target_size[1]
@@ -57,7 +74,16 @@ def TXT2MASK(label_dir, image_name, target_size):
 
 
 def JSON2MASK(label_dir, image_name, target_size):
-    """读取 COCO 格式 JSON 标签并渲染为 mask。"""
+    """读取 COCO JSON 标签并渲染为掩码。
+
+    Args:
+        label_dir (str): 标签目录或 JSON 文件路径。
+        image_name (str): 图像文件名。
+        target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+
+    Returns:
+        np.ndarray: 渲染后的掩码，形状为 (H, W, 1)。
+    """
     w, h = target_size[0], target_size[1]
     label = np.zeros((h, w, 1), dtype=np.uint8)
 
@@ -119,7 +145,16 @@ def JSON2MASK(label_dir, image_name, target_size):
 
 
 def NPY2MASK(label_dir, image_name, target_size):
-    """读取 NPY 格式标签并渲染为 mask。"""
+    """读取 NPY 标签并渲染为掩码。
+
+    Args:
+        label_dir (str): 标签目录。
+        image_name (str): 图像文件名或主体名。
+        target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+
+    Returns:
+        np.ndarray: 渲染后的掩码，形状为 (H, W, 1)。
+    """
     stem = Path(image_name).stem
     npy_path = os.path.join(label_dir, f"{stem}.npy")
     w, h = target_size[0], target_size[1]
