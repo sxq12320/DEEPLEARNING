@@ -14,6 +14,7 @@ class MiniSegNet(nn.Module):
     _RESNET18_STAGE_COUNTS = (2, 2, 2, 2)
     _RESNET18_STAGE_CHANNELS = (64, 128, 256, 512)
     _RESNET18_CFG_LENGTH = len(_STEM_BLOCK_TYPES) + sum(_RESNET18_STAGE_COUNTS)
+    _RESNET18_CFG_OUT_CH_INDEX = 2
 
     def __init__(self, in_ch=3, out_ch=1, backbone_cfg=None):
         """初始化分割网络。
@@ -48,20 +49,21 @@ class MiniSegNet(nn.Module):
         )
 
     def _infer_stage_slices(self, cfg):
-        if len(cfg) < self._RESNET18_CFG_LENGTH:
+        if len(cfg) != self._RESNET18_CFG_LENGTH:
             return None
-        if tuple(item[0] for item in cfg[:self._stem_slice[1]]) != self._STEM_BLOCK_TYPES:
+        stem_len = len(self._STEM_BLOCK_TYPES)
+        if tuple(item[0] for item in cfg[:stem_len]) != self._STEM_BLOCK_TYPES:
             return None
         if any(
             item[0] != self._RESNET18_STAGE_BLOCK
-            for item in cfg[self._stem_slice[1]:self._RESNET18_CFG_LENGTH]
+            for item in cfg[stem_len:self._RESNET18_CFG_LENGTH]
         ):
             return None
         slices = []
-        start = self._stem_slice[1]
+        start = stem_len
         for count, channels in zip(self._RESNET18_STAGE_COUNTS, self._RESNET18_STAGE_CHANNELS):
             end = start + count
-            if cfg[end - 1][2] != channels:
+            if cfg[end - 1][self._RESNET18_CFG_OUT_CH_INDEX] != channels:
                 return None
             slices.append((start, end))
             start = end
@@ -98,6 +100,8 @@ class MiniSegNet(nn.Module):
                 x = self.backbone[idx](x)
             features.append(x)
 
+        if len(features) != len(self._RESNET18_STAGE_COUNTS):
+            raise ValueError("Unexpected encoder stage count.")
         feat1, feat2, feat3, feat4 = features
         dec4 = self._align_like(self.up4(feat4), feat3)
         dec4 = self.dec4(torch.cat([dec4, feat3], dim=1))
