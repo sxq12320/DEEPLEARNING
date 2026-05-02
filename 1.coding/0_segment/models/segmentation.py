@@ -20,9 +20,10 @@ class MiniSegNet(nn.Module):
         super().__init__()
         cfg = backbone_cfg if backbone_cfg is not None else RESNET_18_BACKBONE_CFG
         self.backbone = make_layers(cfg)
-        self._use_encoder_decoder = cfg == RESNET_18_BACKBONE_CFG
+        self._stem_slice = (0, 2)
+        self._stage_slices = self._infer_stage_slices(cfg)
+        self._use_encoder_decoder = self._stage_slices is not None
         if self._use_encoder_decoder:
-            self._stage_slices = [(2, 4), (4, 6), (6, 8), (8, 10)]
             self.up4 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
             self.dec4 = self._make_decoder_block(512, 256)
             self.up3 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
@@ -40,6 +41,31 @@ class MiniSegNet(nn.Module):
             Basic_Conv_Block(out_ch, out_ch, 3, 1, 1, 1, 1, "relu"),
         )
 
+    def _infer_stage_slices(self, cfg):
+        if cfg != RESNET_18_BACKBONE_CFG:
+            return None
+        if len(cfg) < 10:
+            return None
+        if cfg[0][0] != "basic_conv_block" or cfg[1][0] != "maxpool":
+            return None
+        if any(item[0] != "resnet_block_34" for item in cfg[2:10]):
+            return None
+        stage_counts = (2, 2, 2, 2)
+        slices = []
+        start = self._stem_slice[1]
+        for count in stage_counts:
+            end = start + count
+            slices.append((start, end))
+            start = end
+        if start != 10:
+            return None
+        return slices
+
+    def _align_like(self, source, target):
+        if source.shape[2:] != target.shape[2:]:
+            return F.interpolate(source, size=target.shape[2:], mode='bilinear', align_corners=False)
+        return source
+
     def forward(self, x):
         """前向传播并上采样到输入尺寸。
 
@@ -56,8 +82,8 @@ class MiniSegNet(nn.Module):
             logits = F.interpolate(logits, size=input_size, mode='bilinear', align_corners=False)
             return logits
 
-        x = self.backbone[0](x)
-        x = self.backbone[1](x)
+        for idx in range(*self._stem_slice):
+            x = self.backbone[idx](x)
         features = []
         for start, end in self._stage_slices:
             for idx in range(start, end):
@@ -65,19 +91,13 @@ class MiniSegNet(nn.Module):
             features.append(x)
 
         feat1, feat2, feat3, feat4 = features
-        dec4 = self.up4(feat4)
-        if dec4.shape[2:] != feat3.shape[2:]:
-            dec4 = F.interpolate(dec4, size=feat3.shape[2:], mode='bilinear', align_corners=False)
+        dec4 = self._align_like(self.up4(feat4), feat3)
         dec4 = self.dec4(torch.cat([dec4, feat3], dim=1))
 
-        dec3 = self.up3(dec4)
-        if dec3.shape[2:] != feat2.shape[2:]:
-            dec3 = F.interpolate(dec3, size=feat2.shape[2:], mode='bilinear', align_corners=False)
+        dec3 = self._align_like(self.up3(dec4), feat2)
         dec3 = self.dec3(torch.cat([dec3, feat2], dim=1))
 
-        dec2 = self.up2(dec3)
-        if dec2.shape[2:] != feat1.shape[2:]:
-            dec2 = F.interpolate(dec2, size=feat1.shape[2:], mode='bilinear', align_corners=False)
+        dec2 = self._align_like(self.up2(dec3), feat1)
         dec2 = self.dec2(torch.cat([dec2, feat1], dim=1))
 
         logits = self.head(dec2)
