@@ -73,6 +73,7 @@ python scripts/predict.py \
 
 - **注册机制**：通过 `@register_block` 装饰器注册自定义网络层，`make_layers(cfg)` 动态构建网络
 - **配置驱动**：网络结构完全由配置列表定义，无需修改代码即可更换架构
+- **编码器-解码器**：MiniSegNet 采用 Encoder-Decoder + 跳跃连接进行多尺度分割
 - **多标签格式**：支持 mask 图片、TXT（YOLO 格式）、JSON（COCO 格式）、NPY 四种标签格式
 - **自动回退**：无真实数据时自动使用合成数据验证训练链路
 
