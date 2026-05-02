@@ -9,6 +9,12 @@ from .builder import make_layers
 class MiniSegNet(nn.Module):
     """最小化分割网络，ResNet-18 backbone + 1x1 卷积 head。"""
 
+    _STEM_BLOCK_TYPES = ("basic_conv_block", "maxpool")
+    _RESNET18_STAGE_BLOCK = "resnet_block_34"
+    _RESNET18_STAGE_COUNTS = (2, 2, 2, 2)
+    _RESNET18_STAGE_CHANNELS = (64, 128, 256, 512)
+    _RESNET18_CFG_LENGTH = len(_STEM_BLOCK_TYPES) + sum(_RESNET18_STAGE_COUNTS)
+
     def __init__(self, in_ch=3, out_ch=1, backbone_cfg=None):
         """初始化分割网络。
 
@@ -20,7 +26,7 @@ class MiniSegNet(nn.Module):
         super().__init__()
         cfg = backbone_cfg if backbone_cfg is not None else RESNET_18_BACKBONE_CFG
         self.backbone = make_layers(cfg)
-        self._stem_slice = (0, 2)
+        self._stem_slice = (0, len(self._STEM_BLOCK_TYPES))
         self._stage_slices = self._infer_stage_slices(cfg)
         self._use_encoder_decoder = self._stage_slices is not None
         if self._use_encoder_decoder:
@@ -42,22 +48,24 @@ class MiniSegNet(nn.Module):
         )
 
     def _infer_stage_slices(self, cfg):
-        if cfg != RESNET_18_BACKBONE_CFG:
+        if len(cfg) < self._RESNET18_CFG_LENGTH:
             return None
-        if len(cfg) < 10:
+        if tuple(item[0] for item in cfg[:self._stem_slice[1]]) != self._STEM_BLOCK_TYPES:
             return None
-        if cfg[0][0] != "basic_conv_block" or cfg[1][0] != "maxpool":
+        if any(
+            item[0] != self._RESNET18_STAGE_BLOCK
+            for item in cfg[self._stem_slice[1]:self._RESNET18_CFG_LENGTH]
+        ):
             return None
-        if any(item[0] != "resnet_block_34" for item in cfg[2:10]):
-            return None
-        stage_counts = (2, 2, 2, 2)
         slices = []
         start = self._stem_slice[1]
-        for count in stage_counts:
+        for count, channels in zip(self._RESNET18_STAGE_COUNTS, self._RESNET18_STAGE_CHANNELS):
             end = start + count
+            if cfg[end - 1][2] != channels:
+                return None
             slices.append((start, end))
             start = end
-        if start != 10:
+        if start != self._RESNET18_CFG_LENGTH:
             return None
         return slices
 
