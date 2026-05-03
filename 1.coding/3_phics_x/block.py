@@ -26,7 +26,7 @@ class Conv(nn.Module):
         d (int): 膨胀率(dilation)。
         g (int): 分组卷积组数。
         b (bool): 是否使用偏置。
-    
+
     Notes:
         具体运算过程请看forward函数的说明
 
@@ -89,12 +89,12 @@ class Basic_Conv_Block(nn.Module):
     def __init__(
             self,
             in_ch:int,
-            out_ch:int, 
+            out_ch:int,
             k:int,
             s:int,
             p:int,
             d:int,
-            g:int, 
+            g:int,
             activation:str
     ):
         super(Basic_Conv_Block, self).__init__()
@@ -147,12 +147,12 @@ class Conv_Block_NONB(nn.Module):
     def __init__(
             self,
             in_ch:int,
-            out_ch:int, 
+            out_ch:int,
             k:int,
             s:int,
             p:int,
             d:int,
-            g:int, 
+            g:int,
             activation:str
     ):
         super(Conv_Block_NONB, self).__init__()
@@ -231,7 +231,7 @@ class DepthWise_Conv(nn.Module):
             torch.Tensor: 经过深度卷积后生成的张量。
         '''
         return self.forward_basic(x)
-        
+
 
 
 class PointWise_Conv(nn.Module):
@@ -247,7 +247,7 @@ class PointWise_Conv(nn.Module):
     def __init__(
             self,
             in_ch:int,
-            out_ch:int, 
+            out_ch:int,
             s:int,
     ):
         super(PointWise_Conv , self).__init__()
@@ -322,8 +322,8 @@ class DepthWiseSeparable_Conv(nn.Module):
                 s=s_P
             ),
             nn.BatchNorm2d(out_ch),
-            get_activation(activation , ACTIVATION_MAP) 
-        )        
+            get_activation(activation , ACTIVATION_MAP)
+        )
     def forward(self , x):
         '''
         深度可分离卷积的前向传播函数
@@ -470,7 +470,7 @@ class CBAM_Channel_Attention(nn.Module):
             ),
         )
         self.sigmoid = nn.Sigmoid()
-    
+
     def forward(self , x):
         '''
         CBAM注意力机制子模块,也就是通道注意力机制模块的前向传播函数
@@ -499,24 +499,24 @@ class CBAM_Spatial_Attention(nn.Module):
     Args:
         k(int) : 卷积核的大小
 
-    Notes:  
+    Notes:
         其他的请参见forward函数的具体说明。
 
     '''
     def __init__(
             self,
-            k:int, 
+            k:int,
             ):
         super(CBAM_Spatial_Attention , self).__init__()
         self.conv = nn.Conv2d(
-            in_channels=2, 
-            out_channels=1 , 
+            in_channels=2,
+            out_channels=1 ,
             kernel_size=k,
             padding=k//2,
             bias=False
         )
         self.sigmoid = nn.Sigmoid()
-    
+
     def forward(self , x):
         '''
         CBAM空间注意力机制的前向传播函数
@@ -564,12 +564,8 @@ class CBAM(nn.Module):
         self.spatial_attention = CBAM_Spatial_Attention(
             k=k
         )
-        
+
     def forward(self , x):
         x = self.channel_attention(x)
         x = self.spatial_attention(x)
         return x
-    
-
-
-
