@@ -54,6 +54,15 @@
 # 安装依赖
 pip install -r requirements.txt
 
+# 一键训练（默认配置）
+python train.py
+
+# 覆盖超参数
+python train.py --imgsz 256 --epochs 50 --batch 16 --lr 5e-4
+
+# 使用 JSON 配置
+python train.py --cfg configs/train.json
+
 # 训练（自动使用合成数据验证链路）
 python scripts/train.py --epochs 10 --batch 8
 
@@ -68,6 +77,11 @@ python scripts/predict.py \
   --source path/to/image.jpg \
   --weights runs/train/exp/weights/best.pt
 ```
+
+### 一键训练入口
+
+- 推荐使用 [train.py](train.py) 作为统一训练入口，支持 CLI 覆盖与 JSON 配置。
+- 可直接编辑 [configs/train.json](configs/train.json)，也可运行 `python train.py --print-cfg` 查看合并后的配置。
 
 ### 核心特性
 
