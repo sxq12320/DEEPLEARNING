@@ -27,7 +27,7 @@ DEFAULT_CFG = {
 	"synthetic_length": 32,
 	"augment": True,
 	"cpu": False,
-	"project": "1.coding/0_segment/checkpoints/results",
+	"project": "0_segment/checkpoints/results",
 	"name": "test_1",
 	"seed": 22,
 }
