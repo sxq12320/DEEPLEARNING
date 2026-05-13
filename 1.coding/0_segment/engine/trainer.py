@@ -53,6 +53,11 @@ class Trainer:
             None: 本函数无显式返回值。
         """
         loader = self.build_dataloader()
+        
+        # 预防当数据集为空时出现的 ZeroDivisionError 等崩溃问题
+        if len(loader) == 0:
+            raise ValueError("数据集为空或未能正确加载任何批次（Batches: 0）。请检查 image_dir 与 label_dir 路径，或确保合成数据集长度充足！")
+            
         print(f"Device: {self.device}")
         print(f"Dataset size: {len(loader.dataset)}, Batches: {len(loader)}")
 

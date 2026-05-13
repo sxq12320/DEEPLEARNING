@@ -1,6 +1,6 @@
 """模型基础卷积模块封装库。
 
-这里包含了常用的各种基础构建块，如基础卷积操作，以及不同形式的池化层封装。
+这里包含了常用的各种基础构建块,如基础卷积操作,以及不同形式的池化层封装。
 所有模块注册在内部的注册表中以便于统一调用。
 """
 
@@ -20,7 +20,7 @@ from models import registry
 class MaxPool(nn.Module):
     """最大池化层封装。
     
-    提供了一个简单的最大池化层封装，继承自 nn.Module。
+    提供了一个简单的最大池化层封装,继承自 nn.Module。
     
     Attributes:
         k (int): 卷积核大小。
@@ -51,7 +51,7 @@ class MaxPool(nn.Module):
 class AdaptiveMaxPool(nn.Module):
     """自适应最大池化层封装。
 
-    提供自适应大小的最大池化功能，可动态输出指定尺寸特征图。
+    提供自适应大小的最大池化功能,可动态输出指定尺寸特征图。
 
     Attributes:
         output_size (int | Tuple[int, int]): 输出尺寸。
@@ -527,9 +527,9 @@ class CBAM(nn.Module):
 ############################################################
 @register_block('fpn_lateral_conv')
 class FPNLateralConv(nn.Module):
-    """FPN 侧向 1×1 卷积，将 backbone 各级特征通道数统一到 FPN 输出通道。
+    """FPN 侧向 1×1 卷积,将 backbone 各级特征通道数统一到 FPN 输出通道。
 
-    侧向连接不改变空间分辨率，仅做通道对齐，
+    侧向连接不改变空间分辨率,仅做通道对齐,
     使 top-down pathway 中的逐元素加法可行。
     """
 
@@ -557,9 +557,9 @@ class FPNLateralConv(nn.Module):
 
 @register_block('fpn_output_conv')
 class FPNOutputConv(nn.Module):
-    """FPN 输出 3×3 卷积，消除上采样 + 逐元素加法带来的混叠伪影。
+    """FPN 输出 3×3 卷积,消除上采样 + 逐元素加法带来的混叠伪影。
 
-    在 top-down pathway 融合完成后施加，平滑最终的多尺度输出，
+    在 top-down pathway 融合完成后施加,平滑最终的多尺度输出,
     作用是稳定训练并提升小目标分割精度。
     """
 
@@ -585,10 +585,10 @@ class FPNOutputConv(nn.Module):
 
 
 class FPN(nn.Module):
-    """特征金字塔网络（Feature Pyramid Network），自顶向下融合多尺度特征。
+    """特征金字塔网络（Feature Pyramid Network）,自顶向下融合多尺度特征。
 
-    输入 backbone 的四个阶段特征 [c2, c3, c4, c5]，
-    通过 top-down pathway + lateral connection 融合，
+    输入 backbone 的四个阶段特征 [c2, c3, c4, c5],
+    通过 top-down pathway + lateral connection 融合,
     输出统一通道数的多尺度特征 [p2, p3, p4, p5]。
 
     典型用法：
@@ -602,7 +602,7 @@ class FPN(nn.Module):
         """初始化 FPN。
 
         Args:
-            in_channels_list (List[int]): backbone 各级特征通道数，自底向上排列。
+            in_channels_list (List[int]): backbone 各级特征通道数,自底向上排列。
             out_channels (int): FPN 输出特征的统一通道数。
         """
         super().__init__()
@@ -616,20 +616,20 @@ class FPN(nn.Module):
         ])
 
     def forward(self, features):
-        """前向传播，自顶向下融合。
+        """前向传播,自顶向下融合。
 
         Args:
-            features (List[torch.Tensor]): backbone 各阶段特征图，
+            features (List[torch.Tensor]): backbone 各阶段特征图,
                                            自底向上排列 [c2, c3, c4, c5]。
 
         Returns:
-            List[torch.Tensor]: FPN 融合后的多尺度特征 [p2, p3, p4, p5]，
+            List[torch.Tensor]: FPN 融合后的多尺度特征 [p2, p3, p4, p5],
                                 各层通道数 = out_channels。
         """
         # 侧向 1×1 卷积对齐通道
         laterals = [conv(f) for conv, f in zip(self.lateral_convs, features)]
 
-        # 自顶向下路径：从最高层 c5 开始，逐步上采样并融合
+        # 自顶向下路径：从最高层 c5 开始,逐步上采样并融合
         fused = []
         prev = laterals[-1]  # p5 ← lateral(c5)
         fused.append(prev)
@@ -696,11 +696,11 @@ class Linear(nn.Module):
 
 @register_block('c3k2')
 class C3k2(nn.Module):
-    """C3k2 模块 (YOLO11 架构衍生)，即自定义跨阶段局部网络（CSP）瓶颈层构建块。
+    """C3k2 模块 (YOLO11 架构衍生),即自定义跨阶段局部网络（CSP）瓶颈层构建块。
 
     C3k2 是 YOLO 模型中常用的基于 CSP 的高级特征提取块。它通过一条主分支
-    执行连续的瓶颈层操作，并由一个额外捷径（shortcut）通道将特征组合起来，
-    能在不大幅度增加算力的同时，较好地保留并整合多尺度、多层级语义细节。
+    执行连续的瓶颈层操作,并由一个额外捷径（shortcut）通道将特征组合起来,
+    能在不大幅度增加算力的同时,较好地保留并整合多尺度、多层级语义细节。
 
     Attributes:
         in_ch (int): 输入通道数量。
@@ -720,7 +720,7 @@ class C3k2(nn.Module):
         self.act1 = nn.SiLU(inplace=True)
 
         # 构建内部多级联串联的块 (Bottleneck机制)
-        # 此处给出最为经典通用的 3x3 + 3x3 串联表达形式，模拟 YOLO 系列中的 Bottleneck
+        # 此处给出最为经典通用的 3x3 + 3x3 串联表达形式,模拟 YOLO 系列中的 Bottleneck
         self.m = nn.ModuleList()
         for _ in range(n):
             bottle_neck = nn.Sequential(
@@ -731,7 +731,7 @@ class C3k2(nn.Module):
                 nn.BatchNorm2d(hid_c),
                 nn.SiLU(inplace=True)
             )
-            # 是否含有 shortcut 根据用户设置可额外拓展，简化为包含在结构中
+            # 是否含有 shortcut 根据用户设置可额外拓展,简化为包含在结构中
             self.m.append(bottle_neck)
 
         self.conv2 = nn.Conv2d((2 + n) * hid_c, out_ch, kernel_size=1, stride=1, padding=0, bias=False)
