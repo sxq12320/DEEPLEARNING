@@ -1,4 +1,7 @@
 import torch.nn as nn
+import torch
+import torch.nn.functional as F
+import torch.fft
 
 
 class SegmentationLoss(nn.Module):
@@ -33,3 +36,4 @@ class SegmentationLoss(nn.Module):
             torch.Tensor: 损失值。
         """
         return self.criterion(pred, target)
+    
