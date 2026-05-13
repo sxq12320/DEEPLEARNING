@@ -329,9 +329,10 @@ class ContMix(nn.Module):
         dynamic_k = self.kernel_gen(kernel_in) + self.kernel_bias  # [B, K², H, W]
 
         # 5. Expand dynamic kernel per channel and apply via unfold
-        # k_rep: [B, C, K², H*W]
-        k_rep = (dynamic_k.unsqueeze(1) * self.kernel_scale)  # [B, 1, K², H, W]
-        k_rep = k_rep.expand(-1, C, -1, -1, -1)  # [B, C, K², H, W]
+        # dynamic_k: [B, K², H, W] — one kernel per spatial position
+        # Expand to [B, C, K², H, W] then reshape for per-channel dynamic conv
+        k_rep = dynamic_k.unsqueeze(1).expand(-1, C, -1, -1, -1)  # [B, C, K², H, W]
+        k_rep = k_rep * self.kernel_scale.reshape(1, C, 1, 1, 1)  # per-channel scale
         k_flat = k_rep.reshape(B, C, self.kernel_size * self.kernel_size, H * W)
 
         # Unfold input: every channel's K×K neighbourhood → [B, C, K², H*W]
