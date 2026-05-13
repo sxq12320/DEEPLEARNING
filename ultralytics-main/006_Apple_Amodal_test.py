@@ -50,8 +50,11 @@ if __name__ == '__main__':
         data=r'ultralytics-main/206_Apple_Amodal.yaml',
         project=r'ultralytics-main/results',
         name='12_yolo11n-seg-origin-circle-predicted',
-        epochs=400,
+        epochs=300,
         imgsz=640,
         batch=4,
         lr0=0.0001,
+        workers=4,
+        device = 0,
+
     )

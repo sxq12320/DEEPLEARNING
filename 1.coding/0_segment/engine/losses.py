@@ -5,6 +5,7 @@
 """
 
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -72,9 +73,11 @@ def make_anchors(feats, strides, grid_cell_offset=0.5):
         # 网格中心坐标
         sx = torch.arange(w, dtype=feat.dtype, device=feat.device) + grid_cell_offset
         sy = torch.arange(h, dtype=feat.dtype, device=feat.device) + grid_cell_offset
-        sy, sx = torch.meshgrid(sy, sx, indexing='ij')
+        sy, sx = torch.meshgrid(sy, sx, indexing="ij")
         anchor_points.append(torch.stack([sx, sy], dim=-1).reshape(-1, 2))
-        stride_tensor.append(torch.full((h * w, 1), stride, dtype=feat.dtype, device=feat.device))
+        stride_tensor.append(
+            torch.full((h * w, 1), stride, dtype=feat.dtype, device=feat.device)
+        )
     return torch.cat(anchor_points), torch.cat(stride_tensor)
 
 
@@ -120,10 +123,13 @@ def bbox2dist(anchor_points, bbox, reg_max):
     Returns:
         torch.Tensor: DFL 目标索引 (N, 4)，取值 [0, reg_max-1]。
     """
-    ltrb_offset = torch.cat([
-        anchor_points - bbox[..., :2],
-        bbox[..., 2:] - anchor_points,
-    ], dim=-1)
+    ltrb_offset = torch.cat(
+        [
+            anchor_points - bbox[..., :2],
+            bbox[..., 2:] - anchor_points,
+        ],
+        dim=-1,
+    )
     return ltrb_offset.clamp(0, reg_max - 1).long()
 
 
@@ -152,8 +158,9 @@ class TaskAlignedAssigner(nn.Module):
         self.eps = 1e-9
 
     @torch.no_grad()
-    def forward(self, pred_scores, pred_bboxes, gt_labels, gt_bboxes,
-                anchor_points, stride):
+    def forward(
+        self, pred_scores, pred_bboxes, gt_labels, gt_bboxes, anchor_points, stride
+    ):
         """执行标签分配。
 
         Args:
@@ -175,8 +182,9 @@ class TaskAlignedAssigner(nn.Module):
         num_gts = gt_bboxes.shape[1]
 
         device = pred_scores.device
-        target_labels = torch.full((bs, num_anchors), pred_scores.shape[-1],
-                                   dtype=torch.int64, device=device)
+        target_labels = torch.full(
+            (bs, num_anchors), pred_scores.shape[-1], dtype=torch.int64, device=device
+        )
         target_bboxes = torch.zeros(bs, num_anchors, 4, device=device)
         target_scores = torch.zeros(bs, num_anchors, device=device)
         fg_mask = torch.zeros(bs, num_anchors, dtype=torch.bool, device=device)
@@ -188,14 +196,20 @@ class TaskAlignedAssigner(nn.Module):
                 continue
 
             gt_box = gt_bboxes[b][valid_gt]
-            gt_label = gt_labels[b][valid_gt].squeeze(-1) if gt_labels[b].ndim == 2 else gt_labels[b][valid_gt]
+            gt_label = (
+                gt_labels[b][valid_gt].squeeze(-1)
+                if gt_labels[b].ndim == 2
+                else gt_labels[b][valid_gt]
+            )
 
             # ---- 计算 pairwise IoU ----
             lt = torch.max(pred_bboxes[b, :, None, :2], gt_box[None, :, :2])
             rb = torch.min(pred_bboxes[b, :, None, 2:], gt_box[None, :, 2:])
             wh = (rb - lt).clamp(min=0)
             inter = wh[..., 0] * wh[..., 1]
-            area_p = (pred_bboxes[b, :, 2] - pred_bboxes[b, :, 0]) * (pred_bboxes[b, :, 3] - pred_bboxes[b, :, 1])
+            area_p = (pred_bboxes[b, :, 2] - pred_bboxes[b, :, 0]) * (
+                pred_bboxes[b, :, 3] - pred_bboxes[b, :, 1]
+            )
             area_g = (gt_box[:, 2] - gt_box[:, 0]) * (gt_box[:, 3] - gt_box[:, 1])
             iou = inter / (area_p[:, None] + area_g[None, :] - inter + self.eps)
 
@@ -203,13 +217,15 @@ class TaskAlignedAssigner(nn.Module):
             cls_score = pred_scores[b].sigmoid().max(dim=-1)[0]  # (N,)
 
             # ---- 对齐度 ----
-            align_metric = (cls_score[:, None] ** self.alpha) * (iou ** self.beta)
+            align_metric = (cls_score[:, None] ** self.alpha) * (iou**self.beta)
             # 过滤无效锚点（框中心超出 GT 范围的锚点）
             gt_centers = (gt_box[:, :2] + gt_box[:, 2:]) / 2.0
-            anchor_in_gt = (anchor_points[:, 0] >= gt_centers[:, 0].min()) & \
-                           (anchor_points[:, 0] <= gt_centers[:, 0].max()) & \
-                           (anchor_points[:, 1] >= gt_centers[:, 1].min()) & \
-                           (anchor_points[:, 1] <= gt_centers[:, 1].max())
+            anchor_in_gt = (
+                (anchor_points[:, 0] >= gt_centers[:, 0].min())
+                & (anchor_points[:, 0] <= gt_centers[:, 0].max())
+                & (anchor_points[:, 1] >= gt_centers[:, 1].min())
+                & (anchor_points[:, 1] <= gt_centers[:, 1].max())
+            )
             align_metric = align_metric * anchor_in_gt[:, None].float()
 
             # ---- topk 选择 ----
@@ -255,8 +271,12 @@ def ciou_loss(pred_bboxes, target_bboxes, eps=1e-7):
     rb = torch.min(pred_bboxes[..., 2:], target_bboxes[..., 2:])
     wh = (rb - lt).clamp(min=eps)
     inter = wh[..., 0] * wh[..., 1]
-    area_p = (pred_bboxes[..., 2] - pred_bboxes[..., 0]) * (pred_bboxes[..., 3] - pred_bboxes[..., 1])
-    area_g = (target_bboxes[..., 2] - target_bboxes[..., 0]) * (target_bboxes[..., 3] - target_bboxes[..., 1])
+    area_p = (pred_bboxes[..., 2] - pred_bboxes[..., 0]) * (
+        pred_bboxes[..., 3] - pred_bboxes[..., 1]
+    )
+    area_g = (target_bboxes[..., 2] - target_bboxes[..., 0]) * (
+        target_bboxes[..., 3] - target_bboxes[..., 1]
+    )
     union = area_p + area_g - inter + eps
     iou = inter / union
 
@@ -269,9 +289,17 @@ def ciou_loss(pred_bboxes, target_bboxes, eps=1e-7):
     c2 = ((enclose_rb - enclose_lt) ** 2).sum(dim=-1) + eps
 
     # 宽高比一致性 v
-    w_p, h_p = pred_bboxes[..., 2] - pred_bboxes[..., 0], pred_bboxes[..., 3] - pred_bboxes[..., 1]
-    w_g, h_g = target_bboxes[..., 2] - target_bboxes[..., 0], target_bboxes[..., 3] - target_bboxes[..., 1]
-    v = (4.0 / (math.pi ** 2)) * ((torch.atan(w_g / (h_g + eps)) - torch.atan(w_p / (h_p + eps))) ** 2)
+    w_p, h_p = (
+        pred_bboxes[..., 2] - pred_bboxes[..., 0],
+        pred_bboxes[..., 3] - pred_bboxes[..., 1],
+    )
+    w_g, h_g = (
+        target_bboxes[..., 2] - target_bboxes[..., 0],
+        target_bboxes[..., 3] - target_bboxes[..., 1],
+    )
+    v = (4.0 / (math.pi**2)) * (
+        (torch.atan(w_g / (h_g + eps)) - torch.atan(w_p / (h_p + eps))) ** 2
+    )
     with torch.no_grad():
         alpha = v / (1 - iou + v + eps)
 
@@ -304,11 +332,11 @@ def distribution_focal_loss(pred_dist, target_idx, reg_max, weight=None, eps=1e-
     left = target_idx
     right = (target_idx + 1).clamp(max=reg_max - 1)
 
-    loss_left = F.cross_entropy(pred_dist, left, reduction='none')
-    loss_right = F.cross_entropy(pred_dist, right, reduction='none')
+    loss_left = F.cross_entropy(pred_dist, left, reduction="none")
+    loss_right = F.cross_entropy(pred_dist, right, reduction="none")
     # 线性插值权重：目标越靠近整数，权重越集中
-    w_right = (target_idx.float() - left.float())
-    w_left = (right.float() - target_idx.float())
+    w_right = target_idx.float() - left.float()
+    w_left = right.float() - target_idx.float()
 
     dfl = loss_left * w_left + loss_right * w_right
     if weight is not None:
@@ -339,8 +367,16 @@ class YOLODetectionLoss(nn.Module):
         dfl_gain (float): DFL 损失权重。
     """
 
-    def __init__(self, num_classes=80, reg_max=16, strides=(8, 16, 32),
-                 tal_topk=13, box_gain=7.5, cls_gain=0.5, dfl_gain=1.5):
+    def __init__(
+        self,
+        num_classes=80,
+        reg_max=16,
+        strides=(8, 16, 32),
+        tal_topk=13,
+        box_gain=7.5,
+        cls_gain=0.5,
+        dfl_gain=1.5,
+    ):
         """初始化检测损失函数。"""
         super().__init__()
         self.num_classes = num_classes
@@ -349,7 +385,7 @@ class YOLODetectionLoss(nn.Module):
         self.box_gain = box_gain
         self.cls_gain = cls_gain
         self.dfl_gain = dfl_gain
-        self.bce = nn.BCEWithLogitsLoss(reduction='none')
+        self.bce = nn.BCEWithLogitsLoss(reduction="none")
         self.assigner = TaskAlignedAssigner(topk=tal_topk)
 
     def forward(self, cls_preds, reg_preds, targets, features):
@@ -390,22 +426,27 @@ class YOLODetectionLoss(nn.Module):
         pred_boxes = dist2bbox(pred_reg, anchor_points, stride_tensor)  # (B, N, 4)
 
         # ---- 构建真实标注张量 ----
-        max_gts = max(len(t['labels']) for t in targets) if targets else 0
+        max_gts = max(len(t["labels"]) for t in targets) if targets else 0
         if max_gts == 0:
             # 无可用的真实框，返回零损失
             return torch.tensor(0.0, device=device, requires_grad=True), {
-                'box': 0.0, 'cls': 0.0, 'dfl': 0.0
+                "box": 0.0,
+                "cls": 0.0,
+                "dfl": 0.0,
             }
 
         gt_labels = torch.zeros(bs, max_gts, dtype=torch.int64, device=device)
         gt_bboxes = torch.zeros(bs, max_gts, 4, device=device)
         for i, t in enumerate(targets):
-            m = len(t['labels'])
+            m = len(t["labels"])
             if m > 0:
-                gt_labels[i, :m] = t['labels'].to(device)
+                gt_labels[i, :m] = t["labels"].to(device)
                 # 将归一化坐标转为像素坐标
-                img_h, img_w = features[0].shape[2] * self.strides[0], features[0].shape[3] * self.strides[0]
-                boxes = t['boxes'].to(device).clone()
+                img_h, img_w = (
+                    features[0].shape[2] * self.strides[0],
+                    features[0].shape[3] * self.strides[0],
+                )
+                boxes = t["boxes"].to(device).clone()
                 boxes[:, [0, 2]] *= img_w
                 boxes[:, [1, 3]] *= img_h
                 gt_bboxes[i, :m] = boxes
@@ -413,18 +454,25 @@ class YOLODetectionLoss(nn.Module):
         # ---- 标签分配 ----
         pred_scores = pred_cls.detach().sigmoid()
         target_labels, target_bboxes, target_scores, fg_mask = self.assigner(
-            pred_scores, pred_boxes.detach(), gt_labels, gt_bboxes,
-            anchor_points, stride_tensor
+            pred_scores,
+            pred_boxes.detach(),
+            gt_labels,
+            gt_bboxes,
+            anchor_points,
+            stride_tensor,
         )
 
         if fg_mask.sum() == 0:
             return torch.tensor(0.0, device=device, requires_grad=True), {
-                'box': 0.0, 'cls': 0.0, 'dfl': 0.0
+                "box": 0.0,
+                "cls": 0.0,
+                "dfl": 0.0,
             }
 
         # ---- 分类损失 (BCE) ----
-        cls_target = F.one_hot(target_labels.clamp_max(self.num_classes),
-                               self.num_classes + 1)[..., :-1].float()  # drop background class
+        cls_target = F.one_hot(
+            target_labels.clamp_max(self.num_classes), self.num_classes + 1
+        )[..., :-1].float()  # drop background class
         cls_target = cls_target * target_scores.unsqueeze(-1)
         cls_loss = self.bce(pred_cls, cls_target).sum(dim=-1)  # (B, N)
         cls_loss = (cls_loss * fg_mask.float()).sum() / max(fg_mask.sum(), 1)
@@ -435,7 +483,9 @@ class YOLODetectionLoss(nn.Module):
             pred_boxes_fg = pred_boxes[fg_idx]
             target_boxes_fg = target_bboxes[fg_idx]
             ciou = ciou_loss(pred_boxes_fg, target_boxes_fg)
-            box_loss = (ciou * target_scores[fg_idx]).sum() / max(target_scores[fg_idx].sum(), 1)
+            box_loss = (ciou * target_scores[fg_idx]).sum() / max(
+                target_scores[fg_idx].sum(), 1
+            )
         else:
             box_loss = torch.tensor(0.0, device=device)
 
@@ -445,10 +495,11 @@ class YOLODetectionLoss(nn.Module):
             anchor_fg = anchor_points[fg_idx[1]]
             stride_fg = stride_tensor[fg_idx[1]]
             # 将目标框转为相对锚点的距离并量化
-            ltrb_target = bbox2dist(anchor_fg, target_boxes_fg / stride_fg, self.reg_max)
+            ltrb_target = bbox2dist(
+                anchor_fg, target_boxes_fg / stride_fg, self.reg_max
+            )
             dfl_loss = distribution_focal_loss(
-                pred_dist_fg, ltrb_target, self.reg_max,
-                weight=target_scores[fg_idx]
+                pred_dist_fg, ltrb_target, self.reg_max, weight=target_scores[fg_idx]
             )
         else:
             dfl_loss = torch.tensor(0.0, device=device)
@@ -460,7 +511,7 @@ class YOLODetectionLoss(nn.Module):
         total_loss = box_loss + cls_loss + dfl_loss
 
         return total_loss, {
-            'box': box_loss.detach().item() if torch.is_tensor(box_loss) else box_loss,
-            'cls': cls_loss.detach().item() if torch.is_tensor(cls_loss) else cls_loss,
-            'dfl': dfl_loss.detach().item() if torch.is_tensor(dfl_loss) else dfl_loss,
+            "box": box_loss.detach().item() if torch.is_tensor(box_loss) else box_loss,
+            "cls": cls_loss.detach().item() if torch.is_tensor(cls_loss) else cls_loss,
+            "dfl": dfl_loss.detach().item() if torch.is_tensor(dfl_loss) else dfl_loss,
         }

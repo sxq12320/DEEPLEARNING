@@ -44,11 +44,15 @@ def compute_dice(pred: torch.Tensor, target: torch.Tensor, smooth=1e-6) -> float
         pred = pred.squeeze(1)
         target = target.squeeze(1)
     intersection = (pred * target).sum(dim=(1, 2))
-    dice = (2. * intersection + smooth) / (pred.sum(dim=(1, 2)) + target.sum(dim=(1, 2)) + smooth)
+    dice = (2.0 * intersection + smooth) / (
+        pred.sum(dim=(1, 2)) + target.sum(dim=(1, 2)) + smooth
+    )
     return dice.mean().item()
 
 
-def calculate_map(pred_masks: List[np.ndarray], gt_masks: List[np.ndarray], iou_thresholds=None):
+def calculate_map(
+    pred_masks: List[np.ndarray], gt_masks: List[np.ndarray], iou_thresholds=None
+):
     """mAP 计算接口（预留，需要根据具体任务实现）。
 
     Args:
@@ -62,4 +66,4 @@ def calculate_map(pred_masks: List[np.ndarray], gt_masks: List[np.ndarray], iou_
     if iou_thresholds is None:
         iou_thresholds = [0.5]
     print("mAP 计算尚未实现，请根据具体任务实现。")
-    return {f'mAP@{t}': 0.0 for t in iou_thresholds}
+    return {f"mAP@{t}": 0.0 for t in iou_thresholds}

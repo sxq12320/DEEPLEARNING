@@ -45,7 +45,7 @@ def TXT2MASK(label_dir, image_name, target_size):
         return label
 
     try:
-        with open(txt_path, 'r', encoding='utf-8') as f:
+        with open(txt_path, "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f.readlines() if line.strip()]
 
         for line in lines:
@@ -88,10 +88,10 @@ def JSON2MASK(label_dir, image_name, target_size):
     label = np.zeros((h, w, 1), dtype=np.uint8)
 
     json_path = None
-    if os.path.isfile(label_dir) and label_dir.lower().endswith('.json'):
+    if os.path.isfile(label_dir) and label_dir.lower().endswith(".json"):
         json_path = label_dir
     else:
-        json_files = [f for f in os.listdir(label_dir) if f.lower().endswith('.json')]
+        json_files = [f for f in os.listdir(label_dir) if f.lower().endswith(".json")]
         if json_files:
             json_path = os.path.join(label_dir, json_files[0])
 
@@ -99,24 +99,26 @@ def JSON2MASK(label_dir, image_name, target_size):
         return label
 
     try:
-        with open(json_path, 'r', encoding='utf-8') as f:
+        with open(json_path, "r", encoding="utf-8") as f:
             coco_data = json.load(f)
 
-        img_id_map = {img['file_name']: img['id'] for img in coco_data.get('images', [])}
-        img_info_map = {img['id']: img for img in coco_data.get('images', [])}
+        img_id_map = {
+            img["file_name"]: img["id"] for img in coco_data.get("images", [])
+        }
+        img_info_map = {img["id"]: img for img in coco_data.get("images", [])}
 
         image_id = img_id_map.get(image_name)
         if image_id is None:
             return label
 
-        img_w = img_info_map[image_id].get('width', w)
-        img_h = img_info_map[image_id].get('height', h)
+        img_w = img_info_map[image_id].get("width", w)
+        img_h = img_info_map[image_id].get("height", h)
 
-        for ann in coco_data.get('annotations', []):
-            if ann.get('image_id') != image_id:
+        for ann in coco_data.get("annotations", []):
+            if ann.get("image_id") != image_id:
                 continue
-            cls_id = int(ann.get('category_id', 1))
-            segmentation = ann.get('segmentation', [])
+            cls_id = int(ann.get("category_id", 1))
+            segmentation = ann.get("segmentation", [])
 
             if isinstance(segmentation, list) and segmentation:
                 for poly in segmentation:
@@ -128,15 +130,18 @@ def JSON2MASK(label_dir, image_name, target_size):
                     pts[:, 1] = pts[:, 1] / max_len * h
                     pts = np.round(pts).astype(np.int32)
                     cv2.fillPoly(label, [pts], color=cls_id)
-            elif isinstance(segmentation, dict) and 'counts' in segmentation:
+            elif isinstance(segmentation, dict) and "counts" in segmentation:
                 pass
             else:
-                bbox = ann.get('bbox', None)
+                bbox = ann.get("bbox", None)
                 if bbox and len(bbox) == 4:
                     x, y, bw, bh = bbox
                     max_len = max(img_w, img_h)
                     x1, y1 = int(max(0, x / max_len * w)), int(max(0, y / max_len * h))
-                    x2, y2 = int(min(w - 1, (x + bw) / max_len * w)), int(min(h - 1, (y + bh) / max_len * h))
+                    x2, y2 = (
+                        int(min(w - 1, (x + bw) / max_len * w)),
+                        int(min(h - 1, (y + bh) / max_len * h)),
+                    )
                     cv2.rectangle(label, (x1, y1), (x2, y2), color=cls_id, thickness=-1)
     except Exception as e:
         print(f"读取 JSON 标签失败: {json_path}, 错误: {e}")

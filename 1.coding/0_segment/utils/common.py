@@ -17,7 +17,9 @@ def get_activation(act_name: str, activation_map: dict):
     act_name = act_name.strip().lower()
     if act_name not in activation_map:
         supported = ",".join(sorted(activation_map.keys()))
-        raise ValueError(f"Unsupported activation: {act_name}. Supported activations: {supported}")
+        raise ValueError(
+            f"Unsupported activation: {act_name}. Supported activations: {supported}"
+        )
     return activation_map[act_name]
 
 

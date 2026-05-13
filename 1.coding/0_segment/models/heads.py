@@ -46,22 +46,30 @@ class YOLO11Head(nn.Module):
             # 分类分支：两层 3×3 卷积 + 1×1 分类输出
             cls_layers = []
             for _ in range(2):
-                cls_layers.extend([
-                    nn.Conv2d(ch, ch, kernel_size=3, stride=1, padding=1, bias=False),
-                    nn.BatchNorm2d(ch),
-                    nn.SiLU(inplace=True),
-                ])
+                cls_layers.extend(
+                    [
+                        nn.Conv2d(
+                            ch, ch, kernel_size=3, stride=1, padding=1, bias=False
+                        ),
+                        nn.BatchNorm2d(ch),
+                        nn.SiLU(inplace=True),
+                    ]
+                )
             cls_layers.append(nn.Conv2d(ch, num_classes, kernel_size=1))
             self.cls_branch.append(nn.Sequential(*cls_layers))
 
             # 回归分支：两层 3×3 卷积 + 1×1 回归输出（4 * reg_max 通道）
             reg_layers = []
             for _ in range(2):
-                reg_layers.extend([
-                    nn.Conv2d(ch, ch, kernel_size=3, stride=1, padding=1, bias=False),
-                    nn.BatchNorm2d(ch),
-                    nn.SiLU(inplace=True),
-                ])
+                reg_layers.extend(
+                    [
+                        nn.Conv2d(
+                            ch, ch, kernel_size=3, stride=1, padding=1, bias=False
+                        ),
+                        nn.BatchNorm2d(ch),
+                        nn.SiLU(inplace=True),
+                    ]
+                )
             reg_layers.append(nn.Conv2d(ch, 4 * reg_max, kernel_size=1))
             self.reg_branch.append(nn.Sequential(*reg_layers))
 

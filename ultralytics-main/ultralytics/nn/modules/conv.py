@@ -28,7 +28,7 @@ __all__ = (
 # LSnet网络模块基础架构
 
 class LSConv(nn.Module):
-    """Large-Small Convolution based on CVPR 2025 LSNet"""
+    """Large-Small Convolution based on CVPR 2025 LSNet (lightweight variant for C3k2_LS)."""
 
     def __init__(self, c1, c2, k_l=7, k_s=3, reduction=4):
         super().__init__()
@@ -47,16 +47,13 @@ class LSConv(nn.Module):
         self.proj = Conv(c1, c2, 1)
 
     def forward(self, x):
-        # Generate Aggregation Weights (See Large)
         w = self.lkp_pw1(x)
         w = self.lkp_dw(w)
         w = self.lkp_pw2(w)
         w = self.act(w)
 
-        # Extract Local Features (Focus Small)
         x_s = self.ska_dw(x)
 
-        # Dynamic Fusion and Projection
         return self.proj(x_s * w)
 
 
@@ -68,7 +65,6 @@ class C3k2_LS(nn.Module):
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c1, c_, 1, 1)
-        # 核心修改：将内部循环堆叠的模块替换为 LSConv
         self.m = nn.ModuleList(LSConv(c_, c_) for _ in range(n))
         self.cv3 = Conv(c_ * 2, c2, 1)
 

@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 
 from .backbones import YOLO11Backbone
-from .necks import YOLO11Neck
 from .heads import YOLO11Head
+from .necks import YOLO11Neck
 
 
 class YOLO11Detector(nn.Module):
@@ -31,8 +31,9 @@ class YOLO11Detector(nn.Module):
         depth_scale (float): 深度缩放因子。
     """
 
-    def __init__(self, num_classes=80, reg_max=16,
-                 backbone_channels=None, depth_scale=1.0):
+    def __init__(
+        self, num_classes=80, reg_max=16, backbone_channels=None, depth_scale=1.0
+    ):
         """初始化 YOLO11 检测器。
 
         Args:
@@ -57,9 +58,7 @@ class YOLO11Detector(nn.Module):
         self.backbone = YOLO11Backbone(
             channels=backbone_channels, depth_scale=depth_scale
         )
-        self.neck = YOLO11Neck(
-            channels=neck_channels, depth_scale=depth_scale
-        )
+        self.neck = YOLO11Neck(channels=neck_channels, depth_scale=depth_scale)
         self.head = YOLO11Head(
             num_classes=num_classes, reg_max=reg_max, channels=neck_channels
         )
@@ -80,8 +79,8 @@ class YOLO11Detector(nn.Module):
                                                供损失函数使用。
                 neck_feats (List[torch.Tensor]): neck 融合特征 [N3, N4, N5]。
         """
-        features = self.backbone(x)         # [P3, P4, P5]
-        neck_feats = self.neck(features)    # [N3, N4, N5]
+        features = self.backbone(x)  # [P3, P4, P5]
+        neck_feats = self.neck(features)  # [N3, N4, N5]
         cls_list, reg_list = self.head(neck_feats)
         return cls_list, reg_list, features, neck_feats
 

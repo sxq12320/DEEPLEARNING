@@ -81,6 +81,17 @@ from ultralytics.nn.modules import (
     LightConv,
     C3k2DW,
     C3k2_LS,
+    ContMix,
+    OverLoCKBlock,
+    LSBlock,
+    LSConv,
+    LSNetBackbone,
+    LSNetDownsample,
+    LSNet_B,
+    LSNet_S,
+    LSNet_T,
+    MSAStageBlock,
+    PatchEmbed,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1626,6 +1637,12 @@ def parse_model(d, ch, verbose=True):
             LightConv,
             C3k2DW,
             C3k2_LS,
+            OverLoCKBlock,
+            LSBlock,
+            LSConv,
+            MSAStageBlock,
+            PatchEmbed,
+            LSNetDownsample,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments

@@ -53,7 +53,9 @@ __all__ = (
     "SCDown",
     "TorchVision",
     "C3k2DW",
-    "DSConv"
+    "DSConv",
+    "ContMix",
+    "OverLoCKBlock",
 )
 ###################################################################################
 #                                                                                 #
@@ -238,6 +240,150 @@ class ScalarAttention(nn.Module):
         b, c, _, _ = x.shape
         alpha = self.fc(self.pool(x).view(b, c))
         return x * alpha.view(b, 1, 1, 1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  OverLoCK: Overview-first-Look-Closely-next with Context-Mixing Dynamic Kernels
+#  CVPR 2025 Oral — https://github.com/LMMMEng/OverLoCK
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class ContMix(nn.Module):
+    """Context-Mixing Dynamic Convolution (CVPR 2025 OverLoCK).
+
+    Generates spatially-varying dynamic convolution kernels by mixing global
+    context with local features. For each spatial token:
+      1. Context is pooled to an S×S grid, producing S² region descriptors.
+      2. The descriptor is broadcast to the input resolution.
+      3. Local features (avg-pooled) are concatenated with the context.
+      4. A lightweight MLP fuses them into K² dynamic kernel weights per position.
+      5. These kernels are applied channel-wise via unfold → weighted-sum,
+         giving each token a context-aware receptive field.
+      6. A static depthwise conv provides a residual local inductive bias.
+
+    Args:
+        dim: input/output channels
+        kernel_size: convolution kernel size (default 7)
+        context_pool_size: S — pool context to S×S grid (default 7)
+        reduction: channel reduction for the kernel-generation MLP (default 4)
+    """
+
+    def __init__(self, dim, kernel_size=7, context_pool_size=7, reduction=4):
+        super().__init__()
+        self.dim = dim
+        self.kernel_size = kernel_size
+        self.pool_size = context_pool_size
+        pad = kernel_size // 2
+        self.pad = pad
+        k2 = kernel_size * kernel_size
+
+        mid = max(dim // reduction, 16)
+        self.mid = mid
+
+        # Context descriptor: pool → S×S → project to mid channels
+        self.context_proj = nn.Sequential(
+            nn.AdaptiveAvgPool2d((context_pool_size, context_pool_size)),
+            nn.Conv2d(dim, mid, 1, bias=False),
+            nn.BatchNorm2d(mid),
+            nn.SiLU(),
+        )
+
+        # Local feature projector: x → mid channels (keeps resolution)
+        self.local_proj = nn.Sequential(
+            nn.Conv2d(dim, mid, 1, bias=False),
+            nn.BatchNorm2d(mid),
+            nn.SiLU(),
+        )
+
+        # Kernel generator: [context_desc + local_feat] → K² dynamic kernel
+        self.kernel_gen = nn.Sequential(
+            nn.Conv2d(mid * 2, mid, 1, bias=False),
+            nn.BatchNorm2d(mid),
+            nn.SiLU(),
+            nn.Conv2d(mid, k2, 1),
+        )
+
+        # Learnable scale/bias for generated kernels
+        self.kernel_scale = nn.Parameter(torch.ones(1, dim, 1, 1) * 0.1)
+        self.kernel_bias = nn.Parameter(torch.zeros(1, k2, 1, 1))
+
+        # Static depthwise conv  (residual local inductive bias)
+        self.static_dw = nn.Conv2d(dim, dim, kernel_size, padding=pad, groups=dim, bias=False)
+        self.static_bn = nn.BatchNorm2d(dim)
+
+    def forward(self, x, context=None):
+        if context is None:
+            context = x
+        B, C, H, W = x.shape
+
+        # 1. Context descriptor: pool → project  [B, mid, S, S]
+        ctx_desc = self.context_proj(context)
+
+        # 2. Broadcast context to input resolution  [B, mid, H, W]
+        ctx_full = F.interpolate(ctx_desc, size=(H, W), mode="bilinear", align_corners=False)
+
+        # 3. Local feature projector  [B, mid, H, W]
+        x_local = self.local_proj(x)
+
+        # 4. Fuse and generate K² dynamic kernel per spatial position  [B, K², H, W]
+        kernel_in = torch.cat([ctx_full, x_local], dim=1)
+        dynamic_k = self.kernel_gen(kernel_in) + self.kernel_bias  # [B, K², H, W]
+
+        # 5. Expand dynamic kernel per channel and apply via unfold
+        # k_rep: [B, C, K², H*W]
+        k_rep = (dynamic_k.unsqueeze(1) * self.kernel_scale)  # [B, 1, K², H, W]
+        k_rep = k_rep.expand(-1, C, -1, -1, -1)  # [B, C, K², H, W]
+        k_flat = k_rep.reshape(B, C, self.kernel_size * self.kernel_size, H * W)
+
+        # Unfold input: every channel's K×K neighbourhood → [B, C, K², H*W]
+        x_unf = F.unfold(x, kernel_size=self.kernel_size, padding=self.pad, stride=1)
+        x_unf = x_unf.reshape(B, C, self.kernel_size * self.kernel_size, H * W)
+
+        # Dynamic depthwise: weighted sum over the K² neighbourhood
+        out = (x_unf * k_flat).sum(dim=2)  # [B, C, H*W]
+        out = out.reshape(B, C, H, W)
+
+        # 6. Add static depthwise conv for local inductive bias
+        return out + self.static_bn(self.static_dw(x))
+
+
+class OverLoCKBlock(nn.Module):
+    """OverLoCK-style residual block: ContMix token mixing + FFN channel mixing.
+
+    Follows the CVPR 2025 paper design:
+        x = x + ContMix(x, context)   # token mixing with dynamic kernels
+        x = x + FFN(x)                # channel mixing (two 1×1 convs)
+
+    Designed as a drop-in replacement for Bottleneck in YOLO CSP structures
+    (C2f, C3k2, C3k2DW, etc.). The block accepts an optional ``context`` tensor;
+    when omitted, the input itself is used as context.
+
+    Args:
+        c1: input channels
+        c2: output channels (must equal c1 for the residual path to be valid)
+        kernel_size: ContMix kernel size (default 7)
+        mlp_ratio: FFN hidden-channel expansion ratio (default 2.0)
+        context_pool_size: S for S×S context pooling in ContMix (default 7)
+    """
+
+    def __init__(self, c1, c2, kernel_size=7, mlp_ratio=2.0, context_pool_size=7):
+        super().__init__()
+        # Token mixer
+        self.token_mixer = ContMix(c1, kernel_size=kernel_size, context_pool_size=context_pool_size)
+
+        # Channel mixer (FFN)
+        hidden = int(c1 * mlp_ratio)
+        self.ffn = nn.Sequential(
+            nn.Conv2d(c1, hidden, 1, bias=False),
+            nn.BatchNorm2d(hidden),
+            nn.SiLU(),
+            nn.Conv2d(hidden, c1, 1, bias=False),
+            nn.BatchNorm2d(c1),
+        )
+
+    def forward(self, x, context=None):
+        x = x + self.token_mixer(x, context)
+        x = x + self.ffn(x)
+        return x
 
 
 class DFL(nn.Module):

@@ -1,11 +1,11 @@
+from .backbones import MultiScaleResNet18, ResNet18, YOLO11Backbone
 from .blocks import *
 from .builder import make_layers
-from .registry import BLOCK_REGISTRY, register_block
-from .backbones import ResNet18, MultiScaleResNet18, YOLO11Backbone
-from .segmentation import MiniSegNet, FPNSegNet
-from .necks import YOLO11Neck
-from .heads import YOLO11Head
 from .detection import YOLO11Detector
+from .heads import YOLO11Head
+from .necks import YOLO11Neck
+from .registry import BLOCK_REGISTRY, register_block
+from .segmentation import FPNSegNet, MiniSegNet
 
 __all__ = [
     "MaxPool",

@@ -65,6 +65,8 @@ from .block import (
     MyAdaptivePool,
     WeightedFusion,
     MyChannelAttention,
+    ContMix,
+    OverLoCKBlock,
 
 )
 from .conv import (
@@ -112,6 +114,17 @@ from .transformer import (
     TransformerBlock,
     TransformerEncoderLayer,
     TransformerLayer,
+)
+from .lsnet import (
+    LSBlock,
+    LSConv,
+    LSNetBackbone,
+    LSNetDownsample,
+    LSNet_B,
+    LSNet_S,
+    LSNet_T,
+    MSAStageBlock,
+    PatchEmbed,
 )
 
 __all__ = (
@@ -202,5 +215,16 @@ __all__ = (
     "MyAdaptivePool",
     "WeightedFusion",
     "MyChannelAttention",
+    "ContMix",
+    "OverLoCKBlock",
+    "LSBlock",
+    "LSConv",
+    "LSNetBackbone",
+    "LSNetDownsample",
+    "LSNet_B",
+    "LSNet_S",
+    "LSNet_T",
+    "MSAStageBlock",
+    "PatchEmbed",
 
 )

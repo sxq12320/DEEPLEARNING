@@ -23,26 +23,21 @@ ACTIVATION_MAP = {
 RESNET_18_CFG = [
     ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
     ["maxpool", 3, 2, 1, 1],
-    
     # Stage 1: 两个 block，尺寸和通道均不变
     ["resnet_block_34", 64, 64, 1, "relu", "relu"],
     ["resnet_block_34", 64, 64, 1, "relu", "relu"],
-    
     # Stage 2: 第一个 block 下采样 + 升通道，第二个保持
     ["resnet_block_34", 64, 128, 2, "relu", "relu"],
     ["resnet_block_34", 128, 128, 1, "relu", "relu"],
-    
     # Stage 3
     ["resnet_block_34", 128, 256, 2, "relu", "relu"],
     ["resnet_block_34", 256, 256, 1, "relu", "relu"],
-    
     # Stage 4
     ["resnet_block_34", 256, 512, 2, "relu", "relu"],
     ["resnet_block_34", 512, 512, 1, "relu", "relu"],
-    
     ["adaptive_avg_pool", (1, 1)],
     ["flatten"],
-    ["linear", 512, 1000, True]
+    ["linear", 512, 1000, True],
 ]
 
 # ResNet-18 骨干网络配置（不含分类头，用于分割等密集预测任务）
@@ -101,18 +96,18 @@ YOLO11_CONFIGS = {
     "nano": {
         "channels": [16, 32, 64, 128, 256],
         "depth_scale": 0.33,
-        "description": "YOLO11 Nano — 移动端 / CPU 友好"
+        "description": "YOLO11 Nano — 移动端 / CPU 友好",
     },
     # YOLO11 Small：速度与精度的平衡点
     "small": {
         "channels": [32, 64, 128, 256, 512],
         "depth_scale": 0.67,
-        "description": "YOLO11 Small — 速度/精度平衡"
+        "description": "YOLO11 Small — 速度/精度平衡",
     },
     # YOLO11 Medium：常规 GPU 训练首选
     "medium": {
         "channels": [64, 128, 256, 512, 512],
         "depth_scale": 1.0,
-        "description": "YOLO11 Medium — 常规精度取向"
+        "description": "YOLO11 Medium — 常规精度取向",
     },
 }

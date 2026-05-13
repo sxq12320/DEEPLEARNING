@@ -1,11 +1,16 @@
 import torch.nn as nn
+
 from configs.config import (
     RESNET_18_BACKBONE_CFG,
-    RESNET_18_STEM_CFG, RESNET_18_STAGE1_CFG, RESNET_18_STAGE2_CFG,
-    RESNET_18_STAGE3_CFG, RESNET_18_STAGE4_CFG,
+    RESNET_18_STAGE1_CFG,
+    RESNET_18_STAGE2_CFG,
+    RESNET_18_STAGE3_CFG,
+    RESNET_18_STAGE4_CFG,
+    RESNET_18_STEM_CFG,
 )
+
+from .blocks import SPPF, C3k2
 from .builder import make_layers
-from .blocks import C3k2, SPPF
 
 
 class ResNet18(nn.Module):
@@ -42,7 +47,9 @@ class MultiScaleResNet18(nn.Module):
         c5 — (B, 512, H/32, W/32)
     """
 
-    def __init__(self, stem_cfg=None, s1_cfg=None, s2_cfg=None, s3_cfg=None, s4_cfg=None):
+    def __init__(
+        self, stem_cfg=None, s1_cfg=None, s2_cfg=None, s3_cfg=None, s4_cfg=None
+    ):
         """初始化多尺度 ResNet-18。
 
         Args:
@@ -53,11 +60,21 @@ class MultiScaleResNet18(nn.Module):
             s4_cfg (list | None): stage4 配置。
         """
         super().__init__()
-        self.stem = make_layers(stem_cfg if stem_cfg is not None else RESNET_18_STEM_CFG)
-        self.stage1 = make_layers(s1_cfg if s1_cfg is not None else RESNET_18_STAGE1_CFG)
-        self.stage2 = make_layers(s2_cfg if s2_cfg is not None else RESNET_18_STAGE2_CFG)
-        self.stage3 = make_layers(s3_cfg if s3_cfg is not None else RESNET_18_STAGE3_CFG)
-        self.stage4 = make_layers(s4_cfg if s4_cfg is not None else RESNET_18_STAGE4_CFG)
+        self.stem = make_layers(
+            stem_cfg if stem_cfg is not None else RESNET_18_STEM_CFG
+        )
+        self.stage1 = make_layers(
+            s1_cfg if s1_cfg is not None else RESNET_18_STAGE1_CFG
+        )
+        self.stage2 = make_layers(
+            s2_cfg if s2_cfg is not None else RESNET_18_STAGE2_CFG
+        )
+        self.stage3 = make_layers(
+            s3_cfg if s3_cfg is not None else RESNET_18_STAGE3_CFG
+        )
+        self.stage4 = make_layers(
+            s4_cfg if s4_cfg is not None else RESNET_18_STAGE4_CFG
+        )
 
     def forward(self, x):
         """前向传播，返回多尺度特征列表。
@@ -68,11 +85,11 @@ class MultiScaleResNet18(nn.Module):
         Returns:
             List[torch.Tensor]: [c2, c3, c4, c5] 四个尺度的特征图。
         """
-        x = self.stem(x)       # (B, 64,  H/4,  W/4)
-        c2 = self.stage1(x)    # (B, 64,  H/4,  W/4)
-        c3 = self.stage2(c2)   # (B, 128, H/8,  W/8)
-        c4 = self.stage3(c3)   # (B, 256, H/16, W/16)
-        c5 = self.stage4(c4)   # (B, 512, H/32, W/32)
+        x = self.stem(x)  # (B, 64,  H/4,  W/4)
+        c2 = self.stage1(x)  # (B, 64,  H/4,  W/4)
+        c3 = self.stage2(c2)  # (B, 128, H/8,  W/8)
+        c4 = self.stage3(c3)  # (B, 256, H/16, W/16)
+        c5 = self.stage4(c4)  # (B, 512, H/32, W/32)
         return [c2, c3, c4, c5]
 
 
@@ -115,14 +132,22 @@ class YOLO11Backbone(nn.Module):
         )
 
         # stage 1 → P3 (H/8)
-        self.stage1 = C3k2(in_ch=c2, out_ch=c3, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5)
+        self.stage1 = C3k2(
+            in_ch=c2, out_ch=c3, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5
+        )
 
         # stage 2 → P4 (H/16)
         self.stage2 = nn.Sequential(
             nn.Conv2d(c3, c4, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(c4),
             nn.SiLU(inplace=True),
-            C3k2(in_ch=c4, out_ch=c4, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5),
+            C3k2(
+                in_ch=c4,
+                out_ch=c4,
+                n=max(1, round(1 * depth_scale)),
+                shortcut=True,
+                e=0.5,
+            ),
         )
 
         # stage 3 → P5 (H/32)
@@ -130,7 +155,13 @@ class YOLO11Backbone(nn.Module):
             nn.Conv2d(c4, c5, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(c5),
             nn.SiLU(inplace=True),
-            C3k2(in_ch=c5, out_ch=c5, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5),
+            C3k2(
+                in_ch=c5,
+                out_ch=c5,
+                n=max(1, round(1 * depth_scale)),
+                shortcut=True,
+                e=0.5,
+            ),
             SPPF(in_ch=c5, out_ch=c5, k=5),
         )
 
@@ -143,8 +174,8 @@ class YOLO11Backbone(nn.Module):
         Returns:
             List[torch.Tensor]: [P3, P4, P5] 三个尺度的特征图。
         """
-        x = self.stem(x)        # (B, c2, H/4, W/4)
-        p3 = self.stage1(x)     # (B, c3, H/8, W/8)
-        p4 = self.stage2(p3)    # (B, c4, H/16, W/16)
-        p5 = self.stage3(p4)    # (B, c5, H/32, W/32)
+        x = self.stem(x)  # (B, c2, H/4, W/4)
+        p3 = self.stage1(x)  # (B, c3, H/8, W/8)
+        p4 = self.stage2(p3)  # (B, c4, H/16, W/16)
+        p5 = self.stage3(p4)  # (B, c5, H/32, W/32)
         return [p3, p4, p5]

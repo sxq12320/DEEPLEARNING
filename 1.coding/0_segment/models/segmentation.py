@@ -6,10 +6,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from configs.config import RESNET_18_BACKBONE_CFG
-from .builder import make_layers
+
 from .backbones import MultiScaleResNet18
 from .blocks import FPN
+from .builder import make_layers
 
 
 class MiniSegNet(nn.Module):
@@ -42,7 +44,9 @@ class MiniSegNet(nn.Module):
         """
         feat = self.backbone(x)
         logits = self.head(feat)
-        logits = F.interpolate(logits, size=x.shape[2:], mode='bilinear', align_corners=False)
+        logits = F.interpolate(
+            logits, size=x.shape[2:], mode="bilinear", align_corners=False
+        )
         return logits
 
 
@@ -89,16 +93,21 @@ class FPNSegNet(nn.Module):
         Returns:
             torch.Tensor: 分割 logits，大小与输入一致。
         """
-        features = self.backbone(x)                    # [c2, c3, c4, c5]
-        fpn_feats = self.fpn(features)                 # [p2, p3, p4, p5]
+        features = self.backbone(x)  # [c2, c3, c4, c5]
+        fpn_feats = self.fpn(features)  # [p2, p3, p4, p5]
 
         # 全部上采样到 p2 分辨率并拼接
         h, w = fpn_feats[0].shape[2:]
-        fused = torch.cat([
-            F.interpolate(f, size=(h, w), mode='bilinear', align_corners=False)
-            for f in fpn_feats
-        ], dim=1)
+        fused = torch.cat(
+            [
+                F.interpolate(f, size=(h, w), mode="bilinear", align_corners=False)
+                for f in fpn_feats
+            ],
+            dim=1,
+        )
 
         logits = self.head(fused)
-        logits = F.interpolate(logits, size=x.shape[2:], mode='bilinear', align_corners=False)
+        logits = F.interpolate(
+            logits, size=x.shape[2:], mode="bilinear", align_corners=False
+        )
         return logits

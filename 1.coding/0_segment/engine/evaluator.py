@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 
 from datasets import SegmentationDataset
 from models import MiniSegNet
+
 from .metrics import compute_iou
 
 
@@ -19,7 +20,9 @@ class Evaluator:
             args (argparse.Namespace): 评估参数配置。
         """
         self.args = args
-        self.device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() and not args.cpu else "cpu"
+        )
 
     def build_dataloader(self):
         """构建评估数据加载器。
@@ -30,11 +33,13 @@ class Evaluator:
         dataset = SegmentationDataset(
             image_dir=self.args.image_dir or None,
             label_dir=self.args.mask_dir or self.args.label_dir or None,
-            label_type=getattr(self.args, 'label_type', 'mask'),
+            label_type=getattr(self.args, "label_type", "mask"),
             target_size=(self.args.imgsz, self.args.imgsz),
-            synthetic_length=getattr(self.args, 'synthetic_length', 32),
+            synthetic_length=getattr(self.args, "synthetic_length", 32),
         )
-        return DataLoader(dataset, batch_size=self.args.batch, shuffle=False, num_workers=0)
+        return DataLoader(
+            dataset, batch_size=self.args.batch, shuffle=False, num_workers=0
+        )
 
     @torch.no_grad()
     def evaluate(self):
@@ -52,7 +57,11 @@ class Evaluator:
         loader = self.build_dataloader()
 
         checkpoint = torch.load(self.args.weights, map_location=self.device)
-        model_state = checkpoint["model"] if isinstance(checkpoint, dict) and "model" in checkpoint else checkpoint
+        model_state = (
+            checkpoint["model"]
+            if isinstance(checkpoint, dict) and "model" in checkpoint
+            else checkpoint
+        )
 
         model = MiniSegNet().to(self.device)
         model.load_state_dict(model_state, strict=True)
@@ -83,7 +92,9 @@ class Evaluator:
         avg_loss = total_loss / max(total_batches, 1)
         avg_iou = total_iou / max(total_batches, 1)
 
-        print(f"Evaluate done | loss={avg_loss:.6f} | iou={avg_iou:.6f} | batches={total_batches}")
+        print(
+            f"Evaluate done | loss={avg_loss:.6f} | iou={avg_iou:.6f} | batches={total_batches}"
+        )
         return avg_loss, avg_iou
 
     def _normalize_mask(self, mask: torch.Tensor) -> torch.Tensor:

@@ -1,5 +1,6 @@
 BLOCK_REGISTRY = {}
 
+
 def register_block(name):
     """装饰器工厂：将构建函数注册到 BLOCK_REGISTRY。
 
@@ -9,6 +10,7 @@ def register_block(name):
     Returns:
         Callable: 装饰器函数。
     """
+
     def decorator(func):
         """将构建函数写入注册表。
 
@@ -20,4 +22,5 @@ def register_block(name):
         """
         BLOCK_REGISTRY[name.lower()] = func
         return func
+
     return decorator

@@ -7,6 +7,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .blocks import C3k2
 
 
@@ -45,7 +46,7 @@ class YOLO11Neck(nn.Module):
         d = max(1, round(1 * depth_scale))
 
         # ---- 上采样层（top-down） ----
-        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        self.upsample = nn.Upsample(scale_factor=2, mode="nearest")
 
         # p5 → n4 侧向融合
         self.top_down_conv1 = nn.Sequential(
@@ -70,7 +71,9 @@ class YOLO11Neck(nn.Module):
             nn.BatchNorm2d(c4),
             nn.SiLU(inplace=True),
         )
-        self.bottom_up_c3k2_1 = C3k2(in_ch=c4 + c4, out_ch=c4, n=d, shortcut=True, e=0.5)
+        self.bottom_up_c3k2_1 = C3k2(
+            in_ch=c4 + c4, out_ch=c4, n=d, shortcut=True, e=0.5
+        )
 
         # n4 → n5 融合
         self.bottom_up_conv2 = nn.Sequential(
@@ -78,7 +81,9 @@ class YOLO11Neck(nn.Module):
             nn.BatchNorm2d(c5),
             nn.SiLU(inplace=True),
         )
-        self.bottom_up_c3k2_2 = C3k2(in_ch=c5 + c5, out_ch=c5, n=d, shortcut=True, e=0.5)
+        self.bottom_up_c3k2_2 = C3k2(
+            in_ch=c5 + c5, out_ch=c5, n=d, shortcut=True, e=0.5
+        )
 
     def forward(self, features):
         """前向传播，完成 top-down + bottom-up 双路径融合。

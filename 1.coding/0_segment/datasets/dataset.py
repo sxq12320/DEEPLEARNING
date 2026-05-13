@@ -5,7 +5,7 @@
 
 import os
 from pathlib import Path
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from .transforms import image_transform, TXT2MASK, JSON2MASK, NPY2MASK
+from .transforms import JSON2MASK, NPY2MASK, TXT2MASK, image_transform
 
 
 class SegmentationDataset(Dataset):
@@ -48,12 +48,21 @@ class SegmentationDataset(Dataset):
         self.target_size = target_size
         self.augment = augment
 
-        if image_dir and label_dir and os.path.isdir(image_dir) and os.path.isdir(label_dir):
+        if (
+            image_dir
+            and label_dir
+            and os.path.isdir(image_dir)
+            and os.path.isdir(label_dir)
+        ):
             if file_list is None:
-                self.ids = sorted([
-                    p.stem for p in self.image_dir.glob("*.*")
-                    if p.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
-                ])
+                self.ids = sorted(
+                    [
+                        p.stem
+                        for p in self.image_dir.glob("*.*")
+                        if p.suffix.lower()
+                        in {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+                    ]
+                )
             else:
                 self.ids = file_list
             self.synthetic = False
@@ -102,14 +111,22 @@ class SegmentationDataset(Dataset):
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
         label = self._get_mask(stem)
-        label = cv2.resize(label, self.target_size, interpolation=cv2.INTER_NEAREST) if label.shape[:2] != (self.target_size[1], self.target_size[0]) else label
+        label = (
+            cv2.resize(label, self.target_size, interpolation=cv2.INTER_NEAREST)
+            if label.shape[:2] != (self.target_size[1], self.target_size[0])
+            else label
+        )
 
         if self.augment:
             img_rgb, label = self._apply_augmentation(img_rgb, label)
 
         img_rgb = cv2.resize(img_rgb, self.target_size, interpolation=cv2.INTER_LINEAR)
         img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).float() / 255.0
-        mask_tensor = torch.from_numpy((label > 127).astype(np.float32)).unsqueeze(0) if label.ndim == 2 else torch.from_numpy(label).float()
+        mask_tensor = (
+            torch.from_numpy((label > 127).astype(np.float32)).unsqueeze(0)
+            if label.ndim == 2
+            else torch.from_numpy(label).float()
+        )
 
         return img_tensor, mask_tensor
 
@@ -122,7 +139,7 @@ class SegmentationDataset(Dataset):
         Returns:
             Path | None: 命中的图像路径，未找到则返回 None。
         """
-        for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']:
+        for ext in [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]:
             candidate = self.image_dir / f"{stem}{ext}"
             if candidate.exists():
                 return candidate
@@ -155,13 +172,19 @@ class SegmentationDataset(Dataset):
         Returns:
             np.ndarray: 掩码数组。
         """
-        for ext in ['.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff', '.npy']:
+        for ext in [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".npy"]:
             candidate = os.path.join(self.label_dir, stem + ext)
             if os.path.exists(candidate):
-                if candidate.lower().endswith('.npy'):
+                if candidate.lower().endswith(".npy"):
                     return np.load(candidate)
                 label = cv2.imread(candidate, cv2.IMREAD_GRAYSCALE)
-                return label if label is not None else np.zeros((self.target_size[1], self.target_size[0]), dtype=np.uint8)
+                return (
+                    label
+                    if label is not None
+                    else np.zeros(
+                        (self.target_size[1], self.target_size[0]), dtype=np.uint8
+                    )
+                )
         return np.zeros((self.target_size[1], self.target_size[0]), dtype=np.uint8)
 
     def _apply_augmentation(self, image, mask):

@@ -13,7 +13,10 @@ from tqdm import tqdm
 
 from datasets import SegmentationDataset
 from models import MiniSegNet
+
 from .losses import SegmentationLoss
+
+
 class Trainer:
     """分割模型训练器，支持真实数据和合成数据自动切换。
 
@@ -26,7 +29,9 @@ class Trainer:
     def __init__(self, args):
         """初始化训练器模块类。"""
         self.args = args
-        self.device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() and not args.cpu else "cpu"
+        )
         self.save_dir = Path(args.project) / args.name
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -39,12 +44,17 @@ class Trainer:
         dataset = SegmentationDataset(
             image_dir=self.args.image_dir or None,
             label_dir=self.args.mask_dir or self.args.label_dir or None,
-            label_type=getattr(self.args, 'label_type', 'mask'),
+            label_type=getattr(self.args, "label_type", "mask"),
             target_size=(self.args.imgsz, self.args.imgsz),
-            synthetic_length=getattr(self.args, 'synthetic_length', 32),
-            augment=getattr(self.args, 'augment', False),
+            synthetic_length=getattr(self.args, "synthetic_length", 32),
+            augment=getattr(self.args, "augment", False),
         )
-        return DataLoader(dataset, batch_size=self.args.batch, shuffle=True, num_workers=getattr(self.args, 'workers', 0))
+        return DataLoader(
+            dataset,
+            batch_size=self.args.batch,
+            shuffle=True,
+            num_workers=getattr(self.args, "workers", 0),
+        )
 
     def train(self):
         """执行训练流程并保存模型与日志。
@@ -53,11 +63,13 @@ class Trainer:
             None: 本函数无显式返回值。
         """
         loader = self.build_dataloader()
-        
+
         # 预防当数据集为空时出现的 ZeroDivisionError 等崩溃问题
         if len(loader) == 0:
-            raise ValueError("数据集为空或未能正确加载任何批次（Batches: 0）。请检查 image_dir 与 label_dir 路径，或确保合成数据集长度充足！")
-            
+            raise ValueError(
+                "数据集为空或未能正确加载任何批次（Batches: 0）。请检查 image_dir 与 label_dir 路径，或确保合成数据集长度充足！"
+            )
+
         print(f"Device: {self.device}")
         print(f"Dataset size: {len(loader.dataset)}, Batches: {len(loader)}")
 
@@ -72,7 +84,9 @@ class Trainer:
         model.train()
         for epoch in range(self.args.epochs):
             epoch_loss = 0.0
-            pbar = tqdm(loader, desc=f"Epoch {epoch + 1}/{self.args.epochs}", unit="batch")
+            pbar = tqdm(
+                loader, desc=f"Epoch {epoch + 1}/{self.args.epochs}", unit="batch"
+            )
             for imgs, masks in pbar:
                 imgs = imgs.to(self.device)
                 masks = self._normalize_mask(masks).to(self.device)
@@ -91,11 +105,14 @@ class Trainer:
             epoch_losses.append(avg_loss)
             print(f"Epoch {epoch + 1}/{self.args.epochs} - Loss: {avg_loss:.6f}")
 
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(f"Epoch {epoch + 1}/{self.args.epochs} - Average Loss: {avg_loss:.6f}\n")
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(
+                    f"Epoch {epoch + 1}/{self.args.epochs} - Average Loss: {avg_loss:.6f}\n"
+                )
 
         self._save_model(model)
         from utils.visualize import plot_loss_curve
+
         plot_loss_curve(epoch_losses, str(self.save_dir / "loss_curve.png"))
         print(f"Training log saved to: {log_file}")
 
@@ -119,7 +136,7 @@ class Trainer:
 
         Args:
             model (torch.nn.Module): 待保存的模型。
-            
+
         Returns:
             None
         """
@@ -133,7 +150,7 @@ class Trainer:
 
         Args:
             log_file (Path): 日志文件路径。
-            
+
         Returns:
             None
         """
@@ -143,11 +160,11 @@ class Trainer:
             "epochs": self.args.epochs,
             "learning_rate": self.args.lr,
             "optimizer": "Adam",
-            "augment": getattr(self.args, 'augment', False),
+            "augment": getattr(self.args, "augment", False),
             "device": str(self.device),
             "train_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        with open(log_file, 'w', encoding='utf-8') as f:
+        with open(log_file, "w", encoding="utf-8") as f:
             f.write("====== Hyperparameters ======\n")
             for k, v in params.items():
                 f.write(f"{k}: {v}\n")

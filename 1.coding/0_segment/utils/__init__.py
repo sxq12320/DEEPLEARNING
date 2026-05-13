@@ -1,6 +1,6 @@
-from .common import get_activation, autopad
+from .common import autopad, get_activation
 
 __all__ = [
-    "get_activation", 
+    "get_activation",
     "autopad",
-    ]
+]

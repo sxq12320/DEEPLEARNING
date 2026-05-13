@@ -4,24 +4,26 @@
 所有模块注册在内部的注册表中以便于统一调用。
 """
 
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+
 from configs.config import ACTIVATION_MAP
-from utils.common import get_activation, autopad
-from .registry import register_block
 from models import registry
+from utils.common import autopad, get_activation
+
+from .registry import register_block
 
 
 ############################################################
 #               基本卷积相关的模块                            #
 ############################################################
-@register_block('maxpool')
+@register_block("maxpool")
 class MaxPool(nn.Module):
     """最大池化层封装。
-    
+
     提供了一个简单的最大池化层封装,继承自 nn.Module。
-    
+
     Attributes:
         k (int): 卷积核大小。
         s (int): 步幅。
@@ -47,7 +49,8 @@ class MaxPool(nn.Module):
         """
         return self.forward_basic(x)
 
-@register_block('adaptive_max_pool')
+
+@register_block("adaptive_max_pool")
 class AdaptiveMaxPool(nn.Module):
     """自适应最大池化层封装。
 
@@ -57,15 +60,14 @@ class AdaptiveMaxPool(nn.Module):
         output_size (int | Tuple[int, int]): 输出尺寸。
     """
 
-    def __init__(self, output_size:int):
+    def __init__(self, output_size: int):
         """初始化自适应最大池化层。"""
-        super(AdaptiveMaxPool , self).__init__()
+        super(AdaptiveMaxPool, self).__init__()
         self.forward_basic = nn.Sequential(
-            nn.AdaptiveMaxPool2d(
-                output_size=output_size
-            )
+            nn.AdaptiveMaxPool2d(output_size=output_size)
         )
-    def forward(self , x):
+
+    def forward(self, x):
         """前向传播。
 
         Args:
@@ -77,7 +79,7 @@ class AdaptiveMaxPool(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('adaptive_avg_pool')
+@register_block("adaptive_avg_pool")
 class AdaptiveAvgPool(nn.Module):
     """自适应平均池化层封装。
 
@@ -106,7 +108,7 @@ class AdaptiveAvgPool(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('conv')
+@register_block("conv")
 class Conv(nn.Module):
     """基础卷积层封装。
 
@@ -123,12 +125,22 @@ class Conv(nn.Module):
         b (bool): 是否使用偏置。
     """
 
-    def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, b: bool):
+    def __init__(
+        self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, b: bool
+    ):
         """初始化卷积层封装类。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=k,
-                      stride=s, padding=p, dilation=d, groups=g, bias=b)
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=k,
+                stride=s,
+                padding=p,
+                dilation=d,
+                groups=g,
+                bias=b,
+            )
         )
 
     def forward(self, x):
@@ -143,7 +155,7 @@ class Conv(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('basic_conv_block')
+@register_block("basic_conv_block")
 class Basic_Conv_Block(nn.Module):
     """卷积 + BN + 激活的基础模块。
 
@@ -160,12 +172,29 @@ class Basic_Conv_Block(nn.Module):
         activation (str): 激活函数名称。
     """
 
-    def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, activation: str):
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        k: int,
+        s: int,
+        p: int,
+        d: int,
+        g: int,
+        activation: str,
+    ):
         """初始化基础卷积模块。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=k,
-                      stride=s, padding=p, dilation=d, groups=g),
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=k,
+                stride=s,
+                padding=p,
+                dilation=d,
+                groups=g,
+            ),
             nn.BatchNorm2d(out_ch),
         )
         self.act = get_activation(activation, ACTIVATION_MAP)
@@ -182,7 +211,7 @@ class Basic_Conv_Block(nn.Module):
         return self.act(self.forward_basic(x))
 
 
-@register_block('conv_block_nonb')
+@register_block("conv_block_nonb")
 class Conv_Block_NONB(nn.Module):
     """不含 BN 的卷积 + 激活模块。
 
@@ -199,7 +228,17 @@ class Conv_Block_NONB(nn.Module):
         activation (str): 激活函数名称。
     """
 
-    def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, activation: str):
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        k: int,
+        s: int,
+        p: int,
+        d: int,
+        g: int,
+        activation: str,
+    ):
         """初始化不含 BN 的卷积模块。
 
         Returns:
@@ -207,8 +246,15 @@ class Conv_Block_NONB(nn.Module):
         """
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=k,
-                      stride=s, padding=p, dilation=d, groups=g)
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=k,
+                stride=s,
+                padding=p,
+                dilation=d,
+                groups=g,
+            )
         )
         self.act = get_activation(activation, ACTIVATION_MAP)
 
@@ -224,7 +270,7 @@ class Conv_Block_NONB(nn.Module):
         return self.act(self.forward_basic(x))
 
 
-@register_block('depthwise_conv')
+@register_block("depthwise_conv")
 class DepthWise_Conv(nn.Module):
     """Depthwise 卷积模块。"""
 
@@ -240,8 +286,16 @@ class DepthWise_Conv(nn.Module):
         """
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=k,
-                      stride=s, padding=p, dilation=d, groups=in_ch, bias=False)
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=in_ch,
+                kernel_size=k,
+                stride=s,
+                padding=p,
+                dilation=d,
+                groups=in_ch,
+                bias=False,
+            )
         )
 
     def forward(self, x):
@@ -256,7 +310,7 @@ class DepthWise_Conv(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('pointwise_conv')
+@register_block("pointwise_conv")
 class PointWise_Conv(nn.Module):
     """Pointwise (1x1) 卷积模块。"""
 
@@ -270,9 +324,16 @@ class PointWise_Conv(nn.Module):
         """
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=1,
-                      stride=s, padding=0, bias=False)
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=1,
+                stride=s,
+                padding=0,
+                bias=False,
+            )
         )
+
     def forward(self, x):
         """前向传播。
 
@@ -285,11 +346,21 @@ class PointWise_Conv(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('depthwise_separable_conv')
+@register_block("depthwise_separable_conv")
 class DepthWiseSeparable_Conv(nn.Module):
     """Depthwise + Pointwise 的可分离卷积模块。"""
 
-    def __init__(self, in_ch: int, out_ch: int, k: int, p: int, s_D: int, s_P: int, d_D: int, activation: str):
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        k: int,
+        p: int,
+        s_D: int,
+        s_P: int,
+        d_D: int,
+        activation: str,
+    ):
         """初始化可分离卷积模块。
 
         Args:
@@ -309,7 +380,7 @@ class DepthWiseSeparable_Conv(nn.Module):
             get_activation(activation, ACTIVATION_MAP),
             PointWise_Conv(in_ch=in_ch, out_ch=out_ch, s=s_P),
             nn.BatchNorm2d(out_ch),
-            get_activation(activation, ACTIVATION_MAP)
+            get_activation(activation, ACTIVATION_MAP),
         )
 
     def forward(self, x):
@@ -324,11 +395,13 @@ class DepthWiseSeparable_Conv(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('resnet_block_34')
+@register_block("resnet_block_34")
 class ResNetBlock_34(nn.Module):
-    """ResNet-34 基本残差块（双 3x3 卷积）。"""
+    """ResNet-34 基本残差块(双 3x3 卷积)。"""
 
-    def __init__(self, in_ch: int, out_ch: int, s: int, activation_1='relu', activation_2='relu'):
+    def __init__(
+        self, in_ch: int, out_ch: int, s: int, activation_1="relu", activation_2="relu"
+    ):
         """初始化 ResNet-34 残差块。
 
         Args:
@@ -340,19 +413,36 @@ class ResNetBlock_34(nn.Module):
         """
         super().__init__()
         self.forward_basic_1 = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, stride=s,
-                      padding=1, kernel_size=3, bias=False),
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                stride=s,
+                padding=1,
+                kernel_size=3,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_ch),
             get_activation(activation_1, ACTIVATION_MAP),
-            nn.Conv2d(in_channels=out_ch, out_channels=out_ch, stride=1,
-                      padding=1, kernel_size=3, bias=False),
+            nn.Conv2d(
+                in_channels=out_ch,
+                out_channels=out_ch,
+                stride=1,
+                padding=1,
+                kernel_size=3,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_ch),
         )
         self.downsample = None
         if s != 1 or in_ch != out_ch:
             self.downsample = nn.Sequential(
-                nn.Conv2d(in_channels=in_ch, out_channels=out_ch, stride=s,
-                          kernel_size=1, bias=False),
+                nn.Conv2d(
+                    in_channels=in_ch,
+                    out_channels=out_ch,
+                    stride=s,
+                    kernel_size=1,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(out_ch),
             )
         self.act = get_activation(activation_2, ACTIVATION_MAP)
@@ -371,12 +461,20 @@ class ResNetBlock_34(nn.Module):
         return self.act(out + identity)
 
 
-@register_block('resnet_block_50')
+@register_block("resnet_block_50")
 class ResNetBlock_50(nn.Module):
     """ResNet-50 瓶颈残差块。"""
 
-    def __init__(self, in_ch: int, out_ch: int, s: int,
-                 activation_1='relu', activation_2='relu', activation_3='relu', expansion_size=4):
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        s: int,
+        activation_1="relu",
+        activation_2="relu",
+        activation_3="relu",
+        expansion_size=4,
+    ):
         """初始化 ResNet-50 瓶颈残差块。
 
         Args:
@@ -390,25 +488,48 @@ class ResNetBlock_50(nn.Module):
         """
         super().__init__()
         self.forward_basic = nn.Sequential(
-            nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=1,
-                      stride=1, padding=0, bias=False),
+            nn.Conv2d(
+                in_channels=in_ch,
+                out_channels=out_ch,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_ch),
             get_activation(activation_1, ACTIVATION_MAP),
-            nn.Conv2d(in_channels=out_ch, out_channels=out_ch, kernel_size=3,
-                      stride=s, padding=1, bias=False),
+            nn.Conv2d(
+                in_channels=out_ch,
+                out_channels=out_ch,
+                kernel_size=3,
+                stride=s,
+                padding=1,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_ch),
             get_activation(activation_2, ACTIVATION_MAP),
-            nn.Conv2d(in_channels=out_ch, out_channels=out_ch * expansion_size,
-                      kernel_size=1, stride=1, padding=0, bias=False),
+            nn.Conv2d(
+                in_channels=out_ch,
+                out_channels=out_ch * expansion_size,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_ch * expansion_size),
-            get_activation(activation_3, ACTIVATION_MAP)
+            get_activation(activation_3, ACTIVATION_MAP),
         )
         self.downsample = None
         if s != 1 or in_ch != out_ch * expansion_size:
             self.downsample = nn.Sequential(
-                nn.Conv2d(in_channels=in_ch, out_channels=out_ch * expansion_size,
-                          kernel_size=1, stride=s, bias=False),
-                nn.BatchNorm2d(out_ch * expansion_size)
+                nn.Conv2d(
+                    in_channels=in_ch,
+                    out_channels=out_ch * expansion_size,
+                    kernel_size=1,
+                    stride=s,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(out_ch * expansion_size),
             )
 
     def forward(self, x):
@@ -427,7 +548,7 @@ class ResNetBlock_50(nn.Module):
 ############################################################
 #               注意力机制相关的模块                          #
 ############################################################
-@register_block('cbam_channel_attention')
+@register_block("cbam_channel_attention")
 class CBAM_Channel_Attention(nn.Module):
     """CBAM 通道注意力模块。"""
 
@@ -443,9 +564,13 @@ class CBAM_Channel_Attention(nn.Module):
         self.maxpool = nn.AdaptiveMaxPool2d(1)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.MLP_shared = nn.Sequential(
-            nn.Linear(in_features=in_ch, out_features=in_ch // reduction_ratio, bias=False),
+            nn.Linear(
+                in_features=in_ch, out_features=in_ch // reduction_ratio, bias=False
+            ),
             get_activation(activation, ACTIVATION_MAP),
-            nn.Linear(in_features=in_ch // reduction_ratio, out_features=in_ch, bias=False),
+            nn.Linear(
+                in_features=in_ch // reduction_ratio, out_features=in_ch, bias=False
+            ),
         )
         self.sigmoid = nn.Sigmoid()
 
@@ -464,7 +589,7 @@ class CBAM_Channel_Attention(nn.Module):
         return attn * x
 
 
-@register_block('cbam_spatial_attention')
+@register_block("cbam_spatial_attention")
 class CBAM_Spatial_Attention(nn.Module):
     """CBAM 空间注意力模块。"""
 
@@ -475,7 +600,9 @@ class CBAM_Spatial_Attention(nn.Module):
             k (int): 卷积核大小。
         """
         super().__init__()
-        self.conv = nn.Conv2d(in_channels=2, out_channels=1, kernel_size=k, padding=k // 2, bias=False)
+        self.conv = nn.Conv2d(
+            in_channels=2, out_channels=1, kernel_size=k, padding=k // 2, bias=False
+        )
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -493,7 +620,7 @@ class CBAM_Spatial_Attention(nn.Module):
         return self.sigmoid(out) * x
 
 
-@register_block('cbam')
+@register_block("cbam")
 class CBAM(nn.Module):
     """CBAM 通道 + 空间注意力组合模块。"""
 
@@ -507,7 +634,9 @@ class CBAM(nn.Module):
             k (int): 空间注意力卷积核大小。
         """
         super().__init__()
-        self.channel_attention = CBAM_Channel_Attention(in_ch=in_ch, reduction_ratio=reduction_ratio, activation=activation)
+        self.channel_attention = CBAM_Channel_Attention(
+            in_ch=in_ch, reduction_ratio=reduction_ratio, activation=activation
+        )
         self.spatial_attention = CBAM_Spatial_Attention(k=k)
 
     def forward(self, x):
@@ -525,7 +654,7 @@ class CBAM(nn.Module):
 ############################################################
 #               特征金字塔网络 (FPN) 融合模块                  #
 ############################################################
-@register_block('fpn_lateral_conv')
+@register_block("fpn_lateral_conv")
 class FPNLateralConv(nn.Module):
     """FPN 侧向 1×1 卷积,将 backbone 各级特征通道数统一到 FPN 输出通道。
 
@@ -555,7 +684,7 @@ class FPNLateralConv(nn.Module):
         return self.conv(x)
 
 
-@register_block('fpn_output_conv')
+@register_block("fpn_output_conv")
 class FPNOutputConv(nn.Module):
     """FPN 输出 3×3 卷积,消除上采样 + 逐元素加法带来的混叠伪影。
 
@@ -567,7 +696,7 @@ class FPNOutputConv(nn.Module):
         """初始化输出平滑卷积。
 
         Args:
-            ch (int): 输入/输出通道数（保持等通道）。
+            ch (int): 输入/输出通道数(保持等通道)。
         """
         super().__init__()
         self.conv = nn.Conv2d(ch, ch, kernel_size=3, padding=1)
@@ -585,7 +714,7 @@ class FPNOutputConv(nn.Module):
 
 
 class FPN(nn.Module):
-    """特征金字塔网络（Feature Pyramid Network）,自顶向下融合多尺度特征。
+    """特征金字塔网络(Feature Pyramid Network),自顶向下融合多尺度特征。
 
     输入 backbone 的四个阶段特征 [c2, c3, c4, c5],
     通过 top-down pathway + lateral connection 融合,
@@ -606,14 +735,18 @@ class FPN(nn.Module):
             out_channels (int): FPN 输出特征的统一通道数。
         """
         super().__init__()
-        self.lateral_convs = nn.ModuleList([
-            nn.Conv2d(in_ch, out_channels, kernel_size=1)
-            for in_ch in in_channels_list
-        ])
-        self.output_convs = nn.ModuleList([
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-            for _ in in_channels_list
-        ])
+        self.lateral_convs = nn.ModuleList(
+            [
+                nn.Conv2d(in_ch, out_channels, kernel_size=1)
+                for in_ch in in_channels_list
+            ]
+        )
+        self.output_convs = nn.ModuleList(
+            [
+                nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+                for _ in in_channels_list
+            ]
+        )
 
     def forward(self, features):
         """前向传播,自顶向下融合。
@@ -635,7 +768,9 @@ class FPN(nn.Module):
         fused.append(prev)
 
         for i in range(len(laterals) - 2, -1, -1):
-            up = nn.functional.interpolate(prev, size=laterals[i].shape[2:], mode='nearest')
+            up = nn.functional.interpolate(
+                prev, size=laterals[i].shape[2:], mode="nearest"
+            )
             prev = laterals[i] + up
             fused.insert(0, prev)
 
@@ -644,7 +779,7 @@ class FPN(nn.Module):
         return outputs
 
 
-@register_block('flatten')
+@register_block("flatten")
 class Flatten(nn.Module):
     """展平层封装。"""
 
@@ -665,7 +800,7 @@ class Flatten(nn.Module):
         return self.forward_basic(x)
 
 
-@register_block('linear')
+@register_block("linear")
 class Linear(nn.Module):
     """线性层封装。"""
 
@@ -694,12 +829,12 @@ class Linear(nn.Module):
         return self.forwar_basic(x)
 
 
-@register_block('c3k2')
+@register_block("c3k2")
 class C3k2(nn.Module):
-    """C3k2 模块 (YOLO11 架构衍生),即自定义跨阶段局部网络（CSP）瓶颈层构建块。
+    """C3k2 模块 (YOLO11 架构衍生),即自定义跨阶段局部网络(CSP)瓶颈层构建块。
 
     C3k2 是 YOLO 模型中常用的基于 CSP 的高级特征提取块。它通过一条主分支
-    执行连续的瓶颈层操作,并由一个额外捷径（shortcut）通道将特征组合起来,
+    执行连续的瓶颈层操作,并由一个额外捷径(shortcut)通道将特征组合起来,
     能在不大幅度增加算力的同时,较好地保留并整合多尺度、多层级语义细节。
 
     Attributes:
@@ -708,14 +843,24 @@ class C3k2(nn.Module):
         n (int): 内部 Bottleneck 重复次数。
         shortcut (bool): 内部 Bottleneck 是否使用残差连接。
         g (int): 分组卷积组数。
-        e (float): 通道扩展比例（压缩率）。
+        e (float): 通道扩展比例(压缩率)。
     """
 
-    def __init__(self, in_ch: int, out_ch: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        n: int = 1,
+        shortcut: bool = True,
+        g: int = 1,
+        e: float = 0.5,
+    ):
         """初始化 C3k2 类。"""
         super().__init__()
         hid_c = int(out_ch * e)  # 中间通道数
-        self.conv1 = nn.Conv2d(in_ch, 2 * hid_c, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_ch, 2 * hid_c, kernel_size=1, stride=1, padding=0, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(2 * hid_c)
         self.act1 = nn.SiLU(inplace=True)
 
@@ -724,17 +869,35 @@ class C3k2(nn.Module):
         self.m = nn.ModuleList()
         for _ in range(n):
             bottle_neck = nn.Sequential(
-                nn.Conv2d(hid_c, hid_c, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+                nn.Conv2d(
+                    hid_c,
+                    hid_c,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                    groups=g,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(hid_c),
                 nn.SiLU(inplace=True),
-                nn.Conv2d(hid_c, hid_c, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+                nn.Conv2d(
+                    hid_c,
+                    hid_c,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                    groups=g,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(hid_c),
-                nn.SiLU(inplace=True)
+                nn.SiLU(inplace=True),
             )
             # 是否含有 shortcut 根据用户设置可额外拓展,简化为包含在结构中
             self.m.append(bottle_neck)
 
-        self.conv2 = nn.Conv2d((2 + n) * hid_c, out_ch, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(
+            (2 + n) * hid_c, out_ch, kernel_size=1, stride=1, padding=0, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(out_ch)
         self.act2 = nn.SiLU(inplace=True)
 
@@ -749,7 +912,7 @@ class C3k2(nn.Module):
         """
         # 第一层卷积
         y = self.act1(self.bn1(self.conv1(x)))
-        # 把经过首层卷积提炼后的特征对半拆分（实现局部跨阶段 CSP 效果）
+        # 把经过首层卷积提炼后的特征对半拆分(实现局部跨阶段 CSP 效果)
         y1, y2 = torch.chunk(y, 2, dim=1)
 
         # 收集经过每一层 bottle_neck 萃取后的残差分片
@@ -764,7 +927,7 @@ class C3k2(nn.Module):
 ############################################################
 #               YOLO 系列专用模块                            #
 ############################################################
-@register_block('bottleneck')
+@register_block("bottleneck")
 class Bottleneck(nn.Module):
     """YOLO 标准瓶颈模块，由两个 3×3 卷积串联并附加残差连接。
 
@@ -779,17 +942,23 @@ class Bottleneck(nn.Module):
         e (float): 中间通道相对于输出通道的扩展比。
     """
 
-    def __init__(self, in_ch: int, out_ch: int, shortcut: bool = True, g: int = 1, e: float = 0.5):
+    def __init__(
+        self, in_ch: int, out_ch: int, shortcut: bool = True, g: int = 1, e: float = 0.5
+    ):
         """初始化 Bottleneck 模块。"""
         super().__init__()
         hid_ch = int(out_ch * e)
         self.cv1 = nn.Sequential(
-            nn.Conv2d(in_ch, hid_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+            nn.Conv2d(
+                in_ch, hid_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False
+            ),
             nn.BatchNorm2d(hid_ch),
             nn.SiLU(inplace=True),
         )
         self.cv2 = nn.Sequential(
-            nn.Conv2d(hid_ch, out_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+            nn.Conv2d(
+                hid_ch, out_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False
+            ),
             nn.BatchNorm2d(out_ch),
             nn.SiLU(inplace=True),
         )
@@ -807,9 +976,9 @@ class Bottleneck(nn.Module):
         return x + self.cv2(self.cv1(x)) if self.shortcut else self.cv2(self.cv1(x))
 
 
-@register_block('sppf')
+@register_block("sppf")
 class SPPF(nn.Module):
-    """空间金字塔池化快速版（Spatial Pyramid Pooling Fast）。
+    """空间金字塔池化快速版(Spatial Pyramid Pooling Fast)。
 
     通过连续三次同样的最大池化操作代替并行多尺度池化，
     等价于融合 5×5、9×9、13×13 的感受野，增强多尺度目标的特征表达。
@@ -850,4 +1019,3 @@ class SPPF(nn.Module):
         y2 = self.m(y1)
         y3 = self.m(y2)
         return self.cv2(torch.cat([x, y1, y2, y3], dim=1))
-
