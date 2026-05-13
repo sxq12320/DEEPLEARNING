@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from data import SegmentationDataset
+from datasets import SegmentationDataset
 from models import MiniSegNet
 from .metrics import compute_iou
 

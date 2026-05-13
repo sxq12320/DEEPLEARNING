@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data import SegmentationDataset
+from datasets import SegmentationDataset
 from models import MiniSegNet
 from .losses import SegmentationLoss
 class Trainer:
