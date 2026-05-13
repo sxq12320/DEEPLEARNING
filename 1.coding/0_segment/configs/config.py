@@ -89,3 +89,30 @@ RESNET_18_STAGE4_CFG = [
     ["resnet_block_34", 256, 512, 2, "relu", "relu"],
     ["resnet_block_34", 512, 512, 1, "relu", "relu"],
 ]
+
+
+# ---------------------------------------------------------------------------
+# YOLO11 模型缩放配置
+# 宽度：[stem1, stem2, P3, P4, P5] 各阶段输出通道
+# 深度缩放因子：控制 C3K2 内部 bottleneck 重复次数
+# ---------------------------------------------------------------------------
+YOLO11_CONFIGS = {
+    # YOLO11 Nano：极小模型，适合移动端 / CPU 推理
+    "nano": {
+        "channels": [16, 32, 64, 128, 256],
+        "depth_scale": 0.33,
+        "description": "YOLO11 Nano — 移动端 / CPU 友好"
+    },
+    # YOLO11 Small：速度与精度的平衡点
+    "small": {
+        "channels": [32, 64, 128, 256, 512],
+        "depth_scale": 0.67,
+        "description": "YOLO11 Small — 速度/精度平衡"
+    },
+    # YOLO11 Medium：常规 GPU 训练首选
+    "medium": {
+        "channels": [64, 128, 256, 512, 512],
+        "depth_scale": 1.0,
+        "description": "YOLO11 Medium — 常规精度取向"
+    },
+}

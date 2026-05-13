@@ -760,3 +760,94 @@ class C3k2(nn.Module):
         # 将所有的分片拼接并由 final conv 统一还原到 out_ch 通道数
         return self.act2(self.bn2(self.conv2(torch.cat(out, dim=1))))
 
+
+############################################################
+#               YOLO 系列专用模块                            #
+############################################################
+@register_block('bottleneck')
+class Bottleneck(nn.Module):
+    """YOLO 标准瓶颈模块，由两个 3×3 卷积串联并附加残差连接。
+
+    当 shortcut=True 时，模块的残差边会将输入与经两个卷积变换后的
+    特征执行逐元素相加操作，由此辅助梯度流动与特征复用。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        shortcut (bool): 是否使用残差连接。
+        g (int): 分组卷积组数。
+        e (float): 中间通道相对于输出通道的扩展比。
+    """
+
+    def __init__(self, in_ch: int, out_ch: int, shortcut: bool = True, g: int = 1, e: float = 0.5):
+        """初始化 Bottleneck 模块。"""
+        super().__init__()
+        hid_ch = int(out_ch * e)
+        self.cv1 = nn.Sequential(
+            nn.Conv2d(in_ch, hid_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+            nn.BatchNorm2d(hid_ch),
+            nn.SiLU(inplace=True),
+        )
+        self.cv2 = nn.Sequential(
+            nn.Conv2d(hid_ch, out_ch, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+            nn.BatchNorm2d(out_ch),
+            nn.SiLU(inplace=True),
+        )
+        self.shortcut = shortcut and in_ch == out_ch
+
+    def forward(self, x):
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入张量 (B, in_ch, H, W)。
+
+        Returns:
+            torch.Tensor: 输出张量 (B, out_ch, H, W)。
+        """
+        return x + self.cv2(self.cv1(x)) if self.shortcut else self.cv2(self.cv1(x))
+
+
+@register_block('sppf')
+class SPPF(nn.Module):
+    """空间金字塔池化快速版（Spatial Pyramid Pooling Fast）。
+
+    通过连续三次同样的最大池化操作代替并行多尺度池化，
+    等价于融合 5×5、9×9、13×13 的感受野，增强多尺度目标的特征表达。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 连续池化的卷积核大小。
+    """
+
+    def __init__(self, in_ch: int, out_ch: int, k: int = 5):
+        """初始化 SPPF 模块。"""
+        super().__init__()
+        hid_ch = in_ch // 2
+        self.cv1 = nn.Sequential(
+            nn.Conv2d(in_ch, hid_ch, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(hid_ch),
+            nn.SiLU(inplace=True),
+        )
+        self.cv2 = nn.Sequential(
+            nn.Conv2d(hid_ch * 4, out_ch, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(out_ch),
+            nn.SiLU(inplace=True),
+        )
+        self.m = nn.MaxPool2d(kernel_size=k, stride=1, padding=k // 2)
+
+    def forward(self, x):
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入张量 (B, in_ch, H, W)。
+
+        Returns:
+            torch.Tensor: 多尺度融合后的输出 (B, out_ch, H, W)。
+        """
+        x = self.cv1(x)
+        y1 = self.m(x)
+        y2 = self.m(y1)
+        y3 = self.m(y2)
+        return self.cv2(torch.cat([x, y1, y2, y3], dim=1))
+

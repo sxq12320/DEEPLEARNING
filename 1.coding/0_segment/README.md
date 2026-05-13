@@ -1,8 +1,10 @@
-# 0_segment — 图像分割工程骨架
+# 0_segment — 图像分割与目标检测工程骨架
 
-面向图像分割任务的深度学习工程，基于 PyTorch，支持**模块化设计 + 注册机制 + 配置驱动组网**。
+基于 PyTorch 的深度学习工程，支持**图像分割**和**目标检测**两大任务。
+采用**模块化设计 + 注册机制 + 配置驱动组网**架构，
+可灵活更换 backbone / neck / head。
 
-内置 **FPN 多尺度特征金字塔**，实现自顶向下的跨尺度特征融合。
+内置 **FPN 多尺度特征金字塔**（分割）和 **YOLO11 PAN-FPN**（检测）两套融合方案。
 
 ## 项目结构
 
@@ -12,120 +14,154 @@
 ├── requirements.txt         # 依赖
 │
 ├── configs/                 # 全局配置
-│   ├── config.py            # 激活函数映射表 + 网络结构配置列表（含分阶段配置）
-│   └── __init__.py
+│   └── config.py            # 激活函数映射 + ResNet/YOLO 网络结构配置
 │
 ├── datasets/                # 数据流水线
 │   ├── dataset.py           # SegmentationDataset（真实/合成数据自动切换）
-│   ├── transforms.py        # TXT / JSON / NPY → mask 标签转换
-│   └── __init__.py
+│   └── transforms.py        # TXT / JSON / NPY → mask 标签转换
 │
 ├── models/                  # 模型库
 │   ├── registry.py          # @register_block 注册机制
-│   ├── blocks.py            # 基础模块（Conv, ResBlock, CBAM, FPN, Pool ...）
+│   ├── blocks.py            # 基础模块（Conv, ResBlock, CBAM, C3K2, SPPF, FPN ...）
 │   ├── builder.py           # make_layers(cfg) 动态组网
-│   ├── backbones.py         # 骨干网络（ResNet18 / MultiScaleResNet18）
+│   ├── backbones.py         # 骨干网络（ResNet / YOLO11Backbone）
+│   ├── necks.py             # 颈部融合（YOLO11 PAN-FPN）
+│   ├── heads.py             # 检测头（YOLO11 解耦头）
 │   ├── segmentation.py      # 分割架构（MiniSegNet / FPNSegNet）
-│   └── __init__.py
+│   └── detection.py         # 检测架构（YOLO11Detector）
 │
 ├── engine/                  # 训练/评估引擎
-│   ├── losses.py            # 损失函数（BCE / CE）
+│   ├── losses.py            # 损失函数（分割 BCE/CE + 检测 CIoU/DFL/BCE）
 │   ├── metrics.py           # 评估指标（IoU, Dice, mAP）
 │   ├── trainer.py           # Trainer 训练循环
-│   ├── evaluator.py         # Evaluator 评估循环
-│   └── __init__.py
+│   └── evaluator.py         # Evaluator 评估循环
 │
 ├── utils/                   # 通用工具
 │   ├── common.py            # get_activation, autopad
-│   ├── visualize.py         # loss 曲线 / 预测对比可视化
-│   └── __init__.py
+│   └── visualize.py         # loss 曲线 / 预测对比可视化
 │
 └── checkpoints/             # 运行输出（权重、日志、图表）
-    └── results/
-        └── <name>/
-            ├── weights/     # best.pt / last.pt
-            ├── logs.txt     # 超参数 + 逐 epoch 日志
-            └── loss_curve.png
 ```
 
 ## 快速开始
 
 ```bash
-# 安装依赖
 pip install -r requirements.txt
 
-# 使用 FPN 多尺度分割（默认）
-python train.py
+# === 分割 ===
+python train.py --model-type fpnseg
 
-# 使用单尺度分割
-python train.py --model-type miniseg
-
-# 覆盖超参数
-python train.py --imgsz 256 --epochs 50 --batch 16 --lr 5e-4
-
-# 使用 JSON 配置文件
-python train.py --cfg configs/train.json
-
-# 使用 YAML 配置文件
-python train.py --cfg configs/train.yaml
+# === 检测 ===
+# YOLO11 检测在代码中直接调用 API，详见下方示例
 ```
+
+---
 
 ## 模型架构
 
-### 1. MiniSegNet（单尺度）
+### 1. 分割模型
 
-```
-Input → ResNet-18 backbone → (B,512,H/32,W/32) → 1×1 Conv → bilinear upsample → Output
-```
+| 模型 | 结构 | 参数 |
+|------|------|------|
+| MiniSegNet | ResNet18 backbone → 1×1 Conv → upsample | ~11M |
+| FPNSegNet | MultiScaleResNet18 → FPN → fused head | ~14M |
 
-最简单的分割架构，backbone 输出单一尺度特征图后直接上采样。
-
-### 2. FPNSegNet（FPN 多尺度，默认）
+### 2. YOLO11 检测模型
 
 ```
 Input (B,3,H,W)
     │
     ▼
-┌─────────────────────────────────────────────────┐
-│  MultiScaleResNet18 Backbone                     │
-│                                                  │
-│  stem   ──────────────────→ c2 (64,  H/4)       │
-│  stage1 (2× resnet_block) → c2 (64,  H/4)       │
-│  stage2 (2× resnet_block) → c3 (128, H/8)       │
-│  stage3 (2× resnet_block) → c4 (256, H/16)      │
-│  stage4 (2× resnet_block) → c5 (512, H/32)      │
-└─────────────────────────────────────────────────┘
-    │  [c2, c3, c4, c5]
+┌──────────────────────────────────────────────────┐
+│  YOLO11Backbone (CSP + SPPF)                      │
+│                                                   │
+│  stem: Conv(s=2) → Conv(s=2)   → (B,32, H/4)     │
+│  stage1: C3K2(32→64)            → P3 (B,64, H/8)  │
+│  stage2: Conv(s=2) + C3K2(64→128) → P4 (B,128,H/16)│
+│  stage3: Conv(s=2)+C3K2(128→256)+SPPF → P5(B,256,H/32)│
+└──────────────────────────────────────────────────┘
+    │  [P3, P4, P5]
     ▼
-┌─────────────────────────────────────────────────┐
-│  FPN Neck (top-down + lateral)                   │
-│                                                  │
-│  c5 ──1×1──→ p5 ──2× upsample──┐               │
-│  c4 ──1×1──→ ─── + ───→ p4 ──2× upsample──┐   │
-│  c3 ──1×1──→ ─── + ───→ p3 ──2× upsample──┐   │
-│  c2 ──1×1──→ ─── + ───→ p2                  │   │
-│                                                  │
-│  Each pN: 3×3 conv → output (256ch)             │
-│  输出: [p2(256,H/4), p3(256,H/8),               │
-│         p4(256,H/16), p5(256,H/32)]             │
-└─────────────────────────────────────────────────┘
-    │  [p2, p3, p4, p5]
+┌──────────────────────────────────────────────────┐
+│  YOLO11Neck (PAN-FPN)                              │
+│                                                   │
+│  Top-down:                                        │
+│    P5 ──→ Upsample ──+──→ C3K2 → N4               │
+│    P4 ───────────────┘                  ↓          │
+│    N4 ──→ Upsample ──+──→ C3K2 → N3               │
+│    P3 ───────────────┘                             │
+│                                                   │
+│  Bottom-up:                                       │
+│    N3 ──→ Conv(s=2) ──+──→ C3K2 → N4_out          │
+│    N4 ────────────────┘                  ↓          │
+│    N4_out → Conv(s=2) ──+──→ C3K2 → N5_out        │
+│    P5 ──────────────────┘                          │
+└──────────────────────────────────────────────────┘
+    │  [N3, N4_out, N5_out]
     ▼
-┌─────────────────────────────────────────────────┐
-│  Segmentation Head                               │
-│  Upsample all to p2 size (H/4)                   │
-│  → Concat (256×4 = 1024ch)                       │
-│  → 3×3 Conv + BN + ReLU → 256ch                 │
-│  → 1×1 Conv → out_ch                             │
-│  → Bilinear upsample → (B,out_ch,H,W)           │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  YOLO11Head (Decoupled)                            │
+│                                                   │
+│  For each scale:                                  │
+│    cls_branch: 2×Conv3x3 + Conv1x1(num_classes)   │
+│    reg_branch: 2×Conv3x3 + Conv1x1(4×reg_max)     │
+│                                                   │
+│  Output: cls_list[N], reg_list[N]                 │
+└──────────────────────────────────────────────────┘
 ```
 
-**关键设计**：
-- **c2**（浅层 H/4）：保留高分辨率空间细节，利于小目标边缘
-- **c5**（深层 H/32）：包含强语义信息，利于大目标和类别判断
-- **FPN 融合**：自顶向下将深层语义逐级注入浅层，使每个尺度同时具备空间精度和语义强度
-- **多尺度拼接**：head 同时看到 4 个分辨率的信息，比单一尺度更鲁棒
+#### 模型缩放规格
+
+| 规格 | 通道 [c1~c5] | depth_scale | 参数量 | 适用场景 |
+|------|-------------|-------------|--------|----------|
+| nano | [16,32,64,128,256] | 0.33 | ~5.5M | 移动端 / CPU |
+| small | [32,64,128,256,512] | 0.67 | ~16M | 速度/精度平衡 |
+| medium | [64,128,256,512,512] | 1.0 | ~40M | 常规 GPU 训练 |
+
+#### 检测损失函数
+
+YOLO11 使用**任务对齐标签分配**（TaskAlignedAssigner）+ 三合一损失：
+
+```
+total_loss = 7.5 * box_loss + 0.5 * cls_loss + 1.5 * dfl_loss
+
+box_loss = CIoU Loss（预测框 vs 真实框）
+cls_loss = BCE Loss（分类 logits vs one-hot 标签）
+dfl_loss = Distribution Focal Loss（边界框分布回归）
+```
+
+标签分配策略：每个真实框选择 $alignment_metric = cls_score^α × IoU^β$ 最高的 topk 个锚点作为正样本。
+
+#### 编程接口示例
+
+```python
+from models import YOLO11Detector
+from engine.losses import YOLODetectionLoss
+from configs.config import YOLO11_CONFIGS
+
+# 选择规格
+cfg = YOLO11_CONFIGS['nano']
+
+# 构建模型
+model = YOLO11Detector(
+    num_classes=80,           # 类别数
+    reg_max=16,               # DFL 区间数
+    backbone_channels=cfg['channels'],
+    depth_scale=cfg['depth_scale'],
+)
+
+# 前向传播
+x = torch.randn(2, 3, 640, 640)
+cls_list, reg_list, features, neck_feats = model(x)
+
+# 计算损失
+criterion = YOLODetectionLoss(num_classes=80, reg_max=16)
+targets = [
+    {'labels': torch.tensor([1, 2]), 'boxes': torch.tensor([[0.1,0.1,0.5,0.5],[0.3,0.3,0.7,0.7]])},
+    {'labels': torch.tensor([0]), 'boxes': torch.tensor([[0.2,0.2,0.6,0.6]])},
+]
+loss, items = criterion(cls_list, reg_list, targets, features)
+```
 
 ## 训练参数
 
@@ -151,67 +187,15 @@ Input (B,3,H,W)
 | `--name` | str | train | 实验名称 |
 | `--seed` | int | 22 | 随机种子 |
 
-## JSON 配置文件示例
-
-```jsonc
-// configs/train.json
-{
-    "model_type": "fpnseg",
-    "image_dir": "data/images",
-    "mask_dir": "data/masks",
-    "label_type": "mask",
-    "imgsz": 256,
-    "epochs": 50,
-    "batch": 16,
-    "lr": 0.001,
-    "project": "checkpoints/results",
-    "name": "exp_01",
-    "seed": 42
-}
-```
-
-## 日志输出
-
-训练日志采用 YOLO 风格格式：
-
-```
-======================================================================
-                      Segmentation Training
-======================================================================
-image_size           256
-batch_size           16
-epochs               50
-learning_rate        0.001
-optimizer            Adam
-device               NVIDIA GeForce RTX 3060
-data_source          data/images
-model_type           fpnseg
-augment              True
-seed                 42
-project              checkpoints/results/exp_01
-model_params         2,134,593 trainable / 2,134,593 total
-======================================================================
-
-     Epoch       loss                  elapsed    ETA
-────────────────────────────────────────────────────────────
-        1/50     0.234567              00:05      04:10
-        2/50     0.123456              00:10      04:00
-        ...
-```
-
-日志文件 `logs.txt` 会同步写入到输出目录。
-
 ---
 
 ## 开发指南：如何添加新模块
 
 ### 1. 添加新的基础网络层（blocks）
 
-在 [models/blocks.py](models/blocks.py) 中定义新模块，使用 `@register_block` 装饰器注册：
+在 [models/blocks.py](models/blocks.py) 中定义，使用 `@register_block` 装饰器注册：
 
 ```python
-from .registry import register_block
-
 @register_block('my_attention')
 class MyAttention(nn.Module):
     """自定义注意力模块。"""
@@ -223,108 +207,64 @@ class MyAttention(nn.Module):
         ...
 ```
 
-注册后即可在配置列表中直接引用：
+### 2. 添加新的 Backbone
 
-```python
-MY_CFG = [
-    ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
-    ["my_attention", 64, 4],
-    ...
-]
-```
+在 [models/backbones.py](models/backbones.py) 中添加。
 
-### 2. 添加新的骨干网络（backbone）
-
-#### 2a. 单尺度 backbone（输出单个特征图）
-
-在 [models/backbones.py](models/backbones.py) 中添加：
-
+**单尺度模式**（返回单个 Tensor）：
 ```python
 class MyBackbone(nn.Module):
-    def __init__(self, cfg=None):
-        super().__init__()
-        self.backbone = make_layers(cfg or MY_CFG)
-
-    def forward(self, x):
-        return self.backbone(x)   # single tensor
+    def forward(self, x) -> torch.Tensor
 ```
 
-#### 2b. 多尺度 backbone（输出多级特征列表，用于 FPN 融合）
-
-同样在 [models/backbones.py](models/backbones.py) 中，返回 `List[Tensor]`：
-
+**多尺度模式**（返回 List[Tensor]，供 neck 使用）：
 ```python
 class MyMultiScaleBackbone(nn.Module):
-    def __init__(self):
-        super().__init__()
-        # 分阶段构建，每阶段一个 make_layers
-        self.stem = make_layers(MY_STEM_CFG)
-        self.stage1 = make_layers(MY_STAGE1_CFG)
-        self.stage2 = make_layers(MY_STAGE2_CFG)
-        ...
-
-    def forward(self, x):
-        c1 = self.stage1(self.stem(x))
-        c2 = self.stage2(c1)
-        ...
-        return [c1, c2, c3, c4]   # list of tensors, 浅→深
+    def forward(self, x) -> List[torch.Tensor]  # [feat1, feat2, feat3]
 ```
 
-推荐在 [configs/config.py](configs/config.py) 中定义分阶段配置列表，复用 `make_layers`。
+### 3. 添加新的 Neck（颈部融合）
 
-### 3. 添加新的特征融合 neck（FPN / PAN / BiFPN）
+在 [models/necks.py](models/necks.py) 中添加。
 
-在 [models/blocks.py](models/blocks.py) 中添加 neck 模块。
-
-FPN 的通用接口约定：
-- `__init__`: 接收 `in_channels_list`（backbone 各阶段通道数）和 `out_channels`（统一输出通道数）
-- `forward`: 接收 `List[Tensor]`（自底向上排列），返回 `List[Tensor]`（同序）
-
+接口约定：接收多尺度特征列表，返回同序融合特征列表。
 ```python
 class MyNeck(nn.Module):
-    def __init__(self, in_channels_list, out_channels=256):
-        super().__init__()
-        ...
-
-    def forward(self, features):       # features: [c2, c3, c4, c5]
-        ...
-        return [p2, p3, p4, p5]        # fused features
+    def forward(self, features: List[Tensor]) -> List[Tensor]
 ```
 
-### 4. 添加新的分割架构
+### 4. 添加新的 Head（检测头）
 
-在 [models/segmentation.py](models/segmentation.py) 中，组合 backbone + neck + head：
+在 [models/heads.py](models/heads.py) 中添加。
+
+检测头接口约定：
+```python
+class MyHead(nn.Module):
+    def forward(self, features: List[Tensor]) -> Tuple[List[Tensor], List[Tensor]]
+    # Returns: (cls_outputs, reg_outputs)
+```
+
+### 5. 组装完整检测器
+
+在 [models/detection.py](models/detection.py) 中：
 
 ```python
-class MySegNet(nn.Module):
-    def __init__(self, in_ch=3, out_ch=1):
+class MyDetector(nn.Module):
+    def __init__(self):
         super().__init__()
-        self.backbone = MyMultiScaleBackbone()
-        self.neck = MyNeck(in_channels_list=[64, 128, 256, 512])
-        self.head = nn.Sequential(...)
+        self.backbone = MyBackbone()
+        self.neck = MyNeck(...)
+        self.head = MyHead(...)
 
     def forward(self, x):
         feats = self.backbone(x)
         fused = self.neck(feats)
-        # upsample + concat + head → logits
-        ...
-        return logits
+        return self.head(fused)
 ```
 
-然后在 [train.py](train.py) 中注册新模型分支即可。
+### 6. 添加新的损失函数
 
-### 5. 添加新的损失函数
-
-在 [engine/losses.py](engine/losses.py) 的 `SegmentationLoss` 中扩展 `loss_type`：
-
-```python
-elif loss_type == "dice":
-    self.criterion = DiceLoss(**kwargs)
-```
-
-### 6. 添加新的数据增强
-
-在 [datasets/transforms.py](datasets/transforms.py) 中添加增强函数，然后在 [datasets/dataset.py](datasets/dataset.py) 的 `_apply_augmentation` 中调用。
+在 [engine/losses.py](engine/losses.py) 中添加新 Loss 类即可。
 
 ### 注册机制概述
 
@@ -348,6 +288,9 @@ elif loss_type == "dice":
 | `depthwise_separable_conv` | DepthWiseSeparable_Conv | 可分离卷积 |
 | `resnet_block_34` | ResNetBlock_34 | ResNet-34 残差块 |
 | `resnet_block_50` | ResNetBlock_50 | ResNet-50 瓶颈残差块 |
+| `c3k2` | C3k2 | YOLO CSP 瓶颈块 |
+| `bottleneck` | Bottleneck | YOLO 标准瓶颈模块 |
+| `sppf` | SPPF | 空间金字塔快速池化 |
 | `cbam_channel_attention` | CBAM_Channel_Attention | CBAM 通道注意力 |
 | `cbam_spatial_attention` | CBAM_Spatial_Attention | CBAM 空间注意力 |
 | `cbam` | CBAM | CBAM 组合注意力 |
@@ -359,11 +302,17 @@ elif loss_type == "dice":
 | `flatten` | Flatten | 展平层 |
 | `linear` | Linear | 全连接层 |
 
-| 未注册模块 | 说明 |
-|-----------|------|
-| `FPN` | FPN neck 顶层容器，组合 lateral + output convs |
-| `MultiScaleResNet18` | 分阶段 ResNet-18，输出 4 个尺度的特征列表 |
-| `FPNSegNet` | backbone + FPN + head 完整分割网络 |
+| 未注册顶层模块 | 说明 |
+|---------------|------|
+| `FPN` | FPN neck 容器，组合 lateral + output convs |
+| `MultiScaleResNet18` | 分阶段 ResNet-18，输出 4 尺度特征 |
+| `FPNSegNet` | backbone + FPN + head 分割网络 |
+| `YOLO11Backbone` | YOLO11 骨干（C3K2 + SPPF） |
+| `YOLO11Neck` | YOLO11 PAN-FPN 颈部 |
+| `YOLO11Head` | YOLO11 解耦检测头 |
+| `YOLO11Detector` | backbone + neck + head 完整检测器 |
+| `TaskAlignedAssigner` | 任务对齐标签分配器 |
+| `YOLODetectionLoss` | CIoU + DFL + BCE 检测损失 |
 
 ## 支持的数据格式
 

@@ -5,6 +5,7 @@ from configs.config import (
     RESNET_18_STAGE3_CFG, RESNET_18_STAGE4_CFG,
 )
 from .builder import make_layers
+from .blocks import C3k2, SPPF
 
 
 class ResNet18(nn.Module):
@@ -73,3 +74,77 @@ class MultiScaleResNet18(nn.Module):
         c4 = self.stage3(c3)   # (B, 256, H/16, W/16)
         c5 = self.stage4(c4)   # (B, 512, H/32, W/32)
         return [c2, c3, c4, c5]
+
+
+class YOLO11Backbone(nn.Module):
+    """YOLO11 骨干网络，输出三层多尺度特征 [P3, P4, P5]。
+
+    YOLO11 的主干结构基于 CSP 思想，通过 C3K2 模块和 SPPF 模块
+    分别进行跨阶段特征复用和多尺度池化，兼顾推理效率与检测精度。
+
+    输出：
+        P3 — 高分辨率 (H/8)、浅层语义，利于小目标检测。
+        P4 — 中等分辨率 (H/16)、中间层语义。
+        P5 — 低分辨率 (H/32)、深层语义 + SPPF 多感受野。
+
+    Attributes:
+        channels (List[int]): 各阶段输出通道数 [c1, c2, c3, c4, c5]。
+        depth_scale (float): C3K2 重复次数缩放因子（nano=0.33, small=0.67, medium=1.0）。
+    """
+
+    def __init__(self, channels=None, depth_scale=1.0):
+        """初始化 YOLO11 骨干。
+
+        Args:
+            channels (List[int] | None): 宽度配置 [c1,c2,c3,c4,c5]，默认 nano 规格。
+            depth_scale (float): 深度缩放因子。
+        """
+        super().__init__()
+        if channels is None:
+            channels = [16, 32, 64, 128, 256]
+        c1, c2, c3, c4, c5 = channels
+
+        # stem：快速降采样到 1/4
+        self.stem = nn.Sequential(
+            nn.Conv2d(3, c1, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(c1),
+            nn.SiLU(inplace=True),
+            nn.Conv2d(c1, c2, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(c2),
+            nn.SiLU(inplace=True),
+        )
+
+        # stage 1 → P3 (H/8)
+        self.stage1 = C3k2(in_ch=c2, out_ch=c3, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5)
+
+        # stage 2 → P4 (H/16)
+        self.stage2 = nn.Sequential(
+            nn.Conv2d(c3, c4, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(c4),
+            nn.SiLU(inplace=True),
+            C3k2(in_ch=c4, out_ch=c4, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5),
+        )
+
+        # stage 3 → P5 (H/32)
+        self.stage3 = nn.Sequential(
+            nn.Conv2d(c4, c5, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(c5),
+            nn.SiLU(inplace=True),
+            C3k2(in_ch=c5, out_ch=c5, n=max(1, round(1 * depth_scale)), shortcut=True, e=0.5),
+            SPPF(in_ch=c5, out_ch=c5, k=5),
+        )
+
+    def forward(self, x):
+        """前向传播，返回多尺度特征列表供 Neck 融合。
+
+        Args:
+            x (torch.Tensor): 输入图像 (B, 3, H, W)。
+
+        Returns:
+            List[torch.Tensor]: [P3, P4, P5] 三个尺度的特征图。
+        """
+        x = self.stem(x)        # (B, c2, H/4, W/4)
+        p3 = self.stage1(x)     # (B, c3, H/8, W/8)
+        p4 = self.stage2(p3)    # (B, c4, H/16, W/16)
+        p5 = self.stage3(p4)    # (B, c5, H/32, W/32)
+        return [p3, p4, p5]
