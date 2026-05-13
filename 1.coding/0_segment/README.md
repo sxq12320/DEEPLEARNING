@@ -2,6 +2,8 @@
 
 面向图像分割任务的深度学习工程，基于 PyTorch，支持**模块化设计 + 注册机制 + 配置驱动组网**。
 
+内置 **FPN 多尺度特征金字塔**，实现自顶向下的跨尺度特征融合。
+
 ## 项目结构
 
 ```
@@ -10,7 +12,7 @@
 ├── requirements.txt         # 依赖
 │
 ├── configs/                 # 全局配置
-│   ├── config.py            # 激活函数映射表 + 网络结构配置列表
+│   ├── config.py            # 激活函数映射表 + 网络结构配置列表（含分阶段配置）
 │   └── __init__.py
 │
 ├── datasets/                # 数据流水线
@@ -20,10 +22,10 @@
 │
 ├── models/                  # 模型库
 │   ├── registry.py          # @register_block 注册机制
-│   ├── blocks.py            # 基础模块（Conv, ResBlock, CBAM, Pool ...）
+│   ├── blocks.py            # 基础模块（Conv, ResBlock, CBAM, FPN, Pool ...）
 │   ├── builder.py           # make_layers(cfg) 动态组网
-│   ├── backbones.py         # 骨干网络（ResNet-18 ...）
-│   ├── segmentation.py      # 分割架构（MiniSegNet）
+│   ├── backbones.py         # 骨干网络（ResNet18 / MultiScaleResNet18）
+│   ├── segmentation.py      # 分割架构（MiniSegNet / FPNSegNet）
 │   └── __init__.py
 │
 ├── engine/                  # 训练/评估引擎
@@ -52,8 +54,11 @@
 # 安装依赖
 pip install -r requirements.txt
 
-# 使用默认配置启动（自动回退到合成数据）
+# 使用 FPN 多尺度分割（默认）
 python train.py
+
+# 使用单尺度分割
+python train.py --model-type miniseg
 
 # 覆盖超参数
 python train.py --imgsz 256 --epochs 50 --batch 16 --lr 5e-4
@@ -63,13 +68,64 @@ python train.py --cfg configs/train.json
 
 # 使用 YAML 配置文件
 python train.py --cfg configs/train.yaml
-
-# 打印合并后配置
-python train.py --print-cfg
-
-# 保存合并配置
-python train.py --cfg configs/train.json --save-cfg configs/merged.json
 ```
+
+## 模型架构
+
+### 1. MiniSegNet（单尺度）
+
+```
+Input → ResNet-18 backbone → (B,512,H/32,W/32) → 1×1 Conv → bilinear upsample → Output
+```
+
+最简单的分割架构，backbone 输出单一尺度特征图后直接上采样。
+
+### 2. FPNSegNet（FPN 多尺度，默认）
+
+```
+Input (B,3,H,W)
+    │
+    ▼
+┌─────────────────────────────────────────────────┐
+│  MultiScaleResNet18 Backbone                     │
+│                                                  │
+│  stem   ──────────────────→ c2 (64,  H/4)       │
+│  stage1 (2× resnet_block) → c2 (64,  H/4)       │
+│  stage2 (2× resnet_block) → c3 (128, H/8)       │
+│  stage3 (2× resnet_block) → c4 (256, H/16)      │
+│  stage4 (2× resnet_block) → c5 (512, H/32)      │
+└─────────────────────────────────────────────────┘
+    │  [c2, c3, c4, c5]
+    ▼
+┌─────────────────────────────────────────────────┐
+│  FPN Neck (top-down + lateral)                   │
+│                                                  │
+│  c5 ──1×1──→ p5 ──2× upsample──┐               │
+│  c4 ──1×1──→ ─── + ───→ p4 ──2× upsample──┐   │
+│  c3 ──1×1──→ ─── + ───→ p3 ──2× upsample──┐   │
+│  c2 ──1×1──→ ─── + ───→ p2                  │   │
+│                                                  │
+│  Each pN: 3×3 conv → output (256ch)             │
+│  输出: [p2(256,H/4), p3(256,H/8),               │
+│         p4(256,H/16), p5(256,H/32)]             │
+└─────────────────────────────────────────────────┘
+    │  [p2, p3, p4, p5]
+    ▼
+┌─────────────────────────────────────────────────┐
+│  Segmentation Head                               │
+│  Upsample all to p2 size (H/4)                   │
+│  → Concat (256×4 = 1024ch)                       │
+│  → 3×3 Conv + BN + ReLU → 256ch                 │
+│  → 1×1 Conv → out_ch                             │
+│  → Bilinear upsample → (B,out_ch,H,W)           │
+└─────────────────────────────────────────────────┘
+```
+
+**关键设计**：
+- **c2**（浅层 H/4）：保留高分辨率空间细节，利于小目标边缘
+- **c5**（深层 H/32）：包含强语义信息，利于大目标和类别判断
+- **FPN 融合**：自顶向下将深层语义逐级注入浅层，使每个尺度同时具备空间精度和语义强度
+- **多尺度拼接**：head 同时看到 4 个分辨率的信息，比单一尺度更鲁棒
 
 ## 训练参数
 
@@ -78,6 +134,7 @@ python train.py --cfg configs/train.json --save-cfg configs/merged.json
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `--cfg` | str | — | JSON/YAML 配置文件路径 |
+| `--model-type` | str | fpnseg | 模型架构：miniseg / fpnseg |
 | `--image-dir` | str | "" | 训练图像目录 |
 | `--mask-dir` | str | "" | 训练掩码目录 |
 | `--label-dir` | str | "" | 标签目录（别名） |
@@ -99,6 +156,7 @@ python train.py --cfg configs/train.json --save-cfg configs/merged.json
 ```jsonc
 // configs/train.json
 {
+    "model_type": "fpnseg",
     "image_dir": "data/images",
     "mask_dir": "data/masks",
     "label_type": "mask",
@@ -127,6 +185,7 @@ learning_rate        0.001
 optimizer            Adam
 device               NVIDIA GeForce RTX 3060
 data_source          data/images
+model_type           fpnseg
 augment              True
 seed                 42
 project              checkpoints/results/exp_01
@@ -158,11 +217,9 @@ class MyAttention(nn.Module):
     """自定义注意力模块。"""
     def __init__(self, in_ch: int, reduction: int):
         super().__init__()
-        # 定义网络层
         ...
 
     def forward(self, x):
-        # 前向逻辑
         ...
 ```
 
@@ -178,7 +235,9 @@ MY_CFG = [
 
 ### 2. 添加新的骨干网络（backbone）
 
-在 [models/backbones.py](models/backbones.py) 中添加 Backbone 类：
+#### 2a. 单尺度 backbone（输出单个特征图）
+
+在 [models/backbones.py](models/backbones.py) 中添加：
 
 ```python
 class MyBackbone(nn.Module):
@@ -187,48 +246,85 @@ class MyBackbone(nn.Module):
         self.backbone = make_layers(cfg or MY_CFG)
 
     def forward(self, x):
-        return self.backbone(x)
+        return self.backbone(x)   # single tensor
 ```
 
-### 3. 添加新的分割架构（segmentation head）
+#### 2b. 多尺度 backbone（输出多级特征列表，用于 FPN 融合）
 
-在 [models/segmentation.py](models/segmentation.py) 中定义新的分割网络：
+同样在 [models/backbones.py](models/backbones.py) 中，返回 `List[Tensor]`：
+
+```python
+class MyMultiScaleBackbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # 分阶段构建，每阶段一个 make_layers
+        self.stem = make_layers(MY_STEM_CFG)
+        self.stage1 = make_layers(MY_STAGE1_CFG)
+        self.stage2 = make_layers(MY_STAGE2_CFG)
+        ...
+
+    def forward(self, x):
+        c1 = self.stage1(self.stem(x))
+        c2 = self.stage2(c1)
+        ...
+        return [c1, c2, c3, c4]   # list of tensors, 浅→深
+```
+
+推荐在 [configs/config.py](configs/config.py) 中定义分阶段配置列表，复用 `make_layers`。
+
+### 3. 添加新的特征融合 neck（FPN / PAN / BiFPN）
+
+在 [models/blocks.py](models/blocks.py) 中添加 neck 模块。
+
+FPN 的通用接口约定：
+- `__init__`: 接收 `in_channels_list`（backbone 各阶段通道数）和 `out_channels`（统一输出通道数）
+- `forward`: 接收 `List[Tensor]`（自底向上排列），返回 `List[Tensor]`（同序）
+
+```python
+class MyNeck(nn.Module):
+    def __init__(self, in_channels_list, out_channels=256):
+        super().__init__()
+        ...
+
+    def forward(self, features):       # features: [c2, c3, c4, c5]
+        ...
+        return [p2, p3, p4, p5]        # fused features
+```
+
+### 4. 添加新的分割架构
+
+在 [models/segmentation.py](models/segmentation.py) 中，组合 backbone + neck + head：
 
 ```python
 class MySegNet(nn.Module):
-    def __init__(self, in_ch=3, out_ch=1, backbone_cfg=None):
+    def __init__(self, in_ch=3, out_ch=1):
         super().__init__()
-        self.backbone = make_layers(backbone_cfg or DEFAULT_CFG)
-        self.head = nn.Conv2d(512, out_ch, kernel_size=1)
+        self.backbone = MyMultiScaleBackbone()
+        self.neck = MyNeck(in_channels_list=[64, 128, 256, 512])
+        self.head = nn.Sequential(...)
 
     def forward(self, x):
-        feat = self.backbone(x)
-        logits = self.head(feat)
-        return F.interpolate(logits, size=x.shape[2:], mode='bilinear', align_corners=False)
+        feats = self.backbone(x)
+        fused = self.neck(feats)
+        # upsample + concat + head → logits
+        ...
+        return logits
 ```
 
-### 4. 添加新的损失函数
+然后在 [train.py](train.py) 中注册新模型分支即可。
+
+### 5. 添加新的损失函数
 
 在 [engine/losses.py](engine/losses.py) 的 `SegmentationLoss` 中扩展 `loss_type`：
 
 ```python
-# 在 __init__ 中添加新的分支
 elif loss_type == "dice":
     self.criterion = DiceLoss(**kwargs)
 ```
 
-### 5. 添加新的数据增强
+### 6. 添加新的数据增强
 
 在 [datasets/transforms.py](datasets/transforms.py) 中添加增强函数，然后在 [datasets/dataset.py](datasets/dataset.py) 的 `_apply_augmentation` 中调用。
-
-### 6. 切换模型架构
-
-在 [train.py](train.py) 的 `train()` 函数中将 `MiniSegNet` 替换为你的模型：
-
-```python
-from models import MySegNet
-model = MySegNet().to(device)
-```
 
 ### 注册机制概述
 
@@ -237,6 +333,8 @@ model = MySegNet().to(device)
                                           ↓
 配置列表 → make_layers(cfg) → 查表获取构造器 → nn.Sequential
 ```
+
+---
 
 ## 已注册模块一览
 
@@ -253,11 +351,19 @@ model = MySegNet().to(device)
 | `cbam_channel_attention` | CBAM_Channel_Attention | CBAM 通道注意力 |
 | `cbam_spatial_attention` | CBAM_Spatial_Attention | CBAM 空间注意力 |
 | `cbam` | CBAM | CBAM 组合注意力 |
+| `fpn_lateral_conv` | FPNLateralConv | FPN 侧向 1×1 通道对齐 |
+| `fpn_output_conv` | FPNOutputConv | FPN 输出 3×3 抗混叠 |
 | `maxpool` | MaxPool | 最大池化 |
 | `adaptive_max_pool` | AdaptiveMaxPool | 自适应最大池化 |
 | `adaptive_avg_pool` | AdaptiveAvgPool | 自适应平均池化 |
 | `flatten` | Flatten | 展平层 |
 | `linear` | Linear | 全连接层 |
+
+| 未注册模块 | 说明 |
+|-----------|------|
+| `FPN` | FPN neck 顶层容器，组合 lateral + output convs |
+| `MultiScaleResNet18` | 分阶段 ResNet-18，输出 4 个尺度的特征列表 |
+| `FPNSegNet` | backbone + FPN + head 完整分割网络 |
 
 ## 支持的数据格式
 

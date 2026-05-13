@@ -62,3 +62,30 @@ RESNET_18_BACKBONE_CFG = [
 RESNET_34_CFG = [
     ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
 ]
+
+# ---------------------------------------------------------------------------
+# ResNet-18 分阶段配置（用于多尺度特征提取）
+# Splits RESNET_18_BACKBONE_CFG into stem + 4 stages，
+# 每阶段输出作为 FPN 的一级输入
+# 通道变化：3 → 64(1/4) → 64(1/4) → 128(1/8) → 256(1/16) → 512(1/32)
+# ---------------------------------------------------------------------------
+RESNET_18_STEM_CFG = [
+    ["basic_conv_block", 3, 64, 7, 2, 3, 1, 1, "relu"],
+    ["maxpool", 3, 2, 1, 1],
+]
+RESNET_18_STAGE1_CFG = [
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+    ["resnet_block_34", 64, 64, 1, "relu", "relu"],
+]
+RESNET_18_STAGE2_CFG = [
+    ["resnet_block_34", 64, 128, 2, "relu", "relu"],
+    ["resnet_block_34", 128, 128, 1, "relu", "relu"],
+]
+RESNET_18_STAGE3_CFG = [
+    ["resnet_block_34", 128, 256, 2, "relu", "relu"],
+    ["resnet_block_34", 256, 256, 1, "relu", "relu"],
+]
+RESNET_18_STAGE4_CFG = [
+    ["resnet_block_34", 256, 512, 2, "relu", "relu"],
+    ["resnet_block_34", 512, 512, 1, "relu", "relu"],
+]

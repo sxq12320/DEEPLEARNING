@@ -1,8 +1,8 @@
 from .blocks import *
 from .builder import make_layers
 from .registry import BLOCK_REGISTRY, register_block
-from .backbones import ResNet18
-from .segmentation import MiniSegNet
+from .backbones import ResNet18, MultiScaleResNet18
+from .segmentation import MiniSegNet, FPNSegNet
 
 __all__ = [
     "MaxPool",
@@ -18,11 +18,16 @@ __all__ = [
     "CBAM_Channel_Attention",
     "CBAM_Spatial_Attention",
     "CBAM",
+    "FPNLateralConv",
+    "FPNOutputConv",
     "Flatten",
     "Linear",
+    "FPN",
     "make_layers",
     "BLOCK_REGISTRY",
     "register_block",
     "ResNet18",
+    "MultiScaleResNet18",
     "MiniSegNet",
+    "FPNSegNet",
 ]

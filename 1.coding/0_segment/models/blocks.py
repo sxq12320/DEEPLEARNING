@@ -500,6 +500,128 @@ class CBAM(nn.Module):
         return self.spatial_attention(self.channel_attention(x))
 
 
+############################################################
+#               特征金字塔网络 (FPN) 融合模块                  #
+############################################################
+@register_block('fpn_lateral_conv')
+class FPNLateralConv(nn.Module):
+    """FPN 侧向 1×1 卷积，将 backbone 各级特征通道数统一到 FPN 输出通道。
+
+    侧向连接不改变空间分辨率，仅做通道对齐，
+    使 top-down pathway 中的逐元素加法可行。
+    """
+
+    def __init__(self, in_ch: int, out_ch: int):
+        """初始化侧向卷积。
+
+        Args:
+            in_ch (int): backbone 该级特征的输入通道数。
+            out_ch (int): FPN 统一输出通道数。
+        """
+        super().__init__()
+        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=1)
+
+    def forward(self, x):
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): backbone 单级特征图 (B, in_ch, H, W)。
+
+        Returns:
+            torch.Tensor: 通道对齐后的特征图 (B, out_ch, H, W)。
+        """
+        return self.conv(x)
+
+
+@register_block('fpn_output_conv')
+class FPNOutputConv(nn.Module):
+    """FPN 输出 3×3 卷积，消除上采样 + 逐元素加法带来的混叠伪影。
+
+    在 top-down pathway 融合完成后施加，平滑最终的多尺度输出，
+    作用是稳定训练并提升小目标分割精度。
+    """
+
+    def __init__(self, ch: int):
+        """初始化输出平滑卷积。
+
+        Args:
+            ch (int): 输入/输出通道数（保持等通道）。
+        """
+        super().__init__()
+        self.conv = nn.Conv2d(ch, ch, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 融合后的特征图 (B, ch, H, W)。
+
+        Returns:
+            torch.Tensor: 平滑后的特征图 (B, ch, H, W)。
+        """
+        return self.conv(x)
+
+
+class FPN(nn.Module):
+    """特征金字塔网络（Feature Pyramid Network），自顶向下融合多尺度特征。
+
+    输入 backbone 的四个阶段特征 [c2, c3, c4, c5]，
+    通过 top-down pathway + lateral connection 融合，
+    输出统一通道数的多尺度特征 [p2, p3, p4, p5]。
+
+    典型用法：
+        backbone = MultiScaleResNet18()
+        fpn = FPN(in_channels_list=[64, 128, 256, 512], out_channels=256)
+        features = backbone(x)          # [c2,c3,c4,c5]
+        fpn_feats = fpn(features)       # [p2,p3,p4,p5]
+    """
+
+    def __init__(self, in_channels_list, out_channels=256):
+        """初始化 FPN。
+
+        Args:
+            in_channels_list (List[int]): backbone 各级特征通道数，自底向上排列。
+            out_channels (int): FPN 输出特征的统一通道数。
+        """
+        super().__init__()
+        self.lateral_convs = nn.ModuleList([
+            nn.Conv2d(in_ch, out_channels, kernel_size=1)
+            for in_ch in in_channels_list
+        ])
+        self.output_convs = nn.ModuleList([
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+            for _ in in_channels_list
+        ])
+
+    def forward(self, features):
+        """前向传播，自顶向下融合。
+
+        Args:
+            features (List[torch.Tensor]): backbone 各阶段特征图，
+                                           自底向上排列 [c2, c3, c4, c5]。
+
+        Returns:
+            List[torch.Tensor]: FPN 融合后的多尺度特征 [p2, p3, p4, p5]，
+                                各层通道数 = out_channels。
+        """
+        # 侧向 1×1 卷积对齐通道
+        laterals = [conv(f) for conv, f in zip(self.lateral_convs, features)]
+
+        # 自顶向下路径：从最高层 c5 开始，逐步上采样并融合
+        fused = []
+        prev = laterals[-1]  # p5 ← lateral(c5)
+        fused.append(prev)
+
+        for i in range(len(laterals) - 2, -1, -1):
+            up = nn.functional.interpolate(prev, size=laterals[i].shape[2:], mode='nearest')
+            prev = laterals[i] + up
+            fused.insert(0, prev)
+
+        # 3×3 卷积平滑融合结果
+        outputs = [conv(f) for conv, f in zip(self.output_convs, fused)]
+        return outputs
+
+
 @register_block('flatten')
 class Flatten(nn.Module):
     """展平层封装。"""

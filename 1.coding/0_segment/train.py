@@ -34,6 +34,9 @@ sys.path.insert(0, str(ROOT))
 # 1. 默认配置
 # ---------------------------------------------------------------------------
 DEFAULT_CFG = {
+    # ---- 模型 ----
+    "model_type": "fpnseg",         # miniseg  fpnseg
+
     # ---- 数据 ----
     "image_dir": "",
     "mask_dir": "",
@@ -76,6 +79,11 @@ def parse_args(argv=None):
                         help="Save merged config to JSON file")
     parser.add_argument("--print-cfg", action="store_true",
                         help="Print merged config and exit")
+
+    # 模型选择
+    parser.add_argument("--model-type", type=str, default=None,
+                        choices=["miniseg", "fpnseg"],
+                        help="Model architecture")
 
     # 数据
     parser.add_argument("--image-dir", type=str, default=None)
@@ -270,7 +278,7 @@ def train(cfg):
         dict: 包含 save_dir, best_loss, epoch_losses 的结果字典。
     """
     from engine.trainer import Trainer
-    from models import MiniSegNet
+    from models import MiniSegNet, FPNSegNet
     from engine.losses import SegmentationLoss
     from utils.visualize import plot_loss_curve
 
@@ -278,7 +286,11 @@ def train(cfg):
     device, device_name = select_device(cfg.get("cpu", False))
 
     # ---- 模型 ----
-    model = MiniSegNet().to(device)
+    model_type = cfg.get("model_type", "miniseg")
+    if model_type == "fpnseg":
+        model = FPNSegNet().to(device)
+    else:
+        model = MiniSegNet().to(device)
     print_training_header(cfg, device_name, model)
 
     # ---- 数据 ----
@@ -378,8 +390,10 @@ def _normalize_mask(mask):
 
 def _log_hyperparams(log_file, cfg, device_name):
     """记录超参数到日志文件。"""
-    from models import MiniSegNet
-    trainable, total = count_params(MiniSegNet())
+    from models import MiniSegNet, FPNSegNet
+    model_type = cfg.get("model_type", "miniseg")
+    _m = FPNSegNet() if model_type == "fpnseg" else MiniSegNet()
+    trainable, total = count_params(_m)
 
     params = {
         "image_size": cfg["imgsz"],
