@@ -1,3 +1,8 @@
+"""分割数据集加载模块。
+
+提供对于不同格式标签的分割数据集的数据获取及处理。
+"""
+
 import os
 from pathlib import Path
 from typing import Tuple, Optional, List
@@ -14,14 +19,16 @@ from .transforms import image_transform, TXT2MASK, JSON2MASK, NPY2MASK
 class SegmentationDataset(Dataset):
     """RGB 图像分割数据集，支持多种标签格式与合成数据回退。
 
+    负责加载图像及对应的分割标签，并执行相应的数据增强。
+
     Attributes:
-        image_dir (Path | None): 图像目录路径对象。
+        image_dir (str | Path | None): 图像目录路径。
         label_dir (str | None): 标签目录或标签文件路径。
         label_type (str): 标签类型（mask/txt/json/npy）。
-        target_size (Tuple[int, int]): 目标图像尺寸 (W, H)。
-        augment (bool): 是否启用数据增强。
-        synthetic (bool): 是否使用合成数据模式。
+        target_size (Tuple[int, int]): 目标尺寸 (W, H)。
+        file_list (List[str] | None): 指定样本列表（不含后缀）。
         synthetic_length (int): 合成数据长度。
+        augment (bool): 是否启用增强。
     """
 
     def __init__(
@@ -34,17 +41,7 @@ class SegmentationDataset(Dataset):
         synthetic_length: int = 32,
         augment: bool = False,
     ):
-        """初始化分割数据集。
-
-        Args:
-            image_dir (str | Path | None): 图像目录路径。
-            label_dir (str | None): 标签目录或标签文件路径。
-            label_type (str): 标签类型（mask/txt/json/npy）。
-            target_size (Tuple[int, int]): 目标尺寸 (W, H)。
-            file_list (List[str] | None): 指定样本列表（不含后缀）。
-            synthetic_length (int): 合成数据长度。
-            augment (bool): 是否启用简单增强。
-        """
+        """初始化 RGB 图像分割数据集。"""
         self.image_dir = Path(image_dir) if image_dir else None
         self.label_dir = label_dir
         self.label_type = label_type
@@ -66,6 +63,9 @@ class SegmentationDataset(Dataset):
 
     def __len__(self):
         """返回数据集长度。
+
+        Args:
+            无
 
         Returns:
             int: 样本数量。

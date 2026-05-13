@@ -1,3 +1,8 @@
+"""模型训练管理模块。
+
+管理模型的完整训练生命周期，包括数据加载、模型优化及结果验证等。
+"""
+
 import os
 from datetime import datetime
 from pathlib import Path
@@ -10,14 +15,16 @@ from datasets import SegmentationDataset
 from models import MiniSegNet
 from .losses import SegmentationLoss
 class Trainer:
-    """分割模型训练器，支持真实数据和合成数据自动切换。"""
+    """分割模型训练器，支持真实数据和合成数据自动切换。
+
+    包含完整的训练循环封装。
+
+    Attributes:
+        args (argparse.Namespace): 训练参数配置对象。
+    """
 
     def __init__(self, args):
-        """初始化训练器。
-
-        Args:
-            args (argparse.Namespace): 训练参数配置。
-        """
+        """初始化训练器模块类。"""
         self.args = args
         self.device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
         self.save_dir = Path(args.project) / args.name
@@ -107,6 +114,9 @@ class Trainer:
 
         Args:
             model (torch.nn.Module): 待保存的模型。
+            
+        Returns:
+            None
         """
         weight_path = self.save_dir / "weights" / "best.pt"
         weight_path.parent.mkdir(parents=True, exist_ok=True)
@@ -118,6 +128,9 @@ class Trainer:
 
         Args:
             log_file (Path): 日志文件路径。
+            
+        Returns:
+            None
         """
         params = {
             "image_size": self.args.imgsz,

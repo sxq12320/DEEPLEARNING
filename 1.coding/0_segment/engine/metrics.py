@@ -1,3 +1,8 @@
+"""常用评估指标模块。
+
+在此可根据不同的评估要求，计算 IoU, Dice 等常见分割指标。
+"""
+
 from typing import List
 
 import numpy as np

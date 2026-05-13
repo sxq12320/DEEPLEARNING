@@ -1,3 +1,8 @@
+"""基础与复合分割网络模块。
+
+包含诸如简单的 MiniSegNet 及结合了 FPN 结构的 FPNSegNet。
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,16 +13,18 @@ from .blocks import FPN
 
 
 class MiniSegNet(nn.Module):
-    """最小化分割网络，ResNet-18 backbone + 1x1 卷积 head。"""
+    """最小化分割网络，ResNet-18 backbone + 1x1 卷积 head。
+
+    包含最基本的 BackBone 与 极简预测头的分割网络。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        backbone_cfg (list | None): Backbone 配置列表。
+    """
 
     def __init__(self, in_ch=3, out_ch=1, backbone_cfg=None):
-        """初始化分割网络。
-
-        Args:
-            in_ch (int): 输入通道数。
-            out_ch (int): 输出通道数。
-            backbone_cfg (list | None): Backbone 配置列表。
-        """
+        """初始化最简分割网络类。"""
         super().__init__()
         cfg = backbone_cfg if backbone_cfg is not None else RESNET_18_BACKBONE_CFG
         self.backbone = make_layers(cfg)
@@ -48,18 +55,16 @@ class FPNSegNet(nn.Module):
     Backbone 输出 4 个尺度 [c2, c3, c4, c5]，
     FPN 自顶向下融合为 [p2, p3, p4, p5]，
     全部上采样至 p2 分辨率拼接后经 head 输出分割图。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出类别数。
+        backbone_channels (List[int] | None): backbone 各阶段通道数，默认 [64, 128, 256, 512]。
+        fpn_channels (int): FPN 统一通道数。
     """
 
     def __init__(self, in_ch=3, out_ch=1, backbone_channels=None, fpn_channels=256):
-        """初始化 FPN 分割网络。
-
-        Args:
-            in_ch (int): 输入通道数。
-            out_ch (int): 输出类别数。
-            backbone_channels (List[int] | None): backbone 各阶段通道数，
-                                                  默认 [64, 128, 256, 512]。
-            fpn_channels (int): FPN 统一通道数。
-        """
+        """初始化多尺度分割网络类。"""
         super().__init__()
         if backbone_channels is None:
             backbone_channels = [64, 128, 256, 512]

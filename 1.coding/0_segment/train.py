@@ -1,9 +1,8 @@
-"""One-click training entry for segmentation models.
+"""分割模型的一键训练入口。
 
-Supports CLI args, JSON/YAML config files, and programmatic API.
-All parameters can be overridden from external sources.
+支持命令行参数、JSON/YAML配置文件和API调用。所有的参数都可以被外部参数覆盖。
 
-Examples:
+样例：
     python train.py
     python train.py --epochs 50 --batch 16 --lr 5e-4
     python train.py --cfg configs/train.json
@@ -67,7 +66,14 @@ DEFAULT_CFG = {
 # 2. 参数解析
 # ---------------------------------------------------------------------------
 def parse_args(argv=None):
-    """解析 CLI 参数。"""
+    """解析 CLI 参数。
+    
+    Args:
+        argv (list, optional): 命令行参数列表，默认 None。
+        
+    Returns:
+        argparse.Namespace: 解析后的参数对象。
+    """
     parser = argparse.ArgumentParser(
         description="Segmentation Training (one-click)"
     )
@@ -124,7 +130,14 @@ def parse_args(argv=None):
 # 3. 配置加载与合并
 # ---------------------------------------------------------------------------
 def load_cfg(path):
-    """加载 JSON 或 YAML 配置文件。"""
+    """加载 JSON 或 YAML 配置文件。
+    
+    Args:
+        path (str): 配置文件路径。
+        
+    Returns:
+        dict: 配置信息字典。
+    """
     if not path:
         return {}
     cfg_path = Path(path)
@@ -151,7 +164,14 @@ def load_cfg(path):
 
 
 def merge_cfg(cli_args):
-    """三层合并：默认值 → 配置文件 → CLI 覆盖。"""
+    """三层合并：默认值 → 配置文件 → CLI 覆盖。
+    
+    Args:
+        cli_args (argparse.Namespace): 包含所有CLI参数的对象。
+        
+    Returns:
+        dict: 合并后的最终配置字典。
+    """
     cfg = DEFAULT_CFG.copy()
     file_cfg = load_cfg(cli_args.cfg)
 
@@ -172,7 +192,15 @@ def merge_cfg(cli_args):
 
 
 def save_cfg(cfg, path):
-    """保存合并后的配置为 JSON。"""
+    """保存合并后的配置为 JSON。
+    
+    Args:
+        cfg (dict): 需要保存的配置字典。
+        path (str): 保存配置文件的路径。
+        
+    Returns:
+        None
+    """
     out_path = Path(path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
@@ -183,7 +211,14 @@ def save_cfg(cfg, path):
 # 4. 工具函数
 # ---------------------------------------------------------------------------
 def set_seed(seed):
-    """固定随机种子以保证可复现性。"""
+    """固定随机种子以保证可复现性。
+    
+    Args:
+        seed (int): 随机种子，如果为 None 则不固定。
+        
+    Returns:
+        None
+    """
     if seed is None:
         return
     random.seed(seed)
@@ -194,7 +229,14 @@ def set_seed(seed):
 
 
 def select_device(cpu_flag):
-    """选择设备并返回设备对象与设备名称。"""
+    """选择设备并返回设备对象与设备名称。
+    
+    Args:
+        cpu_flag (bool): 是否强制使用 CPU。
+        
+    Returns:
+        tuple[torch.device, str]: 返回指定的设备对象以及设备的名称。
+    """
     if cpu_flag:
         return torch.device("cpu"), "CPU"
     if torch.cuda.is_available():
@@ -205,7 +247,14 @@ def select_device(cpu_flag):
 
 
 def count_params(model):
-    """统计模型可训练 / 总参数量。"""
+    """统计模型可训练 / 总参数量。
+    
+    Args:
+        model (nn.Module): 待统计数量的 PyTorch 模型。
+        
+    Returns:
+        tuple[int, int]: (可训练参数数量, 总参数数量)。
+    """
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
     return trainable, total
@@ -215,7 +264,16 @@ def count_params(model):
 # 5. YOLO 风格日志格式化
 # ---------------------------------------------------------------------------
 def print_training_header(cfg, device_name, model):
-    """输出 YOLO 风格的训练头部信息。"""
+    """输出 YOLO 风格的训练头部信息。
+    
+    Args:
+        cfg (dict): 包含训练参数的字典。
+        device_name (str): 设别名称。
+        model (nn.Module): 用于训练的模型。
+        
+    Returns:
+        None
+    """
     trainable, total = count_params(model)
     data_source = "synthetic" if not cfg.get("image_dir") else cfg.get("image_dir")
 
@@ -240,7 +298,17 @@ def print_training_header(cfg, device_name, model):
 
 
 def print_epoch_progress(epoch, epochs, avg_loss, elapsed):
-    """输出单 epoch 训练进度（YOLO 表格风格）。"""
+    """输出单 epoch 训练进度（YOLO 表格风格）。
+    
+    Args:
+        epoch (int): 当前回合数。
+        epochs (int): 总回合数。
+        avg_loss (float): 当前回合的平均损失。
+        elapsed (float): 当前回合的执行耗时。
+        
+    Returns:
+        None
+    """
     eta = elapsed * (epochs - epoch)
     print(
         f"{' '*4}{epoch:>5}/{epochs:<5} "
@@ -252,7 +320,17 @@ def print_epoch_progress(epoch, epochs, avg_loss, elapsed):
 
 
 def print_training_footer(epochs, total_time, best_loss, save_dir):
-    """输出训练结束汇总信息。"""
+    """输出训练结束汇总信息。
+    
+    Args:
+        epochs (int): 实际训练完成的总轮数。
+        total_time (float): 训练过程总耗时。
+        best_loss (float): 训练中记录的最佳损失值。
+        save_dir (str): 模型权重的保存路径。
+        
+    Returns:
+        None
+    """
     footer = f"""
 {'=' * 70}
 Training Complete  |  Total epochs: {epochs}  |  Total time: {time.strftime('%H:%M:%S', time.gmtime(total_time))}
@@ -380,7 +458,14 @@ def train(cfg):
 
 
 def _normalize_mask(mask):
-    """规范化掩码形状为 (N,1,H,W)。"""
+    """规范化掩码形状为 (N,1,H,W)。
+    
+    Args:
+        mask (torch.Tensor): 输入的掩码张量。
+        
+    Returns:
+        torch.Tensor: 规范化后的掩码张量，形状为 (N,1,H,W)。
+    """
     if mask.ndim == 3:
         mask = mask.unsqueeze(1)
     elif mask.ndim == 4 and mask.shape[-1] == 1:
@@ -389,7 +474,16 @@ def _normalize_mask(mask):
 
 
 def _log_hyperparams(log_file, cfg, device_name):
-    """记录超参数到日志文件。"""
+    """记录超参数到日志文件。
+    
+    Args:
+        log_file (Path): 日志文件路径。
+        cfg (dict): 配置字典。
+        device_name (str): 设备名称。
+        
+    Returns:
+        None
+    """
     from models import MiniSegNet, FPNSegNet
     model_type = cfg.get("model_type", "miniseg")
     _m = FPNSegNet() if model_type == "fpnseg" else MiniSegNet()
@@ -424,6 +518,12 @@ def _log_hyperparams(log_file, cfg, device_name):
 # ---------------------------------------------------------------------------
 def main(argv=None):
     """CLI 主入口。
+
+    Args:
+        argv (list, optional): 命令行参数列表，默认 None。
+
+    Returns:
+        None
 
     用法:
         python train.py

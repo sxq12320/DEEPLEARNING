@@ -1,3 +1,9 @@
+"""模型基础卷积模块封装库。
+
+这里包含了常用的各种基础构建块，如基础卷积操作，以及不同形式的池化层封装。
+所有模块注册在内部的注册表中以便于统一调用。
+"""
+
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -12,17 +18,19 @@ from models import registry
 ############################################################
 @register_block('maxpool')
 class MaxPool(nn.Module):
-    """最大池化层封装。"""
+    """最大池化层封装。
+    
+    提供了一个简单的最大池化层封装，继承自 nn.Module。
+    
+    Attributes:
+        k (int): 卷积核大小。
+        s (int): 步幅。
+        p (int): 填充。
+        d (int): 空洞率。
+    """
 
     def __init__(self, k: int, s: int, p: int, d: int):
-        """初始化最大池化层。
-
-        Args:
-            k (int): 卷积核大小。
-            s (int): 步幅。
-            p (int): 填充。
-            d (int): 空洞率。
-        """
+        """初始化最大池化层封装类。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
             nn.MaxPool2d(kernel_size=k, stride=s, padding=p, dilation=d)
@@ -41,14 +49,16 @@ class MaxPool(nn.Module):
 
 @register_block('adaptive_max_pool')
 class AdaptiveMaxPool(nn.Module):
-    """自适应最大池化层封装。"""
+    """自适应最大池化层封装。
+
+    提供自适应大小的最大池化功能，可动态输出指定尺寸特征图。
+
+    Attributes:
+        output_size (int | Tuple[int, int]): 输出尺寸。
+    """
 
     def __init__(self, output_size:int):
-        """初始化自适应最大池化层。
-
-        Args:
-            output_size (int | Tuple[int, int]): 输出尺寸。
-        """
+        """初始化自适应最大池化层。"""
         super(AdaptiveMaxPool , self).__init__()
         self.forward_basic = nn.Sequential(
             nn.AdaptiveMaxPool2d(
@@ -69,14 +79,16 @@ class AdaptiveMaxPool(nn.Module):
 
 @register_block('adaptive_avg_pool')
 class AdaptiveAvgPool(nn.Module):
-    """自适应平均池化层封装。"""
+    """自适应平均池化层封装。
+
+    提供自适应大小的平均池化功能。
+
+    Attributes:
+        output_size (int | Tuple[int, int]): 输出尺寸。
+    """
 
     def __init__(self, output_size):
-        """初始化自适应平均池化层。
-
-        Args:
-            output_size (int | Tuple[int, int]): 输出尺寸。
-        """
+        """初始化自适应平均池化层。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
             nn.AdaptiveAvgPool2d(output_size=output_size)
@@ -96,21 +108,23 @@ class AdaptiveAvgPool(nn.Module):
 
 @register_block('conv')
 class Conv(nn.Module):
-    """基础卷积层封装。"""
+    """基础卷积层封装。
+
+    继承 nn.Module 的二维卷积封装模块。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 卷积核大小。
+        s (int): 步幅。
+        p (int): 填充。
+        d (int): 空洞率。
+        g (int): 分组数。
+        b (bool): 是否使用偏置。
+    """
 
     def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, b: bool):
-        """初始化卷积层。
-
-        Args:
-            in_ch (int): 输入通道数。
-            out_ch (int): 输出通道数。
-            k (int): 卷积核大小。
-            s (int): 步幅。
-            p (int): 填充。
-            d (int): 空洞率。
-            g (int): 分组数。
-            b (bool): 是否使用偏置。
-        """
+        """初始化卷积层封装类。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
             nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=k,
@@ -131,21 +145,23 @@ class Conv(nn.Module):
 
 @register_block('basic_conv_block')
 class Basic_Conv_Block(nn.Module):
-    """卷积 + BN + 激活的基础模块。"""
+    """卷积 + BN + 激活的基础模块。
+
+    包含二维卷积层、批量归一化层和可指定的激活函数。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 卷积核大小。
+        s (int): 步幅。
+        p (int): 填充。
+        d (int): 空洞率。
+        g (int): 分组数。
+        activation (str): 激活函数名称。
+    """
 
     def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, activation: str):
-        """初始化基础卷积模块。
-
-        Args:
-            in_ch (int): 输入通道数。
-            out_ch (int): 输出通道数。
-            k (int): 卷积核大小。
-            s (int): 步幅。
-            p (int): 填充。
-            d (int): 空洞率。
-            g (int): 分组数。
-            activation (str): 激活函数名称。
-        """
+        """初始化基础卷积模块。"""
         super().__init__()
         self.forward_basic = nn.Sequential(
             nn.Conv2d(in_channels=in_ch, out_channels=out_ch, kernel_size=k,
@@ -168,20 +184,26 @@ class Basic_Conv_Block(nn.Module):
 
 @register_block('conv_block_nonb')
 class Conv_Block_NONB(nn.Module):
-    """不含 BN 的卷积 + 激活模块。"""
+    """不含 BN 的卷积 + 激活模块。
+
+    包含二维卷积层和可指定的激活函数。
+
+    Attributes:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 卷积核大小。
+        s (int): 步幅。
+        p (int): 填充。
+        d (int): 空洞率。
+        g (int): 分组数。
+        activation (str): 激活函数名称。
+    """
 
     def __init__(self, in_ch: int, out_ch: int, k: int, s: int, p: int, d: int, g: int, activation: str):
         """初始化不含 BN 的卷积模块。
 
-        Args:
-            in_ch (int): 输入通道数。
-            out_ch (int): 输出通道数。
-            k (int): 卷积核大小。
-            s (int): 步幅。
-            p (int): 填充。
-            d (int): 空洞率。
-            g (int): 分组数。
-            activation (str): 激活函数名称。
+        Returns:
+            None
         """
         super().__init__()
         self.forward_basic = nn.Sequential(
@@ -670,3 +692,71 @@ class Linear(nn.Module):
             torch.Tensor: 输出张量。
         """
         return self.forwar_basic(x)
+
+
+@register_block('c3k2')
+class C3k2(nn.Module):
+    """C3k2 模块 (YOLO11 架构衍生)，即自定义跨阶段局部网络（CSP）瓶颈层构建块。
+
+    C3k2 是 YOLO 模型中常用的基于 CSP 的高级特征提取块。它通过一条主分支
+    执行连续的瓶颈层操作，并由一个额外捷径（shortcut）通道将特征组合起来，
+    能在不大幅度增加算力的同时，较好地保留并整合多尺度、多层级语义细节。
+
+    Attributes:
+        in_ch (int): 输入通道数量。
+        out_ch (int): 输出通道数量。
+        n (int): 内部 Bottleneck 重复次数。
+        shortcut (bool): 内部 Bottleneck 是否使用残差连接。
+        g (int): 分组卷积组数。
+        e (float): 通道扩展比例（压缩率）。
+    """
+
+    def __init__(self, in_ch: int, out_ch: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
+        """初始化 C3k2 类。"""
+        super().__init__()
+        hid_c = int(out_ch * e)  # 中间通道数
+        self.conv1 = nn.Conv2d(in_ch, 2 * hid_c, kernel_size=1, stride=1, padding=0, bias=False)
+        self.bn1 = nn.BatchNorm2d(2 * hid_c)
+        self.act1 = nn.SiLU(inplace=True)
+
+        # 构建内部多级联串联的块 (Bottleneck机制)
+        # 此处给出最为经典通用的 3x3 + 3x3 串联表达形式，模拟 YOLO 系列中的 Bottleneck
+        self.m = nn.ModuleList()
+        for _ in range(n):
+            bottle_neck = nn.Sequential(
+                nn.Conv2d(hid_c, hid_c, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+                nn.BatchNorm2d(hid_c),
+                nn.SiLU(inplace=True),
+                nn.Conv2d(hid_c, hid_c, kernel_size=3, stride=1, padding=1, groups=g, bias=False),
+                nn.BatchNorm2d(hid_c),
+                nn.SiLU(inplace=True)
+            )
+            # 是否含有 shortcut 根据用户设置可额外拓展，简化为包含在结构中
+            self.m.append(bottle_neck)
+
+        self.conv2 = nn.Conv2d((2 + n) * hid_c, out_ch, kernel_size=1, stride=1, padding=0, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_ch)
+        self.act2 = nn.SiLU(inplace=True)
+
+    def forward(self, x):
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入张量。
+
+        Returns:
+            torch.Tensor: 输出张量。
+        """
+        # 第一层卷积
+        y = self.act1(self.bn1(self.conv1(x)))
+        # 把经过首层卷积提炼后的特征对半拆分（实现局部跨阶段 CSP 效果）
+        y1, y2 = torch.chunk(y, 2, dim=1)
+
+        # 收集经过每一层 bottle_neck 萃取后的残差分片
+        out = [y1, y2]
+        for m in self.m:
+            out.append(m(out[-1]))
+
+        # 将所有的分片拼接并由 final conv 统一还原到 out_ch 通道数
+        return self.act2(self.bn2(self.conv2(torch.cat(out, dim=1))))
+

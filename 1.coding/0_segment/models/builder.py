@@ -1,3 +1,8 @@
+"""网络构建及映射模块。
+
+提供依据配置参数实例化网路层次序列的基础方法。
+"""
+
 import torch.nn as nn
 from .registry import BLOCK_REGISTRY
 
