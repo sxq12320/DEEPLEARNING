@@ -1,10 +1,8 @@
 from ultralytics import YOLO
 from ultralytics.nn.modules import C3k2_LS
 
-if __name__ == '__main__':
-     
-    
-    '''
+if __name__ == "__main__":
+    """
     yolo = YOLO(r"ultralytics/cfg/models/11/yolo11n-seg.yaml")
         1. 使用最基础的 yolo11nano 架构，仅在网络输入部分增加深度信息（PNG 格式）。
 
@@ -43,18 +41,18 @@ if __name__ == '__main__':
 
     yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
         13. 在保持 yolo11n 架构不变的前提下，使用 AdamW 优化器，并增加一个圆形形状先验。
-    '''
+    """
     # yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
-    yolo = YOLO(r"ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+    # yolo = YOLO(r"ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
+    yolo = YOLO(r"ultralytics-main\ultralytics\cfg\models\11\0_yolo11-seg-RGBandD.yaml")
     yolo.train(
-        data=r'ultralytics-main/206_Apple_Amodal.yaml',
-        project=r'ultralytics-main/results',
-        name='12_yolo11n-seg-origin-circle-predicted',
+        data=r"ultralytics-main/206_Apple_Amodal.yaml",
+        project=r"ultralytics-main/results",
+        name="12_yolo11n-seg-origin-circle-predicted",
         epochs=300,
         imgsz=640,
         batch=4,
         lr0=0.0001,
         workers=4,
-        device = 0,
-
+        device=0,
     )

@@ -1,10 +1,13 @@
 from .evaluator import Evaluator
-from .losses import SegmentationLoss, YOLODetectionLoss
+from .losses import FourierLoss, NWDLoss, SegDetLoss, SegmentationLoss, YOLODetectionLoss
 from .metrics import calculate_map, compute_dice, compute_iou
 from .trainer import Trainer
 
 __all__ = [
     "SegmentationLoss",
+    "SegDetLoss",
+    "NWDLoss",
+    "FourierLoss",
     "YOLODetectionLoss",
     "compute_iou",
     "compute_dice",

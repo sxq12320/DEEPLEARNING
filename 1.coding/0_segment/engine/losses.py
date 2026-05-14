@@ -5,6 +5,7 @@
 """
 
 import math
+from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -45,6 +46,193 @@ class SegmentationLoss(nn.Module):
             torch.Tensor: 损失值。
         """
         return self.criterion(pred, target)
+
+
+class NWDLoss(nn.Module):
+    """NWD（Normalized Wasserstein Distance）边界框损失。
+
+    使用中心点与尺度差异计算近似 Wasserstein 距离，并映射为可优化损失。
+
+    Args:
+        constant (float): 归一化常数，数值越大惩罚越缓。
+        reduction (str): 聚合方式（"mean" 或 "sum"）。
+    """
+
+    def __init__(self, constant: float = 20.0, reduction: str = "mean"):
+        """初始化 NWD 损失。
+
+        Args:
+            constant (float): 归一化常数。
+            reduction (str): 聚合方式。
+        """
+        super().__init__()
+        self.constant = constant
+        self.reduction = reduction
+
+    def forward(
+        self,
+        pred_boxes: torch.Tensor,
+        target_boxes: torch.Tensor,
+        valid_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """计算 NWD 损失。
+
+        Args:
+            pred_boxes (torch.Tensor): 预测框 (N, 4)，xyxy 归一化坐标。
+            target_boxes (torch.Tensor): 目标框 (N, 4)，xyxy 归一化坐标。
+            valid_mask (torch.Tensor | None): 有效样本掩码 (N,)。
+
+        Returns:
+            torch.Tensor: 标量损失。
+        """
+        if pred_boxes.numel() == 0:
+            return torch.tensor(0.0, device=pred_boxes.device, requires_grad=True)
+
+        pred = pred_boxes
+        target = target_boxes
+
+        pred_cx = (pred[:, 0] + pred[:, 2]) / 2.0
+        pred_cy = (pred[:, 1] + pred[:, 3]) / 2.0
+        pred_w = (pred[:, 2] - pred[:, 0]).clamp(min=1e-6)
+        pred_h = (pred[:, 3] - pred[:, 1]).clamp(min=1e-6)
+
+        tgt_cx = (target[:, 0] + target[:, 2]) / 2.0
+        tgt_cy = (target[:, 1] + target[:, 3]) / 2.0
+        tgt_w = (target[:, 2] - target[:, 0]).clamp(min=1e-6)
+        tgt_h = (target[:, 3] - target[:, 1]).clamp(min=1e-6)
+
+        center_dist = (pred_cx - tgt_cx) ** 2 + (pred_cy - tgt_cy) ** 2
+        size_dist = ((pred_w - tgt_w) ** 2 + (pred_h - tgt_h) ** 2) / 4.0
+        wasserstein = torch.sqrt(center_dist + size_dist + 1e-6)
+        nwd = torch.exp(-wasserstein / self.constant)
+        loss = 1.0 - nwd
+
+        if valid_mask is not None:
+            loss = loss * valid_mask.float()
+
+        if self.reduction == "sum":
+            return loss.sum()
+        return loss.mean()
+
+
+class FourierLoss(nn.Module):
+    """Fourier 频域损失。
+
+    通过比较频域幅值差异约束形状一致性。
+
+    Args:
+        reduction (str): 聚合方式（"mean" 或 "sum"）。
+        norm (str | None): FFT 归一化方式。
+    """
+
+    def __init__(self, reduction: str = "mean", norm: Optional[str] = "ortho"):
+        """初始化 Fourier 损失。
+
+        Args:
+            reduction (str): 聚合方式。
+            norm (str | None): FFT 归一化方式。
+        """
+        super().__init__()
+        self.reduction = reduction
+        self.norm = norm
+
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """计算 Fourier 损失。
+
+        Args:
+            pred (torch.Tensor): 预测概率或掩码 (B, 1, H, W)。
+            target (torch.Tensor): 目标掩码 (B, 1, H, W)。
+
+        Returns:
+            torch.Tensor: 标量损失。
+        """
+        pred_fft = torch.fft.rfft2(pred, norm=self.norm)
+        target_fft = torch.fft.rfft2(target, norm=self.norm)
+        diff = torch.abs(pred_fft - target_fft)
+        if self.reduction == "sum":
+            return diff.sum()
+        return diff.mean()
+
+
+class SegDetLoss(nn.Module):
+    """分割 + 检测联合损失。
+
+    由分割 BCE/CE、Fourier 频域损失与 NWD 框损失组成。
+
+    Args:
+        mask_loss (str): 分割损失类型（"bce" 或 "cross_entropy"）。
+        mask_weight (float): 分割损失权重。
+        fourier_weight (float): Fourier 损失权重。
+        bbox_weight (float): NWD 损失权重。
+        nwd_constant (float): NWD 归一化常数。
+    """
+
+    def __init__(
+        self,
+        mask_loss: str = "bce",
+        mask_weight: float = 1.0,
+        fourier_weight: float = 0.2,
+        bbox_weight: float = 1.0,
+        nwd_constant: float = 20.0,
+    ):
+        """初始化联合损失。
+
+        Args:
+            mask_loss (str): 分割损失类型。
+            mask_weight (float): 分割损失权重。
+            fourier_weight (float): Fourier 损失权重。
+            bbox_weight (float): NWD 损失权重。
+            nwd_constant (float): NWD 归一化常数。
+        """
+        super().__init__()
+        self.mask_weight = mask_weight
+        self.fourier_weight = fourier_weight
+        self.bbox_weight = bbox_weight
+        self.mask_loss = SegmentationLoss(mask_loss)
+        self.fourier_loss = FourierLoss()
+        self.bbox_loss = NWDLoss(constant=nwd_constant)
+
+    def forward(
+        self,
+        mask_logits: torch.Tensor,
+        mask_targets: torch.Tensor,
+        bbox_pred: torch.Tensor,
+        bbox_targets: torch.Tensor,
+        bbox_valid: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """计算联合损失。
+
+        Args:
+            mask_logits (torch.Tensor): 分割预测 logits。
+            mask_targets (torch.Tensor): 分割目标掩码。
+            bbox_pred (torch.Tensor): 预测框 (B, 4)。
+            bbox_targets (torch.Tensor): 目标框 (B, 4)。
+            bbox_valid (torch.Tensor | None): 有效框掩码。
+
+        Returns:
+            tuple[torch.Tensor, dict]: 总损失与各项损失明细。
+        """
+        if isinstance(self.mask_loss.criterion, nn.CrossEntropyLoss):
+            ce_target = mask_targets.squeeze(1).long()
+            mask_loss_val = self.mask_loss(mask_logits, ce_target)
+        else:
+            mask_loss_val = self.mask_loss(mask_logits, mask_targets)
+
+        prob = torch.sigmoid(mask_logits)
+        fourier_loss_val = self.fourier_loss(prob, mask_targets.float())
+        bbox_loss_val = self.bbox_loss(bbox_pred, bbox_targets, bbox_valid)
+
+        total = (
+            self.mask_weight * mask_loss_val
+            + self.fourier_weight * fourier_loss_val
+            + self.bbox_weight * bbox_loss_val
+        )
+
+        return total, {
+            "mask": mask_loss_val.detach().item(),
+            "fourier": fourier_loss_val.detach().item(),
+            "bbox": bbox_loss_val.detach().item(),
+        }
 
 
 # ======================================================================

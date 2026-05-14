@@ -323,6 +323,93 @@ class MyDetector(nn.Module):
 | COCO JSON | `json` | COCO 格式标注文件 |
 | NumPy | `npy` | .npy 格式掩码数组 |
 
+## TS-Dual 多模态架构
+
+TS-Dual 使用 **Backbone + Neck + Head** 的模块化组合，支持 RGB + Mask 先验 + Depth 输入，
+并同时输出分割结果与边界框回归。
+
+架构示意（与 [docs/ts_dual_arch.md](docs/ts_dual_arch.md) 一致）：
+
+```mermaid
+graph TD
+    classDef input fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef backbone fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px;
+    classDef neck fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef head fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px;
+    classDef loss fill:#ffebee,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5;
+
+    subgraph B1 ["Block 1: 时序先验与多模态输入"]
+        I1(["RGB 图像<br/>B, 3, H, W"]):::input
+        I2(["Mask 先验提示<br/>B, 1, H, W"]):::input
+        I3(["Depth 深度图<br/>B, 1, H, W"]):::input
+        Concat["通道拼接<br/>B, 4, H, W"]
+        I1 --> Concat
+        I2 --> Concat
+    end
+
+    subgraph B2 ["Block 2: TS-Dual 双主干特征提取与交互"]
+        RGB_Stem["RGB 截断主干<br/>提取 P2, P3, P4"]:::backbone
+        Depth_Stem["Depth 截断主干<br/>提取 P2, P3, P4"]:::backbone
+        Cross_TSSA["Cross-Token Statistics<br/>RGB-D 特征交换"]:::backbone
+        RGB_Stem <--> Cross_TSSA
+        Depth_Stem <--> Cross_TSSA
+        Fusion{"双模态特征聚合"}:::backbone
+        Cross_TSSA --> Fusion
+    end
+
+    Concat --> RGB_Stem
+    I3 --> Depth_Stem
+
+    subgraph B3 ["Block 3: AFPN 渐进式特征金字塔"]
+        AFPN_L1["早期自适应融合"]:::neck
+        AFPN_L2["深层渐进融合"]:::neck
+    end
+
+    Fusion --> AFPN_L1
+    AFPN_L1 --> AFPN_L2
+
+    subgraph B4 ["Block 4: DyHead 动态聚合"]
+        ScaleAttn["尺度感知注意力"]:::neck
+        SpatialAttn["空间感知注意力"]:::neck
+        TaskAttn["任务感知注意力"]:::neck
+    end
+
+    AFPN_L2 --> ScaleAttn
+    ScaleAttn --> SpatialAttn
+    SpatialAttn --> TaskAttn
+
+    subgraph B5 ["Block 5: 解耦预测头"]
+        Split{"任务分流"}:::head
+        BboxBranch["边界框预测分支"]:::head
+        MaskBranch["像素分割预测分支"]:::head
+    end
+
+    TaskAttn --> Split
+    Split --> BboxBranch
+    Split --> MaskBranch
+
+    subgraph B6 ["Block 6: 训练期混合损失"]
+        NWD_Loss(("NWD Loss")):::loss
+        FFT_Loss(("Fourier Loss")):::loss
+    end
+
+    BboxBranch -.-> NWD_Loss
+    MaskBranch -.-> FFT_Loss
+```
+
+一键训练示例：
+
+```bash
+python train.py \
+  --model-type ts_dual \
+  --image-dir /path/to/images \
+  --mask-dir /path/to/masks \
+  --depth-dir /path/to/depth \
+  --prompt-dir /path/to/prompts \
+  --imgsz 256 \
+  --epochs 50
+```
+
 ## 依赖
 
 ```
@@ -332,5 +419,6 @@ numpy>=1.24,<2.0
 opencv-python>=4.8,<5.0
 Pillow>=9.5,<11.0
 matplotlib>=3.7,<3.9
-PyYAML>=6.0       # 可选，使用 YAML 配置时安装
+tqdm>=4.66,<5.0
+pyyaml>=6.0,<7.0  # 可选，使用 YAML 配置时安装
 ```
