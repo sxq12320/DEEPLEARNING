@@ -399,7 +399,7 @@ def train(cfg):
     model_type = cfg.get("model_type", "miniseg")
     is_ts_dual = model_type == "ts_dual"
     if is_ts_dual:
-        from configs.ts_dual_config import TS_DUAL_MODEL_CFG
+        from configs.config import TS_DUAL_MODEL_CFG
 
         model = build_ts_dual_model(
             TS_DUAL_MODEL_CFG, num_classes=cfg.get("num_classes", 1)

@@ -21,9 +21,9 @@
 │   └── transforms.py        # TXT / JSON / NPY → mask 标签转换
 │
 ├── models/                  # 模型库
-│   ├── registry.py          # @register_block 注册机制
-│   ├── blocks.py            # 基础模块（Conv, ResBlock, CBAM, C3K2, SPPF, FPN ...）
-│   ├── builder.py           # make_layers(cfg) 动态组网
+│   ├── registry.py          # 模块/backbone/neck/head 注册机制
+│   ├── modules.py           # 基础模块（Conv, ResBlock, CBAM, C3K2, SPPF, FPN ...）
+│   ├── builder.py           # make_layers + build_backbone/necks/heads
 │   ├── backbones.py         # 骨干网络（ResNet / YOLO11Backbone）
 │   ├── necks.py             # 颈部融合（YOLO11 PAN-FPN）
 │   ├── heads.py             # 检测头（YOLO11 解耦头）
@@ -191,9 +191,9 @@ loss, items = criterion(cls_list, reg_list, targets, features)
 
 ## 开发指南：如何添加新模块
 
-### 1. 添加新的基础网络层（blocks）
+### 1. 添加新的基础网络层（modules）
 
-在 [models/blocks.py](models/blocks.py) 中定义，使用 `@register_block` 装饰器注册：
+在 [models/modules.py](models/modules.py) 中定义，使用 `@register_block` 装饰器注册：
 
 ```python
 @register_block('my_attention')
@@ -328,7 +328,7 @@ class MyDetector(nn.Module):
 TS-Dual 使用 **Backbone + Neck + Head** 的模块化组合，支持 RGB + Mask 先验 + Depth 输入，
 并同时输出分割结果与边界框回归。
 
-架构示意（与 [docs/ts_dual_arch.md](docs/ts_dual_arch.md) 一致）：
+架构示意：
 
 ```mermaid
 graph TD

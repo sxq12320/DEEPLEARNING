@@ -1,4 +1,8 @@
+from typing import List, Optional, Union
+
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from configs.config import (
     RESNET_18_BACKBONE_CFG,
@@ -9,10 +13,12 @@ from configs.config import (
     RESNET_18_STEM_CFG,
 )
 
-from .blocks import SPPF, C3k2
+from .modules import ConvBNAct, CrossTokenStatsAttention, C3k2, SPPF
 from .builder import make_layers
+from .registry import register_backbone
 
 
+@register_backbone("resnet18")
 class ResNet18(nn.Module):
     """ResNet-18 骨干网络，通过配置列表构建。"""
 
@@ -37,6 +43,7 @@ class ResNet18(nn.Module):
         return self.backbone(x)
 
 
+@register_backbone("multiscale_resnet18")
 class MultiScaleResNet18(nn.Module):
     """ResNet-18 多尺度骨干，返回四个阶段的特征图用于 FPN 融合。
 
@@ -93,6 +100,7 @@ class MultiScaleResNet18(nn.Module):
         return [c2, c3, c4, c5]
 
 
+@register_backbone("yolo11_backbone")
 class YOLO11Backbone(nn.Module):
     """YOLO11 骨干网络，输出三层多尺度特征 [P3, P4, P5]。
 
@@ -179,3 +187,152 @@ class YOLO11Backbone(nn.Module):
         p4 = self.stage2(p3)  # (B, c4, H/16, W/16)
         p5 = self.stage3(p4)  # (B, c5, H/32, W/32)
         return [p3, p4, p5]
+
+
+@register_backbone("ts_dual_backbone")
+class TSDualBackbone(nn.Module):
+    """TS-Dual 双主干特征提取器。
+
+    输入 RGB + Mask 先验 与 Depth 两路数据，分别提取多尺度特征，
+    并通过跨模态统计注意力进行交互后融合输出。
+
+    Args:
+        in_ch_rgb (int): RGB 分支输入通道数（RGB+先验=4）。
+        in_ch_depth (int): Depth 分支输入通道数（默认 1）。
+        channels (List[int] | None): 各尺度输出通道数 [P2, P3, P4]。
+        activation (str): 激活函数名称。
+        exchange_reduction (int): 跨模态注意力通道压缩比。
+    """
+
+    def __init__(
+        self,
+        in_ch_rgb: int = 4,
+        in_ch_depth: int = 1,
+        channels: Optional[List[int]] = None,
+        activation: str = "silu",
+        exchange_reduction: int = 4,
+    ):
+        """初始化 TS-Dual 双主干。
+
+        Args:
+            in_ch_rgb (int): RGB 分支输入通道数。
+            in_ch_depth (int): Depth 分支输入通道数。
+            channels (List[int] | None): 输出通道配置。
+            activation (str): 激活函数名称。
+            exchange_reduction (int): 通道压缩比。
+        """
+        super().__init__()
+        if channels is None:
+            channels = [32, 64, 128]
+        c2, c3, c4 = channels
+
+        # RGB 分支
+        self.rgb_stem = nn.Sequential(
+            ConvBNAct(in_ch_rgb, c2, k=3, s=2, activation=activation),
+            ConvBNAct(c2, c2, k=3, s=2, activation=activation),
+        )
+        self.rgb_stage3 = ConvBNAct(c2, c3, k=3, s=2, activation=activation)
+        self.rgb_stage4 = ConvBNAct(c3, c4, k=3, s=2, activation=activation)
+
+        # Depth 分支
+        self.depth_stem = nn.Sequential(
+            ConvBNAct(in_ch_depth, c2, k=3, s=2, activation=activation),
+            ConvBNAct(c2, c2, k=3, s=2, activation=activation),
+        )
+        self.depth_stage3 = ConvBNAct(c2, c3, k=3, s=2, activation=activation)
+        self.depth_stage4 = ConvBNAct(c3, c4, k=3, s=2, activation=activation)
+
+        # 跨模态交互
+        self.exchange = nn.ModuleList(
+            [
+                CrossTokenStatsAttention(c2, exchange_reduction, activation),
+                CrossTokenStatsAttention(c3, exchange_reduction, activation),
+                CrossTokenStatsAttention(c4, exchange_reduction, activation),
+            ]
+        )
+
+        # 融合
+        self.fusion = nn.ModuleList(
+            [
+                ConvBNAct(c2 * 2, c2, k=1, s=1, activation=activation),
+                ConvBNAct(c3 * 2, c3, k=1, s=1, activation=activation),
+                ConvBNAct(c4 * 2, c4, k=1, s=1, activation=activation),
+            ]
+        )
+
+    def forward(
+        self,
+        rgb: Union[torch.Tensor, dict],
+        prompt: Optional[torch.Tensor] = None,
+        depth: Optional[torch.Tensor] = None,
+    ) -> List[torch.Tensor]:
+        """前向传播并输出多尺度融合特征。
+
+        Args:
+            rgb (torch.Tensor | dict): RGB 输入，或包含 rgb/prompt/depth 的字典。
+            prompt (torch.Tensor | None): Mask 先验提示 (B,1,H,W)。
+            depth (torch.Tensor | None): Depth 输入 (B,1,H,W)。
+
+        Returns:
+            List[torch.Tensor]: 融合后的多尺度特征 [P2, P3, P4]。
+        """
+        if isinstance(rgb, dict):
+            depth = rgb.get("depth")
+            prompt = rgb.get("prompt")
+            rgb = rgb.get("rgb")
+
+        if rgb is None:
+            raise ValueError("RGB 输入不能为空")
+
+        prompt = self._ensure_single_channel(prompt, rgb)
+        depth = self._ensure_single_channel(depth, rgb)
+
+        rgb_in = torch.cat([rgb, prompt], dim=1)
+
+        # RGB 分支
+        rgb_p2 = self.rgb_stem(rgb_in)
+        rgb_p3 = self.rgb_stage3(rgb_p2)
+        rgb_p4 = self.rgb_stage4(rgb_p3)
+
+        # Depth 分支
+        depth_p2 = self.depth_stem(depth)
+        depth_p3 = self.depth_stage3(depth_p2)
+        depth_p4 = self.depth_stage4(depth_p3)
+
+        # 跨模态交互
+        rgb_p2, depth_p2 = self.exchange[0](rgb_p2, depth_p2)
+        rgb_p3, depth_p3 = self.exchange[1](rgb_p3, depth_p3)
+        rgb_p4, depth_p4 = self.exchange[2](rgb_p4, depth_p4)
+
+        # 融合
+        f2 = self.fusion[0](torch.cat([rgb_p2, depth_p2], dim=1))
+        f3 = self.fusion[1](torch.cat([rgb_p3, depth_p3], dim=1))
+        f4 = self.fusion[2](torch.cat([rgb_p4, depth_p4], dim=1))
+
+        return [f2, f3, f4]
+
+    def _ensure_single_channel(
+        self, x: Optional[torch.Tensor], ref: torch.Tensor
+    ) -> torch.Tensor:
+        """保证输入为单通道并与参考尺寸对齐。
+
+        Args:
+            x (torch.Tensor | None): 输入张量。
+            ref (torch.Tensor): 参考张量，用于尺寸对齐。
+
+        Returns:
+            torch.Tensor: 处理后的单通道张量。
+        """
+        if x is None:
+            return torch.zeros(
+                (ref.size(0), 1, ref.size(2), ref.size(3)),
+                device=ref.device,
+                dtype=ref.dtype,
+            )
+        if x.ndim == 3:
+            x = x.unsqueeze(1)
+        if x.shape[1] != 1:
+            x = x[:, :1, ...]
+        if x.shape[2:] != ref.shape[2:]:
+            x = F.interpolate(x, size=ref.shape[2:], mode="nearest")
+        return x

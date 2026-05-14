@@ -1,5 +1,4 @@
-from .dataset import SegmentationDataset, get_dataset_rgb
-from .mm_dataset import MultiModalSegmentationDataset
+from .dataset import MultiModalSegmentationDataset, SegmentationDataset, get_dataset_rgb
 from .transforms import JSON2MASK, NPY2MASK, TXT2MASK, image_transform
 
 __all__ = [

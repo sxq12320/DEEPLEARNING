@@ -4,10 +4,17 @@
 分离为两条独立卷积路径，避免分类与定位任务间的特征冲突。
 """
 
+from typing import Optional, Tuple, Union
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+from .modules import ConvBNAct
+from .registry import register_head
 
 
+@register_head("yolo11_head")
 class YOLO11Head(nn.Module):
     """YOLO11 解耦检测头。
 
@@ -92,3 +99,89 @@ class YOLO11Head(nn.Module):
             cls_outputs.append(cls_conv(feat))
             reg_outputs.append(reg_conv(feat))
         return cls_outputs, reg_outputs
+
+
+@register_head("decoupled_segdet_head")
+class DecoupledSegDetHead(nn.Module):
+    """解耦预测头。
+
+    同时输出归一化边界框预测与分割 mask logits。
+
+    Args:
+        in_channels (int): 输入特征通道数。
+        mask_out_ch (int): 分割输出通道数。
+        activation (str): 激活函数名称。
+        bbox_hidden (int): bbox 分支中间通道数。
+    """
+
+    def __init__(
+        self,
+        in_channels: int = 128,
+        mask_out_ch: int = 1,
+        activation: str = "silu",
+        bbox_hidden: int = 128,
+    ):
+        """初始化解耦预测头。
+
+        Args:
+            in_channels (int): 输入通道数。
+            mask_out_ch (int): 分割输出通道数。
+            activation (str): 激活函数名称。
+            bbox_hidden (int): bbox 分支中间通道数。
+        """
+        super().__init__()
+        self.bbox_branch = nn.Sequential(
+            ConvBNAct(in_channels, bbox_hidden, k=3, s=1, activation=activation),
+            ConvBNAct(bbox_hidden, bbox_hidden, k=3, s=1, activation=activation),
+        )
+        self.bbox_pool = nn.AdaptiveAvgPool2d(1)
+        self.bbox_fc = nn.Linear(bbox_hidden, 4)
+
+        self.mask_branch = nn.Sequential(
+            ConvBNAct(in_channels, in_channels, k=3, s=1, activation=activation),
+            ConvBNAct(in_channels, in_channels, k=3, s=1, activation=activation),
+            nn.Conv2d(in_channels, mask_out_ch, kernel_size=1),
+        )
+
+    def forward(
+        self,
+        features: Union[torch.Tensor, dict],
+        input_shape: Optional[Tuple[int, int]] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """前向传播。
+
+        Args:
+            features (torch.Tensor | dict): 输入特征或任务特征字典。
+            input_shape (Tuple[int, int] | None): 原图尺寸 (H, W)。
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]:
+                bbox_pred (B, 4) 与 mask_logits (B, C, H, W)。
+        """
+        if isinstance(features, dict):
+            bbox_feat = features.get("bbox")
+            mask_feat = features.get("mask")
+            if bbox_feat is None:
+                bbox_feat = mask_feat
+            if mask_feat is None:
+                mask_feat = bbox_feat
+        else:
+            bbox_feat = features
+            mask_feat = features
+
+        bbox_feat = self.bbox_branch(bbox_feat)
+        bbox_vec = self.bbox_pool(bbox_feat).flatten(1)
+        bbox_raw = torch.sigmoid(self.bbox_fc(bbox_vec))
+        x1 = torch.min(bbox_raw[:, 0], bbox_raw[:, 2])
+        y1 = torch.min(bbox_raw[:, 1], bbox_raw[:, 3])
+        x2 = torch.max(bbox_raw[:, 0], bbox_raw[:, 2])
+        y2 = torch.max(bbox_raw[:, 1], bbox_raw[:, 3])
+        bbox_pred = torch.stack([x1, y1, x2, y2], dim=1)
+
+        mask_logits = self.mask_branch(mask_feat)
+        if input_shape is not None:
+            mask_logits = F.interpolate(
+                mask_logits, size=input_shape, mode="bilinear", align_corners=False
+            )
+
+        return bbox_pred, mask_logits

@@ -8,9 +8,10 @@ from .config import (
     RESNET_18_STAGE4_CFG,
     RESNET_18_STEM_CFG,
     RESNET_34_CFG,
+    TS_DUAL_LOSS_CFG,
+    TS_DUAL_MODEL_CFG,
     YOLO11_CONFIGS,
 )
-from .ts_dual_config import TS_DUAL_LOSS_CFG, TS_DUAL_MODEL_CFG
 
 __all__ = [
     "ACTIVATION_MAP",

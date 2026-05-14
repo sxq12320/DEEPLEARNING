@@ -1,22 +1,20 @@
-from .backbones import MultiScaleResNet18, ResNet18, YOLO11Backbone
-from .blocks import *
-from .arch_builder import build_backbone, build_head, build_neck
-from .arch_registry import (
+from .backbones import MultiScaleResNet18, ResNet18, TSDualBackbone, YOLO11Backbone
+from .builder import build_backbone, build_head, build_neck, make_layers
+from .detection import YOLO11Detector
+from .heads import DecoupledSegDetHead, YOLO11Head
+from .modules import *
+from .necks import AFPNNeck, DyHeadNeck, YOLO11Neck
+from .registry import (
     BACKBONE_REGISTRY,
+    BLOCK_REGISTRY,
     HEAD_REGISTRY,
     NECK_REGISTRY,
     register_backbone,
+    register_block,
     register_head,
     register_neck,
 )
-from .builder import make_layers
-from .detection import YOLO11Detector
-from .heads import YOLO11Head
-from .necks import YOLO11Neck
-from .registry import BLOCK_REGISTRY, register_block
-from .segmentation import FPNSegNet, MiniSegNet
-from .ts_dual_net import TSDualSegDetNet, build_ts_dual_model
-from .ts_modules import AFPNNeck, DecoupledSegDetHead, DyHeadNeck, TSDualBackbone
+from .segmentation import FPNSegNet, MiniSegNet, TSDualSegDetNet, build_ts_dual_model
 
 __all__ = [
     "MaxPool",

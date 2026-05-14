@@ -1,22 +1,23 @@
-"""模型基础卷积模块封装库。
+"""模型基础模块封装库。
 
-这里包含了常用的各种基础构建块,如基础卷积操作,以及不同形式的池化层封装。
-所有模块注册在内部的注册表中以便于统一调用。
+包含常用卷积、注意力、金字塔与 TS-Dual 相关的基础模块。
+所有可配置模块使用注册表进行统一管理。
 """
+
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from configs.config import ACTIVATION_MAP
-from models import registry
 from utils.common import autopad, get_activation
 
 from .registry import register_block
 
 
 ############################################################
-#               基本卷积相关的模块                            #
+#               基本卷积相关的模块                          #
 ############################################################
 @register_block("maxpool")
 class MaxPool(nn.Module):
@@ -395,6 +396,249 @@ class DepthWiseSeparable_Conv(nn.Module):
         return self.forward_basic(x)
 
 
+class ConvBNAct(nn.Module):
+    """卷积 + BN + 激活的基础模块。
+
+    Args:
+        in_ch (int): 输入通道数。
+        out_ch (int): 输出通道数。
+        k (int): 卷积核大小。
+        s (int): 步幅。
+        p (int | None): 填充大小，None 时自动计算。
+        d (int): 空洞率。
+        g (int): 分组卷积组数。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(
+        self,
+        in_ch: int,
+        out_ch: int,
+        k: int = 3,
+        s: int = 1,
+        p: Optional[int] = None,
+        d: int = 1,
+        g: int = 1,
+        activation: str = "silu",
+    ):
+        """初始化基础卷积模块。
+
+        Args:
+            in_ch (int): 输入通道数。
+            out_ch (int): 输出通道数。
+            k (int): 卷积核大小。
+            s (int): 步幅。
+            p (int | None): 填充大小，None 时自动计算。
+            d (int): 空洞率。
+            g (int): 分组卷积组数。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        padding = autopad(k, p, d)
+        self.conv = nn.Conv2d(
+            in_ch,
+            out_ch,
+            kernel_size=k,
+            stride=s,
+            padding=padding,
+            dilation=d,
+            groups=g,
+            bias=False,
+        )
+        self.bn = nn.BatchNorm2d(out_ch)
+        self.act = get_activation(activation, ACTIVATION_MAP)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入张量。
+
+        Returns:
+            torch.Tensor: 输出张量。
+        """
+        return self.act(self.bn(self.conv(x)))
+
+
+class CrossTokenStatsAttention(nn.Module):
+    """轻量级跨模态统计注意力。
+
+    使用全局统计量建立 RGB 与 Depth 的双向交互，
+    以较低开销模拟跨模态特征交换。
+
+    Args:
+        channels (int): 输入通道数。
+        reduction (int): 通道压缩比。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(self, channels: int, reduction: int = 4, activation: str = "silu"):
+        """初始化跨模态统计注意力。
+
+        Args:
+            channels (int): 输入通道数。
+            reduction (int): 通道压缩比。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        hidden = max(1, channels // reduction)
+        self.rgb_to_depth = nn.Sequential(
+            nn.Conv2d(channels, hidden, kernel_size=1, bias=False),
+            get_activation(activation, ACTIVATION_MAP),
+            nn.Conv2d(hidden, channels, kernel_size=1, bias=False),
+            nn.Sigmoid(),
+        )
+        self.depth_to_rgb = nn.Sequential(
+            nn.Conv2d(channels, hidden, kernel_size=1, bias=False),
+            get_activation(activation, ACTIVATION_MAP),
+            nn.Conv2d(hidden, channels, kernel_size=1, bias=False),
+            nn.Sigmoid(),
+        )
+
+    def forward(
+        self, rgb_feat: torch.Tensor, depth_feat: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """执行跨模态交换。
+
+        Args:
+            rgb_feat (torch.Tensor): RGB 特征 (B, C, H, W)。
+            depth_feat (torch.Tensor): Depth 特征 (B, C, H, W)。
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]:
+                交换后的 (rgb_feat, depth_feat)。
+        """
+        rgb_stat = rgb_feat.mean(dim=(2, 3), keepdim=True)
+        depth_stat = depth_feat.mean(dim=(2, 3), keepdim=True)
+
+        rgb_gate = self.depth_to_rgb(depth_stat)
+        depth_gate = self.rgb_to_depth(rgb_stat)
+
+        rgb_out = rgb_feat + rgb_gate * depth_feat
+        depth_out = depth_feat + depth_gate * rgb_feat
+        return rgb_out, depth_out
+
+
+class ScaleAwareAttention(nn.Module):
+    """尺度感知注意力。
+
+    通过全局统计生成通道权重，强调关键尺度特征。
+
+    Args:
+        channels (int): 输入通道数。
+        reduction (int): 通道压缩比。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(self, channels: int, reduction: int = 4, activation: str = "silu"):
+        """初始化尺度注意力。
+
+        Args:
+            channels (int): 输入通道数。
+            reduction (int): 通道压缩比。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        hidden = max(1, channels // reduction)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.mlp = nn.Sequential(
+            nn.Conv2d(channels, hidden, kernel_size=1, bias=False),
+            get_activation(activation, ACTIVATION_MAP),
+            nn.Conv2d(hidden, channels, kernel_size=1, bias=False),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入特征。
+
+        Returns:
+            torch.Tensor: 加权后的特征。
+        """
+        weights = self.mlp(self.pool(x))
+        return x * weights
+
+
+class SpatialAwareAttention(nn.Module):
+    """空间感知注意力。
+
+    通过空间权重过滤背景噪声。
+
+    Args:
+        kernel_size (int): 空间注意力卷积核大小。
+    """
+
+    def __init__(self, kernel_size: int = 7):
+        """初始化空间注意力。
+
+        Args:
+            kernel_size (int): 卷积核大小。
+        """
+        super().__init__()
+        padding = kernel_size // 2
+        self.conv = nn.Conv2d(2, 1, kernel_size=kernel_size, padding=padding, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """前向传播。
+
+        Args:
+            x (torch.Tensor): 输入特征。
+
+        Returns:
+            torch.Tensor: 加权后的特征。
+        """
+        avg_map = x.mean(dim=1, keepdim=True)
+        max_map, _ = x.max(dim=1, keepdim=True)
+        attn = self.sigmoid(self.conv(torch.cat([avg_map, max_map], dim=1)))
+        return x * attn
+
+
+class TaskAwareAttention(nn.Module):
+    """任务感知注意力。
+
+    生成 bbox 与 mask 两条任务分支特征。
+
+    Args:
+        channels (int): 输入通道数。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(self, channels: int, activation: str = "silu"):
+        """初始化任务感知注意力。
+
+        Args:
+            channels (int): 输入通道数。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        self.shared = ConvBNAct(channels, channels, k=3, s=1, activation=activation)
+        self.bbox_gate = nn.Sequential(
+            nn.Conv2d(channels, channels, kernel_size=1, bias=False),
+            nn.Sigmoid(),
+        )
+        self.mask_gate = nn.Sequential(
+            nn.Conv2d(channels, channels, kernel_size=1, bias=False),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x: torch.Tensor) -> dict:
+        """前向传播并生成任务分支。
+
+        Args:
+            x (torch.Tensor): 输入特征。
+
+        Returns:
+            dict: {"bbox": bbox_feat, "mask": mask_feat}。
+        """
+        shared = self.shared(x)
+        bbox_feat = shared * self.bbox_gate(shared)
+        mask_feat = shared * self.mask_gate(shared)
+        return {"bbox": bbox_feat, "mask": mask_feat}
+
+
 @register_block("resnet_block_34")
 class ResNetBlock_34(nn.Module):
     """ResNet-34 基本残差块(双 3x3 卷积)。"""
@@ -546,7 +790,7 @@ class ResNetBlock_50(nn.Module):
 
 
 ############################################################
-#               注意力机制相关的模块                          #
+#               注意力机制相关的模块                        #
 ############################################################
 @register_block("cbam_channel_attention")
 class CBAM_Channel_Attention(nn.Module):
@@ -652,7 +896,7 @@ class CBAM(nn.Module):
 
 
 ############################################################
-#               特征金字塔网络 (FPN) 融合模块                  #
+#               特征金字塔网络 (FPN) 融合模块                #
 ############################################################
 @register_block("fpn_lateral_conv")
 class FPNLateralConv(nn.Module):
@@ -925,7 +1169,7 @@ class C3k2(nn.Module):
 
 
 ############################################################
-#               YOLO 系列专用模块                            #
+#               YOLO 系列专用模块                          #
 ############################################################
 @register_block("bottleneck")
 class Bottleneck(nn.Module):

@@ -4,13 +4,23 @@
 所有 neck 遵循统一接口：接收多尺度特征列表，返回融合后同序特征列表。
 """
 
+from typing import List, Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .blocks import C3k2
+from .modules import (
+    C3k2,
+    ConvBNAct,
+    ScaleAwareAttention,
+    SpatialAwareAttention,
+    TaskAwareAttention,
+)
+from .registry import register_neck
 
 
+@register_neck("yolo11_neck")
 class YOLO11Neck(nn.Module):
     """YOLO11 PAN-FPN 颈部网络，自顶向下再自底向上融合三层特征。
 
@@ -111,3 +121,110 @@ class YOLO11Neck(nn.Module):
         n5_out = self.bottom_up_c3k2_2(torch.cat([p5, n4_down], dim=1))
 
         return [n3, n4_out, n5_out]
+
+
+@register_neck("afpn_neck")
+class AFPNNeck(nn.Module):
+    """渐进式特征金字塔 AFPN。
+
+    先融合浅层特征，再逐步引入高层语义，输出单尺度融合特征。
+
+    Args:
+        in_channels (List[int] | None): 输入特征通道数 [P2, P3, P4]。
+        out_channels (int): 融合输出通道数。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(
+        self,
+        in_channels: Optional[List[int]] = None,
+        out_channels: int = 128,
+        activation: str = "silu",
+    ):
+        """初始化 AFPN。
+
+        Args:
+            in_channels (List[int] | None): 输入通道数。
+            out_channels (int): 输出通道数。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        if in_channels is None:
+            in_channels = [32, 64, 128]
+
+        self.lateral = nn.ModuleList(
+            [
+                ConvBNAct(ch, out_channels, k=1, s=1, activation=activation)
+                for ch in in_channels
+            ]
+        )
+        self.fuse_l1 = ConvBNAct(
+            out_channels * 2, out_channels, k=3, s=1, activation=activation
+        )
+        self.fuse_l2 = ConvBNAct(
+            out_channels * 2, out_channels, k=3, s=1, activation=activation
+        )
+
+    def forward(self, features: List[torch.Tensor]) -> torch.Tensor:
+        """前向传播并输出融合特征。
+
+        Args:
+            features (List[torch.Tensor]): 多尺度特征 [P2, P3, P4]。
+
+        Returns:
+            torch.Tensor: 融合后的特征图 (B, C, H/4, W/4)。
+        """
+        if len(features) != 3:
+            raise ValueError("AFPN 需要 3 个尺度特征 [P2, P3, P4]")
+        p2, p3, p4 = features
+
+        l2 = self.lateral[0](p2)
+        l3 = self.lateral[1](p3)
+        l4 = self.lateral[2](p4)
+
+        p3_up = F.interpolate(l3, size=l2.shape[2:], mode="nearest")
+        f_l1 = self.fuse_l1(torch.cat([l2, p3_up], dim=1))
+
+        p4_up = F.interpolate(l4, size=f_l1.shape[2:], mode="nearest")
+        f_l2 = self.fuse_l2(torch.cat([f_l1, p4_up], dim=1))
+
+        return f_l2
+
+
+@register_neck("dyhead_neck")
+class DyHeadNeck(nn.Module):
+    """动态聚合 DyHead 颈部。
+
+    依次执行尺度、空间与任务注意力，输出两条任务特征。
+
+    Args:
+        channels (int): 输入通道数。
+        reduction (int): 通道压缩比。
+        activation (str): 激活函数名称。
+    """
+
+    def __init__(self, channels: int = 128, reduction: int = 4, activation: str = "silu"):
+        """初始化 DyHead 颈部。
+
+        Args:
+            channels (int): 输入通道数。
+            reduction (int): 通道压缩比。
+            activation (str): 激活函数名称。
+        """
+        super().__init__()
+        self.scale_attn = ScaleAwareAttention(channels, reduction, activation)
+        self.spatial_attn = SpatialAwareAttention()
+        self.task_attn = TaskAwareAttention(channels, activation)
+
+    def forward(self, x: torch.Tensor) -> dict:
+        """前向传播并输出任务特征。
+
+        Args:
+            x (torch.Tensor): 输入特征。
+
+        Returns:
+            dict: {"bbox": bbox_feat, "mask": mask_feat}。
+        """
+        x = self.scale_attn(x)
+        x = self.spatial_attn(x)
+        return self.task_attn(x)
