@@ -1,5 +1,23 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+ACTIVATION_MAP = {
+    "relu": nn.ReLU(inplace=True),
+    "leakyrelu": nn.LeakyReLU(negative_slope=0.01, inplace=True),
+    "prelu": nn.PReLU(),
+    "relu6": nn.ReLU6(inplace=True),
+    "silu": nn.SiLU(inplace=True),
+    "gelu": nn.GELU(),
+    "elu": nn.ELU(inplace=True),
+    "selu": nn.SELU(inplace=True),
+    "mish": nn.Mish(inplace=True),
+    "hardswish": nn.Hardswish(inplace=True),
+    "sigmoid": nn.Sigmoid(),
+    "tanh": nn.Tanh(),
+    "identity": nn.Identity(),
+    "none": nn.Identity(),
+}
 
 
 def get_activation(act_name: str, activation_map: dict):
@@ -22,21 +40,3 @@ def get_activation(act_name: str, activation_map: dict):
             f"Unsupported activation: {act_name}. Supported activations: {supported}"
         )
     return activation_map[act_name]
-
-
-def autopad(k, p=None, d=1):
-    """计算合适的填充大小，使卷积前后尺寸不变。
-
-    Args:
-        k (int | List[int]): 卷积核大小。
-        p (int | List[int] | None): 预设填充大小。
-        d (int): 空洞率。
-
-    Returns:
-        int | List[int]: 计算后的填充大小。
-    """
-    if d > 1:
-        k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]
-    if p is None:
-        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]
-    return p

@@ -122,11 +122,16 @@ class SegmentationDataset(Dataset):
 
         img_rgb = cv2.resize(img_rgb, self.target_size, interpolation=cv2.INTER_LINEAR)
         img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).float() / 255.0
-        mask_tensor = (
-            torch.from_numpy((label > 127).astype(np.float32)).unsqueeze(0)
-            if label.ndim == 2
-            else torch.from_numpy(label).float()
-        )
+        if label.ndim == 3:
+            if label.shape[2] == 1:
+                label = label[..., 0]
+            elif label.shape[0] == 1:
+                label = label[0, ...]
+            else:
+                label = label[..., 0]
+
+        mask_bin = (label > 0).astype(np.float32)
+        mask_tensor = torch.from_numpy(mask_bin).unsqueeze(0)
 
         return img_tensor, mask_tensor
 
@@ -480,7 +485,7 @@ class MultiModalSegmentationDataset(Dataset):
         """
         if mask.ndim == 3:
             mask = mask[..., 0]
-        mask_bin = (mask > 127).astype(np.float32)
+        mask_bin = (mask > 0).astype(np.float32)
         return torch.from_numpy(mask_bin).unsqueeze(0)
 
 

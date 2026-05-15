@@ -37,6 +37,8 @@ DEFAULT_CFG = {
     # ---- 模型 ----
     "model_type": "fpnseg",  # miniseg  fpnseg  ts_dual
     # ---- 数据 ----
+    "data_yaml": "E:/mastercode/ultralytics-main/206_Apple_Amodal.yaml",
+    "data_split": "train",
     "image_dir": "",
     "mask_dir": "",
     "label_dir": "",
@@ -46,6 +48,7 @@ DEFAULT_CFG = {
     "imgsz": 128,
     "num_classes": 1,
     "mask_threshold": 0.5,
+    "metric_threshold": 0.25,
     # ---- 训练 ----
     "epochs": 20,
     "batch": 8,
@@ -104,6 +107,20 @@ def parse_args(argv=None):
     )
 
     # 数据
+    parser.add_argument(
+        "--data-yaml",
+        dest="data_yaml",
+        type=str,
+        default=None,
+        help="Path to YOLO dataset YAML",
+    )
+    parser.add_argument(
+        "--data-split",
+        type=str,
+        default=None,
+        choices=["train", "val", "test"],
+        help="Split name in YOLO dataset YAML",
+    )
     parser.add_argument("--image-dir", type=str, default=None)
     parser.add_argument("--mask-dir", type=str, default=None)
     parser.add_argument("--label-dir", type=str, default=None)
@@ -115,6 +132,12 @@ def parse_args(argv=None):
     parser.add_argument("--imgsz", type=int, default=None)
     parser.add_argument("--num-classes", type=int, default=None)
     parser.add_argument("--mask-threshold", type=float, default=None)
+    parser.add_argument(
+        "--metric-threshold",
+        type=float,
+        default=None,
+        help="Threshold used for metrics (similar to YOLO conf)",
+    )
 
     # 训练超参数
     parser.add_argument("--epochs", type=int, default=None)
@@ -234,6 +257,73 @@ def save_cfg(cfg, path):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
+
+
+def _resolve_yolo_base(data_yaml, data):
+    base = data.get("path") or ""
+    return Path(base) if base else Path(data_yaml).parent
+
+
+def _resolve_yolo_split_path(base_path, split_value):
+    if not split_value:
+        return None
+    if isinstance(split_value, (list, tuple)):
+        if not split_value:
+            return None
+        split_value = split_value[0]
+    split_path = Path(split_value)
+    if not split_path.is_absolute():
+        split_path = base_path / split_path
+    return split_path
+
+
+def _infer_yolo_label_dir(image_dir):
+    name = image_dir.name.lower()
+    if name in ("images", "image", "imgs"):
+        return image_dir.with_name("labels")
+    return image_dir.parent / "labels"
+
+
+def apply_yolo_dataset_cfg(cfg):
+    """Fill dataset paths from a YOLO-format data YAML."""
+    data_yaml = cfg.get("data_yaml")
+    if not data_yaml:
+        return cfg
+
+    data = load_cfg(data_yaml)
+    if not isinstance(data, dict):
+        raise ValueError("YOLO data YAML must be a mapping")
+
+    base_path = _resolve_yolo_base(data_yaml, data)
+    split = cfg.get("data_split", "train")
+    img_dir = _resolve_yolo_split_path(base_path, data.get(split))
+
+    applied = False
+
+    if img_dir and not cfg.get("image_dir"):
+        cfg["image_dir"] = str(img_dir)
+        applied = True
+    if img_dir and not cfg.get("label_dir") and not cfg.get("mask_dir"):
+        cfg["label_dir"] = str(_infer_yolo_label_dir(img_dir))
+        applied = True
+
+    if applied:
+        if data.get("depth_dir") and not cfg.get("depth_dir"):
+            depth_dir = Path(data["depth_dir"])
+            if not depth_dir.is_absolute():
+                depth_dir = base_path / depth_dir
+            cfg["depth_dir"] = str(depth_dir)
+
+        if data.get("nc") is not None:
+            try:
+                cfg["num_classes"] = int(data["nc"])
+            except (TypeError, ValueError):
+                pass
+
+        if cfg.get("label_type") in (None, "", "mask"):
+            cfg["label_type"] = "txt"
+
+    return cfg
 
 
 # ---------------------------------------------------------------------------
@@ -388,12 +478,21 @@ def train(cfg):
         dict: 包含 save_dir, best_loss, epoch_losses 的结果字典。
     """
     from engine.losses import SegDetLoss, SegmentationLoss
-    from engine.metrics import compute_dice, compute_iou
+    from engine.metrics import (
+        ap_per_class,
+        compute_box_iou,
+        compute_dice,
+        compute_iou,
+        compute_iou_per_sample,
+    )
     from models import FPNSegNet, MiniSegNet, build_ts_dual_model
     from utils.visualize import plot_loss_curve
 
     # ---- 设备 ----
     device, device_name = select_device(cfg.get("cpu", False))
+
+    # ---- YOLO 数据集配置 ----
+    cfg = apply_yolo_dataset_cfg(cfg)
 
     # ---- 模型 ----
     model_type = cfg.get("model_type", "miniseg")
@@ -472,16 +571,39 @@ def train(cfg):
     epoch_losses = []
     best_loss = float("inf")
     t0 = time.time()
+    map_thresholds = [round(0.5 + 0.05 * i, 2) for i in range(10)]
+    map_thresholds_t = torch.tensor(map_thresholds, device=device)
 
     model.train()
     for epoch in range(cfg["epochs"]):
         epoch_loss = 0.0
         epoch_iou = 0.0
         epoch_dice = 0.0
+        box_stats = _init_ultra_stats()
+        mask_stats = _init_ultra_stats()
         loss_items = None
         epoch_items = {"bbox": 0.0, "mask": 0.0, "fourier": 0.0} if is_ts_dual else None
+        b_line = tqdm(
+            total=0,
+            bar_format="{desc}",
+            position=0,
+            leave=False,
+            dynamic_ncols=True,
+        )
+        m_line = tqdm(
+            total=0,
+            bar_format="{desc}",
+            position=1,
+            leave=False,
+            dynamic_ncols=True,
+        )
         pbar = tqdm(
-            loader, desc=f"Epoch {epoch + 1}/{cfg['epochs']}", unit="batch", leave=False
+            loader,
+            desc=f"Epoch {epoch + 1}/{cfg['epochs']}",
+            unit="batch",
+            leave=False,
+            position=2,
+            dynamic_ncols=True,
         )
 
         for batch in pbar:
@@ -495,12 +617,12 @@ def train(cfg):
                 imgs = imgs.to(device)
 
             masks = _normalize_mask(masks).to(device)
+            bbox_targets, bbox_valid = _masks_to_boxes(masks)
 
             if is_ts_dual:
                 outputs = model(imgs, prompts, depths)
                 mask_logits = outputs["mask"]
                 bbox_pred = outputs["bbox"]
-                bbox_targets, bbox_valid = _masks_to_boxes(masks)
                 loss, loss_items = criterion(
                     mask_logits, masks, bbox_pred, bbox_targets, bbox_valid
                 )
@@ -525,11 +647,65 @@ def train(cfg):
             mask_bin = (masks > 0.5).float()
             with torch.no_grad():
                 prob = torch.sigmoid(mask_logits)
-                preds = (prob >= cfg.get("mask_threshold", 0.5)).float()
+                metric_thr = cfg.get("metric_threshold", cfg.get("mask_threshold", 0.5))
+                preds = (prob >= metric_thr).float()
                 batch_iou = compute_iou(preds, mask_bin)
                 batch_dice = compute_dice(preds, mask_bin)
                 epoch_iou += batch_iou
                 epoch_dice += batch_dice
+
+                pred_mask_valid = preds.flatten(1).sum(dim=1) > 0
+                gt_mask_valid = mask_bin.flatten(1).sum(dim=1) > 0
+
+                pred_conf = prob.flatten(1).max(dim=1).values
+                mask_iou = compute_iou_per_sample(preds, mask_bin)
+                mask_iou = mask_iou * gt_mask_valid.float()
+
+                pred_idx = pred_mask_valid.nonzero(as_tuple=False).squeeze(1)
+                if pred_idx.numel() > 0:
+                    tp_mask = (
+                        mask_iou[pred_idx].unsqueeze(1) >= map_thresholds_t
+                    ).float().cpu().numpy()
+                    conf_mask = pred_conf[pred_idx].detach().cpu().numpy()
+                    pred_cls_mask = np.zeros(pred_idx.numel(), dtype=np.int64)
+                else:
+                    tp_mask = np.zeros((0, len(map_thresholds)), dtype=np.float32)
+                    conf_mask = np.zeros((0,), dtype=np.float32)
+                    pred_cls_mask = np.zeros((0,), dtype=np.int64)
+                target_cls_mask = np.zeros(int(gt_mask_valid.sum().item()), dtype=np.int64)
+                _update_ultra_stats(mask_stats, tp_mask, conf_mask, pred_cls_mask, target_cls_mask)
+
+                if is_ts_dual:
+                    bbox_pred_use = bbox_pred
+                    pred_box_valid = pred_mask_valid
+                else:
+                    bbox_pred_use, pred_box_valid = _masks_to_boxes(preds)
+
+                bbox_iou = compute_box_iou(bbox_pred_use, bbox_targets)
+                bbox_iou = bbox_iou * bbox_valid.float()
+                pred_idx_box = pred_box_valid.nonzero(as_tuple=False).squeeze(1)
+                if pred_idx_box.numel() > 0:
+                    tp_box = (
+                        bbox_iou[pred_idx_box].unsqueeze(1) >= map_thresholds_t
+                    ).float().cpu().numpy()
+                    conf_box = pred_conf[pred_idx_box].detach().cpu().numpy()
+                    pred_cls_box = np.zeros(pred_idx_box.numel(), dtype=np.int64)
+                else:
+                    tp_box = np.zeros((0, len(map_thresholds)), dtype=np.float32)
+                    conf_box = np.zeros((0,), dtype=np.float32)
+                    pred_cls_box = np.zeros((0,), dtype=np.int64)
+                target_cls_box = np.zeros(int(bbox_valid.sum().item()), dtype=np.int64)
+                _update_ultra_stats(box_stats, tp_box, conf_box, pred_cls_box, target_cls_box)
+
+                p_b, r_b, m50_b, m95_b = _summarize_ultra_stats(box_stats, map_thresholds)
+                p_m, r_m, m50_m, m95_m = _summarize_ultra_stats(mask_stats, map_thresholds)
+
+            b_line.set_description_str(
+                f"B | P={p_b:.3f} R={r_b:.3f} mAP50={m50_b:.3f} mAP50-95={m95_b:.3f}"
+            )
+            m_line.set_description_str(
+                f"M | P={p_m:.3f} R={r_m:.3f} mAP50={m50_m:.3f} mAP50-95={m95_m:.3f}"
+            )
 
             postfix = {
                 "loss": f"{batch_loss:.4f}",
@@ -542,6 +718,9 @@ def train(cfg):
                 postfix["fft"] = f"{loss_items['fourier']:.3f}"
             pbar.set_postfix(postfix)
 
+        b_line.close()
+        m_line.close()
+
         avg_loss = epoch_loss / len(loader)
         avg_iou = epoch_iou / len(loader)
         avg_dice = epoch_dice / len(loader)
@@ -550,17 +729,30 @@ def train(cfg):
             avg_items = {k: v / len(loader) for k, v in epoch_items.items()}
         epoch_losses.append(avg_loss)
 
+        p_b, r_b, map50_b, map95_b = _summarize_ultra_stats(box_stats, map_thresholds)
+        p_m, r_m, map50_m, map95_m = _summarize_ultra_stats(mask_stats, map_thresholds)
+
         if avg_loss < best_loss:
             best_loss = avg_loss
             torch.save(model.state_dict(), weight_dir / "best.pt")
 
         elapsed = time.time() - t0
         print_epoch_progress(epoch + 1, cfg["epochs"], avg_loss, avg_iou, avg_dice, elapsed)
+        print(
+            f"    B: P={p_b:.4f} R={r_b:.4f} mAP50={map50_b:.4f} mAP50-95={map95_b:.4f}"
+        )
+        print(
+            f"    M: P={p_m:.4f} R={r_m:.4f} mAP50={map50_m:.4f} mAP50-95={map95_m:.4f}"
+        )
 
         with open(log_file, "a", encoding="utf-8") as f:
             line = (
                 f"{' ' * 4}{epoch + 1:>5}/{cfg['epochs']:<5}  "
                 f"loss={avg_loss:.6f}  iou={avg_iou:.6f}  dice={avg_dice:.6f}"
+            )
+            line += (
+                f"  pB={p_b:.6f}  rB={r_b:.6f}  mAP50B={map50_b:.6f}  mAP50-95B={map95_b:.6f}"
+                f"  pM={p_m:.6f}  rM={r_m:.6f}  mAP50M={map50_m:.6f}  mAP50-95M={map95_m:.6f}"
             )
             if avg_items is not None:
                 line += (
@@ -633,6 +825,50 @@ def _masks_to_boxes(masks: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     return boxes, valid
 
 
+def _init_ultra_stats() -> dict:
+    return {"tp": [], "conf": [], "pred_cls": [], "target_cls": []}
+
+
+def _update_ultra_stats(
+    stats: dict,
+    tp: np.ndarray,
+    conf: np.ndarray,
+    pred_cls: np.ndarray,
+    target_cls: np.ndarray,
+):
+    if tp is not None and tp.size:
+        stats["tp"].append(tp)
+        stats["conf"].append(conf)
+        stats["pred_cls"].append(pred_cls)
+    if target_cls is not None and target_cls.size:
+        stats["target_cls"].append(target_cls)
+
+
+def _summarize_ultra_stats(
+    stats: dict, iou_thresholds
+) -> Tuple[float, float, float, float]:
+    if stats["tp"]:
+        tp = np.concatenate(stats["tp"], axis=0)
+        conf = np.concatenate(stats["conf"], axis=0)
+        pred_cls = np.concatenate(stats["pred_cls"], axis=0)
+    else:
+        tp = np.zeros((0, len(iou_thresholds)), dtype=np.float32)
+        conf = np.zeros((0,), dtype=np.float32)
+        pred_cls = np.zeros((0,), dtype=np.int64)
+
+    if stats["target_cls"]:
+        target_cls = np.concatenate(stats["target_cls"], axis=0)
+    else:
+        target_cls = np.zeros((0,), dtype=np.int64)
+
+    p, r, ap = ap_per_class(tp, conf, pred_cls, target_cls, iou_thresholds)
+    mp = float(p.mean()) if p.size else 0.0
+    mr = float(r.mean()) if r.size else 0.0
+    map50 = float(ap[:, 0].mean()) if ap.size else 0.0
+    map95 = float(ap.mean()) if ap.size else 0.0
+    return mp, mr, map50, map95
+
+
 def _log_hyperparams(log_file, cfg, device_name, model=None):
     """记录超参数到日志文件。
 
@@ -698,6 +934,7 @@ def main(argv=None):
     """
     cli_args = parse_args(argv)
     cfg = merge_cfg(cli_args)
+    cfg = apply_yolo_dataset_cfg(cfg)
 
     if cli_args.print_cfg:
         print(json.dumps(cfg, indent=2, ensure_ascii=False))

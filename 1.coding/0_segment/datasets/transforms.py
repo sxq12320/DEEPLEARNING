@@ -53,20 +53,21 @@ def TXT2MASK(label_dir, image_name, target_size):
             if len(vals) < 5:
                 continue
             cls_id = int(vals[0])
+            draw_val = 1
             if len(vals) == 5:
                 cx, cy, bw, bh = vals[1:5]
                 if max(cx, cy, bw, bh) <= 1.0:
                     cx, cy, bw, bh = cx * w, cy * h, bw * w, bh * h
                 x1, y1 = int(max(0, cx - bw / 2)), int(max(0, cy - bh / 2))
                 x2, y2 = int(min(w - 1, cx + bw / 2)), int(min(h - 1, cy + bh / 2))
-                cv2.rectangle(label, (x1, y1), (x2, y2), color=cls_id, thickness=-1)
+                cv2.rectangle(label, (x1, y1), (x2, y2), color=draw_val, thickness=-1)
             else:
                 pts = np.array(vals[1:], dtype=np.float32).reshape(-1, 2)
                 if pts.max() <= 1.0:
                     pts[:, 0] *= w
                     pts[:, 1] *= h
                 pts = np.round(pts).astype(np.int32)
-                cv2.fillPoly(label, [pts], color=cls_id)
+                cv2.fillPoly(label, [pts], color=draw_val)
     except Exception as e:
         print(f"读取 TXT 标签失败: {txt_path}, 错误: {e}")
 
