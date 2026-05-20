@@ -56,6 +56,8 @@ __all__ = (
     "DSConv",
     "ContMix",
     "OverLoCKBlock",
+    "NeckGateFusion",
+    "C3k2_Neck",
 )
 ###################################################################################
 #                                                                                 #
@@ -2342,6 +2344,112 @@ class Proto26(Proto):
     def fuse(self):
         """Fuse the model for inference by removing the semantic segmentation head."""
         self.semseg = None
+
+
+class NeckGateFusion(nn.Module):
+    """Neck 多尺度门控融合模块 (Neck Gate Fusion).
+
+    用于替换 PAN-FPN 中 Concat 后的简单拼接，通过通道级门控机制
+    自适应加权两路特征（上采样/下采样路径 vs 主干路径），在保持
+    通道数不变的前提下实现更精细的特征选择。
+
+    相比 WeightedFusion：
+      - 门控基于全局上下文（GAP），非单标量
+      - 两路权重通过 softmax 归一化，和为1
+      - 计算量：约 2*(c1+c2)*(c1+c2)/16 FLOPs，极轻量
+
+    Args:
+        c1 (int): 第一路输入通道数（如 upsample 分支）
+        c2 (int): 第二路输入通道数（如 skip connection 分支）
+        reduction (int): 门控 MLP 降维比（默认 16）
+
+    Input:  list[x1, x2] — 由 yaml Concat 机制传入
+    Output: Tensor — 加权融合后的特征，通道数 = c1（要求 c1 == c2）
+    """
+
+    def __init__(self, c1: int, c2: int, reduction: int = 16):
+        super().__init__()
+        assert c1 == c2, f"NeckGateFusion 要求两路通道数相等，得到 c1={c1}, c2={c2}"
+        self.c = c1
+        # 全局上下文池化 + MLP 门控
+        mid = max(self.c * 2 // reduction, 4)
+        self.gate = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(start_dim=1),           # [B, 2*c]
+            nn.Linear(self.c * 2, mid),
+            nn.SiLU(),
+            nn.Linear(mid, 2),                 # 输出两路权重
+            nn.Softmax(dim=1),                 # 归一化，和为1
+        )
+
+    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
+        """Apply gated fusion to two feature maps.
+
+        Args:
+            x: List of two tensors [x1, x2] with identical [B, C, H, W].
+
+        Returns:
+            Fused feature map of shape [B, C, H, W].
+        """
+        x1, x2 = x[0], x[1]
+        # 拼接获取全局上下文描述符
+        ctx = torch.cat([x1, x2], dim=1)          # [B, 2*C, H, W]
+        g = self.gate(ctx)                        # [B, 2]
+        # reshape 为 [B, 1, 1, 2] 然后分离两路权重
+        g = g.view(-1, 2, 1, 1)                   # [B, 2, 1, 1]
+        return g[:, 0:1] * x1 + g[:, 1:2] * x2    # [B, C, H, W]
+
+
+class C3k2_Neck(nn.Module):
+    """C3k2 的 Neck 专用变体：在 Concat 后插入 NeckGateFusion。
+
+    将标准 C3k2 的输入分支由 chunk(2) 改为：
+      1. 1x1 Conv 分成两路
+      2. 一路过 Bottleneck 序列
+      3. 另一路保持恒等
+      4. 两路通过 NeckGateFusion 融合（替代 chunk + cat）
+      5. 最后 1x1 Conv 输出
+
+    相比标准 C3k2：
+      - 参数量增加极少（仅 gate MLP）
+      - 特征融合更自适应
+      - 适合替换 Neck 中所有 C3k2 节点
+
+    Args:
+        c1 (int): 输入通道数
+        c2 (int): 输出通道数
+        n (int): Bottleneck 重复次数
+        shortcut (bool): 是否使用 shortcut
+        g (int): 分组卷积数
+        e (float): 通道扩展比
+    """
+
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        n: int = 1,
+        shortcut: bool = True,
+        g: int = 1,
+        e: float = 0.5,
+    ):
+        super().__init__()
+        self.c = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, 2 * self.c, 1, 1)
+        self.cv2 = Conv(self.c, c2, 1)    # 输入是 fuse 后的 self.c 通道
+        self.m = nn.Sequential(
+            *(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
+        )
+        self.fuse = NeckGateFusion(self.c, self.c)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with gated fusion."""
+        # 分成两路
+        a, b = self.cv1(x).chunk(2, 1)   # a: 过 Bottleneck, b: 恒等
+        a = self.m(a)
+        # 门控融合替代简单 cat（输出通道数 = self.c）
+        y = self.fuse([a, b])
+        return self.cv2(y)
 
 
 class RealNVP(nn.Module):

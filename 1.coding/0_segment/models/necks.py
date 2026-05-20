@@ -17,7 +17,7 @@ from .modules import (
     SpatialAwareAttention,
     TaskAwareAttention,
 )
-from .registry import register_neck
+from utils.registry import register_neck
 
 
 @register_neck("yolo11_neck")

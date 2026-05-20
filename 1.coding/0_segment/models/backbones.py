@@ -14,8 +14,8 @@ from configs.config import (
 )
 
 from .modules import ConvBNAct, CrossTokenStatsAttention, C3k2, SPPF
-from .builder import make_layers
-from .registry import register_backbone
+from utils.builder import make_layers
+from utils.registry import register_backbone
 
 
 @register_backbone("resnet18")

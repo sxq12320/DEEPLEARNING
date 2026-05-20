@@ -67,6 +67,8 @@ from .block import (
     MyChannelAttention,
     ContMix,
     OverLoCKBlock,
+    NeckGateFusion,
+    C3k2_Neck,
 
 )
 from .conv import (
@@ -217,6 +219,8 @@ __all__ = (
     "MyChannelAttention",
     "ContMix",
     "OverLoCKBlock",
+    "NeckGateFusion",
+    "C3k2_Neck",
     "LSBlock",
     "LSConv",
     "LSNetBackbone",

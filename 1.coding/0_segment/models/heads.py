@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .modules import ConvBNAct
-from .registry import register_head
+from utils.registry import register_head
 
 
 @register_head("yolo11_head")

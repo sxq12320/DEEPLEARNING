@@ -92,6 +92,8 @@ from ultralytics.nn.modules import (
     LSNet_T,
     MSAStageBlock,
     PatchEmbed,
+    NeckGateFusion,
+    C3k2_Neck,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1643,6 +1645,8 @@ def parse_model(d, ch, verbose=True):
             MSAStageBlock,
             PatchEmbed,
             LSNetDownsample,
+            NeckGateFusion,
+            C3k2_Neck,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1662,6 +1666,7 @@ def parse_model(d, ch, verbose=True):
             C2fCIB,
             C2PSA,
             A2C2f,
+            C3k2_Neck,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args

@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Union
 
 import torch.nn as nn
 
-from .registry import (
+from utils.registry import (
     BACKBONE_REGISTRY,
     BLOCK_REGISTRY,
     HEAD_REGISTRY,

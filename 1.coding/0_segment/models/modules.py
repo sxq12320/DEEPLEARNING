@@ -13,7 +13,7 @@ import torch.nn.functional as F
 from configs.config import ACTIVATION_MAP
 from utils.common import autopad, get_activation
 
-from .registry import register_block
+from utils.registry import register_block
 
 
 ############################################################

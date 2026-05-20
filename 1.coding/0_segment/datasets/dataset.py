@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from .transforms import JSON2MASK, NPY2MASK, TXT2MASK, image_transform
+from .parsers import JSON2MASK, NPY2MASK, TXT2MASK, image_transform
 
 
 class SegmentationDataset(Dataset):
