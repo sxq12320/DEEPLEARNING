@@ -128,6 +128,13 @@ from .lsnet import (
     MSAStageBlock,
     PatchEmbed,
 )
+from .ct_modules import (
+    KalmanGatedFusion,
+    ESOFusion,
+    IDAPBCFusion,
+    BypassModule,
+    BLFLoss
+)
 
 __all__ = (
     "AIFI",
@@ -230,5 +237,9 @@ __all__ = (
     "LSNet_T",
     "MSAStageBlock",
     "PatchEmbed",
-
+    "KalmanGatedFusion",
+    "ESOFusion",
+    "IDAPBCFusion",
+    "BypassModule",
+    "BLFLoss"
 )

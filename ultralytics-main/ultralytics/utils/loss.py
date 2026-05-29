@@ -13,6 +13,7 @@ from ultralytics.utils.metrics import OKS_SIGMA, RLE_WEIGHT
 from ultralytics.utils.ops import crop_mask, xywh2xyxy, xyxy2xywh
 from ultralytics.utils.tal import RotatedTaskAlignedAssigner, TaskAlignedAssigner, dist2bbox, dist2rbox, make_anchors
 from ultralytics.utils.torch_utils import autocast
+from ultralytics.nn.modules.ct_modules import BLFLoss
 
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist, rbox2dist
@@ -636,6 +637,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
+        self.blf_loss_fn = BLFLoss(kc=0.5)
         # 椭圆形状先验（默认关闭）。将权重设置为非 0 即可启用。
         self.ellipse_param_weight = float(getattr(model.args, "ellipse_param_weight", 0.0))
         self.ellipse_dice_weight = float(getattr(model.args, "ellipse_dice_weight", 0.0))
@@ -706,19 +708,31 @@ class v8SegmentationLoss(v8DetectionLoss):
         loss[1] *= self.hyp.box  # seg gain
         return loss * batch_size, loss.detach()  # loss(box, seg, cls, dfl, semseg)
 
-    @staticmethod
     def single_mask_loss(
-        gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
+        self, gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
-        """单张图的基础实例分割损失（原始 YOLO 分割损失）。
+        '''单张图的基础实例分割损失（包含非模态扩展）。'''
+        pred_mask = torch.einsum('in,nhw->ihw', pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
+        
+        # 兼容 Amodal 非模态分割（如果 gt_mask 包含两个通道：可见 0，非模态 1）
+        if gt_mask.dim() == 4 and gt_mask.shape[1] == 2:
+            # 假定 pred_mask 被拆分为可见与非模态两部分
+            if pred_mask.dim() == 4 and pred_mask.shape[1] == 2:
+                pred_visible, pred_amodal = pred_mask[:, 0], pred_mask[:, 1]
+            else:
+                half_n = pred_mask.shape[0] // 2
+                pred_visible, pred_amodal = pred_mask[:half_n], pred_mask[half_n:]
+                
+            gt_visible, gt_amodal = gt_mask[:, 0], gt_mask[:, 1]
+            
+            loss_visible = F.binary_cross_entropy_with_logits(pred_visible, gt_visible, reduction='none')
+            loss_amodal = F.binary_cross_entropy_with_logits(pred_amodal, gt_amodal, reduction='none')
+            loss_blf = self.blf_loss_fn(torch.sigmoid(pred_visible), torch.sigmoid(pred_amodal))
+            
+            loss = loss_visible + loss_amodal + 0.5 * loss_blf
+        else:
+            loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction='none')
 
-        公式流程：
-        1) 用 mask 系数与 proto 重建实例掩码
-        2) 计算 BCEWithLogits
-        3) 仅在目标框区域内取均值，并按目标框面积归一化
-        """
-        pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
-        loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
         return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
 
     # @staticmethod

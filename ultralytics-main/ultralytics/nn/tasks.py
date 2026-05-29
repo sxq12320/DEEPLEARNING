@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
+from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules import (
     AIFI,
     C1,
@@ -94,6 +95,10 @@ from ultralytics.nn.modules import (
     PatchEmbed,
     NeckGateFusion,
     C3k2_Neck,
+    KalmanGatedFusion,
+    ESOFusion,
+    IDAPBCFusion,
+    BypassModule,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1750,6 +1755,9 @@ def parse_model(d, ch, verbose=True):
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m in (KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule):
+            c2 = ch[f[0]] if isinstance(f, list) else ch[f]
+            args = [c2, *args] if not isinstance(f, list) else [ch[x] for x in f] + args
         elif m in {ScalarAttention, MyChannelAttention}:
             # 通道保持不变，构造器只需要 in_ch
             c2 = ch[f]
