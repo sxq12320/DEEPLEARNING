@@ -67,7 +67,7 @@ if __name__ == "__main__":
         project=r"E:/mastercode/ultralytics-main/results",
         name="01_yolo11n-seg-base-rgbd_fix",
         optimizer="auto",
-        epochs=300,
+        epochs=1,
         patience=50,
         imgsz=640,
         batch=4,
