@@ -1,54 +1,68 @@
 from ultralytics import YOLO
-from ultralytics.nn.modules import C3k2_LS
 
 if __name__ == "__main__":
     """
-    yolo = YOLO(r"ultralytics/cfg/models/11/yolo11n-seg.yaml")
-        1. 使用最基础的 yolo11nano 架构，仅在网络输入部分增加深度信息（PNG 格式）。
+    Apple Amodal RGBD 分割实验 — 控制理论驱动的双流融合架构
 
-    yolo = YOLO(r"ultralytics-main/ultralytics/cfg/models/11/1_yolo11-seg-DWconv.yaml")
-        2. 在上述基础上，将普通卷积替换为深度可分离卷积（Depthwise + Pointwise）。
+    ═══════════════════════════════════════════════════════════
+    数据管道修复说明：
+    ═══════════════════════════════════════════════════════════
+    1. 深度图加载精度修复 (base.py)：
+       - 修复前：cv2.IMREAD_GRAYSCALE → 8位截断，丢失 99.6% 深度信息
+       - 修复后：cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE → 保留 16位精度
+       - 归一化：uint16 (mm) / 1000.0 → float32 (m)，范围 [0, ~10]
 
-    yolo = YOLO(r"ultralytics-main/ultralytics/cfg/models/11/2_yolo11-seg-DWAny.yaml")
-        3. 进一步将 C3K2 模块内的所有卷积替换为深度可分离卷积。
+    2. 深度图插值修复 (base.py)：
+       - 修复前：cv2.INTER_LINEAR (线性插值，会混合不同深度值)
+       - 修复后：cv2.INTER_NEAREST (最近邻插值，保持深度边界清晰)
 
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/3_yolo11-seg-RGBD_C3K2LS.yaml")
-        4. 基于论文“看大注意小”的思想，引入 LSNET 架构，并将 LSNET 与 C3K2 融合，命名为 C3K2_LS；在不改变其余结构的情况下仅替换该模块。
+    ═══════════════════════════════════════════════════════════
+    模型架构修复说明：
+    ═══════════════════════════════════════════════════════════
+    1. 添加 SplitChannels 模块：正确分离 4ch RGBD → RGB(3ch) + Depth(1ch)
+    2. YAML 添加 channels: 4：模型初始化时使用 4 通道输入
+    3. DetectionModel 修复：优先读取 YAML 中的 channels 值
+    4. 融合模块 forward 修复：BypassModule/KalmanGatedFusion/ESOFusion/IDAPBCFusion
+       接受列表输入 [tensor_rgb, tensor_depth]，与 _predict_once 传参方式一致
+    5. BypassModule 空间对齐：YAML 中 Depth 流使用 Conv stride=2 逐级下采样，
+       确保与 RGB 流在 P3/P4/P5 各阶段空间尺寸一致
 
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/4_yolo11-seg-Dense-skiplink.yaml")
-        5. 修改 yolo11nano 的主干网络，提出 DenseSkip 跳接思想，在主干中实现带有层注意力的跳跃连接。
+    ═══════════════════════════════════════════════════════════
+    实验配置（按顺序排列，取消注释即可切换）：
+    ═══════════════════════════════════════════════════════════
 
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/5_yolo11_seg_Dense_and_C3K2LS.yaml")
-        6. 在完成主干 DenseSkip 修改后，将其中的 C3K2 模块替换为 C3K2_LS 并运行。
+    1. yolo11-base-rgbd.yaml
+       对照组：Base 基础非对称双流模型。
+       RGB 主干为标准 YOLO11 结构，Depth 流用轻量 Conv 逐级下采样对齐空间尺寸。
+       融合方式为最简单的 Bypass 旁路相加，无任何控制理论计算。
+       作为所有消融实验的基准对照线。
 
-    yolo = YOLO(r"ultralytics/cfg/models/11/yolo11n-seg.yaml")
-        7. 在原始 yolo11n（含深度信息输入）基础上，将优化器由 AdamW 替换为 PIDAO。
+    2. yolo11-ct-A.yaml
+       消融组 A：仅浅层卡尔曼融合。
+       仅激活 P3 阶段的 KalmanGatedFusion（卡尔曼自适应滤波融合），
+       P4/P5 依然使用无源 Bypass 对照。验证"卡尔曼增益机制"单独的贡献。
 
-    yolo = YOLO(r"/data/sxq/code/ultralytics-main/ultralytics/cfg/models/11/1_yolo11-seg-DWconv.yaml")
-        8. 在配置 2 的基础上，将优化器由 AdamW 替换为 PIDAO。
+    3. yolo11-ct-AB.yaml
+       消融组 A+B：卡尔曼 + ESO 扰动补偿。
+       同时激活 P3 KalmanGatedFusion 与 P4 ESOFusion（自抗扰观测器融合），
+       深层 P5 保持 Bypass 对照。验证"渐进叠加控制"的增益效果。
 
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/2_yolo11-seg-DWAny.yaml")
-        9. 同样将对应配置中的优化器替换为 PIDAO（适用于深度可分离卷积版本）。
-
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/3_yolo11-seg-RGBD_C3K2LS.yaml")
-        10. 在上述基础上，将 C3K2_LS 网络的优化器更换为 PIDAO。
-
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/4_yolo11-seg-Dense-skiplink.yaml")
-        11. 在上述基础上，将以 DenseSkip 为主干的网络的优化器更换为 PIDAO。
-
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/5_yolo11_seg_Dense_and_C3K2LS.yaml")
-        12. 在上述基础上，将 C3K2_LS 与 DenseSkip 结合的网络的优化器更换为 PIDAO。
-
-    yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
-        13. 在保持 yolo11n 架构不变的前提下，使用 AdamW 优化器，并增加一个圆形形状先验。
+    4. yolo11-ct-ABC.yaml
+       满血组 A+B+C：三阶段渐进控制融合。
+       三个控制单元全激活：
+         P3 → KalmanGatedFusion（卡尔曼自适应）
+         P4 → ESOFusion（ESO扰动补偿）
+         P5 → IDAPBCFusion（IDA-PBC能量成型）
+       完整的控制理论驱动 RGBD 融合架构。
     """
-    # yolo = YOLO(r"code/ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
-    # yolo = YOLO(r"ultralytics-main/ultralytics/cfg/models/11/0_yolo11-seg-RGBandD.yaml")
-    yolo = YOLO(r"ultralytics-main\ultralytics\cfg\models\11\0_yolo11-seg-RGBandD.yaml")
+
+    # ======================== 1. 对照组：Base 基础双流 ========================
+    yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
     yolo.train(
         data=r"ultralytics-main/206_Apple_Amodal.yaml",
         project=r"ultralytics-main/results",
-        name="12_yolo11n-seg-origin-circle-predicted",
+        name="01_yolo11n-seg-base-rgbd",
+        optimizer = "Adam",
         epochs=300,
         imgsz=640,
         batch=4,
@@ -56,3 +70,45 @@ if __name__ == "__main__":
         workers=4,
         device=0,
     )
+
+    # ======================== 2. 消融组 A：卡尔曼融合 ========================
+    # yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-ct-A.yaml")
+    # yolo.train(
+    #     data=r"ultralytics-main/206_Apple_Amodal.yaml",
+    #     project=r"ultralytics-main/results",
+    #     name="02_yolo11n-seg-ct-A-kalman",
+    #     epochs=300,
+    #     imgsz=640,
+    #     batch=4,
+    #     lr0=0.0001,
+    #     workers=4,
+    #     device=0,
+    # )
+
+    # ======================== 3. 消融组 A+B：卡尔曼+ESO ========================
+    # yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-ct-AB.yaml")
+    # yolo.train(
+    #     data=r"ultralytics-main/206_Apple_Amodal.yaml",
+    #     project=r"ultralytics-main/results",
+    #     name="03_yolo11n-seg-ct-AB-kalman-eso",
+    #     epochs=300,
+    #     imgsz=640,
+    #     batch=4,
+    #     lr0=0.0001,
+    #     workers=4,
+    #     device=0,
+    # )
+
+    # ======================== 4. 满血组 A+B+C：三阶段控制 ========================
+    # yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-ct-ABC.yaml")
+    # yolo.train(
+    #     data=r"ultralytics-main/206_Apple_Amodal.yaml",
+    #     project=r"ultralytics-main/results",
+    #     name="04_yolo11n-seg-ct-ABC-full",
+    #     epochs=300,
+    #     imgsz=640,
+    #     batch=4,
+    #     lr0=0.0001,
+    #     workers=4,
+    #     device=0,
+    # )

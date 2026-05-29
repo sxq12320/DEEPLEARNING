@@ -296,12 +296,16 @@ class BaseDataset(Dataset):
             # ===== 加载深度通道 =====
             if self.depth_dir is not None:
                 depth_path = _get_depth_path(f, self.depth_dir)
-                depth = cv2.imread(str(depth_path), cv2.IMREAD_GRAYSCALE)
+                # 修复：使用 IMREAD_ANYDEPTH 保留 16 位深度精度，避免截断为 8 位丢失 99% 信息
+                depth = cv2.imread(str(depth_path), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE)
                 if depth is None:
                     LOGGER.warning(f"{self.prefix}Depth not found: {depth_path}, filling zeros.")
-                    depth = np.zeros(im.shape[:2], dtype=np.uint8)
+                    depth = np.zeros(im.shape[:2], dtype=np.float32)
+                else:
+                    # 16 位深度图 (mm) 归一化到 float32 (m)，范围 [0, ~10]
+                    depth = depth.astype(np.float32) / 1000.0
             else:
-                depth = np.zeros(im.shape[:2], dtype=np.uint8)
+                depth = np.zeros(im.shape[:2], dtype=np.float32)
             # =======================
 
             h0, w0 = im.shape[:2]  # orig hw
@@ -311,10 +315,10 @@ class BaseDataset(Dataset):
                 if r != 1:
                     w, h = (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
                     im    = cv2.resize(im,    (w, h), interpolation=cv2.INTER_LINEAR)
-                    depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_LINEAR)  # 同步 resize
+                    depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_NEAREST)  # 深度图用最近邻插值，避免混合不同深度值
             elif not (h0 == w0 == self.imgsz):
                 im    = cv2.resize(im,    (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
-                depth = cv2.resize(depth, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)  # 同步 resize
+                depth = cv2.resize(depth, (self.imgsz, self.imgsz), interpolation=cv2.INTER_NEAREST)  # 深度图用最近邻插值
 
             if im.ndim == 2:
                 im = im[..., None]

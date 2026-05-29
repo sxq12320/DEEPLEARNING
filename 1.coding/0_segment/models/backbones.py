@@ -20,6 +20,7 @@ from utils.registry import register_backbone
 
 @register_backbone("resnet18")
 class ResNet18(nn.Module):
+    
     """ResNet-18 骨干网络，通过配置列表构建。"""
 
     def __init__(self, cfg=None):

@@ -35,7 +35,11 @@ class KalmanGatedFusion(nn.Module):
             nn.Conv2d(c_rgb, c_rgb, kernel_size=1, bias=False)
         )
 
-    def forward(self, f_rgb, f_dep):
+    def forward(self, x):
+        if isinstance(x, list):
+            f_rgb, f_dep = x[0], x[1]
+        else:
+            f_rgb, f_dep = x, None
         if f_rgb.shape[2:] != f_dep.shape[2:]:
             f_dep = F.interpolate(f_dep, size=f_rgb.shape[2:], mode='bilinear', align_corners=False)
             
@@ -79,7 +83,11 @@ class ESOFusion(nn.Module):
             nn.Conv2d(c_p4_rgb, c_p4_rgb, kernel_size=1, bias=False)
         )
 
-    def forward(self, f_rgb_p4, f_fused_p3):
+    def forward(self, x):
+        if isinstance(x, list):
+            f_rgb_p4, f_fused_p3 = x[0], x[1]
+        else:
+            f_rgb_p4, f_fused_p3 = x, None
         if f_fused_p3.shape[2:] != f_rgb_p4.shape[2:]:
             f_fused_p3 = F.interpolate(f_fused_p3, size=f_rgb_p4.shape[2:], mode='bilinear', align_corners=False)
             
@@ -114,7 +122,11 @@ class IDAPBCFusion(nn.Module):
         )
         self.out_conv = nn.Conv2d(c_p5_rgb * 2, c_p5_rgb, kernel_size=1, bias=False)
 
-    def forward(self, f_rgb_p5, f_fused_p4):
+    def forward(self, x):
+        if isinstance(x, list):
+            f_rgb_p5, f_fused_p4 = x[0], x[1]
+        else:
+            f_rgb_p5, f_fused_p4 = x, None
         if f_fused_p4.shape[2:] != f_rgb_p5.shape[2:]:
             f_fused_p4 = F.interpolate(f_fused_p4, size=f_rgb_p5.shape[2:], mode='bilinear', align_corners=False)
             
@@ -127,6 +139,26 @@ class IDAPBCFusion(nn.Module):
         # 无损 Concat 通道组合
         f_concat = torch.cat([f_rgb_p5, f_dep_guided], dim=1)
         return self.out_conv(f_concat)
+
+
+class SplitChannels(nn.Module):
+    """
+    通道分割模块：从多通道输入中按索引提取指定通道子集。
+    用途：将 4 通道 RGBD 输入拆分为 RGB(0,1,2) 和 Depth(3) 两路。
+    """
+
+    def __init__(self, c_in, channels):
+        """
+        Args:
+            c_in: 输入总通道数（仅用于信息记录，forward 不依赖它）
+            channels: 要提取的通道索引列表，如 [0,1,2] 表示 RGB，[3] 表示 Depth
+        """
+        super().__init__()
+        self.channels = channels
+        self.c_out = len(channels)
+
+    def forward(self, x):
+        return x[:, self.channels, :, :]
 
 
 class BLFLoss(nn.Module):
@@ -157,10 +189,10 @@ class BypassModule(nn.Module):
         else:
             self.proj = nn.Identity()
 
-    def forward(self, f1, f2=None):
-        if f2 is None:
-            return self.proj(f1)
-        if f1.shape[2:] != f2.shape[2:]:
-            f2 = F.interpolate(f2, size=f1.shape[2:], mode='bilinear', align_corners=False)
+    def forward(self, x):
+        if isinstance(x, list):
+            f1, f2 = x[0], x[1]
+        else:
+            return self.proj(x)
         f2_proj = self.proj(f2)
         return f1 + f2_proj

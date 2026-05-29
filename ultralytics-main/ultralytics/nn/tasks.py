@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
-from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
+from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule, SplitChannels
 from ultralytics.nn.modules import (
     AIFI,
     C1,
@@ -99,6 +99,7 @@ from ultralytics.nn.modules import (
     ESOFusion,
     IDAPBCFusion,
     BypassModule,
+    SplitChannels,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -413,6 +414,7 @@ class DetectionModel(BaseModel):
             self.yaml["backbone"][0][2] = "nn.Identity"
 
         # Define model
+        ch = self.yaml.get("channels", ch)  # 优先读取 YAML 中的 channels（如 RGBD 的 4 通道）
         self.yaml["channels"] = ch  # save channels
         if nc and nc != self.yaml["nc"]:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
@@ -1755,9 +1757,17 @@ def parse_model(d, ch, verbose=True):
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m is SplitChannels:
+            c1 = ch[f]
+            c2 = len(args[0])  # channels list 的长度即输出通道数
+            args = [c1, *args]
         elif m in (KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule):
-            c2 = ch[f[0]] if isinstance(f, list) else ch[f]
-            args = [c2, *args] if not isinstance(f, list) else [ch[x] for x in f] + args
+            if isinstance(f, list):
+                c2 = ch[f[0]]  # 输出通道 = 第一路输入通道
+                args = [ch[x] for x in f]  # 只传两路通道数，不追加 YAML args
+            else:
+                c2 = ch[f]
+                args = [c2, *args]
         elif m in {ScalarAttention, MyChannelAttention}:
             # 通道保持不变，构造器只需要 in_ch
             c2 = ch[f]

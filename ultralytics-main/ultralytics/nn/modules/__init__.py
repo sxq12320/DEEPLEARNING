@@ -133,6 +133,7 @@ from .ct_modules import (
     ESOFusion,
     IDAPBCFusion,
     BypassModule,
+    SplitChannels,
     BLFLoss
 )
 
@@ -241,5 +242,6 @@ __all__ = (
     "ESOFusion",
     "IDAPBCFusion",
     "BypassModule",
+    "SplitChannels",
     "BLFLoss"
 )
