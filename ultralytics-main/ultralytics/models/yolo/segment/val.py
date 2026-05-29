@@ -73,6 +73,8 @@ class SegmentationValidator(DetectionValidator):
             check_requirements("faster-coco-eval>=1.6.7")
         # More accurate vs faster
         self.process = ops.process_mask_native if self.args.save_json or self.args.save_txt else ops.process_mask
+        # 保存训练图像尺寸，用于 mask 后处理（避免从 proto 形状推算出错）
+        self._imgsz = self.args.imgsz if isinstance(self.args.imgsz, (list, tuple)) else [self.args.imgsz, self.args.imgsz]
 
     def get_desc(self) -> str:
         """Return a formatted description of evaluation metrics."""
@@ -101,7 +103,8 @@ class SegmentationValidator(DetectionValidator):
         """
         proto = preds[0][1] if isinstance(preds[0], tuple) else preds[1]
         preds = super().postprocess(preds[0])
-        imgsz = [4 * x for x in proto.shape[2:]]  # get image size from proto
+        # 使用实际训练图像尺寸，而非从 proto 形状推算（不同模型 proto 缩放比例不同）
+        imgsz = getattr(self, '_imgsz', [4 * x for x in proto.shape[2:]])
         for i, pred in enumerate(preds):
             coefficient = pred.pop("extra")
             pred["masks"] = (
@@ -165,7 +168,18 @@ class SegmentationValidator(DetectionValidator):
         if gt_cls.shape[0] == 0 or preds["cls"].shape[0] == 0:
             tp_m = np.zeros((preds["cls"].shape[0], self.niou), dtype=bool)
         else:
-            iou = mask_iou(batch["masks"].flatten(1), preds["masks"].flatten(1).float())  # float, uint8
+            # 修复：当预测 mask 与 GT mask 空间尺寸不匹配时，将预测 mask 缩放到 GT 尺寸
+            gt_masks = batch["masks"]
+            pred_masks = preds["masks"]
+            if pred_masks.shape[1:] != gt_masks.shape[1:]:
+                pred_masks = torch.nn.functional.interpolate(
+                    pred_masks.unsqueeze(0).float(),
+                    size=gt_masks.shape[1:],
+                    mode="bilinear",
+                    align_corners=False,
+                ).squeeze(0)
+                pred_masks = pred_masks.gt_(0.5).float()
+            iou = mask_iou(gt_masks.flatten(1), pred_masks.flatten(1).float())  # float, uint8
             tp_m = self.match_predictions(preds["cls"], gt_cls, iou).cpu().numpy()
         tp.update({"tp_m": tp_m})  # update tp with mask IoU
         return tp

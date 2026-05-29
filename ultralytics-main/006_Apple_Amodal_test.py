@@ -60,7 +60,7 @@ if __name__ == "__main__":
     yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
     yolo.train(
         data=r"ultralytics-main/206_Apple_Amodal.yaml",
-        project=r"ultralytics-main/results",
+        project=r"E:/mastercode/ultralytics-main/results",
         name="01_yolo11n-seg-base-rgbd",
         optimizer = "Adam",
         epochs=300,
@@ -69,6 +69,7 @@ if __name__ == "__main__":
         lr0=0.0001,
         workers=4,
         device=0,
+        cache='disk',  # 缓存预处理图片到磁盘，首次加载慢，后续 epoch 从缓存读取
     )
 
     # ======================== 2. 消融组 A：卡尔曼融合 ========================
