@@ -302,8 +302,12 @@ class BaseDataset(Dataset):
                     LOGGER.warning(f"{self.prefix}Depth not found: {depth_path}, filling zeros.")
                     depth = np.zeros(im.shape[:2], dtype=np.float32)
                 else:
-                    # 16 位深度图 (mm) 归一化到 float32 (m)，范围 [0, ~10]
+                    # 16 位深度图 (mm) 先转换为 float32 (m)
                     depth = depth.astype(np.float32) / 1000.0
+                    # 截断极端的噪声深度点，并深度归一化到 0~1 的范围内，与RGB保持同量级
+                    max_depth = 5.0  # 设置最大有效物理距离为 5 米(根据实际数据集规模可改)
+                    depth = np.clip(depth, 0, max_depth)
+                    depth = depth / max_depth
             else:
                 depth = np.zeros(im.shape[:2], dtype=np.float32)
             # =======================
