@@ -247,7 +247,7 @@ class Model(torch.nn.Module):
         cfg_dict = yaml_model_load(cfg)
         self.cfg = cfg
         self.task = task or guess_model_task(cfg_dict)
-        # Extract channels from YAML config if specified
+        # 从 YAML 配置中提取输入通道数
         ch = cfg_dict.get("ch", 3)
         self.model = (model or self._smart_load("model"))(cfg_dict, ch=ch, verbose=verbose and RANK == -1)  # build model
         self.overrides["model"] = self.cfg

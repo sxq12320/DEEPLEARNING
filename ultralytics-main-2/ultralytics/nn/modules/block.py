@@ -2640,35 +2640,22 @@ class OverLoCKBlock(nn.Module):
 
 
 class NeckGateFusion(nn.Module):
-    """Neck multi-scale gated fusion module.
+    """颈部多尺度门控融合模块。
 
-    Replaces simple concatenation in PAN-FPN with channel-level gating. Uses global
-    average pooling followed by an MLP to compute softmax-normalized weights for two
-    input paths. Supports different channel sizes via automatic projection.
-
-    Methods:
-        forward: Apply gated fusion to two feature maps.
+    用通道级门控替代 PAN-FPN 中的简单拼接。通过全局平均池化 + MLP 生成 softmax 归一化权重，
+    对两路输入进行加权融合。支持不同通道数，自动投影对齐。
 
     Args:
-        c1 (int): First input path channel count.
-        c2 (int): Second input path channel count (projected to c1 if different).
-        reduction (int): Gate MLP reduction ratio.
-
-    Returns:
-        (torch.Tensor): Gated fusion output of shape (B, c1, H, W).
+        c1 (int): 第一路输入通道数。
+        c2 (int): 第二路输入通道数（不同时自动投影到 c1）。
+        reduction (int): 门控 MLP 的缩减比。
     """
 
     def __init__(self, c1, c2, reduction=16):
-        """Initialize NeckGateFusion with gated MLP.
-
-        Args:
-            c1 (int): First input path channel count.
-            c2 (int): Second input path channel count (projected to c1 if different).
-            reduction (int): Gate MLP reduction ratio.
-        """
+        """初始化 NeckGateFusion，构建门控 MLP。"""
         super().__init__()
         self.c = c1
-        # Project c2 to c1 if channels differ
+        # 通道数不同时，将 c2 投影到 c1
         if c1 != c2:
             self.proj = nn.Sequential(
                 nn.Conv2d(c2, c1, kernel_size=1, bias=False),
@@ -2687,18 +2674,18 @@ class NeckGateFusion(nn.Module):
         )
 
     def forward(self, x):
-        """Apply gated fusion to two feature maps.
+        """对两路特征图执行门控融合。
 
         Args:
-            x (list[torch.Tensor]): List of two tensors [x1, x2] with same [B, C, H, W].
+            x (list[torch.Tensor]): 包含两个张量 [x1, x2]，形状均为 (B, C, H, W)。
 
         Returns:
-            (torch.Tensor): Gated fusion output of shape (B, C, H, W).
+            (torch.Tensor): 门控融合输出，形状 (B, C, H, W)。
         """
         x1, x2 = x[0], x[1]
-        # Project x2 to match x1 channels if needed
+        # 需要时将 x2 通道投影到与 x1 一致
         x2 = self.proj(x2)
-        # Resize x2 to match x1 spatial dimensions if needed
+        # 空间尺寸不匹配时，双线性插值对齐
         if x1.shape[2:] != x2.shape[2:]:
             x2 = F.interpolate(x2, size=x1.shape[2:], mode="bilinear", align_corners=False)
         ctx = torch.cat([x1, x2], dim=1)
@@ -2708,38 +2695,22 @@ class NeckGateFusion(nn.Module):
 
 
 class C3k2_Neck(nn.Module):
-    """C3k2 variant for neck with gated fusion.
+    """C3k2 的颈部变体，使用门控融合替代 chunk+cat。
 
-    Replaces the standard chunk+cat pattern in C3k2 with NeckGateFusion for more adaptive
-    feature fusion. Splits via 1x1 conv into two paths: one through Bottleneck sequence,
-    one identity, fused via NeckGateFusion.
-
-    Methods:
-        forward: Apply C3k2_Neck pipeline with gated fusion.
+    通过 1×1 卷积分成两路：一路经 Bottleneck 序列，一路恒等映射，
+    再通过 NeckGateFusion 进行自适应融合。
 
     Args:
-        c1 (int): Number of input channels.
-        c2 (int): Number of output channels.
-        n (int): Number of Bottleneck blocks.
-        shortcut (bool): Whether to use residual connections in Bottleneck.
-        g (int): Groups for convolution.
-        e (float): Channel expansion ratio.
-
-    Returns:
-        (torch.Tensor): Output tensor of shape (B, c2, H, W).
+        c1 (int): 输入通道数。
+        c2 (int): 输出通道数。
+        n (int): Bottleneck 块数。
+        shortcut (bool): Bottleneck 是否使用残差连接。
+        g (int): 卷积分组数。
+        e (float): 通道扩展比。
     """
 
     def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
-        """Initialize C3k2_Neck with gated fusion.
-
-        Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use residual connections.
-            g (int): Groups for convolution.
-            e (float): Channel expansion ratio.
-        """
+        """初始化 C3k2_Neck。"""
         super().__init__()
         self.c = int(c2 * e)
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
@@ -2750,13 +2721,13 @@ class C3k2_Neck(nn.Module):
         self.fuse = NeckGateFusion(self.c, self.c)
 
     def forward(self, x):
-        """Apply C3k2_Neck pipeline with gated fusion.
+        """执行 C3k2_Neck 前向传播。
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, c1, H, W).
+            x (torch.Tensor): 输入张量，形状 (B, c1, H, W)。
 
         Returns:
-            (torch.Tensor): Output tensor of shape (B, c2, H, W).
+            (torch.Tensor): 输出张量，形状 (B, c2, H, W)。
         """
         a, b = self.cv1(x).chunk(2, 1)
         a = self.m(a)
@@ -2765,37 +2736,25 @@ class C3k2_Neck(nn.Module):
 
 
 class DualBranchTokenMixer(nn.Module):
-    """Dual-branch token mixer combining local and global spatial communication.
+    """双分支 Token Mixer，融合局部和全局空间通信。
 
-    Implements the XX-Former token mixer paradigm with two parallel branches:
-    - Local branch: 3x3 depthwise separable convolution for local spatial patterns
-    - Global branch: 7x7 depthwise convolution for global spatial context (memory-efficient)
-    The outputs are combined via simple addition (a + b).
-
-    Methods:
-        forward: Apply dual-branch token mixing to input tensor.
+    实现 XX-Former 的 Token Mixer 范式，包含两条并行分支：
+    - 局部分支：3×3 深度可分离卷积，提取局部空间模式
+    - 全局分支：7×7 深度卷积，获取全局空间上下文（显存友好）
+    两路输出通过逐元素相加融合 (a + b)。
 
     Args:
-        dim (int): Number of input/output channels.
-        num_heads (int): Number of attention heads (unused, kept for API compatibility).
-        attn_ratio (float): Attention key dimension ratio (unused, kept for API compatibility).
-
-    Returns:
-        (torch.Tensor): Output tensor of shape (B, dim, H, W).
+        dim (int): 输入/输出通道数。
+        num_heads (int): 注意力头数（保留，用于 API 兼容）。
+        attn_ratio (float): 注意力 key 维度比例（保留，用于 API 兼容）。
     """
 
     def __init__(self, dim, num_heads=8, attn_ratio=0.5):
-        """Initialize DualBranchTokenMixer with local and global branches.
-
-        Args:
-            dim (int): Number of input/output channels.
-            num_heads (int): Number of attention heads (unused, kept for API compatibility).
-            attn_ratio (float): Attention key dimension ratio (unused, kept for API compatibility).
-        """
+        """初始化 DualBranchTokenMixer，构建局部分支和全局分支。"""
         super().__init__()
         self.dim = dim
 
-        # Local branch: 3x3 depthwise separable convolution
+        # 局部分支：3×3 深度可分离卷积
         self.local_branch = nn.Sequential(
             nn.Conv2d(dim, dim, kernel_size=3, padding=1, groups=dim, bias=False),
             nn.BatchNorm2d(dim),
@@ -2803,7 +2762,7 @@ class DualBranchTokenMixer(nn.Module):
             nn.BatchNorm2d(dim),
         )
 
-        # Global branch: 7x7 depthwise convolution (memory-efficient global context)
+        # 全局分支：7×7 深度卷积（显存友好的全局上下文）
         self.global_branch = nn.Sequential(
             nn.Conv2d(dim, dim, kernel_size=7, padding=3, groups=dim, bias=False),
             nn.BatchNorm2d(dim),
@@ -2812,53 +2771,42 @@ class DualBranchTokenMixer(nn.Module):
         )
 
     def forward(self, x):
-        """Apply dual-branch token mixing to input tensor.
+        """对输入张量执行双分支 Token 混合。
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, dim, H, W).
+            x (torch.Tensor): 输入张量，形状 (B, dim, H, W)。
 
         Returns:
-            (torch.Tensor): Output tensor of shape (B, dim, H, W).
+            (torch.Tensor): 输出张量，形状 (B, dim, H, W)。
         """
-        # Local branch
+        # 局部分支输出
         local_out = self.local_branch(x)
 
-        # Global branch
+        # 全局分支输出
         global_out = self.global_branch(x)
 
         return local_out + global_out
 
 
 class DualBranchFFN(nn.Module):
-    """Dual-branch feed-forward network for channel refinement.
+    """双分支前馈网络，用于通道精炼。
 
-    Implements the XX-Former FFN paradigm with two parallel branches:
-    - Branch A: 3x3 depthwise convolution focusing on spatial details
-    - Branch B: 3x3 dilated convolution (dilation=2) for multi-scale context
-    The outputs are combined via simple addition (a + b).
-
-    Methods:
-        forward: Apply dual-branch FFN to input tensor.
+    实现 XX-Former 的 FFN 范式，包含两条并行分支：
+    - 分支A：3×3 深度卷积，聚焦空间细节
+    - 分支B：3×3 空洞卷积（膨胀率=2），多尺度上下文
+    两路输出通过逐元素相加融合 (a + b)。
 
     Args:
-        dim (int): Number of input/output channels.
-        expansion_ratio (float): Hidden dimension expansion ratio.
-
-    Returns:
-        (torch.Tensor): Output tensor of shape (B, dim, H, W).
+        dim (int): 输入/输出通道数。
+        expansion_ratio (float): 隐藏层扩展比。
     """
 
     def __init__(self, dim, expansion_ratio=2.0):
-        """Initialize DualBranchFFN with spatial and context branches.
-
-        Args:
-            dim (int): Number of input/output channels.
-            expansion_ratio (float): Hidden dimension expansion ratio.
-        """
+        """初始化 DualBranchFFN，构建空间分支和上下文分支。"""
         super().__init__()
         hidden = int(dim * expansion_ratio)
 
-        # Branch A: depthwise conv for spatial details
+        # 分支A：深度卷积，关注空间细节
         self.branch_a = nn.Sequential(
             nn.Conv2d(dim, hidden, kernel_size=1, bias=False),
             nn.BatchNorm2d(hidden),
@@ -2869,7 +2817,7 @@ class DualBranchFFN(nn.Module):
             nn.BatchNorm2d(dim),
         )
 
-        # Branch B: dilated conv for multi-scale context
+        # 分支B：空洞卷积，多尺度上下文
         self.branch_b = nn.Sequential(
             nn.Conv2d(dim, hidden, kernel_size=1, bias=False),
             nn.BatchNorm2d(hidden),
@@ -2881,50 +2829,32 @@ class DualBranchFFN(nn.Module):
         )
 
     def forward(self, x):
-        """Apply dual-branch FFN to input tensor.
+        """对输入张量执行双分支前馈网络。
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, dim, H, W).
+            x (torch.Tensor): 输入张量，形状 (B, dim, H, W)。
 
         Returns:
-            (torch.Tensor): Output tensor of shape (B, dim, H, W).
+            (torch.Tensor): 输出张量，形状 (B, dim, H, W)。
         """
         return self.branch_a(x) + self.branch_b(x)
 
 
 class XXFormerBlock(nn.Module):
-    """XX-Former block with dual-branch token mixer and dual-branch FFN.
+    """XX-Former 基本块，包含双分支 Token Mixer 和双分支 FFN。
 
-    Implements the XX-Former architecture paradigm: each block consists of a
-    dual-branch token mixer (local conv + global attention) followed by a
-    dual-branch FFN (depthwise conv + dilated conv), with residual connections.
-    This replaces the standard single-path transformer block design.
-
-    Architecture:
-        Input → [DualBranchTokenMixer + residual] → [DualBranchFFN + residual] → Output
-
-    Methods:
-        forward: Apply XX-Former block to input tensor.
+    架构：
+        输入 → [DualBranchTokenMixer + 残差] → [DualBranchFFN + 残差] → 输出
 
     Args:
-        dim (int): Number of input/output channels.
-        num_heads (int): Number of attention heads in token mixer.
-        attn_ratio (float): Attention key dimension ratio.
-        ffn_expansion (float): FFN hidden dimension expansion ratio.
-
-    Returns:
-        (torch.Tensor): Output tensor of shape (B, dim, H, W).
+        dim (int): 输入/输出通道数。
+        num_heads (int): Token Mixer 的注意力头数。
+        attn_ratio (float): 注意力 key 维度比例。
+        ffn_expansion (float): FFN 隐藏层扩展比。
     """
 
     def __init__(self, dim, num_heads=8, attn_ratio=0.5, ffn_expansion=2.0):
-        """Initialize XXFormerBlock with dual-branch components.
-
-        Args:
-            dim (int): Number of input/output channels.
-            num_heads (int): Number of attention heads in token mixer.
-            attn_ratio (float): Attention key dimension ratio.
-            ffn_expansion (float): FFN hidden dimension expansion ratio.
-        """
+        """初始化 XXFormerBlock，构建双分支组件。"""
         super().__init__()
         self.norm1 = nn.BatchNorm2d(dim)
         self.token_mixer = DualBranchTokenMixer(dim, num_heads, attn_ratio)
@@ -2932,13 +2862,13 @@ class XXFormerBlock(nn.Module):
         self.ffn = DualBranchFFN(dim, ffn_expansion)
 
     def forward(self, x):
-        """Apply XX-Former block to input tensor.
+        """对输入张量执行 XX-Former 块前向传播。
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, dim, H, W).
+            x (torch.Tensor): 输入张量，形状 (B, dim, H, W)。
 
         Returns:
-            (torch.Tensor): Output tensor of shape (B, dim, H, W).
+            (torch.Tensor): 输出张量，形状 (B, dim, H, W)。
         """
         x = x + self.token_mixer(self.norm1(x))
         x = x + self.ffn(self.norm2(x))
@@ -2946,44 +2876,26 @@ class XXFormerBlock(nn.Module):
 
 
 class C3k2_XXFormer(nn.Module):
-    """C3k2 variant using XX-Former blocks for enhanced feature extraction.
+    """使用 XX-Former 块的 C3k2 变体，增强特征提取。
 
-    Drop-in replacement for C3k2 that uses XXFormerBlock (dual-branch token mixer
-    + dual-branch FFN) instead of standard Bottleneck blocks. Maintains the same
-    CSP-like interface while providing richer spatial and channel modeling through
-    the XX-Former architecture paradigm.
+    可直接替换 C3k2，内部使用 XXFormerBlock（双分支 Token Mixer + 双分支 FFN）
+    替代标准 Bottleneck 块，同时保持相同的 CSP 风格接口。
 
-    Architecture:
-        Input → cv1(1x1, split) → [XXFormerBlock × n] → cv2(1x1, concat) → Output
-
-    Methods:
-        forward: Apply C3k2_XXFormer pipeline to input tensor.
+    架构：
+        输入 → cv1(1×1, 分割) → [XXFormerBlock × n] → cv2(1×1, 拼接) → 输出
 
     Args:
-        c1 (int): Number of input channels.
-        c2 (int): Number of output channels.
-        n (int): Number of XXFormerBlock blocks.
-        e (float): Channel expansion ratio.
-        num_heads (int): Number of attention heads in each block.
-        attn_ratio (float): Attention key dimension ratio.
-        ffn_expansion (float): FFN hidden dimension expansion ratio.
-
-    Returns:
-        (torch.Tensor): Output tensor of shape (B, c2, H, W).
+        c1 (int): 输入通道数。
+        c2 (int): 输出通道数。
+        n (int): XXFormerBlock 块数。
+        e (float): 通道扩展比。
+        num_heads (int): 每个块的注意力头数。
+        attn_ratio (float): 注意力 key 维度比例。
+        ffn_expansion (float): FFN 隐藏层扩展比。
     """
 
     def __init__(self, c1, c2, n=1, e=0.5, num_heads=8, attn_ratio=0.5, ffn_expansion=2.0):
-        """Initialize C3k2_XXFormer with XX-Former blocks.
-
-        Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            n (int): Number of XXFormerBlock blocks.
-            e (float): Channel expansion ratio.
-            num_heads (int): Number of attention heads in each block.
-            attn_ratio (float): Attention key dimension ratio.
-            ffn_expansion (float): FFN hidden dimension expansion ratio.
-        """
+        """初始化 C3k2_XXFormer。"""
         super().__init__()
         self.c = int(c2 * e)
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
@@ -2993,13 +2905,13 @@ class C3k2_XXFormer(nn.Module):
         )
 
     def forward(self, x):
-        """Apply C3k2_XXFormer pipeline to input tensor.
+        """执行 C3k2_XXFormer 前向传播。
 
         Args:
-            x (torch.Tensor): Input tensor of shape (B, c1, H, W).
+            x (torch.Tensor): 输入张量，形状 (B, c1, H, W)。
 
         Returns:
-            (torch.Tensor): Output tensor of shape (B, c2, H, W).
+            (torch.Tensor): 输出张量，形状 (B, c2, H, W)。
         """
         y = list(self.cv1(x).chunk(2, 1))
         y.extend(m(y[-1]) for m in self.m)
