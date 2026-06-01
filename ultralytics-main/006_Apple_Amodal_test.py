@@ -1,7 +1,17 @@
 from ultralytics import YOLO
 import torch
+import random
+import numpy as np
 from ultralytics import YOLO
 from thop import profile
+
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 
 if __name__ == "__main__":
@@ -75,6 +85,7 @@ if __name__ == "__main__":
         workers=4,
         device=0,
         cache=False,  # 缓存预处理图片到磁盘，首次加载慢，后续 epoch 从缓存读取
+        seed=SEED,
     )
    
 
@@ -90,6 +101,7 @@ if __name__ == "__main__":
     #     lr0=0.0001,
     #     workers=4,
     #     device=0,
+    #     seed=SEED,
     # )
 
     # ======================== 3. 消融组 A+B：卡尔曼+ESO ========================
@@ -104,6 +116,7 @@ if __name__ == "__main__":
     #     lr0=0.0001,
     #     workers=4,
     #     device=0,
+    #     seed=SEED,
     # )
 
     # ======================== 4. 满血组 A+B+C：三阶段控制 ========================
@@ -118,4 +131,5 @@ if __name__ == "__main__":
     #     lr0=0.0001,
     #     workers=4,
     #     device=0,
+    #     seed=SEED,
     # )
