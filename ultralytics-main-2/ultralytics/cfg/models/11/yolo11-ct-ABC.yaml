@@ -1,0 +1,46 @@
+# yolo11-ct-ABC.yaml (满血组 A+B+C：三阶段渐进控制融合)
+# 逻辑说明：满血版配置，三个控制单元全激活。
+
+# Parameters
+nc: 1 # number of classes (Apple Amodal)
+channels: 4
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  - [-1, 1, nn.Identity, []]            # 0
+  - [0, 1, SplitChannels, [[0, 1, 2]]]  # 1
+  - [-1, 1, Conv, [64, 3, 2]]           # 2
+  - [-1, 1, Conv, [128, 3, 2]]          # 3
+  - [-1, 1, C3k2, [256, False, 0.25]]   # 4 - P3 (RGB)
+  - [-1, 1, Conv, [256, 3, 2]]          # 5
+  - [-1, 1, C3k2, [512, False, 0.25]]   # 6 - P4 (RGB)
+  - [-1, 1, Conv, [512, 3, 2]]          # 7
+  - [-1, 1, C3k2, [512, True, 0.25]]    # 8 - P5 (RGB)
+  - [0, 1, SplitChannels, [[3]]]        # 9
+  - [-1, 1, Conv, [16, 3, 2]]           # 10
+  - [-1, 1, Conv, [64, 3, 2]]           # 11 - P3 (Depth)
+  - [-1, 1, Conv, [128, 3, 2]]          # 12 - P4 (Depth)
+  - [-1, 1, Conv, [128, 3, 2]]          # 13 - P5 (Depth)
+
+  # 满血三阶段控制融合
+  - [[4, 11], 1, KalmanGatedFusion, []]  # 14 - F_P3 (A: 卡尔曼)
+  - [[6, 12], 1, ESOFusion, []]          # 15 - F_P4 (B: ESO)
+  - [[8, 13], 1, IDAPBCFusion, []]       # 16 - F_P5 (C: IDA-PBC)
+
+head:
+  - [-1, 1, SPPF, [512, 5]]             # 17
+  - [-1, 1, C2PSA, [512]]               # 18
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 19
+  - [[-1, 15], 1, Concat, [1]]          # 20
+  - [-1, 1, C3k2, [512, False]]         # 21
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 22
+  - [[-1, 14], 1, Concat, [1]]          # 23
+  - [-1, 1, C3k2, [256, False]]         # 24
+  - [-1, 1, Conv, [256, 3, 2]]          # 25
+  - [[-1, 21], 1, Concat, [1]]          # 26
+  - [-1, 1, C3k2, [512, False]]         # 27
+  - [-1, 1, Conv, [512, 3, 2]]          # 28
+  - [[-1, 18], 1, Concat, [1]]          # 29
+  - [-1, 1, C3k2, [512, False]]          # 30
+  - [[24, 27, 30], 1, Segment, [nc, 32, 256]]  # 31 - 检测与分割输出 [P3:256, P4:512, P5:512]
