@@ -134,7 +134,8 @@ from .ct_modules import (
     IDAPBCFusion,
     BypassModule,
     SplitChannels,
-    BLFLoss
+    BLFLoss,
+    MultiScaleVarianceEstimator,
 )
 
 __all__ = (
@@ -243,5 +244,6 @@ __all__ = (
     "IDAPBCFusion",
     "BypassModule",
     "SplitChannels",
-    "BLFLoss"
+    "BLFLoss",
+    "MultiScaleVarianceEstimator"
 )

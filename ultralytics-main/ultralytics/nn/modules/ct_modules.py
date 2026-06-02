@@ -2,6 +2,54 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+class MultiScaleVarianceEstimator(nn.Module):
+    """
+    多尺度方差估计器 (统计学先验 + 网络自适应校准)
+    """
+    def __init__(self, c_in):
+        super().__init__()
+        # 使用统计数学计算数学期望Ex
+        self.pool1 = nn.AvgPool2d(kernel_size = 3 , stride = 1 , padding = 1)
+        self.pool2 = nn.AvgPool2d(kernel_size = 5 , stride = 1 , padding = 1)
+        self.pool3 = nn.AvgPool2d(kernel_size = 7 , stride = 1 , padding = 1)
+        # 2. 极轻量网络校准器 (学习语义级别的不确定性)
+        # 输入: 3个尺度的统计方差 + 1个原始特征 (共4个通道，极致压缩)
+        self.calibrator = nn.Sequential(
+            nn.Conv2d(4, 1, kernel_size=1, bias=False),
+            nn.Softplus() # 保证输出的方差/不确定性严格为正
+        )
+
+    def forward(self, x):
+        # 1. 计算多尺度局部均值 E(X)
+        mu1 = self.pool1(x)
+        mu2 = self.pool2(x)
+        mu3 = self.pool3(x)
+        
+        # 2. 计算多尺度局部方差 Var(X) = E(X^2) - [E(X)]^2
+        # 为了计算效率，这里使用 (X - mu)^2 的近似
+        var1 = self.pool1((x - mu1).pow(2))
+        var2 = self.pool2((x - mu2).pow(2))
+        var3 = self.pool3((x - mu3).pow(2))
+        # 2. 计算多尺度局部方差 Var(X) = E(X^2) - [E(X)]^2
+        # 为了计算效率，这里使用 (X - mu)^2 的近似
+        var1 = self.pool1((x - mu1).pow(2))
+        var2 = self.pool2((x - mu2).pow(2))
+        var3 = self.pool3((x - mu3).pow(2))
+        
+        # 3. 拼接统计先验与原始特征，进行网络自适应校准
+        # 使用全局均值池化将原始特征压缩为全局上下文，避免参数量爆炸
+        x_global = F.adaptive_avg_pool2d(x, 1) 
+        # 广播回原尺寸，作为全局上下文指导局部方差校准
+        x_context = x_global.expand_as(var1) 
+        
+        feat = torch.cat([var1, var2, var3, x_context], dim=1)
+        
+        # 4. 输出校准后的最终方差/不确定性图 (B, 1, H, W)
+        sigma2 = self.calibrator(feat)
+        return sigma2
+
+
 class KalmanGatedFusion(nn.Module):
     """
     【阶段 1：P3 浅层卡尔曼融合 (深度指导 RGB) - 极致轻量化版】
@@ -9,52 +57,48 @@ class KalmanGatedFusion(nn.Module):
     轻量化：采用 1x1 挤压通道 + 3x3 深度卷积，相比标准 3x3 卷积减少 85% 参数。
     """
     def __init__(self, c_rgb, c_dep, eps=1e-5):
-        super().__init__()
         self.eps = eps
-        
-        # 极轻量化通道挤压方差估计器
-        mid_c_rgb = max(16, c_rgb // 16)
-        mid_c_dep = max(8, c_dep // 8)
-        
-        self.uncert_rgb = nn.Sequential(
-            nn.Conv2d(c_rgb, mid_c_rgb, kernel_size=1, bias=False),
-            nn.Conv2d(mid_c_rgb, 1, kernel_size=3, padding=1, groups=1, bias=False),
-            nn.Softplus()
-        )
-        self.uncert_dep = nn.Sequential(
-            nn.Conv2d(c_dep, mid_c_dep, kernel_size=1, bias=False),
-            nn.Conv2d(mid_c_dep, 1, kernel_size=3, padding=1, groups=1, bias=False),
-            nn.Softplus()
-        )
+        self.uncert_rgb = MultiScaleVarianceEstimator(c_rgb)
+        self.uncert_dep = MultiScaleVarianceEstimator(c_dep)
+
+        # 投影层：将深度特征映射到 RGB 通道维度
         self.proj_rgb = nn.Conv2d(c_rgb, c_rgb, kernel_size=1, bias=False)
         self.proj_dep = nn.Conv2d(c_dep, c_rgb, kernel_size=1, bias=False)
-        
+
         # 深度可分离卷积输出层
         self.out_conv = nn.Sequential(
             nn.Conv2d(c_rgb, c_rgb, kernel_size=3, padding=1, groups=c_rgb, bias=False),
+            nn.BatchNorm2d(c_rgb),
+            nn.ReLU(inplace=True),
             nn.Conv2d(c_rgb, c_rgb, kernel_size=1, bias=False)
         )
 
     def forward(self, x):
-        if isinstance(x, list):
+        if isinstance(x, (list, tuple)):
             f_rgb, f_dep = x[0], x[1]
         else:
-            f_rgb, f_dep = x, None
+            # 如果只输入单张图，直接返回
+            return self.out_conv(self.proj_rgb(x))
+            
+        # 空间尺寸对齐
         if f_rgb.shape[2:] != f_dep.shape[2:]:
             f_dep = F.interpolate(f_dep, size=f_rgb.shape[2:], mode='bilinear', align_corners=False)
             
+        # 1. 估计多尺度校准方差
         sigma2_rgb = self.uncert_rgb(f_rgb)
         sigma2_dep = self.uncert_dep(f_dep)
         
-        # 动态卡尔曼增益计算
+        # 2. 动态卡尔曼增益计算 (K = P_dep / (P_rgb + P_dep))
         k_gain = sigma2_dep / (sigma2_rgb + sigma2_dep + self.eps)
         
+        # 3. 特征投影
         p_rgb = self.proj_rgb(f_rgb)
         p_dep = self.proj_dep(f_dep)
         
-        # 状态更新方程: F_fused = F_rgb + K * (F_dep - F_rgb)
+        # 4. 状态更新方程: F_fused = F_rgb + K * (F_dep - F_rgb)
         f_fused = p_rgb + k_gain * (p_dep - p_rgb)
-        return self.out_conv(f_fused)
+        
+        return self.out_conv(f_fused)    
 
 
 class ESOFusion(nn.Module):
