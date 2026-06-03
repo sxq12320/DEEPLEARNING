@@ -462,6 +462,11 @@ class BaseTrainer:
 
     def _setup_scheduler(self):
         """Initialize training learning rate scheduler."""
+        # SMC 模式：SMCScheduler 内建 cosine schedule，跳过 LambdaLR
+        if self.args.optimizer.upper() == "SMC":
+            self.lf = lambda x: 1.0  # no-op，SMCScheduler 自行管理 LR
+            self.scheduler = None
+            return
         if self.args.cos_lr:
             self.lf = one_cycle(1, self.args.lrf, self.epochs)  # cosine 1->hyp['lrf']
         else:
@@ -508,20 +513,21 @@ class BaseTrainer:
 
         # SMC 模式：用 SMCScheduler 包装优化器
         if self.args.optimizer.upper() == "SMC":
-            total_steps = iterations
+            # SMC 模式不创建 LambdaLR，但 warmup 需要 initial_lr，手动添加
+            for pg in self.optimizer.param_groups:
+                if "initial_lr" not in pg:
+                    pg["initial_lr"] = pg["lr"]
             self.smc_scheduler = SMCScheduler(
                 self.optimizer,
-                total_steps=total_steps,
-                c=0.5,
-                ema_alpha=0.05,
-                loss_ema_alpha=0.02,
-                loss_rate_threshold=1e-4,
-                grad_ratio_threshold=0.3,
-                lr_boost_max=2.0,
-                beta1_min=0.2,
-                beta2_min=0.95,
-                noise_base=0.02,
-                noise_floor=0.1,
+                total_steps=iterations,
+                plateau_threshold=getattr(self.args, 'smc_plateau_threshold', 0.15),
+                plateau_patience=getattr(self.args, 'smc_plateau_patience', 5),
+                escape_push=getattr(self.args, 'smc_escape_push', 0.10),
+                escape_push_steps=getattr(self.args, 'smc_escape_push_steps', 20),
+                reconv_steps=getattr(self.args, 'smc_reconv_steps', 40),
+                reconv_lr_mult=getattr(self.args, 'smc_reconv_lr_mult', 3.0),
+                beta1_low=getattr(self.args, 'smc_beta1_low', 0.1),
+                beta2_low=getattr(self.args, 'smc_beta2_low', 0.9),
                 verbose=True,
             )
             LOGGER.info(f"{colorstr('smc:')} SMCScheduler enabled -- wraps {type(self.optimizer).__name__}")
@@ -595,7 +601,8 @@ class BaseTrainer:
 
         self.stopper, self.stop = EarlyStopping(patience=self.args.patience), False
         self.resume_training(ckpt)
-        self.scheduler.last_epoch = self.start_epoch - 1  # do not move
+        if self.scheduler is not None:
+            self.scheduler.last_epoch = self.start_epoch - 1  # do not move
         self.run_callbacks("on_pretrain_routine_end")
 
     def _do_train(self):
@@ -628,7 +635,8 @@ class BaseTrainer:
             self.run_callbacks("on_train_epoch_start")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")  # suppress 'Detected lr_scheduler.step() before optimizer.step()'
-                self.scheduler.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
 
             self._model_train()
             if RANK != -1:
@@ -694,7 +702,8 @@ class BaseTrainer:
                     )
                     self._clear_memory()
                     self._build_train_pipeline()  # rebuild dataloaders, optimizer, scheduler
-                    self.scheduler.last_epoch = self.start_epoch - 1
+                    if self.scheduler is not None:
+                        self.scheduler.last_epoch = self.start_epoch - 1
                     nb = len(self.train_loader)
                     nw = max(round(self.args.warmup_epochs * nb), 100) if self.args.warmup_epochs > 0 else -1
                     last_opt_step = -1
@@ -786,7 +795,8 @@ class BaseTrainer:
                 mean_epoch_time = (t - self.train_time_start) / (epoch - self.start_epoch + 1)
                 self.epochs = self.args.epochs = math.ceil(self.args.time * 3600 / mean_epoch_time)
                 self._setup_scheduler()
-                self.scheduler.last_epoch = self.epoch  # do not move
+                if self.scheduler is not None:
+                    self.scheduler.last_epoch = self.epoch  # do not move
                 self.stop |= epoch >= self.epochs  # stop if exceeded epochs
             self.run_callbacks("on_fit_epoch_end")
             self._clear_memory(0.5)  # clear if memory utilization > 50%
@@ -1169,7 +1179,8 @@ class BaseTrainer:
         unwrap_model(self.model).load_state_dict(ema_state)  # Load EMA weights into model
         self._load_checkpoint_state(ckpt)  # Load optimizer/scaler/EMA/best_fitness
         del ckpt, ema_state
-        self.scheduler.last_epoch = epoch - 1
+        if self.scheduler is not None:
+            self.scheduler.last_epoch = epoch - 1
         return True
 
     def resume_training(self, ckpt):
@@ -1303,8 +1314,9 @@ class BaseTrainer:
         else:
             optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
+        opt_name = f"SMC+{type(optimizer).__name__}" if name == "SMC" else type(optimizer).__name__
         LOGGER.info(
-            f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}, momentum={momentum}) with parameter groups "
+            f"{colorstr('optimizer:')} {opt_name}(lr={lr}, momentum={momentum}) with parameter groups "
             f"{num_params[1]} weight(decay=0.0), {num_params[0]} weight(decay={decay}), {num_params[2]} bias(decay=0.0)"
         )
         return optimizer

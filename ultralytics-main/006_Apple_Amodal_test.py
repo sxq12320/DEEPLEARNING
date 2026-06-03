@@ -73,19 +73,30 @@ if __name__ == "__main__":
     # ======================== 1. 对照组：Base 基础双流 ========================
     yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
     yolo.train(
-        data=r"ultralytics-main/206_Apple_Amodal.yaml",
-        project=r"E:/mastercode/ultralytics-main/results",
-        name="01_yolo11n-seg-base-rgbd_fix",
-        optimizer="auto",
-        epochs=1,
-        patience=50,
-        imgsz=640,
-        batch=4,
-        lr0=0.01,
-        workers=4,
-        device=0,
-        cache=False,  # 缓存预处理图片到磁盘，首次加载慢，后续 epoch 从缓存读取
-        seed=SEED,
+         data=r"ultralytics-main/206_Apple_Amodal.yaml",
+         project=r"E:/mastercode/ultralytics-main/results",
+         name="01_yolo11n-seg-base-rgbd_fix",
+         optimizer="SMC",
+         epochs=20,
+         patience=50,
+         imgsz=540,
+         batch=4,
+         lr0=0.01,
+         workers=4,
+         device=0,
+         cache=False,  # 缓存预处理图片到磁盘，首次加载慢，后续 epoch 从缓存读取
+         seed=SEED,
+
+         # SMC 超参数（可选，不传用默认值）
+         smc_plateau_threshold=0.15,   # 梯度停滞阈值
+         smc_plateau_patience=5,       # plateau 耐心值
+         smc_escape_push=0.10,         # 逃离位移量
+         smc_escape_push_steps=20,     # 逃离步数
+         smc_reconv_steps=40,          # 重收敛步数
+         smc_reconv_lr_mult=3.0,       # 重收敛 LR 倍数
+         smc_beta1_low=0.1,            # 逃离时 β₁
+         smc_beta2_low=0.9,            # 逃离时 β₂
+
     )
    
 

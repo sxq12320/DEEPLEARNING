@@ -1,17 +1,7 @@
 """
-SMCScheduler — 基于滑模控制 (Sliding Mode Control) 的 AdamW 学习率调度器
+SMCScheduler — 基于滑模控制的 AdamW 调度器
 
-核心思想（思路 2 的框架，实现思路 1 的目的）：
-    框架 = 基于滑模面动态调节 LR（Schedule）
-    目的 = 逃离鞍点/平缓区/局部最优
-
-    逃离机制（多方向探索 + loss 选择）：
-    1. 检测 plateau → 触发逃离
-    2. 尝试多个随机方向，每个方向推动 N 步
-    3. 每个方向结束后检查 loss：若 loss 恢化则回退
-    4. 保留 loss 改善最大的方向（可能收敛到更优 basin）
-
-工程安全性：底层完全依赖标准 AdamW，通过动态修改 param_groups + state 实现控制。
+核心：plateau 检测 → 定向逃离 → 快速重收敛 → loss 比较决定保留/回退
 """
 
 import math
@@ -28,15 +18,14 @@ class SMCScheduler:
         min_lr_ratio=0.01,
         plateau_threshold=0.15,
         plateau_patience=5,
-        lr_boost=5.0,
-        escape_duration=20,
-        escape_push=0.05,
-        max_escape_trials=8,
+        escape_push=0.10,
+        escape_push_steps=20,
+        reconv_steps=40,
+        reconv_lr_mult=3.0,
         beta1_default=0.9,
         beta1_low=0.1,
         beta2_default=0.999,
         beta2_low=0.9,
-        momentum_reset_interval=5,
         verbose=True,
     ):
         self.optimizer = optimizer
@@ -48,33 +37,25 @@ class SMCScheduler:
         self.grad_norm_history: deque[float] = deque(maxlen=300)
         self.grad_peak: float = 0.0
         self._plateau_counter: int = 0
-        self.lr_boost = lr_boost
-        self.escape_duration = escape_duration
+
         self.escape_push = escape_push
-        self.max_escape_trials = max_escape_trials
-        self.momentum_reset_interval = momentum_reset_interval
+        self.escape_push_steps = escape_push_steps
+        self.reconv_steps = reconv_steps
+        self.reconv_lr_mult = reconv_lr_mult
         self.beta1_default = beta1_default
         self.beta1_low = beta1_low
         self.beta2_default = beta2_default
         self.beta2_low = beta2_low
         self.initial_lrs = [pg["lr"] for pg in optimizer.param_groups]
 
-        # 逃离状态
-        self._escape_remaining: int = 0
+        # State
         self._escape_dir: torch.Tensor | None = None
-        self._pre_escape_state: dict | None = None
-        self._pre_escape_loss: float | None = None
         self._last_loss: float | None = None
-        self._revert_pending: bool = False
-        self._escape_trials_left: int = 0  # 剩余尝试方向数
-        self._best_escape_state: dict | None = None
-        self._best_escape_loss: float | None = None
-
+        self._in_escape: bool = False
         self.step_count = 0
         self.mode = "normal"
         self.verbose = verbose
         self._lr_sum: float = 0.0
-        self._noise_count: int = 0
         self._escape_count: int = 0
         self._revert_count: int = 0
 
@@ -115,121 +96,109 @@ class SMCScheduler:
                     p.data.copy_(state[p])
 
     def observe_gradients(self):
-        """optimizer.step() 之前"""
         gn = self._compute_grad_norm()
         self.grad_norm_history.append(gn)
         if gn > self.grad_peak:
             self.grad_peak = gn
 
-        # 1. 回退：上一步逃离后 loss 恢化
-        if self._revert_pending and self._pre_escape_state is not None:
-            self._restore_state(self._pre_escape_state)
-            self._escape_remaining = 0
-            self._revert_pending = False
-            self._pre_escape_state = None
-            self._pre_escape_loss = None
-            self._plateau_counter = 0
-            self._revert_count += 1
-            # 保留当前最佳（如果有的话），尝试下一个方向
-            self._escape_trials_left -= 1
-            if self._escape_trials_left > 0:
-                self._start_escape_trial()
-            return
-
-        # 2. 逃离进行中
-        if self._escape_remaining > 0 and self._escape_dir is not None:
-            for pg in self.optimizer.param_groups:
-                for p in pg["params"]:
-                    push = self._escape_dir[:p.numel()].reshape_as(p.data)
-                    p.data.add_(push * self.escape_push)
-                    if p.grad is not None:
-                        p.grad.data.zero_()
-            self._noise_count += 1
-            if self._escape_remaining % self.momentum_reset_interval == 0:
-                for state in self.optimizer.state.values():
-                    if "exp_avg" in state:
-                        state["exp_avg"].mul_(0.0)
-                    if "exp_avg_sq" in state:
-                        state["exp_avg_sq"].mul_(0.0)
-
-    def _start_escape_trial(self):
-        """开始一个新的逃离尝试"""
-        self._escape_remaining = self.escape_duration
-        self._pre_escape_loss = self._last_loss
-        self._pre_escape_state = self._save_state()
-        total_params = sum(p.numel() for pg in self.optimizer.param_groups for p in pg["params"])
-        self._escape_dir = torch.randn(total_params)
-        self._escape_dir = self._escape_dir / (self._escape_dir.norm() + 1e-8)
-
     def step(self, loss_value=None):
-        """optimizer.step() 之后"""
         self.step_count += 1
-
         if loss_value is not None:
             val = loss_value.item() if isinstance(loss_value, torch.Tensor) else loss_value
             self._last_loss = val
 
-        # 1. 逃离倒计时结束
-        if self._escape_remaining > 0:
-            self._escape_remaining -= 1
-            if self._escape_remaining == 0 and self._pre_escape_loss is not None:
-                if self._last_loss is not None and self._last_loss >= self._pre_escape_loss:
-                    # Loss 没有改善 → 回退
-                    self._revert_pending = True
-                else:
-                    # Loss 真正改善了 → 保留
-                    self._escape_trials_left = 0
-                    self._pre_escape_loss = None
-                    self._pre_escape_state = None
-                    self._plateau_counter = 0
-            ctrl = 1.0
-        else:
-            ctrl = 0.0
+        if self._in_escape:
+            return  # 逃离期间不干预
 
-        # 2. Cosine LR
         cos_factor = self._get_cosine_lr(self.step_count)
 
-        # 3. Plateau detection
-        if not self._revert_pending and self._escape_remaining <= 0:
-            if self._is_plateau():
-                self._plateau_counter += 1
-            else:
-                self._plateau_counter = 0
+        # Plateau detection
+        if self._is_plateau():
+            self._plateau_counter += 1
+        else:
+            self._plateau_counter = 0
 
-        # 4. 触发逃离（多方向尝试）
-        if (self._plateau_counter >= self.plateau_patience
-                and self._escape_remaining <= 0
-                and not self._revert_pending
-                and self._escape_trials_left <= 0):
+        # 触发逃离：push → reconv → 比较 loss
+        if self._plateau_counter >= self.plateau_patience:
+            self._plateau_counter = 0
+            self._in_escape = True
             self._escape_count += 1
-            self._escape_trials_left = self.max_escape_trials
-            self._start_escape_trial()
+            pre_escape_loss = self._last_loss
+            pre_escape_state = self._save_state()
 
-        # 5. Apply LR / betas
-        lr_factor = cos_factor * (1.0 + (self.lr_boost - 1.0) * ctrl)
-        for i, pg in enumerate(self.optimizer.param_groups):
-            pg["lr"] = self.initial_lrs[i] * lr_factor
-        b1 = self.beta1_default - (self.beta1_default - self.beta1_low) * ctrl
-        b2 = self.beta2_default - (self.beta2_default - self.beta2_low) * ctrl
-        for pg in self.optimizer.param_groups:
-            pg["betas"] = (b1, b2)
+            # 1. 定向逃离（在参数所在设备上）
+            first_param = next(p for pg in self.optimizer.param_groups for p in pg["params"])
+            device = first_param.device
+            total_params = sum(p.numel() for pg in self.optimizer.param_groups for p in pg["params"])
+            escape_dir = torch.randn(total_params, device=device)
+            escape_dir = escape_dir / (escape_dir.norm() + 1e-8)
 
-        self.mode = "escape" if ctrl > 0.3 else "normal"
-        self._lr_sum += lr_factor
+            for step_i in range(self.escape_push_steps):
+                for pg in self.optimizer.param_groups:
+                    for p in pg["params"]:
+                        push = escape_dir[:p.numel()].reshape_as(p.data)
+                        p.data.add_(push * self.escape_push)
+                        if p.grad is not None:
+                            p.grad.data.zero_()
+
+            # 2. 快速重收敛（高 LR + 正常梯度）
+            for pg in self.optimizer.param_groups:
+                pg["lr"] = self.initial_lrs[0] * self.reconv_lr_mult
+                pg["betas"] = (self.beta1_low, self.beta2_low)
+            for state in self.optimizer.state.values():
+                if "exp_avg" in state:
+                    state["exp_avg"].mul_(0.0)
+                if "exp_avg_sq" in state:
+                    state["exp_avg_sq"].mul_(0.0)
+
+            for pg in self.optimizer.param_groups:
+                pg["lr"] = self.initial_lrs[0] * self.reconv_lr_mult
+                pg["betas"] = (self.beta1_low, self.beta2_low)
+
+            self._reconv_loss = self._last_loss
+            self._reconv_step = 0
+
+        # 重收敛期间：正常训练但用高 LR
+        if hasattr(self, '_reconv_step') and self._reconv_step < self.reconv_steps:
+            for pg in self.optimizer.param_groups:
+                pg["lr"] = self.initial_lrs[0] * self.reconv_lr_mult
+                pg["betas"] = (self.beta1_low, self.beta2_low)
+            self._reconv_step += 1
+
+            if self._reconv_step >= self.reconv_steps:
+                # 重收敛结束，比较 loss
+                post_escape_loss = self._last_loss
+                if post_escape_loss is not None and pre_escape_loss is not None:
+                    if post_escape_loss >= pre_escape_loss:
+                        # Loss 没改善 → 回退
+                        self._restore_state(pre_escape_state)
+                        self._revert_count += 1
+                    # 否则保留逃离结果
+                # 恢复正常
+                self._in_escape = False
+                if hasattr(self, '_reconv_step'):
+                    del self._reconv_step
+                if hasattr(self, '_reconv_loss'):
+                    del self._reconv_loss
+                self._plateau_counter = 0
+        else:
+            # 正常训练
+            for i, pg in enumerate(self.optimizer.param_groups):
+                pg["lr"] = self.initial_lrs[i] * cos_factor
+                pg["betas"] = (self.beta1_default, self.beta2_default)
+
+        self._lr_sum += self.optimizer.param_groups[0]["lr"] / self.initial_lrs[0] if self.initial_lrs[0] > 0 else 1.0
 
     def get_stats(self):
         return {
             "avg_lr_ratio": self._lr_sum / max(self.step_count, 1),
-            "noise_injections": self._noise_count,
             "escape_events": self._escape_count,
             "reverts": self._revert_count,
-            "grad_peak": self.grad_peak,
         }
 
     def state_dict(self):
-        return {"step_count": self.step_count, "grad_peak": self.grad_peak, "initial_lrs": self.initial_lrs}
+        return {"step_count": self.step_count, "initial_lrs": self.initial_lrs}
 
     def load_state_dict(self, sd):
         self.step_count = sd["step_count"]
-        self.grad_peak = sd.get("grad_peak", 0.0)
         self.initial_lrs = sd["initial_lrs"]

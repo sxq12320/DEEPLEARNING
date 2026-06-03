@@ -293,7 +293,7 @@ if __name__ == "__main__":
         print(f"  AdamW:  loss={ma['final_loss']:.4f}, dist={ma['dist_to_global']:.2f}, escaped={ma['escaped']}")
         print(f"  SMC:    loss={ms['final_loss']:.4f}, dist={ms['dist_to_global']:.2f}, escaped={ms['escaped']}")
         if stats_s:
-            print(f"  SMC stats: noise={stats_s['noise_injections']}, escapes={stats_s['escape_events']}")
+            print(f"  SMC stats: escapes={stats_s['escape_events']}, reverts={stats_s['reverts']}")
 
     # ============================================================
     # 函数 2: Rosenbrock (4 个起始点)
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         print(f"  AdamW:  loss={ma['final_loss']:.4f}, dist={ma['dist_to_global']:.2f}, escaped={ma['escaped']}")
         print(f"  SMC:    loss={ms['final_loss']:.4f}, dist={ms['dist_to_global']:.2f}, escaped={ms['escaped']}")
         if stats_s:
-            print(f"  SMC stats: noise={stats_s['noise_injections']}, escapes={stats_s['escape_events']}")
+            print(f"  SMC stats: escapes={stats_s['escape_events']}, reverts={stats_s['reverts']}")
 
     # ============================================================
     # 综合汇总
