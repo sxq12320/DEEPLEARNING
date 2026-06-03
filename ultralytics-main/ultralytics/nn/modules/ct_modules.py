@@ -109,41 +109,70 @@ class ESOFusion(nn.Module):
     """
     def __init__(self, c_p4_rgb, c_p3_fused):
         super().__init__()
-        self.proj_p3 = nn.Conv2d(c_p3_fused, c_p4_rgb, kernel_size=1, bias=False)
-        
-        # 极轻量瓶颈观测器 (Bottleneck ESO)
+        self.c_p4 = c_p4_rgb
+        self.proj_u = nn.Conv2d(c_p3_fused, c_p4_rgb, kernel_size=1, bias=False)
+        # ==========================================
+        # 极轻量瓶颈 ESO 观测器 (保留你的优秀设计)
+        # 物理意义：估计 RGB 特征中的总扰动 z2 (遮挡/噪声/模态差异)
+        # ==========================================
         self.eso_observer = nn.Sequential(
+            # 1x1 压缩至 32 维，极大降低计算量
             nn.Conv2d(c_p4_rgb * 2, 32, kernel_size=1, bias=False),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
+            # 3x3 深度可分离卷积提取空间扰动分布
             nn.Conv2d(32, 32, kernel_size=3, padding=1, groups=32, bias=False),
-            nn.Conv2d(32, 1, kernel_size=1, bias=False),
-            nn.Sigmoid()
+            # 【关键修正】输出 C 通道扰动，且不加 Sigmoid！
+            # 真实物理扰动是无界的(可正可负)，Sigmoid 会破坏扰动方向性
+            # 使用 Tanh 限制极端值防止训练崩溃，同时保留负值能力
+            nn.Conv2d(32, c_p4_rgb, kernel_size=1, bias=True), 
+            nn.Tanh() 
         )
         
-        # 深度可分离输出，避免 P4 阶段标准大卷积带来的计算开销
+        # ESO 反馈增益 beta1 (可学习参数，对应控制理论中的观测器带宽)
+        self.beta1 = nn.Parameter(torch.ones(1, c_p4_rgb, 1, 1) * 0.1)
+        
+        # 深度可分离输出层 (对补偿后的纯净特征进行非线性变换)
         self.out_conv = nn.Sequential(
             nn.Conv2d(c_p4_rgb, c_p4_rgb, kernel_size=3, padding=1, groups=c_p4_rgb, bias=False),
+            nn.BatchNorm2d(c_p4_rgb),
+            nn.SiLU(inplace=True),
             nn.Conv2d(c_p4_rgb, c_p4_rgb, kernel_size=1, bias=False)
         )
 
     def forward(self, x):
-        if isinstance(x, list):
+        if isinstance(x, (list, tuple)):
             f_rgb_p4, f_fused_p3 = x[0], x[1]
         else:
-            f_rgb_p4, f_fused_p3 = x, None
-        if f_fused_p3.shape[2:] != f_rgb_p4.shape[2:]:
-            f_fused_p3 = F.interpolate(f_fused_p3, size=f_rgb_p4.shape[2:], mode='bilinear', align_corners=False)
+            # 兼容单输入情况
+            return self.out_conv(x)
             
-        p_fused_p3 = self.proj_p3(f_fused_p3)
+        # 空间尺寸对齐
+        if f_rgb_p4.shape[2:] != f_fused_p3.shape[2:]:
+            f_fused_p3 = F.interpolate(f_fused_p3, size=f_rgb_p4.shape[2:], 
+                                       mode='bilinear', align_corners=False)
+            
+        # 1. 生成控制量 u
+        u = self.proj_u(f_fused_p3)
         
-        # 1. 观测器：估计系统未知外扰量 (遮挡不确定性)
-        concat_feat = torch.cat([f_rgb_p4, p_fused_p3], dim=1)
-        m_occ = self.eso_observer(concat_feat)
+        # 2. ESO 扰动观测：估计总扰动 z2
+        concat_feat = torch.cat([f_rgb_p4, u], dim=1)
+        z2_disturbance = self.eso_observer(concat_feat)  # Shape: (B, C, H, W), 值域 [-1, 1]
         
-        # 2. 扰动补偿反馈律
-        f_compensated = f_rgb_p4 + m_occ * p_fused_p3
-        return self.out_conv(f_compensated)
+        # 3. 【严格 ESO 补偿律】
+        # 物理公式: F_compensated = F_rgb - beta1 * z2 + u
+        # 减去估计的扰动，加上来自浅层的控制引导
+        f_compensated = f_rgb_p4 - self.beta1 * z2_disturbance + u
+        
+        # 4. 非线性净化
+        f_clean = self.out_conv(f_compensated)
+        
+        # 5. 【YOLO 兼容关键】恢复 Concat 的双倍通道特性
+        # 将"ESO 补偿净化后的特征"与"原始 P3 控制特征"拼接
+        # 确保输出通道 = c_p4_rgb + c_p3_fused，完美接入后续 C3k2 模块
+        out = torch.cat([f_clean, f_fused_p3], dim=1)
+        
+        return out    
 
 
 class IDAPBCFusion(nn.Module):
