@@ -30,6 +30,7 @@ from ultralytics.cfg import get_cfg, get_save_dir
 from ultralytics.data.utils import check_cls_dataset, check_det_dataset
 from ultralytics.nn.tasks import load_checkpoint
 from ultralytics.optim import MuSGD
+from ultralytics.nn.modules.smc_scheduler import SMCScheduler
 from ultralytics.utils import (
     DEFAULT_CFG,
     GIT,
@@ -346,6 +347,7 @@ class BaseTrainer:
         self.validator = None
         self.metrics = None
         self.plots = {}
+        self.smc_scheduler = None  # SMCScheduler for SMC optimizer mode
         init_seeds(self.args.seed + 1 + RANK, deterministic=self.args.deterministic)
 
         # Dirs
@@ -503,6 +505,28 @@ class BaseTrainer:
             iterations=iterations,
         )
         self._setup_scheduler()
+
+        # SMC 模式：用 SMCScheduler 包装优化器
+        if self.args.optimizer.upper() == "SMC":
+            total_steps = iterations
+            self.smc_scheduler = SMCScheduler(
+                self.optimizer,
+                total_steps=total_steps,
+                c=0.5,
+                ema_alpha=0.05,
+                loss_ema_alpha=0.02,
+                loss_rate_threshold=1e-4,
+                grad_ratio_threshold=0.3,
+                lr_boost_max=2.0,
+                beta1_min=0.2,
+                beta2_min=0.95,
+                noise_base=0.02,
+                noise_floor=0.1,
+                verbose=True,
+            )
+            LOGGER.info(f"{colorstr('smc:')} SMCScheduler enabled -- wraps {type(self.optimizer).__name__}")
+        else:
+            self.smc_scheduler = None
 
     def _setup_train(self):
         """Configure model, optimizer, dataloaders, and training utilities before the training loop."""
@@ -677,7 +701,13 @@ class BaseTrainer:
                     self.optimizer.zero_grad()
                     break  # restart epoch loop with reduced batch size
                 if ni - last_opt_step >= self.accumulate:
+                    # SMC: 在 optimizer.step 之前注入滑模扰动
+                    if self.smc_scheduler is not None:
+                        self.smc_scheduler.observe_gradients()
                     self.optimizer_step()
+                    # SMC: 在 optimizer.step 之后更新控制信号
+                    if self.smc_scheduler is not None:
+                        self.smc_scheduler.step(self.loss.item())
                     last_opt_step = ni
 
                     # Timed stopping
@@ -1217,10 +1247,10 @@ class BaseTrainer:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
         # 👉 第一处整合：添加 PIDAO 到白名单
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO"}
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
 
-        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam"}:
+        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC"}:
             optim_args = dict(lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         elif name == "RMSProp":
             optim_args = dict(lr=lr, momentum=momentum)
@@ -1257,18 +1287,19 @@ class BaseTrainer:
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
 
-        # 👉 第二处整合：拦截 YOLO 的默认实例化，使用多通道 PIDAO
+        # 👉 第二处整合：拦截 YOLO 的默认实例化，使用多通道 PIDAO / SMC
         if name == "PIDAO":
-            # 这里 kd_channels 传入一个列表，列表长度即代表“微分通道”的数量。
-            # 例如 [0.1, 0.05, 0.01] 表示引入一阶、二阶、三阶导数的力矩。
             optimizer = PIDAO(
-                params=g, 
-                lr=lr, 
-                eq_momentum=momentum, 
-                kp=None, 
-                ki=1.0, 
-                kd_channels=[0.1, 0.05, 0.01]  # <--- 可在此处配置多通道系统
+                params=g,
+                lr=lr,
+                eq_momentum=momentum,
+                kp=None,
+                ki=1.0,
+                kd_channels=[0.1, 0.05, 0.01]
             )
+        elif name == "SMC":
+            # SMC 模式：底层使用 AdamW，由 SMCScheduler 在训练循环中动态调节
+            optimizer = optim.AdamW(params=g, lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         else:
             optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
