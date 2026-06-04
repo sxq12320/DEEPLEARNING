@@ -106,6 +106,30 @@ from .transformer import (
     TransformerEncoderLayer,
     TransformerLayer,
 )
+from .ct_modules import (
+    BLFLoss,
+    BypassModule,
+    ESOFusion,
+    IDAPBCFusion,
+    KalmanGatedFusion,
+    MultiScaleVarianceEstimator,
+)
+from .lsnet import (
+    LSBlock,
+    LSConv,
+    LSNetBackbone,
+    LSNetDownsample,
+    LSNet_B,
+    LSNet_S,
+    LSNet_T,
+    MSAStageBlock,
+    PatchEmbed,
+)
+from .shufflenetv2_depth import (
+    ShuffleV2Block,
+    ShuffleV2Stage,
+    ShuffleV2Stem_Depth,
+)
 
 __all__ = (
     "AIFI",
@@ -189,4 +213,25 @@ __all__ = (
     "YOLOESegment",
     "YOLOESegment26",
     "v10Detect",
+    # CT fusion modules
+    "BLFLoss",
+    "BypassModule",
+    "ESOFusion",
+    "IDAPBCFusion",
+    "KalmanGatedFusion",
+    "MultiScaleVarianceEstimator",
+    # LSNet backbone
+    "LSBlock",
+    "LSConv",
+    "LSNetBackbone",
+    "LSNetDownsample",
+    "LSNet_B",
+    "LSNet_S",
+    "LSNet_T",
+    "MSAStageBlock",
+    "PatchEmbed",
+    # ShuffleNetV2 depth branch
+    "ShuffleV2Block",
+    "ShuffleV2Stage",
+    "ShuffleV2Stem_Depth",
 )

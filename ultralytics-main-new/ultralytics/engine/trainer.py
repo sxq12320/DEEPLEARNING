@@ -29,6 +29,8 @@ from ultralytics.cfg import get_cfg, get_save_dir
 from ultralytics.data.utils import check_cls_dataset, check_det_dataset, convert_ndjson_to_yolo_if_needed
 from ultralytics.nn.tasks import load_checkpoint
 from ultralytics.optim import MuSGD
+from ultralytics.nn.modules.smc_scheduler import SMCScheduler
+from collections import deque
 from ultralytics.utils import (
     DEFAULT_CFG,
     GIT,
@@ -62,6 +64,89 @@ from ultralytics.utils.torch_utils import (
     unset_deterministic,
     unwrap_model,
 )
+
+
+# ==========================================
+# 多通道高阶 PID 优化器 (PIDAO)
+# ==========================================
+class PIDAO(optim.Optimizer):
+    def __init__(self, params, lr=1e-3, eq_momentum=0.9, kp=None, ki=1.0, kd_channels=None):
+        """
+        多通道高阶 PID 优化器
+        :param kd_channels: list, 包含各个阶数微分通道的系数 [1阶微分系数, 2阶微分系数, ...]
+        """
+        if lr < 0.0:
+            raise ValueError(f"Invalid learning rate: {lr}")
+        if kd_channels is None:
+            kd_channels = [0.1]  # 默认退化为标准 PID
+
+        defaults = dict(lr=lr, eq_momentum=eq_momentum, kp=kp, ki=ki, kd_channels=kd_channels)
+        super(PIDAO, self).__init__(params, defaults)
+
+    @torch.no_grad()
+    def step(self, closure=None):
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+
+                grad = p.grad
+                if group.get('weight_decay', 0) != 0:
+                    grad = grad.add(p, alpha=group['weight_decay'])
+
+                state = self.state[p]
+                kd_channels = group['kd_channels']
+                num_d_channels = len(kd_channels)
+
+                # 初始化状态字典
+                if len(state) == 0:
+                    state['step'] = 0
+                    state['I'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    # 使用 deque 存储所需的历史梯度，最大长度取决于我们需要的最高阶导数 (N阶需要 N+1 个历史状态)
+                    state['grad_history'] = deque(maxlen=num_d_channels + 1)
+
+                state['step'] += 1
+                I = state['I']
+                grad_hist = state['grad_history']
+
+                # 将当前梯度插入历史队列的最左端 (索引 0 永远是 g_t)
+                grad_hist.appendleft(grad.clone())
+
+                # 1. 积分通道 (I)
+                I.add_(grad)
+
+                # 2. 比例通道 (P) -> 如果 Kp 是 None，则默认使用 1.0
+                kp = group['kp'] if group['kp'] is not None else 1.0
+                update = torch.mul(grad, kp)
+                update.add_(I, alpha=group['ki'])
+
+                # 3. 高阶微分多通道 (D)
+                # 使用数学推导中的二项式系数计算 N 阶差分
+                for k, kd in enumerate(kd_channels):
+                    order = k + 1  # 当前的导数阶数 (1阶, 2阶...)
+
+                    # 如果历史梯度数量不足以计算当前阶数的差分，则跳过该通道
+                    if len(grad_hist) < order + 1:
+                        continue
+
+                    diff_k = torch.zeros_like(grad)
+                    for j in range(order + 1):
+                        # (-1)^j * C(order, j) * g_{t-j}
+                        coef = ((-1) ** j) * math.comb(order, j)
+                        diff_k.add_(grad_hist[j], alpha=coef)
+
+                    # 将该微分通道的结果叠加到总更新量中
+                    update.add_(diff_k, alpha=kd)
+
+                # 4. 应用最终更新
+                p.add_(update, alpha=-group['lr'])
+
+        return loss
 
 
 class BaseTrainer:
@@ -130,6 +215,7 @@ class BaseTrainer:
         self.args.device = os.getenv("CUDA_VISIBLE_DEVICES") if "cuda" in str(self.device) else str(self.device)
         self.validator = None
         self.metrics = None
+        self.smc_scheduler = None  # SMCScheduler for SMC optimizer mode
         self.plots = {}
         init_seeds(self.args.seed + 1 + RANK, deterministic=self.args.deterministic)
 
@@ -247,6 +333,11 @@ class BaseTrainer:
 
     def _setup_scheduler(self):
         """Initialize training learning rate scheduler."""
+        # SMC 模式：SMCScheduler 内建 cosine schedule，跳过 LambdaLR
+        if self.args.optimizer.upper() == "SMC":
+            self.lf = lambda x: 1.0  # no-op，SMCScheduler 自行管理 LR
+            self.scheduler = None
+            return
         if self.args.cos_lr:
             self.lf = one_cycle(1, self.args.lrf, self.epochs)  # cosine 1->hyp['lrf']
         else:
@@ -290,6 +381,31 @@ class BaseTrainer:
             iterations=iterations,
         )
         self._setup_scheduler()
+
+        # SMC 模式：用 SMCScheduler 包装优化器
+        if self.args.optimizer.upper() == "SMC":
+            # SMC 模式不创建 LambdaLR，但 warmup 需要 initial_lr，手动添加
+            for pg in self.optimizer.param_groups:
+                if "initial_lr" not in pg:
+                    pg["initial_lr"] = pg["lr"]
+            self.smc_scheduler = SMCScheduler(
+                self.optimizer,
+                total_steps=iterations,
+                c=0.5,
+                surface_threshold=getattr(self.args, 'smc_surface_threshold', 0.05),
+                surface_patience=getattr(self.args, 'smc_surface_patience', 100),
+                lr_boost=getattr(self.args, 'smc_lr_boost', 1.05),
+                noise_scale=getattr(self.args, 'smc_noise_scale', 0.001),
+                noise_max_steps=getattr(self.args, 'smc_noise_max_steps', 10),
+                noise_decay=getattr(self.args, 'smc_noise_decay', 0.9),
+                escape_cooldown=getattr(self.args, 'smc_escape_cooldown', 100),
+                escape_max_duration=getattr(self.args, 'smc_escape_max_duration', 20),
+                beta1_low=getattr(self.args, 'smc_beta1_low', 0.88),
+                verbose=True,
+            )
+            LOGGER.info(f"{colorstr('smc:')} SMCScheduler enabled -- wraps {type(self.optimizer).__name__}")
+        else:
+            self.smc_scheduler = None
 
     def _setup_train(self):
         """Configure model, optimizer, dataloaders, and training utilities before the training loop."""
@@ -483,7 +599,13 @@ class BaseTrainer:
                     self.optimizer.zero_grad()
                     break  # restart epoch loop with reduced batch size
                 if ni - last_opt_step >= self.accumulate:
+                    # SMC: 在 optimizer.step 之前注入滑模扰动
+                    if self.smc_scheduler is not None:
+                        self.smc_scheduler.observe_gradients()
                     self.optimizer_step()
+                    # SMC: 在 optimizer.step 之后更新控制信号
+                    if self.smc_scheduler is not None:
+                        self.smc_scheduler.step(self.loss.item())
                     last_opt_step = ni
 
                     # Timed stopping
@@ -529,6 +651,12 @@ class BaseTrainer:
             self.lr = {f"lr/pg{ir}": x["lr"] for ir, x in enumerate(self.optimizer.param_groups)}  # for loggers
 
             self.run_callbacks("on_train_epoch_end")
+
+            # SMC: epoch 结束时通知调度器
+            if self.smc_scheduler is not None and self.tloss is not None:
+                epoch_loss = self.tloss.mean().item() if isinstance(self.tloss, torch.Tensor) else float(self.tloss)
+                self.smc_scheduler.on_train_epoch_end(epoch_loss)
+
             if RANK in {-1, 0}:
                 self.ema.update_attr(self.model, include=["yaml", "nc", "args", "names", "stride", "class_weights"])
 
@@ -1035,14 +1163,16 @@ class BaseTrainer:
         if not use_muon:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto"}
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
-        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam"}:
+        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC"}:
             optim_args = dict(lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         elif name == "RMSProp":
             optim_args = dict(lr=lr, momentum=momentum)
         elif name == "SGD" or name == "MuSGD":
             optim_args = dict(lr=lr, momentum=momentum, nesterov=True)
+        elif name == "PIDAO":
+            optim_args = dict(lr=lr, eq_momentum=momentum)
         else:
             raise NotImplementedError(
                 f"Optimizer '{name}' not found in list of available optimizers {optimizers}. "
@@ -1069,10 +1199,25 @@ class BaseTrainer:
                 p2 = [v for k, v in p.items() if not pattern.search(k)]
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
-        optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
+        # PIDAO / SMC 优化器实例化
+        if name == "PIDAO":
+            optimizer = PIDAO(
+                params=g,
+                lr=lr,
+                eq_momentum=momentum,
+                kp=None,
+                ki=1.0,
+                kd_channels=[0.1, 0.05, 0.01]
+            )
+        elif name == "SMC":
+            # SMC 模式：底层使用 AdamW，由 SMCScheduler 在训练循环中动态调节
+            optimizer = optim.AdamW(params=g, lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
+        else:
+            optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
+        opt_name = f"SMC+{type(optimizer).__name__}" if name == "SMC" else type(optimizer).__name__
         LOGGER.info(
-            f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}, momentum={momentum}) with parameter groups "
+            f"{colorstr('optimizer:')} {opt_name}(lr={lr}, momentum={momentum}) with parameter groups "
             f"{num_params[1]} weight(decay=0.0), {num_params[0]} weight(decay={decay}), {num_params[2]} bias(decay=0.0)"
         )
         return optimizer
