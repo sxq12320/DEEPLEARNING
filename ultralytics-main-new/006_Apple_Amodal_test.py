@@ -17,7 +17,7 @@ torch.backends.cudnn.benchmark = False
 if __name__ == "__main__":
     yolo = YOLO(r"E:\mastercode\ultralytics-main-new\ultralytics\cfg\models\11\yolo11-seg.yaml")
     yolo.train(
-         data=r"E:\mastercode\ultralytics-main-new\205_jeurk_spilt_data.yaml",
+         data=r"E:\mastercode\ultralytics-main-new\206_Apple_Amodal.yaml",
          project=r"E:\mastercode\ultralytics-main-new\results",
          name="01_yolo11n-seg-base-rgbd_fix",
          optimizer="adam",

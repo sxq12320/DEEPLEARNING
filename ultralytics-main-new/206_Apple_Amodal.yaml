@@ -8,9 +8,7 @@
 # nc: 1
 # names: ["apple"]
 
-# depth_dir: /data/sxq/datasets/apple/depth_pic
-
-path: E:/mastercode/data/Apple_RGB_D_Amoal/yolo
+path: E:/mastercode/data/Apple_RGB_D_Amoal/apple_rgbd_amoal
 
 train: train/images
 val: val/images
@@ -19,4 +17,13 @@ test: test/images
 channels: 4
 nc: 1
 names: ["apple"]
-depth_dir: E:/mastercode/data/Apple_RGB_D_Amoal/depth_pic
+
+
+
+# 保存的 .npy 文件形状为 (H, W, 4)：
+
+# 通道索引	内容	说明
+# [:, :, 0]	Blue	cv2 读取顺序为 BGR
+# [:, :, 1]	Green	
+# [:, :, 2]	Red	
+# [:, :, 3]	Depth	float32，单位米 (mm÷1000)
