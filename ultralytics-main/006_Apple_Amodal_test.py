@@ -71,7 +71,8 @@ if __name__ == "__main__":
     """
 
     # ======================== 1. 对照组：Base 基础双流 ========================
-    yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
+   #  yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
+    yolo = YOLO(r"E:/mastercode/ultralytics-main/ultralytics/cfg/models/11/yolo11-base-rgbd-shuffle.yaml")
     yolo.train(
          data=r"ultralytics-main/206_Apple_Amodal.yaml",
          project=r"E:/mastercode/ultralytics-main/results",
