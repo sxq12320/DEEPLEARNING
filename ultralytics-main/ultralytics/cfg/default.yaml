@@ -25,12 +25,16 @@ exist_ok: False # (bool) overwrite existing 'project/name' if True
 pretrained: False # (bool | str) use pretrained weights (bool) or load weights from path (str)
 optimizer: auto # (str) optimizer: SGD, MuSGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
 
-# SMCScheduler (optimizer='SMC' 时生效)
-smc_surface_threshold: 0.1 # (float) 滑模面停滞阈值 (|s_t|/peak < 此值)
-smc_surface_patience: 50 # (int) 滑模面停滞持续步数
-smc_lr_boost: 1.2 # (float) escape 时 LR 提升倍数
-smc_noise_scale: 0.003 # (float) escape 时梯度噪声标准差
-smc_beta1_low: 0.85 # (float) escape 时 β₁
+# SMCScheduler (optimizer='SMC' 时生效) — V3 默认值
+smc_surface_threshold: 0.05 # (float) 滑模面停滞阈值 (|s_t|/peak < 此值)
+smc_surface_patience: 100 # (int) 滑模面停滞持续步数
+smc_lr_boost: 1.05 # (float) escape 时 LR 提升倍数
+smc_noise_scale: 0.001 # (float) escape 时梯度噪声标准差
+smc_beta1_low: 0.88 # (float) escape 时 β₁
+smc_noise_max_steps: 10 # (int) 单次 escape 最多注入噪声步数
+smc_noise_decay: 0.9 # (float) 噪声随 escape 步数衰减系数
+smc_escape_cooldown: 100 # (int) escape 结束后冷却步数
+smc_escape_max_duration: 20 # (int) 单次 escape 最长持续步数
 verbose: True # (bool) print verbose logs during training/val
 seed: 0 # (int) random seed for reproducibility
 deterministic: True # (bool) enable deterministic ops; reproducible but may be slower
