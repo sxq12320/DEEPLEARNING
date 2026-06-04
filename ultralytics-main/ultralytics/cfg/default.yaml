@@ -26,14 +26,11 @@ pretrained: False # (bool | str) use pretrained weights (bool) or load weights f
 optimizer: auto # (str) optimizer: SGD, MuSGD, Adam, Adamax, AdamW, NAdam, RAdam, RMSProp, or auto
 
 # SMCScheduler (optimizer='SMC' 时生效)
-smc_plateau_threshold: 0.15 # (float) 梯度停滞检测阈值 (grad_norm均值/峰值 < 此值)
-smc_plateau_patience: 5 # (int) plateau 持续步数后触发逃离
-smc_escape_push: 0.10 # (float) 逃离时每步参数位移量
-smc_escape_push_steps: 20 # (int) 逃离推进步数
-smc_reconv_steps: 40 # (int) 逃离后快速重收敛步数
-smc_reconv_lr_mult: 3.0 # (float) 重收敛时 LR 放大倍数
-smc_beta1_low: 0.1 # (float) 逃离/重收敛时 β₁
-smc_beta2_low: 0.9 # (float) 逃离/重收敛时 β₂
+smc_surface_threshold: 0.1 # (float) 滑模面停滞阈值 (|s_t|/peak < 此值)
+smc_surface_patience: 50 # (int) 滑模面停滞持续步数
+smc_lr_boost: 1.2 # (float) escape 时 LR 提升倍数
+smc_noise_scale: 0.003 # (float) escape 时梯度噪声标准差
+smc_beta1_low: 0.85 # (float) escape 时 β₁
 verbose: True # (bool) print verbose logs during training/val
 seed: 0 # (int) random seed for reproducibility
 deterministic: True # (bool) enable deterministic ops; reproducible but may be slower

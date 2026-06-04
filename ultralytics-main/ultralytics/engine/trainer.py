@@ -520,14 +520,12 @@ class BaseTrainer:
             self.smc_scheduler = SMCScheduler(
                 self.optimizer,
                 total_steps=iterations,
-                plateau_threshold=getattr(self.args, 'smc_plateau_threshold', 0.15),
-                plateau_patience=getattr(self.args, 'smc_plateau_patience', 5),
-                escape_push=getattr(self.args, 'smc_escape_push', 0.10),
-                escape_push_steps=getattr(self.args, 'smc_escape_push_steps', 20),
-                reconv_steps=getattr(self.args, 'smc_reconv_steps', 40),
-                reconv_lr_mult=getattr(self.args, 'smc_reconv_lr_mult', 3.0),
-                beta1_low=getattr(self.args, 'smc_beta1_low', 0.1),
-                beta2_low=getattr(self.args, 'smc_beta2_low', 0.9),
+                c=0.5,
+                surface_threshold=getattr(self.args, 'smc_surface_threshold', 0.1),
+                surface_patience=getattr(self.args, 'smc_surface_patience', 50),
+                lr_boost=getattr(self.args, 'smc_lr_boost', 1.2),
+                noise_scale=getattr(self.args, 'smc_noise_scale', 0.003),
+                beta1_low=getattr(self.args, 'smc_beta1_low', 0.85),
                 verbose=True,
             )
             LOGGER.info(f"{colorstr('smc:')} SMCScheduler enabled -- wraps {type(self.optimizer).__name__}")
@@ -799,6 +797,12 @@ class BaseTrainer:
                     self.scheduler.last_epoch = self.epoch  # do not move
                 self.stop |= epoch >= self.epochs  # stop if exceeded epochs
             self.run_callbacks("on_fit_epoch_end")
+
+            # SMC: epoch 结束时通知调度器
+            if self.smc_scheduler is not None and self.tloss is not None:
+                epoch_loss = self.tloss.mean().item() if isinstance(self.tloss, torch.Tensor) else float(self.tloss)
+                self.smc_scheduler.on_train_epoch_end(epoch_loss)
+
             self._clear_memory(0.5)  # clear if memory utilization > 50%
 
             # Early Stopping

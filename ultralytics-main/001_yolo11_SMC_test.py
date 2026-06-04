@@ -3,14 +3,10 @@ SMC (Sliding Mode Control) Optimizer 测试脚本
 基于 YOLO11-seg，使用 SMCScheduler 替代 AdamW
 
 超参数说明：
-  smc_plateau_threshold  : 梯度停滞检测阈值 (grad_norm 均值/峰值 < 此值 → plateau)
-  smc_plateau_patience   : plateau 持续多少步后触发逃离
-  smc_escape_push        : 逃离时每步参数位移量
-  smc_escape_push_steps  : 逃离推进步数 (总位移 = push × steps)
-  smc_reconv_steps       : 逃离后快速重收敛步数
-  smc_reconv_lr_mult     : 重收敛时 LR 放大倍数
-  smc_beta1_low          : 逃离/重收敛时的 β₁
-  smc_beta2_low          : 逃离/重收敛时的 β₂
+  smc_plateau_patience  : loss 不改善的 epoch 数后触发 plateau
+  smc_lr_boost          : plateau 时 LR 提升倍数
+  smc_noise_scale       : 梯度噪声标准差
+  smc_beta1_low         : plateau 时 β₁
 """
 
 from ultralytics import YOLO
@@ -30,12 +26,10 @@ if __name__ == '__main__':
         optimizer='SMC',
         device=0,
         # ---- SMC 超参数 (可选，不传则用默认值) ----
-        smc_plateau_threshold=0.15,   # 梯度停滞阈值
-        smc_plateau_patience=5,       # plateau 耐心值
-        smc_escape_push=0.10,         # 逃离位移量
-        smc_escape_push_steps=20,     # 逃离步数
-        smc_reconv_steps=40,          # 重收敛步数
-        smc_reconv_lr_mult=3.0,       # 重收敛 LR 倍数
+        smc_surface_patience=10,
+        smc_lr_boost=1.2,
+        smc_noise_scale=0.003,
+        smc_beta1_low=0.85,
         # ---- 数据增强 ----
         copy_paste=0.3,
         erasing=0.3,

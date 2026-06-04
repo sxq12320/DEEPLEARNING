@@ -88,14 +88,10 @@ if __name__ == "__main__":
          seed=SEED,
 
          # SMC 超参数（可选，不传用默认值）
-         smc_plateau_threshold=0.15,   # 梯度停滞阈值
-         smc_plateau_patience=5,       # plateau 耐心值
-         smc_escape_push=0.10,         # 逃离位移量
-         smc_escape_push_steps=20,     # 逃离步数
-         smc_reconv_steps=40,          # 重收敛步数
-         smc_reconv_lr_mult=3.0,       # 重收敛 LR 倍数
-         smc_beta1_low=0.1,            # 逃离时 β₁
-         smc_beta2_low=0.9,            # 逃离时 β₂
+         smc_surface_patience=10,    # 滑模面停滞持续步数
+         smc_lr_boost=1.2,           # plateau 时 LR 提升
+         smc_noise_scale=0.003,      # 梯度噪声
+         smc_beta1_low=0.85,         # plateau 时 β₁
 
     )
    
