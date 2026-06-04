@@ -48,6 +48,7 @@ IMG_FORMATS = {
     "jpeg2000",
     "jpg",
     "mpo",
+    "npy",
     "png",
     "tif",
     "tiff",
@@ -182,6 +183,13 @@ def check_image(im_file: str) -> tuple[str, tuple[int, int]]:
         AssertionError: If the image size is less than 10 pixels in any dimension or the format is invalid.
     """
     msg = ""
+    if im_file.lower().endswith(".npy"):
+        # .npy files: skip PIL verification, read shape directly via numpy
+        im_arr = np.load(im_file)
+        assert im_arr.ndim >= 2, f".npy image must have at least 2 dimensions, got {im_arr.ndim}"
+        shape = (im_arr.shape[1], im_arr.shape[0])  # hw
+        assert (shape[0] > 9) & (shape[1] > 9), f"image size {shape} <10 pixels"
+        return msg, shape
     im = Image.open(im_file)
     im.verify()  # PIL verify
     shape = exif_size(im)  # image size

@@ -30,4 +30,5 @@ if __name__ == "__main__":
          device=0,
          cache=False,  
          seed=SEED,
+         amp = 0,
     )

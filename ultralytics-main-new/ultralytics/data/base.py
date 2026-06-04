@@ -242,6 +242,10 @@ class BaseDataset(Dataset):
                     LOGGER.warning(f"{self.prefix}Removing corrupt *.npy image file {fn} due to: {e}")
                     Path(fn).unlink(missing_ok=True)
                     im = imread(f, flags=self.cv2_flag)  # BGR
+            elif f.lower().endswith(".npy"):  # 源文件本身是 .npy 格式（如 RGBD 四通道）
+                im = np.load(f)
+                if im.ndim == 2:
+                    im = im[..., None]  # (H, W) → (H, W, 1)
             else:  # read image
                 im = imread(f, flags=self.cv2_flag)  # BGR
             if im is None:
@@ -296,6 +300,9 @@ class BaseDataset(Dataset):
     def cache_images_to_disk(self, i: int) -> None:
         """Save an image as an *.npy file for faster loading."""
         f = self.npy_files[i]
+        # 源文件本身就是 .npy 时跳过缓存（避免覆盖源文件、避免通道丢失）
+        if self.im_files[i].lower().endswith(".npy"):
+            return
         if not f.exists():
             try:
                 np.save(f.as_posix(), imread(self.im_files[i], flags=self.cv2_flag), allow_pickle=False)
