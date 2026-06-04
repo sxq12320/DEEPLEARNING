@@ -11,12 +11,12 @@ class MultiScaleVarianceEstimator(nn.Module):
         super().__init__()
         # 使用统计数学计算数学期望Ex
         self.pool1 = nn.AvgPool2d(kernel_size = 3 , stride = 1 , padding = 1)
-        self.pool2 = nn.AvgPool2d(kernel_size = 5 , stride = 1 , padding = 1)
-        self.pool3 = nn.AvgPool2d(kernel_size = 7 , stride = 1 , padding = 1)
+        self.pool2 = nn.AvgPool2d(kernel_size = 5 , stride = 1 , padding = 2)
+        self.pool3 = nn.AvgPool2d(kernel_size = 7 , stride = 1 , padding = 3)
         # 2. 极轻量网络校准器 (学习语义级别的不确定性)
-        # 输入: 3个尺度的统计方差 + 1个原始特征 (共4个通道，极致压缩)
+        # 输入: 3个尺度的统计方差(各c_in通道) + 1个全局上下文(c_in通道) = 4*c_in通道
         self.calibrator = nn.Sequential(
-            nn.Conv2d(4, 1, kernel_size=1, bias=False),
+            nn.Conv2d(4 * c_in, 1, kernel_size=1, bias=False),
             nn.Softplus() # 保证输出的方差/不确定性严格为正
         )
 
@@ -57,6 +57,7 @@ class KalmanGatedFusion(nn.Module):
     轻量化：采用 1x1 挤压通道 + 3x3 深度卷积，相比标准 3x3 卷积减少 85% 参数。
     """
     def __init__(self, c_rgb, c_dep, eps=1e-5):
+        super().__init__()
         self.eps = eps
         self.uncert_rgb = MultiScaleVarianceEstimator(c_rgb)
         self.uncert_dep = MultiScaleVarianceEstimator(c_dep)

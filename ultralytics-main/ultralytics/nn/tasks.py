@@ -12,6 +12,7 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule, SplitChannels
+from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
 from ultralytics.nn.modules import (
     AIFI,
     C1,
@@ -1761,13 +1762,32 @@ def parse_model(d, ch, verbose=True):
             c1 = ch[f]
             c2 = len(args[0])  # channels list 的长度即输出通道数
             args = [c1, *args]
-        elif m in (KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule):
+        elif m is ESOFusion:
+            # ESOFusion 输出 = cat(f_clean, f_fused_p3)，通道数 = ch[f[0]] + ch[f[1]]
+            if isinstance(f, list):
+                c2 = ch[f[0]] + ch[f[1]]
+                args = [ch[x] for x in f]
+            else:
+                c2 = ch[f]
+                args = [c2, *args]
+        elif m in (KalmanGatedFusion, IDAPBCFusion, BypassModule):
             if isinstance(f, list):
                 c2 = ch[f[0]]  # 输出通道 = 第一路输入通道
                 args = [ch[x] for x in f]  # 只传两路通道数，不追加 YAML args
             else:
                 c2 = ch[f]
                 args = [c2, *args]
+        elif m is ShuffleV2Stem_Depth:
+            # ShuffleNetV2 Stem: 不受 width_multiple 缩放，固定输出 24 通道
+            c1 = ch[f]
+            c2 = 24
+            args = [c1, c2]
+        elif m is ShuffleV2Stage:
+            # ShuffleNetV2 Stage: 不受 width_multiple 缩放，输出通道由 YAML 指定
+            c1 = ch[f]
+            c2 = args[0]  # 输出通道 (116/232/464 for 1.0x)
+            num_blocks = args[1]
+            args = [c1, c2, num_blocks]
         elif m in {ScalarAttention, MyChannelAttention}:
             # 通道保持不变，构造器只需要 in_ch
             c2 = ch[f]
