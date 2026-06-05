@@ -20,7 +20,7 @@ if __name__ == "__main__":
          data=r"E:\mastercode\ultralytics-main-new\206_Apple_Amodal.yaml",
          project=r"E:\mastercode\ultralytics-main-new\results",
          name="01_yolo11n-seg-base-rgbd_fix",
-         optimizer="adam",
+         optimizer="AdamW",
          epochs=20,
          patience=50,
          imgsz=400,

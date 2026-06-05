@@ -486,7 +486,8 @@ class BaseTrainer:
 
         self.stopper, self.stop = EarlyStopping(patience=self.args.patience), False
         self.resume_training(ckpt)
-        self.scheduler.last_epoch = self.start_epoch - 1  # do not move
+        if self.scheduler is not None:
+            self.scheduler.last_epoch = self.start_epoch - 1  # do not move
         self.run_callbacks("on_pretrain_routine_end")
 
     def _do_train(self):
@@ -519,7 +520,8 @@ class BaseTrainer:
             self.run_callbacks("on_train_epoch_start")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")  # suppress 'Detected lr_scheduler.step() before optimizer.step()'
-                self.scheduler.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
 
             self._model_train()
             if RANK != -1:
@@ -592,7 +594,8 @@ class BaseTrainer:
                     self.loss = self.loss_items = self.tloss = None
                     self._clear_memory()
                     self._build_train_pipeline()  # rebuild dataloaders, optimizer, scheduler
-                    self.scheduler.last_epoch = self.start_epoch - 1
+                    if self.scheduler is not None:
+                        self.scheduler.last_epoch = self.start_epoch - 1
                     nb = len(self.train_loader)
                     nw = max(round(self.args.warmup_epochs * nb), 100) if self.args.warmup_epochs > 0 else -1
                     last_opt_step = -1
@@ -689,7 +692,8 @@ class BaseTrainer:
                 mean_epoch_time = (t - self.train_time_start) / (epoch - self.start_epoch + 1)
                 self.epochs = self.args.epochs = math.ceil(self.args.time * 3600 / mean_epoch_time)
                 self._setup_scheduler()
-                self.scheduler.last_epoch = self.epoch  # do not move
+                if self.scheduler is not None:
+                    self.scheduler.last_epoch = self.epoch  # do not move
                 self.stop |= epoch >= self.epochs  # stop if exceeded epochs
             self.run_callbacks("on_fit_epoch_end")
             # clear if memory utilization > 50%; always clear on MPS due to leak https://github.com/ultralytics/ultralytics/issues/22621
@@ -1083,7 +1087,8 @@ class BaseTrainer:
         unwrap_model(self.model).load_state_dict(ema_state)  # Load EMA weights into model
         self._load_checkpoint_state(ckpt)  # Load optimizer/scaler/EMA/best_fitness
         del ckpt, ema_state
-        self.scheduler.last_epoch = epoch - 1
+        if self.scheduler is not None:
+            self.scheduler.last_epoch = epoch - 1
         return True
 
     def resume_training(self, ckpt):
