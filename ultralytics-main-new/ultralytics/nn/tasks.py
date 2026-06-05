@@ -73,7 +73,30 @@ from ultralytics.nn.modules import (
     YOLOESegment,
     YOLOESegment26,
     v10Detect,
+    # CT fusion modules
+    BLFLoss,
+    BypassModule,
+    ESOFusion,
+    IDAPBCFusion,
+    KalmanGatedFusion,
+    MultiScaleVarianceEstimator,
+    # LSNet backbone
+    LSBlock,
+    LSConv,
+    LSNetBackbone,
+    LSNetDownsample,
+    LSNet_B,
+    LSNet_S,
+    LSNet_T,
+    MSAStageBlock,
+    PatchEmbed,
+    # ShuffleNetV2 depth branch
+    ShuffleV2Block,
+    ShuffleV2Stage,
+    ShuffleV2Stem_Depth,
 )
+from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
+from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, SETTINGS, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import REMOTE_FILE_PREFIXES, check_file, check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import (
@@ -1778,6 +1801,32 @@ def parse_model(d, ch, verbose=True):
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
+        elif m is ESOFusion:
+            # ESOFusion 输出 = cat(f_clean, f_fused_p3)，通道数 = ch[f[0]] + ch[f[1]]
+            if isinstance(f, list):
+                c2 = ch[f[0]] + ch[f[1]]
+                args = [ch[x] for x in f]
+            else:
+                c2 = ch[f]
+                args = [c2, *args]
+        elif m in (KalmanGatedFusion, IDAPBCFusion, BypassModule):
+            if isinstance(f, list):
+                c2 = ch[f[0]]  # 输出通道 = 第一路输入通道
+                args = [ch[x] for x in f]  # 只传两路通道数，不追加 YAML args
+            else:
+                c2 = ch[f]
+                args = [c2, *args]
+        elif m is ShuffleV2Stem_Depth:
+            # ShuffleNetV2 Stem: 不受 width_multiple 缩放，固定输出 24 通道
+            c1 = ch[f]
+            c2 = 24
+            args = [c1, c2]
+        elif m is ShuffleV2Stage:
+            # ShuffleNetV2 Stage: 不受 width_multiple 缩放，输出通道由 YAML 指定
+            c1 = ch[f]
+            c2 = args[0]  # 输出通道 (116/232/464 for 1.0x)
+            num_blocks = args[1]
+            args = [c1, c2, num_blocks]
         elif m in frozenset(
             {
                 Detect,
