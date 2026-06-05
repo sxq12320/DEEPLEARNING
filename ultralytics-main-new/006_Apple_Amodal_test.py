@@ -1,4 +1,3 @@
-from ultralytics import YOLO
 import torch
 import random
 import numpy as np
@@ -15,13 +14,13 @@ torch.backends.cudnn.benchmark = False
 
 
 if __name__ == "__main__":
-    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\ultralytics\cfg\models\11\yolo11-seg.yaml")
+    yolo = YOLO(r"E:/mastercode/ultralytics-main-new/ultralytics/cfg/models/11/yolo11-seg.yaml")
     yolo.train(
-         data=r"E:\mastercode\ultralytics-main-new\206_Apple_Amodal.yaml",
-         project=r"E:\mastercode\ultralytics-main-new\results",
+         data=r"E:/mastercode/ultralytics-main-new/206_Apple_Amodal.yaml",
+         project=r"E:/mastercode/ultralytics-main-new/results",
          name="01_yolo11n-seg-base-rgbd_fix",
          optimizer="PIDAO",
-         epochs=20,
+         epochs=40,
          patience=50,
          imgsz=400,
          batch=4,
