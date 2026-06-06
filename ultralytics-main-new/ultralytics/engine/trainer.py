@@ -30,6 +30,7 @@ from ultralytics.data.utils import check_cls_dataset, check_det_dataset, convert
 from ultralytics.nn.tasks import load_checkpoint
 from ultralytics.optim import MuSGD
 from ultralytics.nn.modules.smc_scheduler import SMCScheduler
+from ultralytics.nn.modules.smcao_v22_scheduler import SMCAOV22Scheduler
 from collections import deque
 from ultralytics.utils import (
     DEFAULT_CFG,
@@ -333,9 +334,9 @@ class BaseTrainer:
 
     def _setup_scheduler(self):
         """Initialize training learning rate scheduler."""
-        # SMC 模式：SMCScheduler 内建 cosine schedule，跳过 LambdaLR
-        if self.args.optimizer.upper() == "SMC":
-            self.lf = lambda x: 1.0  # no-op，SMCScheduler 自行管理 LR
+        # SMC / SMCAO 模式：内建 cosine schedule，跳过 LambdaLR
+        if self.args.optimizer.upper() in {"SMC", "SMCAO"}:
+            self.lf = lambda x: 1.0  # no-op，Scheduler 自行管理 LR
             self.scheduler = None
             return
         if self.args.cos_lr:
@@ -382,7 +383,7 @@ class BaseTrainer:
         )
         self._setup_scheduler()
 
-        # SMC 模式：用 SMCScheduler 包装优化器
+        # SMC / SMCAO 模式：用对应 Scheduler 包装优化器
         if self.args.optimizer.upper() == "SMC":
             # SMC 模式不创建 LambdaLR，但 warmup 需要 initial_lr，手动添加
             for pg in self.optimizer.param_groups:
@@ -404,6 +405,43 @@ class BaseTrainer:
                 verbose=True,
             )
             LOGGER.info(f"{colorstr('smc:')} SMCScheduler enabled -- wraps {type(self.optimizer).__name__}")
+        elif self.args.optimizer.upper() == "SMCAO":
+            # SMCAO V2.2 模式：四项改进驱动的局部极小值逃逸
+            for pg in self.optimizer.param_groups:
+                if "initial_lr" not in pg:
+                    pg["initial_lr"] = pg["lr"]
+            self.smc_scheduler = SMCAOV22Scheduler(
+                self.optimizer,
+                total_steps=iterations,
+                c0=0.5,
+                # 停滞检测
+                surface_threshold=getattr(self.args, 'smc_surface_threshold', 0.05),
+                surface_patience=getattr(self.args, 'smc_surface_patience', 80),
+                # 机制1: 随机滑模面抖动
+                dither_scale=getattr(self.args, 'smcao_dither_scale', 0.002),
+                dither_alpha=getattr(self.args, 'smcao_dither_alpha', 1.5),
+                dither_max_steps=getattr(self.args, 'smcao_dither_max_steps', 12),
+                dither_decay=getattr(self.args, 'smcao_dither_decay', 0.9),
+                # 机制2: 负阻尼能量注入
+                a0=getattr(self.args, 'smcao_a0', 5.0),
+                a_neg=getattr(self.args, 'smcao_a_neg', 1.0),
+                gamma_damping=getattr(self.args, 'smcao_gamma_damping', 2.0),
+                grad_threshold=getattr(self.args, 'smcao_grad_threshold', 0.01),
+                # 机制3: 分数阶记忆
+                kappa_mem=getattr(self.args, 'smcao_kappa_mem', 0.1),
+                alpha_frac=getattr(self.args, 'smcao_alpha_frac', 0.5),
+                memory_window=getattr(self.args, 'smcao_memory_window', 20),
+                # 机制4: 自适应损失引导
+                c_beta=getattr(self.args, 'smcao_c_beta', 1.0),
+                c_eps=getattr(self.args, 'smcao_c_eps', 0.01),
+                # 通用控制
+                lr_boost=getattr(self.args, 'smc_lr_boost', 1.1),
+                escape_cooldown=getattr(self.args, 'smc_escape_cooldown', 80),
+                escape_max_duration=getattr(self.args, 'smc_escape_max_duration', 25),
+                beta1_low=getattr(self.args, 'smc_beta1_low', 0.88),
+                verbose=True,
+            )
+            LOGGER.info(f"{colorstr('smcao:')} SMCAO V2.2 Scheduler enabled -- wraps {type(self.optimizer).__name__}")
         else:
             self.smc_scheduler = None
 
@@ -1168,9 +1206,9 @@ class BaseTrainer:
         if not use_muon:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC"}
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC", "SMCAO"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
-        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC"}:
+        if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC", "SMCAO"}:
             optim_args = dict(lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         elif name == "RMSProp":
             optim_args = dict(lr=lr, momentum=momentum)
@@ -1204,7 +1242,7 @@ class BaseTrainer:
                 p2 = [v for k, v in p.items() if not pattern.search(k)]
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
-        # PIDAO / SMC 优化器实例化
+        # PIDAO / SMC / SMCAO 优化器实例化
         if name == "PIDAO":
             optimizer = PIDAO(
                 params=g,
@@ -1214,13 +1252,18 @@ class BaseTrainer:
                 ki=1.0,
                 kd_channels=[0.1, 0.05, 0.01]
             )
-        elif name == "SMC":
-            # SMC 模式：底层使用 AdamW，由 SMCScheduler 在训练循环中动态调节
+        elif name in {"SMC", "SMCAO"}:
+            # SMC / SMCAO 模式：底层使用 AdamW，由对应 Scheduler 在训练循环中动态调节
             optimizer = optim.AdamW(params=g, lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
         else:
             optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
-        opt_name = f"SMC+{type(optimizer).__name__}" if name == "SMC" else type(optimizer).__name__
+        if name == "SMC":
+            opt_name = f"SMC+{type(optimizer).__name__}"
+        elif name == "SMCAO":
+            opt_name = f"SMCAO-V2.2+{type(optimizer).__name__}"
+        else:
+            opt_name = type(optimizer).__name__
         LOGGER.info(
             f"{colorstr('optimizer:')} {opt_name}(lr={lr}, momentum={momentum}) with parameter groups "
             f"{num_params[1]} weight(decay=0.0), {num_params[0]} weight(decay={decay}), {num_params[2]} bias(decay=0.0)"

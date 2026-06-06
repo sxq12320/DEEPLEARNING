@@ -37,6 +37,33 @@ fraction: 1.0 # (float) fraction of training dataset to use (1.0 = all)
 profile: False # (bool) profile ONNX/TensorRT speeds during training for loggers
 freeze: # (int | list, optional) freeze first N layers (int) or specific layer indices (list)
 multi_scale: 0.0 # (float) multi-scale range as a fraction of imgsz; sizes are rounded to stride multiples
+
+# SMC / SMCAO Optimizer Parameters ------------------------------------------------------------------
+# SMC V3 (Sliding Mode Control Scheduler)
+smc_surface_threshold: 0.05 # (float) 滑模面停滞阈值 (|s_t|/peak < 此值)
+smc_surface_patience: 100 # (int) 滑模面停滞持续步数触发 escape
+smc_lr_boost: 1.05 # (float) escape 时 LR 提升倍数
+smc_noise_scale: 0.001 # (float) 梯度噪声相对量级
+smc_beta1_low: 0.88 # (float) escape 时 β₁
+smc_noise_max_steps: 10 # (int) 单次 escape 最多注入噪声步数
+smc_noise_decay: 0.9 # (float) 噪声随 escape 步数衰减系数
+smc_escape_cooldown: 100 # (int) escape 结束后冷却步数
+smc_escape_max_duration: 20 # (int) 单次 escape 最长持续步数
+
+# SMCAO V2.2 (四项改进：Lévy 抖动 + 负阻尼 + 分数阶记忆 + 自适应 c)
+smcao_dither_scale: 0.002 # (float) Lévy 扰动基础缩放
+smcao_dither_alpha: 1.5 # (float) Lévy 稳定指数 (1<α<2，越小尾部越重)
+smcao_dither_max_steps: 12 # (int) 单次 escape 最多注入 Lévy 扰动步数
+smcao_dither_decay: 0.9 # (float) Lévy 扰动衰减系数
+smcao_a0: 5.0 # (float) 基础正阻尼系数
+smcao_a_neg: 1.0 # (float) 负阻尼幅度 (escape 时 a=-a_neg)
+smcao_gamma_damping: 2.0 # (float) 负阻尼激活 tanh 增益
+smcao_grad_threshold: 0.01 # (float) 梯度低于此值视为"梯度消失"
+smcao_kappa_mem: 0.1 # (float) 分数阶记忆项系数
+smcao_alpha_frac: 0.5 # (float) 分数阶阶数 (0<α<1)
+smcao_memory_window: 20 # (int) 记忆窗口长度
+smcao_c_beta: 1.0 # (float) 自适应 c(f) 中的 beta
+smcao_c_eps: 0.01 # (float) 自适应 c(f) 中的 epsilon
 compile: False # (bool | str) enable torch.compile() backend='inductor'; True="default", False=off, or "default|reduce-overhead|max-autotune-no-cudagraphs"
 
 # Segmentation
