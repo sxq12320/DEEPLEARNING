@@ -35,6 +35,24 @@ smc_noise_max_steps: 10 # (int) 单次 escape 最多注入噪声步数
 smc_noise_decay: 0.9 # (float) 噪声随 escape 步数衰减系数
 smc_escape_cooldown: 100 # (int) escape 结束后冷却步数
 smc_escape_max_duration: 20 # (int) 单次 escape 最长持续步数
+
+# SMCAOOptimizer (optimizer='SMCAO' 时生效) — V2.1 默认值
+smcao_a_neg: 5.0 # (float) 阻尼系数 a（抑制速度振荡）
+smcao_kappa_mem: 200.0 # (float) 切换增益基数 kappa_base
+smcao_dither_alpha: 2.0 # (float) 自适应 kappa 放大系数 kappa_alpha
+smcao_dither_scale: 0.1 # (float) 边界层厚度 phi（饱和函数参数）
+smcao_c_beta: 1.0 # (float) 滑模面系数 c
+smcao_alpha_frac: 0.8 # (float) Newton 精修步长 newton_lr
+smcao_ki: 0.001 # (float) 积分增益 ki
+smcao_v_max: 10.0 # (float) 最大速度限制 v_max
+smcao_reaching_threshold: 10.0 # (float) 趋达阶段梯度阈值 reaching_threshold
+smcao_newton_threshold: 0.5 # (float) Newton 阶段梯度阈值 newton_threshold
+smcao_lambda_min: 0.0001 # (float) Hessian 正则化最小值 lambda_min
+smcao_lambda_max: 50.0 # (float) Hessian 正则化最大值 lambda_max
+smcao_lambda_beta: 0.3 # (float) Hessian 正则化 Sigmoid 斜率 lambda_beta
+smcao_lambda_g_mid: 5.0 # (float) Hessian 正则化 Sigmoid 中点 lambda_g_mid
+smcao_integrator: rk4 # (str) 数值积分方法: heun 或 rk4
+
 verbose: True # (bool) print verbose logs during training/val
 seed: 0 # (int) random seed for reproducibility
 deterministic: True # (bool) enable deterministic ops; reproducible but may be slower

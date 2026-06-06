@@ -31,6 +31,7 @@ from ultralytics.data.utils import check_cls_dataset, check_det_dataset
 from ultralytics.nn.tasks import load_checkpoint
 from ultralytics.optim import MuSGD
 from ultralytics.nn.modules.smc_scheduler import SMCScheduler
+from ultralytics.nn.modules.smcao_module import SMCAOOptimizer
 from ultralytics.utils import (
     DEFAULT_CFG,
     GIT,
@@ -1265,8 +1266,8 @@ class BaseTrainer:
         if not use_muon:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
-        # 👉 第一处整合：添加 PIDAO 到白名单
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC"}
+        # 👉 第一处整合：添加 PIDAO / SMCAO 到白名单
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC", "SMCAO"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
 
         if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC"}:
@@ -1279,6 +1280,9 @@ class BaseTrainer:
         elif name == "PIDAO":
             # 将 YOLO 传进来的 momentum 映射给 PIDAO 需要的 eq_momentum
             optim_args = dict(lr=lr, eq_momentum=momentum)
+        # 👉 SMCAO 参数字典配置
+        elif name == "SMCAO":
+            optim_args = dict(lr=lr)
         else:
             raise NotImplementedError(
                 f"Optimizer '{name}' not found in list of available optimizers {optimizers}. "
@@ -1306,7 +1310,7 @@ class BaseTrainer:
                 g_.extend([{"params": p1, **x, "lr": lr * 3}, {"params": p2, **x}])
             g = g_
 
-        # 👉 第二处整合：拦截 YOLO 的默认实例化，使用多通道 PIDAO / SMC
+        # 👉 第二处整合：拦截 YOLO 的默认实例化，使用多通道 PIDAO / SMC / SMCAO
         if name == "PIDAO":
             optimizer = PIDAO(
                 params=g,
@@ -1319,6 +1323,27 @@ class BaseTrainer:
         elif name == "SMC":
             # SMC 模式：底层使用 AdamW，由 SMCScheduler 在训练循环中动态调节
             optimizer = optim.AdamW(params=g, lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
+        elif name == "SMCAO":
+            # SMCAO 模式：使用 SMCAOOptimizer 三阶段独立优化器
+            optimizer = SMCAOOptimizer(
+                params=g,
+                lr=lr,
+                a=getattr(self.args, 'smcao_a_neg', 5.0),
+                kappa_base=getattr(self.args, 'smcao_kappa_mem', 200.0),
+                kappa_alpha=getattr(self.args, 'smcao_dither_alpha', 2.0),
+                phi=getattr(self.args, 'smcao_dither_scale', 0.1),
+                c=getattr(self.args, 'smcao_c_beta', 1.0),
+                ki=getattr(self.args, 'smcao_ki', 0.001),
+                v_max=getattr(self.args, 'smcao_v_max', 10.0),
+                reaching_threshold=getattr(self.args, 'smcao_reaching_threshold', 10.0),
+                newton_threshold=getattr(self.args, 'smcao_newton_threshold', 0.5),
+                newton_lr=getattr(self.args, 'smcao_alpha_frac', 0.8),
+                lambda_min=getattr(self.args, 'smcao_lambda_min', 1e-4),
+                lambda_max=getattr(self.args, 'smcao_lambda_max', 50.0),
+                lambda_beta=getattr(self.args, 'smcao_lambda_beta', 0.3),
+                lambda_g_mid=getattr(self.args, 'smcao_lambda_g_mid', 5.0),
+                integrator=getattr(self.args, 'smcao_integrator', 'rk4'),
+            )
         else:
             optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 
