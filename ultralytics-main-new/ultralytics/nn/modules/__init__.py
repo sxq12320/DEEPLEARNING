@@ -130,6 +130,13 @@ from .shufflenetv2_depth import (
     ShuffleV2Stage,
     ShuffleV2Stem_Depth,
 )
+from .custom_blocks import (
+    DGFFN,
+    HaarDWT,
+    HaarIDWT,
+    SFM,
+    WCAF,
+)
 
 __all__ = (
     "AIFI",
@@ -234,4 +241,10 @@ __all__ = (
     "ShuffleV2Block",
     "ShuffleV2Stage",
     "ShuffleV2Stem_Depth",
+    # Custom RGB-D modules
+    "DGFFN",
+    "HaarDWT",
+    "HaarIDWT",
+    "SFM",
+    "WCAF",
 )

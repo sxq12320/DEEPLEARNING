@@ -94,6 +94,12 @@ from ultralytics.nn.modules import (
     ShuffleV2Block,
     ShuffleV2Stage,
     ShuffleV2Stem_Depth,
+    # Custom RGB-D modules
+    DGFFN,
+    HaarDWT,
+    HaarIDWT,
+    SFM,
+    WCAF,
 )
 from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1731,6 +1737,8 @@ def parse_model(d, ch, verbose=True):
             SCDown,
             C2fCIB,
             A2C2f,
+            SFM,
+            DGFFN,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1750,6 +1758,7 @@ def parse_model(d, ch, verbose=True):
             C2fCIB,
             C2PSA,
             A2C2f,
+            SFM,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -1816,6 +1825,14 @@ def parse_model(d, ch, verbose=True):
             else:
                 c2 = ch[f]
                 args = [c2, *args]
+        elif m is WCAF:
+            # WCAF: Wavelet-Cross-Attention Fusion, takes two inputs (rgb, depth)
+            if isinstance(f, list):
+                c2 = ch[f[0]]  # 输出通道 = RGB 通道数
+                args = [ch[f[0]], ch[f[1]]]  # [c_rgb, c_dep]
+            else:
+                c2 = ch[f]
+                args = [c2, c2]
         elif m is ShuffleV2Stem_Depth:
             # ShuffleNetV2 Stem: 不受 width_multiple 缩放，固定输出 24 通道
             c1 = ch[f]
