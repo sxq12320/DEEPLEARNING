@@ -2379,7 +2379,13 @@ class Format(BaseTransform):
         if len(img.shape) < 3:
             img = img[..., None]
         img = img.transpose(2, 0, 1)
-        img = np.ascontiguousarray(img[::-1] if random.uniform(0, 1) > self.bgr and img.shape[0] == 3 else img)
+        # 对3通道图像反转BGR->RGB；对4通道图像(如RGBD)反转前3通道BGR->RGB
+        if random.uniform(0, 1) > self.bgr:
+            if img.shape[0] == 3:
+                img = img[::-1]
+            elif img.shape[0] == 4:
+                img = np.concatenate([img[:3][::-1], img[3:]], axis=0)
+        img = np.ascontiguousarray(img)
         img = torch.from_numpy(img)
         return img
 
