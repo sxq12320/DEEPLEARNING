@@ -74,30 +74,30 @@ if __name__ == "__main__":
    #  yolo = YOLO(r"ultralytics/cfg/models/11/yolo11-base-rgbd.yaml")
     yolo = YOLO(r"E:/mastercode/ultralytics-main/ultralytics/cfg/models/11/yolo11-base-rgbd-shuffle.yaml")
     yolo.train(
-         data=r"ultralytics-main/206_Apple_Amodal.yaml",
-         project=r"E:/mastercode/ultralytics-main/results",
-         name="01_yolo11n-seg-base-rgbd_fix",
-         optimizer="SMC",
-         epochs=20,
-         patience=50,
-         imgsz=540,
-         batch=4,
-         lr0=0.01,
-         workers=4,
-         device=0,
-         cache=False,  # 缓存预处理图片到磁盘，首次加载慢，后续 epoch 从缓存读取
-         seed=SEED,
-
-         # SMC 超参数 V3（可选，不传用默认值）
-         # 注意：V3 修复了滑模面计算 bug、大幅降低噪声、引入冷却机制
-         smc_surface_patience=50,    # 滑模面停滞持续步数（V3 建议 ≥50，避免频繁误触发）
-         smc_lr_boost=1.05,          # escape 时 LR 提升（V3 更温和，1.05x 而非 1.2x）
-         smc_noise_scale=0.001,      # 梯度噪声（V3 更低，0.001 而非 0.003）
-         smc_beta1_low=0.88,         # escape 时 β₁（V3 变化更小，0.88 而非 0.85）
-         smc_noise_max_steps=10,     # 单次 escape 最多注入 10 步噪声
-         smc_escape_cooldown=100,    # escape 后冷却 100 步
-         smc_escape_max_duration=20, # 单次 escape 最长 20 步
-
+        data=r"ultralytics-main/206_Apple_Amodal.yaml",
+        project=r"E:/mastercode/ultralytics-main/results",
+        name="01_yolo11n-seg-base-rgbd-shuffle",
+        epochs=300,
+        imgsz=640,
+        batch=4,
+        lr0=0.0001,
+        workers=4,
+        device=0,
+        seed=SEED,
+        amp = 0,
+        optimizer="AdamW", # 使用基本 的AdamW优化器
+        
+    )
+   #  yolo.train(
+   #  optimizer="SMCAO",  # 启用 SMCAO V2.2
+   #  epochs=40,
+   #  # SMCAO 专属参数（可选，不传则用默认值）
+   #  smcao_dither_scale=0.002,     # Lévy 扰动缩放
+   #  smcao_dither_alpha=1.5,       # Lévy 稳定指数
+   #  smcao_a_neg=1.0,              # 负阻尼幅度
+   #  smcao_kappa_mem=0.1,          # 分数阶记忆系数
+   #  smcao_alpha_frac=0.5,         # 分数阶阶数
+   #  smcao_c_beta=1.0,             # 自适应 c(f) 的 beta
     )
    
 

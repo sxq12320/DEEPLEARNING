@@ -14,20 +14,21 @@ torch.backends.cudnn.benchmark = False
 
 
 if __name__ == "__main__":
-    yolo = YOLO(r"E:/mastercode/ultralytics-main-new/ultralytics/cfg/models/11/yolo11-seg.yaml")
+    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\mine_yaml\ablation1_4ch_input.yaml")
     yolo.train(
          data=r"E:/mastercode/ultralytics-main-new/206_Apple_Amodal.yaml",
          project=r"E:/mastercode/ultralytics-main-new/results",
-         name="01_yolo11n-seg-base-rgbd_fix",
-         optimizer="PIDAO",
-         epochs=40,
+         name="01_yolo11_doublebarnch_RGBD_shuffleNet_depth_AdamW",
+         optimizer="AdamW",
+         epochs=300,
          patience=50,
-         imgsz=400,
-         batch=4,
+         imgsz=640,
+         batch=2,
          lr0=0.01,
          workers=4,
          device=0,
          cache=False,  
          seed=SEED,
          amp = 0,
+         dropout = 0.1,
       )
