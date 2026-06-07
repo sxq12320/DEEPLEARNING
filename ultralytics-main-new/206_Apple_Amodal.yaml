@@ -8,7 +8,7 @@
 # nc: 1
 # names: ["apple"]
 
-path: E:/mastercode/data/Apple_RGB_D_Amoal/apple_rgbd_amoal
+path: E:/mastercode/data/Apple_RGB_D_Amoal/apple_rgbd_amoal_png
 
 train: train/images
 val: val/images
