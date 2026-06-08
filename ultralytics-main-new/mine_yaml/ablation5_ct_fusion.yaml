@@ -1,7 +1,7 @@
 # 消融实验 5：RGB分支(YOLO11) + Depth分支(ShuffleNetV2) + CT融合策略
 # 改进策略：在特征融合部分增加卡尔曼滤波融合、ESO融合、IDA-PBC融合策略
 # 训练命令示例：
-#   yolo detect train model=ablation5_ct_fusion.yaml data=your_rgd_data.yaml epochs=100
+#   yolo segment train model=ablation5_ct_fusion.yaml data=your_rgd_data.yaml epochs=100
 #
 # 架构说明：
 #   - 输入：4通道 RGBD (channels=4)
@@ -76,4 +76,4 @@ head:
   - [[-1, 17], 1, Concat, [1]]          # 28-cat IDAPBC P5
   - [-1, 2, C3k2, [1024, True]]         # 29-P5/32-large
 
-  - [[23, 26, 29], 1, Detect, [nc]]     # 30-Detect(P3, P4, P5)
+  - [[23, 26, 29], 1, Segment, [nc, 32, 256]] # 30-Segment(P3, P4, P5)

@@ -1,7 +1,7 @@
 # 消融实验 2：RGB分支(YOLO11) + Depth分支(简单Conv下采样) + BypassModule融合
 # 改进策略：RGB分支仍使用YOLO11架构，Depth仅使用Conv进行简单下采样保证尺寸大小一样
 # 训练命令示例：
-#   yolo detect train model=ablation2_rgb_conv_depth.yaml data=your_rgd_data.yaml epochs=100
+#   yolo segment train model=ablation2_rgb_conv_depth.yaml data=your_rgd_data.yaml epochs=100
 #
 # 架构说明：
 #   - 输入：4通道 RGBD (channels=4)
@@ -69,4 +69,4 @@ head:
   - [[-1, 17], 1, Concat, [1]]          # 28-cat fused P5
   - [-1, 2, C3k2, [1024, True]]         # 29-P5/32-large
 
-  - [[23, 26, 29], 1, Detect, [nc]]     # 30-Detect(P3, P4, P5)
+  - [[23, 26, 29], 1, Segment, [nc, 32, 256]] # 30-Segment(P3, P4, P5)

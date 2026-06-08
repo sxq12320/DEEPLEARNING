@@ -52,7 +52,84 @@ __all__ = (
     "ResNetLayer",
     "SCDown",
     "TorchVision",
+    "APFN",
 )
+
+class APFN(nn.Module):
+    """
+    Attention Parallel Feature Mixer (APFN).
+
+    Fuses two feature maps F_A and F_B via parallel channel-context and
+    spatial-context branches, then combines them with a learned soft gate.
+
+    Reference diagram: "(b) Attention Parallel Feature Mixer".
+    """
+
+    def __init__(self, c1: int, c2: int):
+        """
+        Initialize APFN.
+
+        Args:
+            c1 (int): Number of channels for the first input feature map (F_A).
+            c2 (int): Number of channels for the second input feature map (F_B).
+        """
+        super().__init__()
+        # Intermediate channel count is the concatenation of the two inputs.
+        c_mid = c1 + c2
+
+        # Channel-context branch
+        self.cv_ch_1 = nn.Conv2d(c_mid, c_mid, kernel_size=1, bias=False)
+        self.bn_ch_1 = nn.BatchNorm2d(c_mid)
+        self.cv_ch_2 = nn.Conv2d(c_mid, c_mid, kernel_size=1, bias=False)
+        self.bn_ch_2 = nn.BatchNorm2d(c_mid)
+
+        # Spatial-context branch
+        self.cv_sp_1 = nn.Conv2d(c_mid, c_mid, kernel_size=1, bias=False)
+        self.bn_sp_1 = nn.BatchNorm2d(c_mid)
+        self.cv_sp_2 = nn.Conv2d(c_mid, c_mid, kernel_size=1, bias=False)
+        self.bn_sp_2 = nn.BatchNorm2d(c_mid)
+
+        self.act = nn.SiLU()
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
+        """
+        Forward pass of APFN.
+
+        Args:
+            x (list[torch.Tensor]): List containing two feature maps [F_A, F_B],
+                each of shape (B, C, H, W). C must match c1 and c2 respectively.
+                H and W must be identical for both inputs.
+
+        Returns:
+            torch.Tensor: Fused feature map of shape (B, C, H, W).
+        """
+        fa, fb = x
+        # Concatenate along channel dimension: (B, C_A + C_B, H, W)
+        fab = torch.cat([fa, fb], dim=1)
+
+        # --- Channel Context Branch ---
+        # GAP + GMP along spatial dims -> (B, C_mid, 1, 1) -> broadcast
+        gap = F.adaptive_avg_pool2d(fab, 1)
+        gmp = F.adaptive_max_pool2d(fab, 1)
+        ch_ctx = torch.cat([gap, gmp], dim=1)  # (B, C_mid, 1, 1)
+        ch_ctx = self.act(self.bn_ch_1(self.cv_ch_1(ch_ctx)))
+        ch_ctx = self.bn_ch_2(self.cv_ch_2(ch_ctx))  # (B, C_mid, 1, 1)
+
+        # --- Spatial Context Branch ---
+        sp_ctx = self.act(self.bn_sp_1(self.cv_sp_1(fab)))
+        sp_ctx = self.bn_sp_2(self.cv_sp_2(sp_ctx))  # (B, C_mid, H, W)
+
+        # Combine the two context branches
+        attn = self.sigmoid(ch_ctx + sp_ctx)  # (B, C_mid, H, W) after broadcast
+
+        # Soft-gated fusion: w * F_A + (1 - w) * F_B
+        out = attn * fa + (1 - attn) * fb
+
+        # Residual connection with the concatenated input
+        out = out + fab
+
+        return out
 
 
 class DFL(nn.Module):

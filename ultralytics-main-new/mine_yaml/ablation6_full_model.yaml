@@ -1,9 +1,9 @@
 # 消融实验 6：完整魔改模型 (所有改进组合)
 # 改进策略：组合所有改进模块 — 双分支架构 + ShuffleNetV2 + CT融合 + 优化器
 # 训练命令示例：
-#   PIDAO优化器: yolo detect train model=ablation6_full_model.yaml optimizer=PIDAO data=your_rgd_data.yaml epochs=100
-#   SMC优化器:   yolo detect train model=ablation6_full_model.yaml optimizer=SMC data=your_rgd_data.yaml epochs=100
-#   标准AdamW:   yolo detect train model=ablation6_full_model.yaml optimizer=AdamW data=your_rgd_data.yaml epochs=100
+#   PIDAO优化器: yolo segment train model=ablation6_full_model.yaml optimizer=PIDAO data=your_rgd_data.yaml epochs=100
+#   SMC优化器:   yolo segment train model=ablation6_full_model.yaml optimizer=SMC data=your_rgd_data.yaml epochs=100
+#   标准AdamW:   yolo segment train model=ablation6_full_model.yaml optimizer=AdamW data=your_rgd_data.yaml epochs=100
 #
 # 完整改进清单：
 #   1. 四通道RGBD输入 (channels=4)
@@ -73,4 +73,4 @@ head:
   - [[-1, 17], 1, Concat, [1]]          # 28-cat IDAPBC P5
   - [-1, 2, C3k2, [1024, True]]         # 29-P5/32-large
 
-  - [[23, 26, 29], 1, Detect, [nc]]     # 30-Detect(P3, P4, P5)
+  - [[23, 26, 29], 1, Segment, [nc, 32, 256]] # 30-Segment(P3, P4, P5)

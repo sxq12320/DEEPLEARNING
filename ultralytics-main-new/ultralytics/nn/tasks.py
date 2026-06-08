@@ -100,6 +100,8 @@ from ultralytics.nn.modules import (
     HaarIDWT,
     SFM,
     WCAF,
+    # Attention Parallel Feature Mixer
+    APFN,
 )
 from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
