@@ -165,7 +165,7 @@ class ClassificationValidator(BaseValidator):
 
     def print_results(self) -> None:
         """Print evaluation metrics for the classification model."""
-        pf = "%22s" + "%11.3g" * len(self.metrics.keys)  # print format
+        pf = "%-6s" + "%9.3g" * len(self.metrics.keys)  # print format
         LOGGER.info(pf % ("all", self.metrics.top1, self.metrics.top5))
 
     def plot_val_samples(self, batch: dict[str, Any], ni: int) -> None:
