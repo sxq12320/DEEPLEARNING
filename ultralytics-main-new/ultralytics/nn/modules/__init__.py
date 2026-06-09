@@ -108,6 +108,7 @@ from .transformer import (
     TransformerLayer,
 )
 from .ct_modules import (
+    APFM,
     BLFLoss,
     BypassModule,
     ESOFusion,
@@ -222,6 +223,7 @@ __all__ = (
     "YOLOESegment26",
     "v10Detect",
     # CT fusion modules
+    "APFM",
     "BLFLoss",
     "BypassModule",
     "ESOFusion",

@@ -74,6 +74,7 @@ from ultralytics.nn.modules import (
     YOLOESegment26,
     v10Detect,
     # CT fusion modules
+    APFM,
     BLFLoss,
     BypassModule,
     ESOFusion,
@@ -103,7 +104,7 @@ from ultralytics.nn.modules import (
     # Attention Parallel Feature Mixer
     APFN,
 )
-from ultralytics.nn.modules.ct_modules import KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
+from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, SETTINGS, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import REMOTE_FILE_PREFIXES, check_file, check_requirements, check_suffix, check_yaml
@@ -382,7 +383,7 @@ def _initialize_yolo_model(model, cfg, ch, nc, verbose):
         )
         model.yaml["backbone"][0][2] = "nn.Identity"
 
-    model.yaml["channels"] = ch  # save channels
+    model.yaml["channels"] = ch = model.yaml.get("channels", ch)  # YAML channels 优先，否则用传入 ch
     if nc and nc != model.yaml["nc"]:
         LOGGER.info(f"Overriding model.yaml nc={model.yaml['nc']} with nc={nc}")
         model.yaml["nc"] = nc  # override YAML value
@@ -446,7 +447,7 @@ class DetectionModel(BaseModel):
 
             self.model.eval()  # Avoid changing batch statistics until training begins
             m.training = True  # Setting it to True to properly return strides
-            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, self.yaml["channels"], s, s))])  # forward
             self.stride = m.stride
             self.model.train()  # Set model back to training(default) mode
             m.bias_init()  # only run once
@@ -1820,7 +1821,7 @@ def parse_model(d, ch, verbose=True):
             else:
                 c2 = ch[f]
                 args = [c2, *args]
-        elif m in (KalmanGatedFusion, IDAPBCFusion, BypassModule):
+        elif m in (KalmanGatedFusion, IDAPBCFusion, BypassModule, APFM):
             if isinstance(f, list):
                 c2 = ch[f[0]]  # 输出通道 = 第一路输入通道
                 args = [ch[x] for x in f]  # 只传两路通道数，不追加 YAML args

@@ -232,6 +232,91 @@ class BLFLoss(nn.Module):
         return loss_val.mean()
 
 
+class APFM(nn.Module):
+    """
+    Attention Parallel Feature Mixer (APFM)
+    同时建模 Channel-wise 和 Spatial-wise 注意力，
+    对两路互补特征 FA, FB 进行自适应加权融合。
+    支持两路不同通道数输入（通过 1x1 Conv 投影对齐）。
+    Args:
+        c1 (int): 第一路输入特征通道数 (输出通道数也等于 c1)
+        c2 (int): 第二路输入特征通道数
+        reduction (int): 通道压缩比，默认为 4
+    """
+    def __init__(self, c1: int, c2: int, reduction: int = 4):
+        super().__init__()
+        # 如果通道数不同，投影第二路到 c1
+        self.proj_b = nn.Conv2d(c2, c1, kernel_size=1, bias=False) if c2 != c1 else nn.Identity()
+        in_channels = c1
+        mid_channels = max(in_channels // reduction, 1)
+        # ------------------------------------------------------------------
+        # Channel Context 分支 (对应论文 Figure 2b 左侧)
+        # GAP -> 1x1 Conv -> Norm -> SiLU -> 1x1 Conv -> Norm
+        # ------------------------------------------------------------------
+        self.channel_branch = nn.Sequential(
+            nn.Conv2d(in_channels * 2, mid_channels, kernel_size=1, bias=False),
+            nn.GroupNorm(num_groups=1, num_channels=mid_channels),
+            nn.SiLU(inplace=True),
+            nn.Conv2d(mid_channels, in_channels, kernel_size=1, bias=False),
+            nn.GroupNorm(num_groups=1, num_channels=in_channels),
+        )
+        # ------------------------------------------------------------------
+        # Spatial Context 分支 (对应论文 Figure 2b 右侧)
+        # GMP -> 1x1 Conv -> Norm -> SiLU -> 1x1 Conv -> Norm
+        # ------------------------------------------------------------------
+        self.spatial_branch = nn.Sequential(
+            nn.Conv2d(in_channels * 2, mid_channels, kernel_size=1, bias=False),
+            nn.GroupNorm(num_groups=1, num_channels=mid_channels),
+            nn.SiLU(inplace=True),
+            nn.Conv2d(mid_channels, in_channels, kernel_size=1, bias=False),
+            nn.GroupNorm(num_groups=1, num_channels=in_channels),
+        )
+        # ------------------------------------------------------------------
+        # 融合两路上下文后的 3x3 Conv (论文 Figure 2b 底部)
+        # ------------------------------------------------------------------
+        self.fusion_conv = nn.Sequential(
+            nn.Conv2d(in_channels * 2, in_channels, kernel_size=3, padding=1, bias=False),
+            nn.GroupNorm(num_groups=1, num_channels=in_channels),
+            nn.SiLU(inplace=True),
+        )
+        # 最终 Sigmoid: 生成融合权重 w ∈ (0, 1)
+        self.sigmoid = nn.Sigmoid()
+        self._init_weights()
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    def forward(self, x):
+        if isinstance(x, (list, tuple)):
+            fa, fb = x[0], x[1]
+        else:
+            return x
+        # 空间尺寸对齐
+        if fa.shape[2:] != fb.shape[2:]:
+            fb = F.interpolate(fb, size=fa.shape[2:], mode='bilinear', align_corners=False)
+        # 投影第二路通道到 c1
+        fb = self.proj_b(fb)
+        # 拼接两路特征: [B, 2C, H, W]
+        f_cat = torch.cat([fa, fb], dim=1)
+        # ---- Channel Context ----
+        gap = F.adaptive_avg_pool2d(f_cat, 1)
+        ch_ctx = self.channel_branch(gap)          # [B, C, 1, 1]
+        # ---- Spatial Context ----
+        gmp = F.adaptive_max_pool2d(f_cat, 1)
+        sp_ctx = self.spatial_branch(gmp)          # [B, C, 1, 1]
+        # ---- 合并两路上下文 ----
+        ctx_cat = torch.cat([ch_ctx, sp_ctx], dim=1)
+        ctx_fused = self.fusion_conv(ctx_cat)       # [B, C, 1, 1]
+        # ---- 生成权重并自适应融合 ----
+        w = self.sigmoid(ctx_fused)                 # [B, C, 1, 1]
+        ff = w * fa + (1.0 - w) * fb               # [B, C, H, W]
+        return ff
+
+
 class BypassModule(nn.Module):
     """
     用于消融实验的 Bypass 旁路组件（直接执行无损 Concat / 映射以对齐通道，无任何额外计算）
