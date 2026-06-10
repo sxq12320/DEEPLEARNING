@@ -1,0 +1,26 @@
+# Amodal RGB-D 数据集配置文件
+# 适用于 amodal_tribranch 训练脚本
+#
+# 数据格式说明:
+#   format: npy (默认)
+#     - images/: .npy 文件, shape=(H, W, 4), 通道顺序: B, G, R, Depth(float32)
+#     - labels/: .txt 文件, YOLO polygon 格式 (class x1 y1 x2 y2 ... xn yn)
+#
+#   format: separate
+#     - rgb/:    RGB 图像 (.png/.jpg)
+#     - depth/:  深度图 (.png/.npy, 单通道)
+#     - amodal/: 非模态GT掩码 (.png, 二值)
+
+# ===== 修改以下路径为你的数据集路径 =====
+path: /path/to/your/amodal_rgbd_dataset
+
+# 数据集划分
+train: train
+val: val
+
+# 数据格式: npy 或 separate
+format: npy
+
+# 类别
+nc: 1
+names: ["object"]

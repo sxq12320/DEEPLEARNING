@@ -1,0 +1,79 @@
+# 消融实验 5：RGB分支(YOLO11) + Depth分支(ShuffleNetV2) + CT融合策略
+# 改进策略：在特征融合部分增加卡尔曼滤波融合、ESO融合、IDA-PBC融合策略
+# 训练命令示例：
+#   yolo segment train model=ablation5_ct_fusion.yaml data=your_rgd_data.yaml epochs=100
+#
+# 架构说明：
+#   - 输入：4通道 RGBD (channels=4)
+#   - RGB分支：标准YOLO11 backbone，输出P3/P4/P5
+#   - Depth分支：ShuffleNetV2 1.0x，输出P3/P4/P5
+#   - 融合策略（层级化控制理论融合）：
+#     · P3浅层: KalmanGatedFusion — 卡尔曼增益融合(深度指导RGB)
+#       利用多尺度方差估计器计算局部卡尔曼增益K，动态融合RGB和Depth
+#     · P4中层: ESOFusion — 自抗扰观测器扰动补偿融合
+#       估计遮挡扰动并主动补偿，输出通道=c_p4_rgb+c_p3_fused(拼接)
+#     · P5深层: IDAPBCFusion — IDA-PBC能量成型融合
+#       哈密顿势能面指导几何特征，输出通道=c_p5_rgb
+#
+# 融合层级关系（自底向上）：
+#   KalmanGatedFusion(RGB_P3, Depth_P3) → Fused_P3
+#   ESOFusion(RGB_P4, Fused_P3) → Fused_P4 (包含P3信息)
+#   IDAPBCFusion(RGB_P5, Fused_P4) → Fused_P5 (包含P4信息)
+
+nc: 80
+channels: 4  # RGB(3ch) + Depth(1ch) = 4通道输入
+scales:
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # ========== RGB 分支 (标准 YOLO11) ==========
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]]           # 0-P1/2  (4ch输入)
+  - [-1, 1, Conv, [128, 3, 2]]          # 1-P2/4
+  - [-1, 2, C3k2, [256, False, 0.25]]   # 2
+  - [-1, 1, Conv, [256, 3, 2]]          # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]]   # 4-P3/8 RGB特征
+  - [-1, 1, Conv, [512, 3, 2]]          # 5-P4/16
+  - [-1, 2, C3k2, [512, True]]          # 6-P4/16 RGB特征
+  - [-1, 1, Conv, [1024, 3, 2]]         # 7-P5/32
+  - [-1, 2, C3k2, [1024, True]]         # 8
+  - [-1, 1, SPPF, [1024, 5]]            # 9
+  - [-1, 2, C2PSA, [1024]]              # 10-P5/32 RGB特征
+
+  # ========== Depth 分支 (ShuffleNetV2 1.0x) ==========
+  - [0, 1, ShuffleV2Stem_Depth, [24]]   # 11-Depth Stem: P1/2→P3/8, 24ch
+  - [-1, 1, Conv, [116, 1, 1]]          # 12-Depth P3/8, 116ch
+  - [-1, 1, ShuffleV2Stage, [232, 8]]   # 13-Depth P4/16, 232ch
+  - [-1, 1, ShuffleV2Stage, [464, 4]]   # 14-Depth P5/32, 464ch
+
+  # ========== CT 控制理论融合 (层级化) ==========
+  # P3浅层: 卡尔曼增益融合
+  - [[4, 12], 1, KalmanGatedFusion, []] # 15-P3融合: Kalman(RGB_P3, Depth_P3) → 512ch
+  # P4中层: ESO扰动补偿融合 (输入RGB_P4 + Fused_P3，输出=ch[P4]+ch[P3])
+  - [[6, 15], 1, ESOFusion, []]         # 16-P4融合: ESO(RGB_P4, Fused_P3) → 512+512=1024ch
+  # P5深层: IDA-PBC能量成型融合
+  - [[10, 16], 1, IDAPBCFusion, []]     # 17-P5融合: IDAPBC(RGB_P5, Fused_P4) → 1024ch
+
+# YOLO11 head (使用CT融合后的特征)
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 18
+  - [[-1, 16], 1, Concat, [1]]          # 19-cat ESO P4 (1024+1024=2048)
+  - [-1, 2, C3k2, [512, False]]         # 20
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 21
+  - [[-1, 15], 1, Concat, [1]]          # 22-cat Kalman P3 (512+512=1024)
+  - [-1, 2, C3k2, [256, False]]         # 23-P3/8-small
+
+  - [-1, 1, Conv, [256, 3, 2]]          # 24
+  - [[-1, 20], 1, Concat, [1]]          # 25-cat head P4
+  - [-1, 2, C3k2, [512, False]]         # 26-P4/16-medium
+
+  - [-1, 1, Conv, [512, 3, 2]]          # 27
+  - [[-1, 17], 1, Concat, [1]]          # 28-cat IDAPBC P5
+  - [-1, 2, C3k2, [1024, True]]         # 29-P5/32-large
+
+  - [[23, 26, 29], 1, Segment, [nc, 32, 256]] # 30-Segment(P3, P4, P5)
