@@ -139,6 +139,13 @@ from .custom_blocks import (
     SFM,
     WCAF,
 )
+from .rgbd_fusion_neck import (
+    FusionDecoder,
+    P3FusionModule,
+    P4FusionModule,
+    P5FusionModule,
+    RGBDFusionNeck,
+    ScaleAlignBlock,
 from .mobilenetv3_rgb import (
     MobileNetV3InvertedResidual,
     MobileNetV3Stage,
@@ -267,6 +274,13 @@ __all__ = (
     "HaarIDWT",
     "SFM",
     "WCAF",
+    # RGBD Fusion Neck
+    "FusionDecoder",
+    "P3FusionModule",
+    "P4FusionModule",
+    "P5FusionModule",
+    "RGBDFusionNeck",
+    "ScaleAlignBlock",
     # MobileNetV3 RGB branch
     "MobileNetV3InvertedResidual",
     "MobileNetV3Stage",
