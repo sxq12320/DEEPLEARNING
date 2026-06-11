@@ -39,7 +39,7 @@ if __name__ == "__main__":
          name="01_yolo11_doublebarnch_RGBD_shuffleNet_depth_AdamW",
          optimizer="AdamW",
          epochs=300,
-         patience=50,
+         patience=300,
          imgsz=640,
          batch=2,
          lr0=0.01,
