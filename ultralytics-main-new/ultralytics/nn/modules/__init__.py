@@ -139,6 +139,14 @@ from .custom_blocks import (
     SFM,
     WCAF,
 )
+from .rgbd_fusion_neck import (
+    FusionDecoder,
+    P3FusionModule,
+    P4FusionModule,
+    P5FusionModule,
+    RGBDFusionNeck,
+    ScaleAlignBlock,
+)
 
 __all__ = (
     "AIFI",
@@ -250,4 +258,11 @@ __all__ = (
     "HaarIDWT",
     "SFM",
     "WCAF",
+    # RGBD Fusion Neck
+    "FusionDecoder",
+    "P3FusionModule",
+    "P4FusionModule",
+    "P5FusionModule",
+    "RGBDFusionNeck",
+    "ScaleAlignBlock",
 )
