@@ -146,6 +146,22 @@ from .rgbd_fusion_neck import (
     P5FusionModule,
     RGBDFusionNeck,
     ScaleAlignBlock,
+from .mobilenetv3_rgb import (
+    MobileNetV3InvertedResidual,
+    MobileNetV3Stage,
+    MobileNetV3Stem_RGB,
+)
+from .starnet_depth import (
+    StarBlock,
+    StarNetStage,
+    StarNetStem_Depth,
+)
+from .scale_aware_fusion import (
+    ScaleAwareFusion,
+    ScaleAwareFusion_Bidirectional,
+    ScaleAwareFusion_Depth2RGB,
+    ScaleAwareFusion_Naive,
+    ScaleAwareFusion_RGBLed,
 )
 
 __all__ = (
@@ -265,4 +281,18 @@ __all__ = (
     "P5FusionModule",
     "RGBDFusionNeck",
     "ScaleAlignBlock",
+    # MobileNetV3 RGB branch
+    "MobileNetV3InvertedResidual",
+    "MobileNetV3Stage",
+    "MobileNetV3Stem_RGB",
+    # StarNet depth branch
+    "StarBlock",
+    "StarNetStage",
+    "StarNetStem_Depth",
+    # Scale-Aware Fusion
+    "ScaleAwareFusion",
+    "ScaleAwareFusion_Bidirectional",
+    "ScaleAwareFusion_Depth2RGB",
+    "ScaleAwareFusion_Naive",
+    "ScaleAwareFusion_RGBLed",
 )
