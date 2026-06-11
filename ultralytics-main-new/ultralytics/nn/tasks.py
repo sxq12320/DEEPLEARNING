@@ -103,6 +103,20 @@ from ultralytics.nn.modules import (
     WCAF,
     # Attention Parallel Feature Mixer
     APFN,
+    # MobileNetV3 RGB branch
+    MobileNetV3InvertedResidual,
+    MobileNetV3Stage,
+    MobileNetV3Stem_RGB,
+    # StarNet depth branch
+    StarBlock,
+    StarNetStage,
+    StarNetStem_Depth,
+    # Scale-Aware Fusion
+    ScaleAwareFusion,
+    ScaleAwareFusion_Bidirectional,
+    ScaleAwareFusion_Depth2RGB,
+    ScaleAwareFusion_Naive,
+    ScaleAwareFusion_RGBLed,
 )
 from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1847,6 +1861,36 @@ def parse_model(d, ch, verbose=True):
             c2 = args[0]  # 输出通道 (116/232/464 for 1.0x)
             num_blocks = args[1]
             args = [c1, c2, num_blocks]
+        elif m is MobileNetV3Stem_RGB:
+            # MobileNetV3 Stem: 不受 width_multiple 缩放，固定输出 16 通道
+            c1 = ch[f]
+            c2 = 16
+            args = [c1, c2]
+        elif m is MobileNetV3Stage:
+            # MobileNetV3 Stage: 不受 width_multiple 缩放，输出通道由 YAML 指定
+            c1 = ch[f]
+            c2 = args[0]  # 输出通道 (24/40/160)
+            args = [c1, c2]
+        elif m is StarNetStem_Depth:
+            # StarNet Stem: 不受 width_multiple 缩放，固定输出 32 通道
+            c1 = ch[f]
+            c2 = args[0] if args else 32
+            args = [c1, c2]
+        elif m is StarNetStage:
+            # StarNet Stage: 不受 width_multiple 缩放，输出通道由 YAML 指定
+            c1 = ch[f]
+            c2 = args[0]  # 输出通道 (64/128/256)
+            num_blocks = args[1] if len(args) > 1 else 2
+            args = [c1, c2, num_blocks]
+        elif m in (ScaleAwareFusion, ScaleAwareFusion_Depth2RGB, ScaleAwareFusion_Bidirectional,
+                   ScaleAwareFusion_RGBLed, ScaleAwareFusion_Naive):
+            # Scale-Aware Fusion: 双输入融合，输出通道由 YAML 指定
+            if isinstance(f, list):
+                c2 = args[0] if args else ch[f[0]]  # 输出通道 (由 YAML 指定或取 RGB 通道)
+                args = [ch[f[0]], ch[f[1]], c2]  # [c_rgb, c_dep, out_ch]
+            else:
+                c2 = ch[f]
+                args = [c2, c2, c2]
         elif m in frozenset(
             {
                 Detect,

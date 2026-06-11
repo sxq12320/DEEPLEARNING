@@ -1,0 +1,98 @@
+# ==============================================================================
+# 消融实验 Group4-10：MobileNetV3-Large(RGB) + StarNet(Depth) + Scale-Aware融合 + 优化器对比
+# ==============================================================================
+# 改进策略：在 Scale-Aware 完整架构基础上，对比不同优化器的训练效果
+# 训练命令示例：
+#   PIDAO优化器: yolo segment train model=10_ablation_optimizer_pidao.yaml optimizer=PIDAO data=your_rgd_data.yaml epochs=100
+#   SMC优化器:   yolo segment train model=10_ablation_optimizer_pidao.yaml optimizer=SMC data=your_rgd_data.yaml epochs=100
+#   标准AdamW:   yolo segment train model=10_ablation_optimizer_pidao.yaml optimizer=AdamW data=your_rgd_data.yaml epochs=100
+#
+# 架构说明：
+#   - 输入：4通道 RGBD (channels=4)
+#   - RGB分支：MobileNetV3-Large 轻量主干，输出P3/P4/P5
+#     · MobileNetV3Stem_RGB: 4ch→16ch, stride=2, 320×320 (P1/2)
+#     · MobileNetV3Stage [24]: 16→24ch, 160×160 (P2/4)
+#     · MobileNetV3Stage [40]: 24→40ch, 80×80 (P3/8) ← RGB P3
+#     · MobileNetV3Stage [160]: 40→160ch, 40×40 (P4/16) ← RGB P4
+#     · Conv [512,3,2]: 160→512ch, 20×20 (P5/32)
+#     · SPPF [512,5]: 512ch, 20×20 ← RGB P5
+#   - Depth分支：StarNet 星型操作主干，输出P3/P4/P5
+#     · StarNetStem_Depth [32]: 16→32ch, stride=4, 80×80 (P3/8) ← Depth P3
+#     · StarNetStage [64,2]: 32→64ch, 40×40 (P4/16) ← Depth P4
+#     · StarNetStage [128,2]: 64→128ch, 20×20 (P5/32) ← Depth P5
+#   - Scale-Aware 尺度感知融合（聚合-扩散范式，通道对齐至128/256/512）：
+#     · P3: ScaleAwareFusion_Depth2RGB [128] — Depth空间引导RGB
+#       聚合: Depth经轻量CNN→Spatial Attention Map
+#       扩散: Map经Sigmoid后广播乘到RGB特征上，抠取前景
+#     · P4: ScaleAwareFusion_Bidirectional [256] — 双向互补对齐
+#       聚合: 轻量级双向交叉注意力，RGB和Depth互为Q/K/V
+#       扩散: 残差扩散+自适应门控，防止劣质模态污染
+#     · P5: ScaleAwareFusion_RGBLed [512] — RGB-led几何先验
+#       聚合: Depth经GAP+MLP→Channel Attention向量
+#       扩散: 向量经Sigmoid后逐通道乘到RGB特征上
+#   - 优化器改进（训练策略层面，不影响模型结构）：
+#     · PIDAO: 多通道高阶PID优化器，支持1/2/3阶微分通道
+#       利用二项式系数计算高阶差分，动态调节学习率
+#     · SMC: 滑模控制优化器，底层AdamW + SMCScheduler
+#       基于滑模面停滞检测触发escape模式(梯度噪声注入+LR提升+β₁微调)
+#
+# 模型架构与 07_ours_scale_aware_full 完全一致，仅优化器不同
+#
+# 建议分别运行三次实验，对比不同优化器的效果：
+#   实验10a: optimizer=PIDAO (多通道高阶PID)
+#   实验10b: optimizer=SMC   (滑模控制)
+#   实验10c: optimizer=AdamW (标准对照)
+# ==============================================================================
+
+nc: 80
+channels: 4  # RGB(3ch) + Depth(1ch) = 4通道输入
+scales:
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # ========== RGB 分支 (MobileNetV3-Large) ==========
+  # [from, repeats, module, args]
+  - [-1, 1, MobileNetV3Stem_RGB, [16]]    # 0-P1/2: 16ch, 320x320 (4ch输入)
+  - [-1, 1, MobileNetV3Stage, [24]]        # 1-P2/4: 24ch, 160x160
+  - [-1, 1, MobileNetV3Stage, [40]]        # 2-P3/8: 40ch, 80x80 ← RGB P3
+  - [-1, 1, MobileNetV3Stage, [160]]       # 3-P4/16: 160ch, 40x40 ← RGB P4
+  - [-1, 1, Conv, [512, 3, 2]]            # 4-P5/32: 512ch, 20x20
+  - [-1, 1, SPPF, [512, 5]]               # 5-P5/32: 512ch, 20x20 ← RGB P5
+
+  # ========== Depth 分支 (StarNet) ==========
+  # 从layer 0输出分叉，StarNet提取深度几何特征
+  - [0, 1, StarNetStem_Depth, [32]]        # 6-P3/8: 32ch, 80x80 ← Depth P3
+  - [-1, 1, StarNetStage, [64, 2]]         # 7-P4/16: 64ch, 40x40 ← Depth P4
+  - [-1, 1, StarNetStage, [128, 2]]        # 8-P5/32: 128ch, 20x20 ← Depth P5
+
+  # ========== Scale-Aware 尺度感知融合 (聚合-扩散范式) ==========
+  # P3: Depth-to-RGB 空间引导融合 (通道对齐至128)
+  - [[2, 6], 1, ScaleAwareFusion_Depth2RGB, [128]]   # 9-P3融合: Depth2RGB(RGB_P3, Depth_P3) → 128ch
+  # P4: 双向互补对齐融合 (通道对齐至256)
+  - [[3, 7], 1, ScaleAwareFusion_Bidirectional, [256]] # 10-P4融合: Bidirectional(RGB_P4, Depth_P4) → 256ch
+  # P5: RGB-led 几何先验融合 (通道对齐至512)
+  - [[5, 8], 1, ScaleAwareFusion_RGBLed, [512]]      # 11-P5融合: RGBLed(RGB_P5, Depth_P5) → 512ch
+
+# YOLO11 Head (使用融合后的特征)
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]       # 12
+  - [[-1, 10], 1, Concat, [1]]                        # 13-cat fused P4 (256+256=512)
+  - [-1, 2, C3k2, [256, False]]                       # 14
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]       # 15
+  - [[-1, 9], 1, Concat, [1]]                         # 16-cat fused P3 (128+128=256)
+  - [-1, 2, C3k2, [128, False]]                       # 17-P3/8-small
+
+  - [-1, 1, Conv, [128, 3, 2]]                        # 18
+  - [[-1, 14], 1, Concat, [1]]                        # 19-cat head P4 (128+256=384)
+  - [-1, 2, C3k2, [256, False]]                       # 20-P4/16-medium
+
+  - [-1, 1, Conv, [256, 3, 2]]                        # 21
+  - [[-1, 11], 1, Concat, [1]]                        # 22-cat fused P5 (256+512=768)
+  - [-1, 2, C3k2, [512, True]]                        # 23-P5/32-large
+
+  - [[17, 20, 23], 1, Segment, [nc, 32, 256]]        # 24-Segment(P3, P4, P5)
