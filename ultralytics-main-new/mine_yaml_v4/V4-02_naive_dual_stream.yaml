@@ -1,0 +1,91 @@
+# MobileNetV4-Conv-M 异构双流基线 (RGB + StarNet Depth + Naive融合)
+# 改进策略：使用异构双流架构分别处理RGB和Depth，P3/P4/P5均使用Naive(Concat)融合
+# 训练命令：yolo segment train model=V4-02_naive_dual_stream.yaml data=your_rgd_data.yaml epochs=100
+#
+# 架构说明：
+#   - 输入：4通道 RGBD (channels=4)
+#   - RGB分支：MobileNetV4-Conv-M，输出P3/P4/P5
+#     · MobileNetV4Stem_RGB: 4ch输入 → 32ch, stride=2, 320×320 (P1/2)
+#     · MobileNetV4Stage [32]: 32→32ch, stride=2, 160×160 (P2/4)
+#     · MobileNetV4Stage [64]: 32→64ch, stride=2, 80×80 (P3/8) ← RGB P3
+#     · MobileNetV4Stage [96]: 64→96ch, stride=2, 40×40 (P4/16) ← RGB P4
+#     · Conv [512, 3, 2]: 96→512ch, stride=2, 20×20 (P5/32)
+#     · SPPF [512, 5]: 512ch, 20×20 ← RGB P5
+#   - Depth分支：StarNet，从layer 0分叉，输出P3/P4/P5
+#     · StarNetStem_Depth [32]: 32ch→32ch, stride=4, 80×80 (P3/8) ← Depth P3
+#     · StarNetStage [64, 2]: 32→64ch, stride=2, 40×40 (P4/16) ← Depth P4
+#     · StarNetStage [128, 2]: 64→128ch, stride=2, 20×20 (P5/32) ← Depth P5
+#   - 融合方式：ScaleAwareFusion_Naive (Concat + 1x1 Conv)，P3/P4/P5均使用Naive策略
+#     · P3: ScaleAwareFusion_Naive [128] from [RGB_P3, Depth_P3] → 64ch+32ch→128ch
+#     · P4: ScaleAwareFusion_Naive [256] from [RGB_P4, Depth_P4] → 96ch+64ch→256ch
+#     · P5: ScaleAwareFusion_Naive [512] from [RGB_P5, Depth_P5] → 512ch+128ch→512ch
+#   - 检测头：标准YOLO11 head (使用融合后特征)
+#
+# 层索引说明（from字段为层索引，-1表示上一层）：
+#   Layer 0-5:   MobileNetV4-Conv-M RGB分支 (P1→P5)
+#   Layer 6-8:   StarNet Depth分支 (P3→P5)
+#   Layer 9-11:  ScaleAwareFusion_Naive融合 (P3/P4/P5)
+#   Layer 12-23: YOLO11检测头 (FPN + PAN)
+#   Layer 24:    Segment分割头
+#
+# MobileNetV4-Conv-M 通道配置:
+#   stem→32, stage1→32, stage2→64(P3), stage3→96(P4), extra→512(P5)
+# 核心改进: UIB统一倒置瓶颈 (ExtraDW/IB/ConvNext/FFN) + FusedIB
+# StarNet 通道配置 (适配RGB-D检测):
+#   stem→32(P3), stage2→64(P4), stage3→128(P5)
+# 注意：MobileNetV4和StarNet的通道数均不受width_multiple缩放
+#
+# 对比意义：
+#   与V4-01_baseline_rgb_only对比 → 验证双流架构+Depth信息的增益
+#   作为后续CT融合/APFM融合实验的基线对照
+
+nc: 80
+channels: 4  # RGB(3ch) + Depth(1ch) = 4通道输入
+scales:
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # ========== RGB 分支 (MobileNetV4-Conv-M) ==========
+  # [from, repeats, module, args]
+  - [-1, 1, MobileNetV4Stem_RGB, []]      # 0-P1/2  4ch→32ch, 320×320
+  - [-1, 1, MobileNetV4Stage, [32]]        # 1-P2/4  32→32ch, 160×160
+  - [-1, 1, MobileNetV4Stage, [64]]        # 2-P3/8  32→64ch, 80×80 ← RGB P3
+  - [-1, 1, MobileNetV4Stage, [96]]        # 3-P4/16 64→96ch, 40×40 ← RGB P4
+  - [-1, 1, Conv, [512, 3, 2]]            # 4-P5/32 96→512ch, 20×20
+  - [-1, 1, SPPF, [512, 5]]               # 5       512ch, 20×20 ← RGB P5
+
+  # ========== Depth 分支 (StarNet) ==========
+  # 从layer 0分叉，使用StarNet提取深度特征
+  - [0, 1, StarNetStem_Depth, [32]]        # 6-Depth Stem: 32→32ch, stride=4, 80×80 (P3/8) ← Depth P3
+  - [-1, 1, StarNetStage, [64, 2]]         # 7-Depth P4/16: 32→64ch, stride=2, 40×40 ← Depth P4
+  - [-1, 1, StarNetStage, [128, 2]]        # 8-Depth P5/32: 64→128ch, stride=2, 20×20 ← Depth P5
+
+  # ========== Naive 融合 (Concat + 1x1 Conv) ==========
+  # 通道对齐至128/256/512，与后续CT融合实验保持一致
+  - [[2, 6], 1, ScaleAwareFusion_Naive, [128]]   # 9-P3融合: RGB_P3(64ch) + Depth_P3(32ch) → 128ch
+  - [[3, 7], 1, ScaleAwareFusion_Naive, [256]]   # 10-P4融合: RGB_P4(96ch) + Depth_P4(64ch) → 256ch
+  - [[5, 8], 1, ScaleAwareFusion_Naive, [512]]   # 11-P5融合: RGB_P5(512ch) + Depth_P5(128ch) → 512ch
+
+# YOLO11 检测头 (使用Naive融合后的特征)
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 12
+  - [[-1, 10], 1, Concat, [1]]          # 13-cat fused P4 (512+256=768ch)
+  - [-1, 2, C3k2, [256, False]]         # 14
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 15
+  - [[-1, 9], 1, Concat, [1]]           # 16-cat fused P3 (256+128=384ch)
+  - [-1, 2, C3k2, [128, False]]         # 17-P3/8-small
+
+  - [-1, 1, Conv, [128, 3, 2]]          # 18
+  - [[-1, 14], 1, Concat, [1]]          # 19-cat head P4 (128+256=384ch)
+  - [-1, 2, C3k2, [256, False]]         # 20-P4/16-medium
+
+  - [-1, 1, Conv, [256, 3, 2]]          # 21
+  - [[-1, 11], 1, Concat, [1]]          # 22-cat fused P5 (256+512=768ch)
+  - [-1, 2, C3k2, [512, True]]          # 23-P5/32-large
+
+  - [[17, 20, 23], 1, Segment, [nc, 32, 256]] # 24-Segment(P3, P4, P5)
