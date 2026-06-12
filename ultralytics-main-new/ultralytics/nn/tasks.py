@@ -107,6 +107,11 @@ from ultralytics.nn.modules import (
     MobileNetV3InvertedResidual,
     MobileNetV3Stage,
     MobileNetV3Stem_RGB,
+    # MobileNetV4 RGB branch
+    FusedIB,
+    MobileNetV4Stage,
+    MobileNetV4Stem_RGB,
+    UIBBlock,
     # StarNet depth branch
     StarBlock,
     StarNetStage,
@@ -1871,6 +1876,17 @@ def parse_model(d, ch, verbose=True):
             c1 = ch[f]
             c2 = args[0]  # 输出通道 (24/40/160)
             args = [c1, c2]
+        elif m is MobileNetV4Stem_RGB:
+            # MobileNetV4 Stem: 不受 width_multiple 缩放，固定输出 32 通道
+            c1 = ch[f]
+            c2 = 32
+            args = [c1, c2]
+        elif m is MobileNetV4Stage:
+            # MobileNetV4 Stage: 不受 width_multiple 缩放，输出通道由 YAML 指定
+            c1 = ch[f]
+            c2 = args[0]  # 输出通道 (32/64/80/96/128/160/256)
+            variant = args[1] if len(args) > 1 else 'conv_m'
+            args = [c1, c2, variant]
         elif m is StarNetStem_Depth:
             # StarNet Stem: 不受 width_multiple 缩放，固定输出 32 通道
             c1 = ch[f]

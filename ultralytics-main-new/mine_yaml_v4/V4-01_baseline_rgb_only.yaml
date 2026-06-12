@@ -1,0 +1,64 @@
+# MobileNetV4-Conv-M RGB基线 (无Depth分支, 无融合)
+# 改进策略：使用MobileNetV4-Conv-M替换MobileNetV3-Large作为RGB主干
+# 训练命令：yolo segment train model=V4-01_baseline_rgb_only.yaml data=your_rgb_data.yaml epochs=100
+#
+# 架构说明：
+#   - 输入：3通道 RGB (channels=3)
+#   - 主干网络：MobileNetV4-Conv-M，输出P3/P4/P5
+#     · MobileNetV4Stem_RGB: 3ch输入 → 32ch, stride=2, 320×320 (P1/2)
+#     · MobileNetV4Stage [32]: 32→32ch, stride=2, 160×160 (P2/4)
+#     · MobileNetV4Stage [64]: 32→64ch, stride=2, 80×80 (P3/8) ← RGB P3
+#     · MobileNetV4Stage [96]: 64→96ch, stride=2, 40×40 (P4/16) ← RGB P4
+#     · Conv [512, 3, 2]: 96→512ch, stride=2, 20×20 (P5/32)
+#     · SPPF [512, 5]: 512ch, 20×20 ← RGB P5
+#   - 检测头：标准YOLO11 head (Upsample + Concat + C3k2)
+#   - 无Depth分支，无融合模块
+#
+# 层索引说明（from字段为层索引，-1表示上一层）：
+#   Layer 0-5:   MobileNetV4-Conv-M RGB主干 (P1→P5)
+#   Layer 6-17:  YOLO11检测头 (FPN + PAN)
+#   Layer 18:    Segment分割头
+#
+# MobileNetV4-Conv-M 通道配置:
+#   stem→32, stage1→32, stage2→64(P3), stage3→96(P4), extra→512(P5)
+# 核心改进: UIB统一倒置瓶颈 (ExtraDW/IB/ConvNext/FFN) + FusedIB
+# 注意：MobileNetV4的通道数不受width_multiple缩放
+
+nc: 80
+channels: 3  # 纯RGB 3通道输入
+scales:
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+# MobileNetV4-Conv-M RGB 主干网络
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, MobileNetV4Stem_RGB, []]      # 0-P1/2  3ch→32ch, 320×320
+  - [-1, 1, MobileNetV4Stage, [32]]        # 1-P2/4  32→32ch, 160×160
+  - [-1, 1, MobileNetV4Stage, [64]]        # 2-P3/8  32→64ch, 80×80 ← RGB P3
+  - [-1, 1, MobileNetV4Stage, [96]]        # 3-P4/16 64→96ch, 40×40 ← RGB P4
+  - [-1, 1, Conv, [512, 3, 2]]            # 4-P5/32 96→512ch, 20×20
+  - [-1, 1, SPPF, [512, 5]]               # 5       512ch, 20×20 ← RGB P5
+
+# YOLO11 检测头 (标准FPN+PAN结构)
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 6
+  - [[-1, 3], 1, Concat, [1]]           # 7-cat RGB P4 (512+96=608ch)
+  - [-1, 2, C3k2, [256, False]]         # 8
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 9
+  - [[-1, 2], 1, Concat, [1]]           # 10-cat RGB P3 (256+64=320ch)
+  - [-1, 2, C3k2, [128, False]]         # 11-P3/8-small
+
+  - [-1, 1, Conv, [128, 3, 2]]          # 12
+  - [[-1, 8], 1, Concat, [1]]           # 13-cat head P4 (128+256=384ch)
+  - [-1, 2, C3k2, [256, False]]         # 14-P4/16-medium
+
+  - [-1, 1, Conv, [256, 3, 2]]          # 15
+  - [[-1, 5], 1, Concat, [1]]           # 16-cat RGB P5 (256+512=768ch)
+  - [-1, 2, C3k2, [512, True]]          # 17-P5/32-large
+
+  - [[11, 14, 17], 1, Segment, [nc, 32, 256]] # 18-Segment(P3, P4, P5)

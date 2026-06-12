@@ -146,10 +146,17 @@ from .rgbd_fusion_neck import (
     P5FusionModule,
     RGBDFusionNeck,
     ScaleAlignBlock,
+)
 from .mobilenetv3_rgb import (
     MobileNetV3InvertedResidual,
     MobileNetV3Stage,
     MobileNetV3Stem_RGB,
+)
+from .mobilenetv4_rgb import (
+    FusedIB,
+    MobileNetV4Stage,
+    MobileNetV4Stem_RGB,
+    UIBBlock,
 )
 from .starnet_depth import (
     StarBlock,
@@ -285,6 +292,11 @@ __all__ = (
     "MobileNetV3InvertedResidual",
     "MobileNetV3Stage",
     "MobileNetV3Stem_RGB",
+    # MobileNetV4 RGB branch
+    "FusedIB",
+    "MobileNetV4Stage",
+    "MobileNetV4Stem_RGB",
+    "UIBBlock",
     # StarNet depth branch
     "StarBlock",
     "StarNetStage",
