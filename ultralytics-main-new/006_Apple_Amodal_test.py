@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml") 
         # 010 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用CTModulesV1，优化器PIDAO
 
-    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\mine_yaml\ablation1_4ch_input.yaml")
+    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\mine_yaml\11_ours_final_complete.yaml")
     yolo.train(
          data=r"E:/mastercode/ultralytics-main-new/206_Apple_Amodal.yaml",
          project=r"E:/mastercode/ultralytics-main-new/results",
