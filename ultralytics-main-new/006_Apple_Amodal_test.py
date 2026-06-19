@@ -15,24 +15,24 @@ torch.backends.cudnn.benchmark = False
 if __name__ == "__main__":
     # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation1_4ch_input.yaml")
         # 01 基线模型使用四通道RGBD输入即可，优化器AdamW
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation2_rgb_conv_depth.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation2_rgb_conv_depth.yaml")
         # 02 双分支主干网络，RGB使用yolo11主干结构，Depth仅仅使用Conv进行下采样操作，优化器AdamW
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation3_rgb_shufflenet_depth.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation3_rgb_shufflenet_depth.yaml")
         # 03 双分支主干网络，RGB使用yolo11主干结构，Depth使用shufflenet结构，优化器AdamW
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml")
         # 04 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用bypass，优化器SMC
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml")
         # 05 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用bypass，优化器PIDAO
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation4_optimizers.yaml")
         # 06 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用bypass，优化器AdamW
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml")
         # 07 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用CTModulesV1，优化器AdamW
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml")
         # 09 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用CTModulesV1，优化器SMC
-    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml") 
+    # yolo = YOLO(r"/data/sxq/code/ultralytics-main-new/mine_yaml/ablation5_ct_fusion.yaml")
         # 010 双分支主干网络结构，RGB使用yolo11主干结构，Depth使用shufflenet结构，融合使用CTModulesV1，优化器PIDAO
 
-    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\mine_yaml\11_ours_final_complete.yaml")
+    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\mine_yaml_v4\V4-10_p5_rgbled_ablation.yaml")
     yolo.train(
          data=r"E:/mastercode/ultralytics-main-new/206_Apple_Amodal.yaml",
          project=r"E:/mastercode/ultralytics-main-new/results",
@@ -45,7 +45,7 @@ if __name__ == "__main__":
          lr0=0.01,
          workers=4,
          device=0,
-         cache=False,  
+         cache=False,
          seed=SEED,
          amp = 0,
          dropout = 0.1,
