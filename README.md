@@ -1,63 +1,84 @@
-# 深度学习与计算机视觉综合代码库
+mastercode
+深度学习计算机视觉研究与实践仓库，涵盖图像分割、目标检测（RGB-D 苹果遮挡检测）与经典网络架构学习三大方向。
 
-欢迎来到本代码仓库！这是一个包含多个深度学习、图像分割、目标检测算法实现以及神经网络原理可视化的综合性工程集合。仓库代码主要涵盖了从经典网络学习、模块化分割框架搭建到前沿 RGB-D 目标检测模型开发的完整链路。
+仓库结构
 
-## 📁 仓库结构
+Plain Text
 
-仓库主要由以下三个核心模块组成：
+.
+├── 1.coding/                 # 深度学习编码项目
+│   ├── 0_segment/            # 图像分割与检测工程骨架（模块化 + 注册机制 + 配置驱动）
+│   ├── 1_study_module/       # 经典网络架构复现（LeNet → ConvNeXt / LSNet）
+│   ├── 2_Unet/               # U-Net 分割实现
+│   └── 3_phics_x/            # PHICS-X 模型（ResNet18 基座）
+├── 2_catoon/                 # Manim 数学动画（神经网络可视化）
+├── ultralytics-main-new/     # 定制版 Ultralytics YOLO11（RGB-D 苹果遮挡检测）
+└── .github/                  # CI：Issue 触发自动更新本 README 博客列表
+1. 1.coding — 深度学习编码项目
+0_segment — 图像分割与检测工程骨架
+基于 PyTorch 的模块化工程，支持图像分割与目标检测两大任务。采用注册机制 + 配置驱动组网，可灵活更换 backbone / neck / head。
 
-### 1. `1.coding/` - 图像分割与经典网络学习
-这是一个深度学习图像分割和经典神经网络学习的项目集合，适合学习与科研实验。
-- **`0_segment/`**: 图像分割工程骨架。支持模块化设计、动态组网，通过配置文件即可快速构建基于 ResNet 等骨干网络的分割模型，支持多种数据标签格式。
-- **`1_study_module/`**: 深度学习经典网络学习模块。包含了计算机视觉领域众多经典模型的纯手写实现与测试，包括：
-  - **分类网络**: LeNet, AlexNet, VGGNet, GoogLeNet, ResNet, DenseNet, NIN, MobileNet (V1/V2), ConvNeXt 等。
-  - **注意力机制与 Transformer**: SEBlock, CBAM, Transformer, ViT 等。
-  - **分割与其他**: FCN, LSNET 等。
-- **`2_Unet/`**: U-Net 图像分割网络的标准实现与训练流程。
-- **`3_phics_x/`**: PHICS-X 相关模型与模块实现。
+分割模型：MiniSegNet（ResNet18 + 1×1 Conv）、FPNSegNet（多尺度 ResNet18 + FPN）
+检测模型：YOLO11Detector（CSP + SPPF 骨干 + PAN-FPN 颈部 + 解耦头）
+多模态：TS-Dual（RGB + Mask 先验 + Depth，输出分割与边界框）
+数据格式：mask 图片 / YOLO TXT / COCO JSON / NumPy NPY
+损失函数：分割 BCE/CE；检测 CIoU + DFL + BCE（TaskAlignedAssigner 标签分配）
+详见 1.coding/0_segment/README.md。
 
-### 2. `2_catoon/` - 神经网络动画可视化
-基于 [Manim](https://github.com/3b1b/manim) 引擎的数学与神经网络可视化动画项目。
-- 包含 `0_Learning` 基础学习测试脚本和 `1_LeNet` 经典网络的结构展示（如 `abstract`, `detail`, `conclusion` 等分镜脚本）。
-- 用于生成高质量的深度学习原理解析视频与动画，帮助更直观地理解网络的前向传播与结构。
 
-### 3. `ultralytics-main-new/` - YOLO11-RGBD 苹果遮挡检测模型
-基于官方 [Ultralytics](https://github.com/ultralytics/ultralytics) YOLO 的深度定制版本，专为 RGB-D (4通道) 图像的苹果遮挡检测任务设计。
-- **核心特点**: 遵循“纯 CNN + 频域 (FFT/小波) + 动态门控”的设计哲学，**完全不依赖 Transformer 或 Mamba**。
-- **自定义创新模块**:
-  - **SFM (Strip-Freq Mixer)**: 结合正交条形深度卷积与 2D-FFT 的全局频域建模，替换原始的 C3k2/C2f 模块。
-  - **WCAF (Wavelet-Cross-Attention Fusion)**: 利用手写 Haar 小波变换 (DWT/IDWT) 处理 RGB 与 Depth 特征，通过深度空间注意力对 RGB 高频噪声进行门控过滤。
-  - **DGFFN (Dilated-Gated FFN)**: 结合多尺度膨胀卷积、通道注意力与 GLU 门控，替换标准 YOLO 的前馈网络。
-- **实验与配置**: 包含大量定制化的 YAML 模型配置（位于 `mine_yaml/` 与 `mine_yaml_v4/`）以及消融实验的详细结果（`results/`）。
+Bash
 
----
-
-## 🚀 快速开始
-
-各模块均可独立运行，请进入对应目录查看详细说明或执行代码：
-
-### 图像分割框架 (`1.coding/0_segment`)
-```bash
 cd 1.coding/0_segment
 pip install -r requirements.txt
-python scripts/train.py --epochs 10 --batch 8
-```
-> 详情请参考 `1.coding/0_segment/README.md`
+python train.py --model-type fpnseg          # 分割
+python train.py --model-type ts_dual ...     # 多模态
+1_study_module — 经典网络架构复现
+按论文顺序复现主流网络，每个子目录对应一个架构：
 
-### YOLO11-RGBD 目标检测 (`ultralytics-main-new`)
-```bash
+编号	架构	编号	架构
+1	LeNet-5	9	NIN (Network in Network)
+2	AlexNet	10	GoogleNet
+3	VGGNet (A~E)	11	ResNet
+4	SEBlock	12	DenseNet
+5	CBAM	13	ConvNeXt
+6	MobileNet-V1	14	MobileNet-V2
+7	Transformer	15	FCN (全卷积网络)
+8	ViT	16	LSNet
+2_Unet / 3_phics_x
+2_Unet — U-Net 医学图像分割实现（含训练图像样本）
+3_phics_x — PHICS-X 模型，基于 ResNet18 基座
+2. 2_catoon — Manim 数学动画
+使用 Manim 制作神经网络原理动画，用于可视化教学（如 LeNet 结构演示）。
+
+3. ultralytics-main-new — RGB-D 苹果遮挡检测
+基于 Ultralytics YOLO11 的定制版本，采用纯 CNN + 频域 + 动态门控机制（不依赖 Transformer / Mamba），面向果园 RGB-D 苹果遮挡检测。
+
+自定义模块
+模块	作用	机制
+SFM (Strip-Freq Mixer)	替换 backbone 的 C3k2/C2f	条带感知深度卷积 + 2D-FFT 全局频域建模
+WCAF (Wavelet-Cross-Attention Fusion)	替换 neck 的 Concat	Haar 小波变换，Depth 低频门控 RGB 高频
+DGFFN (Dilated-Gated FFN)	替换标准 FFN	多尺度膨胀卷积 + 通道注意力 + GLU 门控
+异构双流骨干
+RGB 分支：MobileNetV3-Large / MobileNetV4（倒残差 + SE + HardSwish）
+Depth 分支：StarNet（星型操作）/ ShuffleNetV2
+尺度感知融合：P3 Depth2RGB、P4 双向互补、P5 RGB-led 几何先验
+优化器：PIDAO（多通道高阶 PID 优化器）
+实验配置
+mine_yaml/ — 11 组消融与对比实验（baseline → 完整模型）
+mine_yaml_v4/ — V4 版本 10 组实验
+results/ — 训练结果（曲线、混淆矩阵、预测样例）
+详见 ultralytics-main-new/README.md。
+
+
+Bash
+
 cd ultralytics-main-new
-pip install -e .
-yolo task=detect mode=train model=cfg/models/11/yolo11-rgbd.yaml data=your_dataset.yaml epochs=100 imgsz=640
-```
-> 模型设计细节与频域/小波模块说明请参考 `ultralytics-main-new/README.md`
+yolo task=detect mode=train model=yolo11-rgbd.yaml data=your_dataset.yaml epochs=100 imgsz=640
+自动化：Issue 驱动博客列表
+仓库配置了 GitHub Actions（.github/workflows/main.yml）：当带有 blog 标签的 Issue 被创建/编辑时，自动将标题与链接追加到下方列表。
 
-### 动画渲染 (`2_catoon`)
-需提前配置好 Manim 环境及 FFmpeg，然后执行对应的 Python 脚本即可渲染视频：
-```bash
-cd 2_catoon/1_LeNet
-manim -pql 1_abstract.py SimpleCircle
-```
-
-## 📝 许可协议
-本项目包含多个子模块，大部分基于开源社区项目二次开发。其中 YOLO 相关代码遵循 Ultralytics 原有的 AGPL-3.0 许可证，其余代码请参考各子目录下的具体说明。
+技术栈
+框架：PyTorch、Ultralytics YOLO11
+领域：图像分割、目标检测、RGB-D 多模态融合、频域/小波变换
+工具：Manim（动画）、GitHub Actions（CI）
+语言：Python
