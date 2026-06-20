@@ -26,7 +26,7 @@ from ultralytics import YOLO
 
 SEED = 42
 EPOCHS = 600
-BATCH = 16
+BATCH = 12
 IMGSZ = 640
 DATA = r"E:/mastercode/ultralytics-main-new/207_shr_watermelon.yaml"
 PROJECT = r"E:/mastercode/ultralytics-main-new/results"
@@ -56,36 +56,20 @@ def main():
     print(f"  Keypoint: 1 (蕊心) with visibility")
     print()
 
-    yolo = YOLO(MODEL)
-
+    yolo = YOLO(r"E:/mastercode/ultralytics-main-new/ultralytics/cfg/models/11/yolo11-pose.yaml")
     yolo.train(
-        data=DATA,
-        project=PROJECT,
-        name="08_shr_watermelon_flower_pose",
-        epochs=EPOCHS,
-        patience=600,
-        imgsz=IMGSZ,
-        batch=BATCH,
+        data=r"E:/mastercode/ultralytics-main-new/207_shr_watermelon.yaml",
+        project=r"E:/mastercode/ultralytics-main-new/results",
+        name="08_shr_watermelon_flower_pose_base",
+        epochs=600,
+        patience=300,
+        imgsz=(960,640),
+        batch=12,
         optimizer="AdamW",
-        lr0=0.001,
-        # lrf=0.01,
-        momentum=0.937,
-        weight_decay=0.0005,
-        warmup_epochs=3,
-        warmup_momentum=0.8,
-        warmup_bias_lr=0.1,
-        workers=4,
-        device=0,
-        cache=False,
-        seed=SEED,
-        amp=True,
-        cos_lr=True,
-        close_mosaic=10,
-        augment=True,
-        flipud=0.0,
-        fliplr=0.5,
+        copy_paste=0.3,
         mosaic=1.0,
-        mixup=0.0,
+        mixup=0.1,
+        cos_lr=True
     )
 
     print("\n训练完成！")

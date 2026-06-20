@@ -2,7 +2,7 @@
 # 5 classes (flower types), 1 keypoint per object (蕊心), visibility flag
 # bbox derived from segmentation polygons, keypoint from pose JSON
 
-path: E:/mastercode/data/shr_watermelon/ceshiwenjian
+path: E:/mastercode/data/shr_watermelon/pose/yolo
 
 train: train/images
 val: val/images
