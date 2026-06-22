@@ -1,0 +1,15 @@
+# SHR Watermelon Flower Pose Dataset - 6 Keypoints
+# 5 classes (flower types), 6 keypoints per object (stigma + 5 petals)
+# bbox from LabelMe rectangles, keypoints from LabelMe points
+
+path: E:/mastercode/data/shr_watermelon/pose/yolo_6pt
+
+train: images/train
+val: images/val
+test: images/test
+
+nc: 5
+names: ["blooming_male", "unknown", "closed_male", "blooming_female", "closed_female"]
+
+kpt_shape: [6, 3]  # 6 keypoints, 3 dims (x, y, visibility)
+flip_idx: [0, 1, 2, 3, 4, 5]  # 不做水平翻转（花瓣顺序会乱）
