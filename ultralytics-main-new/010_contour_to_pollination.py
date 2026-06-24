@@ -162,7 +162,7 @@ class YOLOSegPollinationDataset(Dataset):
         
         # 读取图像
         image = cv2.imread(img_path)
-        h, w = image.shape[:2]
+        h, w = image.shape[:2] # type: ignore
         
         # YOLO分割得到掩膜
         results = self.seg_model.predict(img_path, conf=0.25, verbose=False)
