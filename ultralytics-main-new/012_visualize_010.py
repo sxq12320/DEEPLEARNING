@@ -93,6 +93,43 @@ def extract_hsv_features(image, mask):
     ], dtype=np.float32)
 
 
+def select_gt_center(label_path, w, h, flower_center):
+    """Select a visible pollination point that matches the current flower mask."""
+    if not os.path.exists(label_path):
+        return None
+
+    with open(label_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    candidates = []
+    for shape in data.get('shapes', []):
+        if shape.get('shape_type') != 'point':
+            continue
+        lbl = shape.get('label', '')
+        if lbl not in ('fully_visible', 'partially_visible'):
+            continue
+        points = shape.get('points') or []
+        if not points:
+            continue
+
+        pt = points[0]
+        norm_pt = np.array([pt[0] / w, pt[1] / h], dtype=np.float32)
+        priority = 0 if lbl == 'fully_visible' else 1
+        candidates.append((priority, norm_pt))
+
+    if not candidates:
+        return None
+
+    best_priority = min(priority for priority, _ in candidates)
+    visible_candidates = [pt for priority, pt in candidates if priority == best_priority]
+    return min(visible_candidates, key=lambda pt: np.linalg.norm(pt - flower_center))
+
+
+def as_float_point(point):
+    arr = np.asarray(point, dtype=np.float64).reshape(-1)
+    return [float(arr[0]), float(arr[1])]
+
+
 def draw_visualization(image, contour_pts_norm, flower_center_norm, pred_center_norm,
                        gt_center_norm, error_px, img_w, img_h):
     """绘制单张图的可视化结果"""
@@ -111,23 +148,22 @@ def draw_visualization(image, contour_pts_norm, flower_center_norm, pred_center_
     cv2.circle(vis, (fc_x, fc_y), 6, (255, 0, 0), -1)  # 蓝色花朵中心
     cv2.putText(vis, "Center", (fc_x + 8, fc_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
 
-    # 画GT授粉点
-    gt_x = int(gt_center_norm[0] * img_w)
-    gt_y = int(gt_center_norm[1] * img_h)
-    cv2.circle(vis, (gt_x, gt_y), 8, (0, 255, 0), 2)  # 绿色圆圈 = GT
-    cv2.putText(vis, "GT", (gt_x + 10, gt_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
     # 画预测授粉点
     pred_x = int(pred_center_norm[0] * img_w)
     pred_y = int(pred_center_norm[1] * img_h)
     cv2.circle(vis, (pred_x, pred_y), 8, (0, 0, 255), 2)  # 红色圆圈 = Pred
     cv2.putText(vis, f"Pred", (pred_x + 10, pred_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-    # 画误差线
-    cv2.line(vis, (gt_x, gt_y), (pred_x, pred_y), (0, 0, 255), 1)
+    # 画GT授粉点
+    if gt_center_norm is not None:
+        gt_x = int(gt_center_norm[0] * img_w)
+        gt_y = int(gt_center_norm[1] * img_h)
+        cv2.circle(vis, (gt_x, gt_y), 8, (0, 255, 0), 2)  # 绿色圆圈 = GT
+        cv2.putText(vis, "GT", (gt_x + 10, gt_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.line(vis, (gt_x, gt_y), (pred_x, pred_y), (0, 0, 255), 1)
 
     # 误差信息
-    info_text = f"Error: {error_px:.1f}px"
+    info_text = f"Error: {error_px:.1f}px" if error_px is not None else "GT skipped"
     cv2.putText(vis, info_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
     return vis
@@ -154,6 +190,7 @@ def main():
 
     all_errors = []
     results_data = []
+    skipped_data = []
 
     # 推理并可视化
     for img_file in tqdm(img_files, desc="推理中"):
@@ -192,16 +229,6 @@ def main():
             if M["m00"] > 0:
                 flower_center = np.array([M["m10"] / M["m00"] / w, M["m01"] / M["m00"] / h])
 
-        # GT
-        gt_center = np.array([0.5, 0.5])
-        if os.path.exists(label_path):
-            with open(label_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            for shape in data['shapes']:
-                if shape['label'] == 'fully_visible':
-                    gt_center = np.array([shape['points'][0][0] / w, shape['points'][0][1] / h])
-                    break
-
         # 推理
         boundary_tensor = torch.tensor(contour_pts.flatten(), dtype=torch.float32).unsqueeze(0).to(device)
         hsv_tensor = torch.tensor(hsv_feat, dtype=torch.float32).unsqueeze(0).to(device)
@@ -212,15 +239,29 @@ def main():
             pred_center = flower_center_tensor + offset
             pred_center = pred_center.cpu().numpy()[0]
 
+        # GT
+        gt_center = select_gt_center(label_path, w, h, flower_center)
+        if gt_center is None:
+            skipped_data.append({
+                'file': img_file,
+                'reason': 'no fully_visible or partially_visible point',
+                'pred': as_float_point(pred_center),
+                'flower_center': as_float_point(flower_center),
+            })
+            vis = draw_visualization(image, contour_pts, flower_center, pred_center,
+                                     None, None, w, h)
+            cv2.imwrite(os.path.join(VIS_DIR, img_file), vis)
+            continue
+
         # 计算误差
-        error_px = np.sqrt(((pred_center - gt_center) * max(w, h)) ** 2).sum()
+        error_px = float(np.linalg.norm((pred_center - gt_center) * np.array([w, h], dtype=np.float32)))
         all_errors.append(error_px)
         results_data.append({
             'file': img_file,
             'error_px': error_px,
-            'pred': pred_center.tolist(),
-            'gt': gt_center.tolist(),
-            'flower_center': flower_center.tolist(),
+            'pred': as_float_point(pred_center),
+            'gt': as_float_point(gt_center),
+            'flower_center': as_float_point(flower_center),
         })
 
         # 可视化
@@ -290,13 +331,15 @@ def main():
         json.dump({
             'summary': {
                 'total': len(all_errors),
+                'skipped': len(skipped_data),
                 'mean_error_px': float(np.mean(all_errors)),
                 'median_error_px': float(np.median(all_errors)),
                 'std_error_px': float(np.std(all_errors)),
                 'max_error_px': float(np.max(all_errors)),
                 'min_error_px': float(np.min(all_errors)),
             },
-            'per_sample': results_data
+            'per_sample': results_data,
+            'skipped_sample': skipped_data
         }, f, indent=2, ensure_ascii=False)
 
     print(f"  详细结果已保存: {VIS_DIR}/eval_results.json")

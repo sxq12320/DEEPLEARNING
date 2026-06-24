@@ -20,6 +20,7 @@ from tqdm import tqdm
 RESULTS_DIR = r"E:\mastercode\ultralytics-main-new\results"
 SEG_MODEL_PATH = os.path.join(RESULTS_DIR, "09_watermelon_seg_2", "weights", "best.pt")
 NUM_BOUNDARY_POINTS = 64
+MAX_GT_MATCH_DISTANCE_PX = 160
 
 
 # ============ 网络 ============
@@ -104,6 +105,40 @@ def extract_hsv_features(image, mask):
     ], dtype=np.float32)
 
 
+def select_gt_center(label_path, w, h, flower_center):
+    """Select the pollination point that belongs to the current segmented flower."""
+    if not os.path.exists(label_path):
+        return None
+
+    with open(label_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    candidates = []
+    img_wh = np.array([w, h], dtype=np.float32)
+    for shape in data.get('shapes', []):
+        if shape.get('shape_type') != 'point':
+            continue
+        lbl = shape.get('label', '')
+        if lbl not in ('fully_visible', 'partially_visible', 'invisible'):
+            continue
+        points = shape.get('points') or []
+        if not points:
+            continue
+
+        pt = points[0]
+        norm_pt = np.array([pt[0] / w, pt[1] / h], dtype=np.float32)
+        distance_px = float(np.linalg.norm((norm_pt - flower_center) * img_wh))
+        candidates.append((distance_px, lbl, norm_pt))
+
+    if not candidates:
+        return None
+
+    distance_px, lbl, norm_pt = min(candidates, key=lambda item: item[0])
+    if lbl == 'invisible' or distance_px > MAX_GT_MATCH_DISTANCE_PX:
+        return None
+    return norm_pt
+
+
 # ============ 数据集（使用YOLO分割） ============
 class YOLOSegPollinationDataset(Dataset):
     """使用YOLO分割模型生成掩膜的数据集"""
@@ -113,11 +148,15 @@ class YOLOSegPollinationDataset(Dataset):
         self.seg_model = seg_model
         self.num_boundary_points = num_boundary_points
         self.img_files = [f for f in os.listdir(img_dir) if f.endswith('.jpg')]
+        self.cache = {}
     
     def __len__(self):
         return len(self.img_files)
     
     def __getitem__(self, idx):
+        if idx in self.cache:
+            return self.cache[idx]
+
         img_file = self.img_files[idx]
         img_path = os.path.join(self.img_dir, img_file)
         
@@ -138,18 +177,6 @@ class YOLOSegPollinationDataset(Dataset):
         boundary = extract_boundary_points(mask, self.num_boundary_points)
         hsv_feat = extract_hsv_features(image, mask)
         
-        # 读取GT
-        json_name = img_file.replace('.jpg', '.json')
-        label_path = os.path.join(self.label_dir, json_name)
-        gt_center = np.array([0.5, 0.5])
-        if os.path.exists(label_path):
-            with open(label_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            for shape in data['shapes']:
-                if shape['label'] == 'fully_visible':
-                    gt_center = np.array([shape['points'][0][0] / w, shape['points'][0][1] / h])
-                    break
-        
         # 计算花朵中心（用于偏移量计算）
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         flower_center = np.array([0.5, 0.5])
@@ -158,14 +185,25 @@ class YOLOSegPollinationDataset(Dataset):
             M = cv2.moments(largest)
             if M["m00"] > 0:
                 flower_center = np.array([M["m10"]/M["m00"]/w, M["m01"]/M["m00"]/h])
-        
-        return {
+
+        # 读取GT授粉点（优先 fully_visible > partially_visible，多候选取离花朵中心最近的）
+        json_name = img_file.replace('.jpg', '.json')
+        label_path = os.path.join(self.label_dir, json_name)
+        gt_center = select_gt_center(label_path, w, h, flower_center)
+        gt_valid = gt_center is not None
+        if not gt_valid:
+            gt_center = np.array([0.0, 0.0], dtype=np.float32)
+
+        sample = {
             'boundary': torch.tensor(boundary) if boundary is not None else torch.zeros(self.num_boundary_points * 2),
-            'hsv': torch.tensor(hsv_feat),
-            'flower_center': torch.tensor(flower_center),
-            'gt_center': torch.tensor(gt_center),
-            'valid': boundary is not None
+            'hsv': torch.tensor(hsv_feat, dtype=torch.float32),
+            'flower_center': torch.tensor(flower_center, dtype=torch.float32),
+            'gt_center': torch.tensor(gt_center, dtype=torch.float32),
+            'img_wh': torch.tensor([w, h], dtype=torch.float32),
+            'valid': boundary is not None and gt_valid
         }
+        self.cache[idx] = sample
+        return sample
 
 
 # ============ 训练 ============
@@ -269,6 +307,7 @@ def main():
                 hsv = batch['hsv'][batch['valid']].to(device)
                 flower_center = batch['flower_center'][batch['valid']].to(device)
                 gt_center = batch['gt_center'][batch['valid']].to(device)
+                img_wh = batch['img_wh'][batch['valid']].to(device)
                 
                 offset = model(boundary, hsv)
                 pred_center = flower_center + offset
@@ -278,9 +317,8 @@ def main():
                 val_count += 1
                 
                 # 计算像素误差
-                for i in range(pred_center.shape[0]):
-                    err = torch.sqrt(((pred_center[i] - gt_center[i]) * 640) ** 2).sum().item()
-                    errors.append(err)
+                pixel_errors = torch.norm((pred_center - gt_center) * img_wh, dim=1)
+                errors.extend(pixel_errors.cpu().tolist())
         
         train_loss /= max(train_count, 1)
         val_loss /= max(val_count, 1)
@@ -321,13 +359,13 @@ def main():
             hsv = batch['hsv'][batch['valid']].to(device)
             flower_center = batch['flower_center'][batch['valid']].to(device)
             gt_center = batch['gt_center'][batch['valid']].to(device)
+            img_wh = batch['img_wh'][batch['valid']].to(device)
             
             offset = model(boundary, hsv)
             pred_center = flower_center + offset
             
-            for i in range(pred_center.shape[0]):
-                err = torch.sqrt(((pred_center[i] - gt_center[i]) * 640) ** 2).sum().item()
-                all_errors.append(err)
+            pixel_errors = torch.norm((pred_center - gt_center) * img_wh, dim=1)
+            all_errors.extend(pixel_errors.cpu().tolist())
     
     all_errors = np.array(all_errors)
     print(f"  总样本数: {len(all_errors)}")
