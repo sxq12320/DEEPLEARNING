@@ -1,0 +1,11 @@
+# SHR Watermelon Flower Segmentation Dataset
+# 5 classes (flower types), segmentation masks
+
+path: E:/mastercode/data/shr_watermelon/segmentation
+
+train: images/train
+val: images/val
+test: images/test
+
+nc: 5
+names: ["blooming_male", "unknown", "closed_male", "blooming_female", "closed_female"]
