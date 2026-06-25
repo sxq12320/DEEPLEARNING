@@ -195,7 +195,7 @@ class YOLOSegPollinationDataset(Dataset):
         img_path = os.path.join(self.img_dir, img_file)
         
         image = cv2.imread(img_path)
-        h, w = image.shape[:2]
+        h, w = image.shape[:2] # type: ignore
         
         # YOLO分割
         results = self.seg_model.predict(img_path, conf=0.25, verbose=False)
