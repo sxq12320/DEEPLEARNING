@@ -1,21 +1,20 @@
 """
-可视化评估：010 ContourToPollinationNet 训练结果
-===============================================
-1. 在验证集上逐样本推理
-2. 可视化预测授粉点 vs GT授粉点
-3. 误差分布统计
+Visualize and evaluate 010 ContourToPollinationNet on the validation set.
 """
 
+import json
+import os
+
+import cv2
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-import cv2
-import os
-import json
-from ultralytics import YOLO
 from tqdm import tqdm
+from ultralytics import YOLO
 
-# ============ 配置 ============
+from keypoint_map_utils import compute_mask_area, compute_oks, summarize_single_keypoint_map
+
+
 RESULTS_DIR = r"E:\mastercode\ultralytics-main-new\results"
 SEG_MODEL_PATH = os.path.join(RESULTS_DIR, "09_watermelon_seg_2", "weights", "best.pt")
 MODEL_PATH = os.path.join(RESULTS_DIR, "10_contour_pollination", "best.pth")
@@ -23,10 +22,9 @@ VAL_IMG_DIR = r"E:\mastercode\data\shr_watermelon\segmentation\images\val"
 VAL_LABEL_DIR = r"E:\mastercode\data\shr_watermelon\pose\labels\val"
 VIS_DIR = os.path.join(RESULTS_DIR, "10_contour_pollination", "visualizations")
 NUM_BOUNDARY_POINTS = 64
-IMG_SIZE = 960  # 假设宽度，会从json读取实际值
+MAX_GT_MATCH_DISTANCE_PX = 160
 
 
-# ============ 网络（必须和训练时一致） ============
 class ContourToPollinationNet(nn.Module):
     def __init__(self, num_boundary_points=64, hidden_dim=128):
         super().__init__()
@@ -53,7 +51,7 @@ class ContourToPollinationNet(nn.Module):
             nn.Linear(64, 32),
             nn.ReLU(inplace=True),
             nn.Linear(32, 2),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, boundary_points, hsv_features):
@@ -61,11 +59,9 @@ class ContourToPollinationNet(nn.Module):
         hsv_feat = self.hsv_encoder(hsv_features)
         fused = torch.cat([boundary_feat, hsv_feat], dim=1)
         fused = self.fusion(fused)
-        offset = self.predictor(fused)
-        return offset
+        return self.predictor(fused)
 
 
-# ============ 工具函数 ============
 def extract_boundary_points(mask, num_points=64):
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
@@ -86,43 +82,65 @@ def extract_hsv_features(image, mask):
     flower_pixels = hsv[mask > 0]
     if len(flower_pixels) == 0:
         return np.zeros(3, dtype=np.float32)
-    return np.array([
-        np.mean(flower_pixels[:, 0]) / 180.0,
-        np.mean(flower_pixels[:, 1]) / 255.0,
-        np.mean(flower_pixels[:, 2]) / 255.0
-    ], dtype=np.float32)
+    return np.array(
+        [
+            np.mean(flower_pixels[:, 0]) / 180.0,
+            np.mean(flower_pixels[:, 1]) / 255.0,
+            np.mean(flower_pixels[:, 2]) / 255.0,
+        ],
+        dtype=np.float32,
+    )
+
+
+def compute_flower_center(mask):
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    flower_center = np.array([0.5, 0.5], dtype=np.float32)
+    if not contours:
+        return flower_center
+
+    largest = max(contours, key=cv2.contourArea)
+    moments = cv2.moments(largest)
+    if moments["m00"] <= 0:
+        return flower_center
+
+    h, w = mask.shape
+    return np.array(
+        [moments["m10"] / moments["m00"] / w, moments["m01"] / moments["m00"] / h],
+        dtype=np.float32,
+    )
 
 
 def select_gt_center(label_path, w, h, flower_center):
-    """Select a visible pollination point that matches the current flower mask."""
     if not os.path.exists(label_path):
         return None
 
-    with open(label_path, 'r', encoding='utf-8') as f:
+    with open(label_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     candidates = []
-    for shape in data.get('shapes', []):
-        if shape.get('shape_type') != 'point':
+    img_wh = np.array([w, h], dtype=np.float32)
+    for shape in data.get("shapes", []):
+        if shape.get("shape_type") != "point":
             continue
-        lbl = shape.get('label', '')
-        if lbl not in ('fully_visible', 'partially_visible'):
+        label = shape.get("label", "")
+        if label not in ("fully_visible", "partially_visible", "invisible"):
             continue
-        points = shape.get('points') or []
+        points = shape.get("points") or []
         if not points:
             continue
 
-        pt = points[0]
-        norm_pt = np.array([pt[0] / w, pt[1] / h], dtype=np.float32)
-        priority = 0 if lbl == 'fully_visible' else 1
-        candidates.append((priority, norm_pt))
+        point = points[0]
+        norm_pt = np.array([point[0] / w, point[1] / h], dtype=np.float32)
+        distance_px = float(np.linalg.norm((norm_pt - flower_center) * img_wh))
+        candidates.append((distance_px, label, norm_pt))
 
     if not candidates:
         return None
 
-    best_priority = min(priority for priority, _ in candidates)
-    visible_candidates = [pt for priority, pt in candidates if priority == best_priority]
-    return min(visible_candidates, key=lambda pt: np.linalg.norm(pt - flower_center))
+    distance_px, label, norm_pt = min(candidates, key=lambda item: item[0])
+    if label == "invisible" or distance_px > MAX_GT_MATCH_DISTANCE_PX:
+        return None
+    return norm_pt
 
 
 def as_float_point(point):
@@ -130,220 +148,249 @@ def as_float_point(point):
     return [float(arr[0]), float(arr[1])]
 
 
-def draw_visualization(image, contour_pts_norm, flower_center_norm, pred_center_norm,
-                       gt_center_norm, error_px, img_w, img_h):
-    """绘制单张图的可视化结果"""
+def draw_visualization(
+    image,
+    contour_pts_norm,
+    flower_center_norm,
+    pred_center_norm,
+    gt_center_norm,
+    error_px,
+    img_w,
+    img_h,
+):
     vis = image.copy()
 
-    # 画轮廓点
     if contour_pts_norm is not None:
         for pt in contour_pts_norm:
             px = int(pt[0] * img_w)
             py = int(pt[1] * img_h)
-            cv2.circle(vis, (px, py), 2, (0, 255, 255), -1)  # 黄色轮廓点
+            cv2.circle(vis, (px, py), 2, (0, 255, 255), -1)
 
-    # 画花朵中心
     fc_x = int(flower_center_norm[0] * img_w)
     fc_y = int(flower_center_norm[1] * img_h)
-    cv2.circle(vis, (fc_x, fc_y), 6, (255, 0, 0), -1)  # 蓝色花朵中心
+    cv2.circle(vis, (fc_x, fc_y), 6, (255, 0, 0), -1)
     cv2.putText(vis, "Center", (fc_x + 8, fc_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
 
-    # 画预测授粉点
     pred_x = int(pred_center_norm[0] * img_w)
     pred_y = int(pred_center_norm[1] * img_h)
-    cv2.circle(vis, (pred_x, pred_y), 8, (0, 0, 255), 2)  # 红色圆圈 = Pred
-    cv2.putText(vis, f"Pred", (pred_x + 10, pred_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    cv2.circle(vis, (pred_x, pred_y), 8, (0, 0, 255), 2)
+    cv2.putText(vis, "Pred", (pred_x + 10, pred_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-    # 画GT授粉点
     if gt_center_norm is not None:
         gt_x = int(gt_center_norm[0] * img_w)
         gt_y = int(gt_center_norm[1] * img_h)
-        cv2.circle(vis, (gt_x, gt_y), 8, (0, 255, 0), 2)  # 绿色圆圈 = GT
+        cv2.circle(vis, (gt_x, gt_y), 8, (0, 255, 0), 2)
         cv2.putText(vis, "GT", (gt_x + 10, gt_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         cv2.line(vis, (gt_x, gt_y), (pred_x, pred_y), (0, 0, 255), 1)
 
-    # 误差信息
     info_text = f"Error: {error_px:.1f}px" if error_px is not None else "GT skipped"
     cv2.putText(vis, info_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-
     return vis
+
+
+def summarize_errors(errors):
+    if len(errors) == 0:
+        return {
+            "total": 0,
+            "mean_error_px": 0.0,
+            "median_error_px": 0.0,
+            "std_error_px": 0.0,
+            "max_error_px": 0.0,
+            "min_error_px": 0.0,
+        }
+
+    arr = np.asarray(errors, dtype=np.float32)
+    return {
+        "total": int(len(arr)),
+        "mean_error_px": float(np.mean(arr)),
+        "median_error_px": float(np.median(arr)),
+        "std_error_px": float(np.std(arr)),
+        "max_error_px": float(np.max(arr)),
+        "min_error_px": float(np.min(arr)),
+    }
 
 
 def main():
     os.makedirs(VIS_DIR, exist_ok=True)
 
-    # 加载模型
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"设备: {device}")
+    print(f"Device: {device}")
 
     seg_model = YOLO(SEG_MODEL_PATH)
-
     model = ContourToPollinationNet(num_boundary_points=NUM_BOUNDARY_POINTS)
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model = model.to(device)
     model.eval()
 
-    # 获取验证图片
-    img_files = sorted([f for f in os.listdir(VAL_IMG_DIR)
-                        if f.endswith('.jpg') and not f.startswith('annotations')])
-    print(f"验证图片数: {len(img_files)}")
+    img_files = sorted([f for f in os.listdir(VAL_IMG_DIR) if f.endswith(".jpg") and not f.startswith("annotations")])
+    print(f"Validation images: {len(img_files)}")
 
     all_errors = []
+    all_oks = []
     results_data = []
     skipped_data = []
 
-    # 推理并可视化
-    for img_file in tqdm(img_files, desc="推理中"):
+    for img_file in tqdm(img_files, desc="Running inference"):
         img_path = os.path.join(VAL_IMG_DIR, img_file)
-        json_name = img_file.replace('.jpg', '.json')
-        label_path = os.path.join(VAL_LABEL_DIR, json_name)
+        label_path = os.path.join(VAL_LABEL_DIR, img_file.replace(".jpg", ".json"))
 
-        # 读取图像
         image = cv2.imread(img_path)
         if image is None:
             continue
         h, w = image.shape[:2]
 
-        # YOLO分割
         results = seg_model.predict(img_path, conf=0.25, verbose=False)
         mask = np.zeros((h, w), dtype=np.uint8)
         if results[0].masks is not None:
-            for r in results[0].masks:
-                mask_data = r.data.cpu().numpy()[0]
+            for result_mask in results[0].masks:
+                mask_data = result_mask.data.cpu().numpy()[0]  # type: ignore
                 mask_resized = cv2.resize(mask_data, (w, h))
                 mask[mask_resized > 0.5] = 255
 
-        # 提取特征
+        mask_area = compute_mask_area(mask)
         contour_pts = extract_boundary_points(mask, NUM_BOUNDARY_POINTS)
         hsv_feat = extract_hsv_features(image, mask)
-
         if contour_pts is None:
+            skipped_data.append({"file": img_file, "reason": "no contour extracted"})
             continue
 
-        # 花朵中心
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        flower_center = np.array([0.5, 0.5])
-        if contours:
-            largest = max(contours, key=cv2.contourArea)
-            M = cv2.moments(largest)
-            if M["m00"] > 0:
-                flower_center = np.array([M["m10"] / M["m00"] / w, M["m01"] / M["m00"] / h])
+        flower_center = compute_flower_center(mask)
 
-        # 推理
         boundary_tensor = torch.tensor(contour_pts.flatten(), dtype=torch.float32).unsqueeze(0).to(device)
         hsv_tensor = torch.tensor(hsv_feat, dtype=torch.float32).unsqueeze(0).to(device)
         flower_center_tensor = torch.tensor(flower_center, dtype=torch.float32).unsqueeze(0).to(device)
 
         with torch.no_grad():
             offset = model(boundary_tensor, hsv_tensor)
-            pred_center = flower_center_tensor + offset
-            pred_center = pred_center.cpu().numpy()[0]
+            pred_center = (flower_center_tensor + offset).cpu().numpy()[0]
 
-        # GT
         gt_center = select_gt_center(label_path, w, h, flower_center)
         if gt_center is None:
-            skipped_data.append({
-                'file': img_file,
-                'reason': 'no fully_visible or partially_visible point',
-                'pred': as_float_point(pred_center),
-                'flower_center': as_float_point(flower_center),
-            })
-            vis = draw_visualization(image, contour_pts, flower_center, pred_center,
-                                     None, None, w, h)
+            skipped_data.append(
+                {
+                    "file": img_file,
+                    "reason": "no matched visible pollination point",
+                    "pred": as_float_point(pred_center),
+                    "flower_center": as_float_point(flower_center),
+                }
+            )
+            vis = draw_visualization(image, contour_pts, flower_center, pred_center, None, None, w, h)
             cv2.imwrite(os.path.join(VIS_DIR, img_file), vis)
             continue
 
-        # 计算误差
-        error_px = float(np.linalg.norm((pred_center - gt_center) * np.array([w, h], dtype=np.float32)))
-        all_errors.append(error_px)
-        results_data.append({
-            'file': img_file,
-            'error_px': error_px,
-            'pred': as_float_point(pred_center),
-            'gt': as_float_point(gt_center),
-            'flower_center': as_float_point(flower_center),
-        })
+        img_wh = np.array([w, h], dtype=np.float32)
+        error_px = float(np.linalg.norm((pred_center - gt_center) * img_wh))
+        oks = compute_oks(pred_center, gt_center, img_wh, mask_area)
 
-        # 可视化
-        vis = draw_visualization(image, contour_pts, flower_center, pred_center,
-                                 gt_center, error_px, w, h)
+        all_errors.append(error_px)
+        all_oks.append(oks)
+        results_data.append(
+            {
+                "file": img_file,
+                "error_px": error_px,
+                "oks": float(oks),
+                "pred": as_float_point(pred_center),
+                "gt": as_float_point(gt_center),
+                "flower_center": as_float_point(flower_center),
+                "mask_area_px": float(mask_area),
+            }
+        )
+
+        vis = draw_visualization(image, contour_pts, flower_center, pred_center, gt_center, error_px, w, h)
         cv2.imwrite(os.path.join(VIS_DIR, img_file), vis)
 
-    # ========== 统计报告 ==========
-    all_errors = np.array(all_errors)
+    error_summary = summarize_errors(all_errors)
+    map_metrics = summarize_single_keypoint_map(all_oks)
 
     print("\n" + "=" * 60)
-    print("评估结果统计")
+    print("Evaluation summary")
     print("=" * 60)
-    print(f"  总样本数:   {len(all_errors)}")
-    print(f"  平均误差:   {np.mean(all_errors):.2f} px")
-    print(f"  中位数误差: {np.median(all_errors):.2f} px")
-    print(f"  最大误差:   {np.max(all_errors):.2f} px")
-    print(f"  最小误差:   {np.min(all_errors):.2f} px")
-    print(f"  标准差:     {np.std(all_errors):.2f} px")
-    print(f"  <10px:      {np.sum(all_errors < 10)} ({np.sum(all_errors < 10) / len(all_errors) * 100:.1f}%)")
-    print(f"  <20px:      {np.sum(all_errors < 20)} ({np.sum(all_errors < 20) / len(all_errors) * 100:.1f}%)")
-    print(f"  <30px:      {np.sum(all_errors < 30)} ({np.sum(all_errors < 30) / len(all_errors) * 100:.1f}%)")
-    print(f"  <50px:      {np.sum(all_errors < 50)} ({np.sum(all_errors < 50) / len(all_errors) * 100:.1f}%)")
+    print(f"Samples: {error_summary['total']}")
+    print(f"Mean error: {error_summary['mean_error_px']:.2f} px")
+    print(f"Median error: {error_summary['median_error_px']:.2f} px")
+    print(f"Max error: {error_summary['max_error_px']:.2f} px")
+    print(f"Min error: {error_summary['min_error_px']:.2f} px")
+    print(f"Std error: {error_summary['std_error_px']:.2f} px")
 
-    # 排序打印最差的样本
-    results_data.sort(key=lambda x: x['error_px'], reverse=True)
-    print(f"\n  误差最大 Top-5:")
-    for r in results_data[:5]:
-        print(f"    {r['file']}: {r['error_px']:.1f}px")
-    print(f"\n  误差最小 Top-5:")
-    for r in results_data[-5:]:
-        print(f"    {r['file']}: {r['error_px']:.1f}px")
+    if error_summary["total"] > 0:
+        all_errors_arr = np.asarray(all_errors, dtype=np.float32)
+        print(f"<10px: {np.sum(all_errors_arr < 10)} ({np.mean(all_errors_arr < 10) * 100:.1f}%)")
+        print(f"<20px: {np.sum(all_errors_arr < 20)} ({np.mean(all_errors_arr < 20) * 100:.1f}%)")
+        print(f"<30px: {np.sum(all_errors_arr < 30)} ({np.mean(all_errors_arr < 30) * 100:.1f}%)")
+        print(f"<50px: {np.sum(all_errors_arr < 50)} ({np.mean(all_errors_arr < 50) * 100:.1f}%)")
 
-    # 误差分布直方图
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
+    print(f"mAP50: {map_metrics['mAP50']:.4f}")
+    print(f"mAP50-95: {map_metrics['mAP50-95']:.4f}")
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    results_data.sort(key=lambda item: item["error_px"], reverse=True)
+    if results_data:
+        print("\nWorst Top-5:")
+        for item in results_data[:5]:
+            print(f"  {item['file']}: {item['error_px']:.1f}px, OKS={item['oks']:.4f}")
 
-    # 直方图
-    axes[0].hist(all_errors, bins=30, color='steelblue', edgecolor='black', alpha=0.7)
-    axes[0].axvline(np.mean(all_errors), color='red', linestyle='--', label=f'Mean: {np.mean(all_errors):.1f}px')
-    axes[0].axvline(np.median(all_errors), color='orange', linestyle='--', label=f'Median: {np.median(all_errors):.1f}px')
-    axes[0].set_xlabel('Error (px)')
-    axes[0].set_ylabel('Count')
-    axes[0].set_title('Error Distribution')
-    axes[0].legend()
+        print("\nBest Top-5:")
+        for item in results_data[-5:]:
+            print(f"  {item['file']}: {item['error_px']:.1f}px, OKS={item['oks']:.4f}")
 
-    # 累积分布
-    sorted_errors = np.sort(all_errors)
-    cdf = np.arange(1, len(sorted_errors) + 1) / len(sorted_errors)
-    axes[1].plot(sorted_errors, cdf, 'b-', linewidth=2)
-    axes[1].axhline(0.5, color='gray', linestyle=':', alpha=0.5)
-    axes[1].axhline(0.9, color='gray', linestyle=':', alpha=0.5)
-    axes[1].set_xlabel('Error (px)')
-    axes[1].set_ylabel('Cumulative Proportion')
-    axes[1].set_title('CDF of Error')
-    axes[1].grid(True, alpha=0.3)
+    if all_errors:
+        import matplotlib
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(VIS_DIR, "error_distribution.png"), dpi=150)
-    print(f"\n  误差分布图已保存: {VIS_DIR}/error_distribution.png")
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
 
-    # 保存详细结果JSON
-    with open(os.path.join(VIS_DIR, "eval_results.json"), 'w', encoding='utf-8') as f:
-        json.dump({
-            'summary': {
-                'total': len(all_errors),
-                'skipped': len(skipped_data),
-                'mean_error_px': float(np.mean(all_errors)),
-                'median_error_px': float(np.median(all_errors)),
-                'std_error_px': float(np.std(all_errors)),
-                'max_error_px': float(np.max(all_errors)),
-                'min_error_px': float(np.min(all_errors)),
+        all_errors_arr = np.asarray(all_errors, dtype=np.float32)
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+        axes[0].hist(all_errors_arr, bins=30, color="steelblue", edgecolor="black", alpha=0.7)
+        axes[0].axvline(np.mean(all_errors_arr), color="red", linestyle="--", label=f"Mean: {np.mean(all_errors_arr):.1f}px")
+        axes[0].axvline(
+            np.median(all_errors_arr),
+            color="orange",
+            linestyle="--",
+            label=f"Median: {np.median(all_errors_arr):.1f}px",
+        )
+        axes[0].set_xlabel("Error (px)")
+        axes[0].set_ylabel("Count")
+        axes[0].set_title("Error Distribution")
+        axes[0].legend()
+
+        sorted_errors = np.sort(all_errors_arr)
+        cdf = np.arange(1, len(sorted_errors) + 1) / len(sorted_errors)
+        axes[1].plot(sorted_errors, cdf, "b-", linewidth=2)
+        axes[1].axhline(0.5, color="gray", linestyle=":", alpha=0.5)
+        axes[1].axhline(0.9, color="gray", linestyle=":", alpha=0.5)
+        axes[1].set_xlabel("Error (px)")
+        axes[1].set_ylabel("Cumulative Proportion")
+        axes[1].set_title("CDF of Error")
+        axes[1].grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(VIS_DIR, "error_distribution.png"), dpi=150)
+        plt.close(fig)
+        print(f"Saved plot: {os.path.join(VIS_DIR, 'error_distribution.png')}")
+
+    with open(os.path.join(VIS_DIR, "eval_results.json"), "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "summary": {
+                    **error_summary,
+                    "skipped": len(skipped_data),
+                    "mAP50": map_metrics["mAP50"],
+                    "mAP50-95": map_metrics["mAP50-95"],
+                    "oks_mean": map_metrics["oks_mean"],
+                    "oks_median": map_metrics["oks_median"],
+                    "ap_by_threshold": map_metrics["ap_by_threshold"],
+                },
+                "per_sample": results_data,
+                "skipped_sample": skipped_data,
             },
-            'per_sample': results_data,
-            'skipped_sample': skipped_data
-        }, f, indent=2, ensure_ascii=False)
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
 
-    print(f"  详细结果已保存: {VIS_DIR}/eval_results.json")
-    print(f"  可视化图片已保存: {VIS_DIR}/ ({len(all_errors)}张)")
+    print(f"Saved detailed results: {os.path.join(VIS_DIR, 'eval_results.json')}")
+    print(f"Saved visualizations: {VIS_DIR}")
 
 
 if __name__ == "__main__":

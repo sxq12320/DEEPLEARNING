@@ -16,6 +16,8 @@ from ultralytics import YOLO
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from keypoint_map_utils import compute_batch_oks, compute_mask_area, summarize_single_keypoint_map
+
 # ============ 配置 ============
 RESULTS_DIR = r"E:\mastercode\ultralytics-main-new\results"
 SEG_MODEL_PATH = os.path.join(RESULTS_DIR, "09_watermelon_seg_2", "weights", "best.pt")
@@ -172,6 +174,7 @@ class YOLOSegPollinationDataset(Dataset):
                 mask_data = r.data.cpu().numpy()[0]
                 mask_resized = cv2.resize(mask_data, (w, h))
                 mask[mask_resized > 0.5] = 255
+        mask_area = compute_mask_area(mask)
         
         # 提取特征
         boundary = extract_boundary_points(mask, self.num_boundary_points)
@@ -200,6 +203,7 @@ class YOLOSegPollinationDataset(Dataset):
             'flower_center': torch.tensor(flower_center, dtype=torch.float32),
             'gt_center': torch.tensor(gt_center, dtype=torch.float32),
             'img_wh': torch.tensor([w, h], dtype=torch.float32),
+            'mask_area': torch.tensor(mask_area, dtype=torch.float32),
             'valid': boundary is not None and gt_valid
         }
         self.cache[idx] = sample
@@ -297,6 +301,7 @@ def main():
         val_loss = 0
         val_count = 0
         errors = []
+        oks_scores = []
         
         with torch.no_grad():
             for batch in tqdm(val_loader, desc="验证中", ncols=80, leave=False):
@@ -308,6 +313,7 @@ def main():
                 flower_center = batch['flower_center'][batch['valid']].to(device)
                 gt_center = batch['gt_center'][batch['valid']].to(device)
                 img_wh = batch['img_wh'][batch['valid']].to(device)
+                mask_area = batch['mask_area'][batch['valid']].cpu().numpy()
                 
                 offset = model(boundary, hsv)
                 pred_center = flower_center + offset
@@ -319,16 +325,26 @@ def main():
                 # 计算像素误差
                 pixel_errors = torch.norm((pred_center - gt_center) * img_wh, dim=1)
                 errors.extend(pixel_errors.cpu().tolist())
+                oks_scores.extend(
+                    compute_batch_oks(
+                        pred_center.detach().cpu().numpy(),
+                        gt_center.detach().cpu().numpy(),
+                        img_wh.detach().cpu().numpy(),
+                        mask_area,
+                    ).tolist()
+                )
         
         train_loss /= max(train_count, 1)
         val_loss /= max(val_count, 1)
         mean_error = np.mean(errors) if errors else 0
+        map_metrics = summarize_single_keypoint_map(oks_scores)
         
         # 更新进度条
         epoch_pbar.set_postfix({
             'train_loss': f"{train_loss:.6f}",
             'val_loss': f"{val_loss:.6f}",
-            'error': f"{mean_error:.1f}px"
+            'error': f"{mean_error:.1f}px",
+            'mAP50': f"{map_metrics['mAP50']:.3f}"
         })
         
         if val_loss < best_loss:
@@ -350,6 +366,7 @@ def main():
     model.eval()
     
     all_errors = []
+    all_oks = []
     with torch.no_grad():
         for batch in tqdm(val_loader, desc="评估中", ncols=80):
             if not batch['valid'].any():
@@ -360,19 +377,31 @@ def main():
             flower_center = batch['flower_center'][batch['valid']].to(device)
             gt_center = batch['gt_center'][batch['valid']].to(device)
             img_wh = batch['img_wh'][batch['valid']].to(device)
+            mask_area = batch['mask_area'][batch['valid']].cpu().numpy()
             
             offset = model(boundary, hsv)
             pred_center = flower_center + offset
             
             pixel_errors = torch.norm((pred_center - gt_center) * img_wh, dim=1)
             all_errors.extend(pixel_errors.cpu().tolist())
-    
+            all_oks.extend(
+                compute_batch_oks(
+                    pred_center.detach().cpu().numpy(),
+                    gt_center.detach().cpu().numpy(),
+                    img_wh.detach().cpu().numpy(),
+                    mask_area,
+                ).tolist()
+            )
+
     all_errors = np.array(all_errors)
+    map_metrics = summarize_single_keypoint_map(all_oks)
     print(f"  总样本数: {len(all_errors)}")
     print(f"  平均误差: {np.mean(all_errors):.2f} px")
     print(f"  中位数误差: {np.median(all_errors):.2f} px")
     print(f"  <10px: {np.sum(all_errors < 10)} ({np.sum(all_errors < 10)/len(all_errors)*100:.1f}%)")
     print(f"  <20px: {np.sum(all_errors < 20)} ({np.sum(all_errors < 20)/len(all_errors)*100:.1f}%)")
+    print(f"  mAP50: {map_metrics['mAP50']:.4f}")
+    print(f"  mAP50-95: {map_metrics['mAP50-95']:.4f}")
     
     print("\n" + "=" * 60)
     print("全流程完成！")
