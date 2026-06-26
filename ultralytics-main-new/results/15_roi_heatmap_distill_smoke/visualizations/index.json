@@ -1,0 +1,21 @@
+[
+  {
+    "file": "dsc00005.jpg#0",
+    "path": "E:\\mastercode\\ultralytics-main-new\\results\\15_roi_heatmap_distill_smoke\\visualizations\\dsc00005_inst00_err16p7px.jpg",
+    "error_px": 16.65283966064453,
+    "gt_center_norm": [
+      0.47880643606185913,
+      0.5934348106384277
+    ],
+    "pred_center_norm": [
+      0.46834367513656616,
+      0.5726805925369263
+    ],
+    "roi_box": [
+      345.0,
+      294.0,
+      525.0,
+      432.0
+    ]
+  }
+]
