@@ -249,7 +249,7 @@ Depthwise Conv 3x3 -> Pointwise Conv 1x1 -> Residual Add -> SiLU
 默认配置：
 
 ```text
-in_channels = 4
+qiin_channels = 4
 base_channels = 8
 input_size = 128 x 128
 output_size = 64 x 64
