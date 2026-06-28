@@ -1,0 +1,13 @@
+{
+  "image_path": "E:\\mastercode\\data\\shr_watermelon\\segmentation\\images\\val\\dsc00005.jpg",
+  "label_path": "E:\\mastercode\\data\\shr_watermelon\\pose\\labels\\val\\dsc00005.json",
+  "seg_model_path": "E:\\mastercode\\ultralytics-main-new\\results\\09_watermelon_seg_2\\weights\\best.pt",
+  "seg_conf": 0.25,
+  "candidate_classes": "0:blooming_male,3:blooming_female",
+  "num_detected_instances": 1,
+  "num_gt_points": 1,
+  "num_matches": 1,
+  "device": "cuda",
+  "models": {
+    "013": {
+      "weights": 

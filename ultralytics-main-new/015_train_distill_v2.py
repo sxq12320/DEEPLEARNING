@@ -6,7 +6,6 @@ YOLO segmentation -> flower ROI image + mask -> student heatmap.
 The stage-1 segmentation model and ROI/GT matching logic are reused from 014.
 """
 
-import argparse
 import importlib.util
 import json
 import os
@@ -40,6 +39,31 @@ StudentROIHeatmapNet = student_net_module.ROIHeatmapNet
 SAVE_DIR = os.path.join(stage14.RESULTS_DIR, "15_roi_heatmap_distill")
 DEFAULT_TEACHER_WEIGHTS = os.path.join(stage14.RESULTS_DIR, "14_roi_heatmap_lite", "best.pth")
 
+TRAIN_CONFIG = {
+    "seed": 42,
+    "epochs": 100,
+    "batch_size": 16,
+    "roi_size": 128,
+    "heatmap_size": 64,
+    "student_base_channels": 8,
+    "teacher_base_channels": 16,
+    "teacher_weights": DEFAULT_TEACHER_WEIGHTS,
+    "seg_model_path": stage14.SEG_MODEL_PATH,
+    "seg_conf": 0.25,
+    "lr": 1e-3,
+    "weight_decay": 1e-4,
+    "gt_weight": 1.0,
+    "distill_weight": 0.7,
+    "distill_temperature": 2.0,
+    "distill_coord_weight": 0.25,
+    "max_train_samples": 0,
+    "max_val_samples": 0,
+    "save_dir": SAVE_DIR,
+    "cache": True,
+    "max_visualizations": 0,
+    "candidate_class_ids": [0, 3],
+}
+
 
 def spatial_kl_distill(student_logits, teacher_logits, temperature=2.0):
     b = student_logits.shape[0]
@@ -60,19 +84,19 @@ def distillation_loss(student_logits, teacher_logits, temperature=2.0, coord_wei
     return kl_loss + coord_weight * coord_loss, kl_loss.detach(), coord_loss.detach()
 
 
-def load_teacher(args, device):
+def load_teacher(config, device):
     teacher = TeacherROIHeatmapNet(
         in_channels=4,
-        base_channels=args.teacher_base_channels,
-        output_size=args.heatmap_size,
+        base_channels=config["teacher_base_channels"],
+        output_size=config["heatmap_size"],
     ).to(device)
 
-    if not os.path.exists(args.teacher_weights):
+    if not os.path.exists(config["teacher_weights"]):
         raise FileNotFoundError(
-            f"Teacher weights not found: {args.teacher_weights}. Train 014 first or pass --teacher-weights."
+            f"Teacher weights not found: {config['teacher_weights']}. Train 014 first or update TRAIN_CONFIG."
         )
 
-    checkpoint = torch.load(args.teacher_weights, map_location=device)
+    checkpoint = torch.load(config["teacher_weights"], map_location=device)
     state_dict = checkpoint["model"] if isinstance(checkpoint, dict) and "model" in checkpoint else checkpoint
     teacher.load_state_dict(state_dict)
     teacher.eval()
@@ -81,94 +105,68 @@ def load_teacher(args, device):
     return teacher
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--roi-size", type=int, default=128)
-    parser.add_argument("--heatmap-size", type=int, default=64)
-    parser.add_argument("--student-base-channels", type=int, default=8)
-    parser.add_argument("--teacher-base-channels", type=int, default=16)
-    parser.add_argument("--teacher-weights", default=DEFAULT_TEACHER_WEIGHTS)
-    parser.add_argument("--seg-model-path", default=stage14.SEG_MODEL_PATH, help="First-stage YOLO segmentation weights.")
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--weight-decay", type=float, default=1e-4)
-    parser.add_argument("--gt-weight", type=float, default=1.0)
-    parser.add_argument("--distill-weight", type=float, default=0.7)
-    parser.add_argument("--distill-temperature", type=float, default=2.0)
-    parser.add_argument("--distill-coord-weight", type=float, default=0.25)
-    parser.add_argument("--max-train-samples", type=int, default=0)
-    parser.add_argument("--max-val-samples", type=int, default=0)
-    parser.add_argument("--save-dir", default=SAVE_DIR)
-    parser.add_argument("--no-cache", action="store_true")
-    parser.add_argument("--max-visualizations", type=int, default=0)
-    parser.add_argument(
-        "--candidate-class-ids",
-        default="0,3",
-        help="YOLO segmentation classes sent to stage 2. Use ids/names like '0,3'; use 'all' to disable filtering.",
-    )
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
+    config = TRAIN_CONFIG.copy()
 
-    random.seed(42)
-    np.random.seed(42)
-    torch.manual_seed(42)
+    random.seed(config["seed"])
+    np.random.seed(config["seed"])
+    torch.manual_seed(config["seed"])
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(42)
+        torch.cuda.manual_seed_all(config["seed"])
 
     print("=" * 60)
     print("Train 015 distilled ROIHeatmapNet student")
     print("=" * 60)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    save_dir = args.save_dir
+    save_dir = config["save_dir"]
     os.makedirs(save_dir, exist_ok=True)
 
     print(f"Device: {device}")
-    print(f"Segmentation model: {args.seg_model_path}")
-    print(f"Teacher weights: {args.teacher_weights}")
+    print(f"Segmentation model: {config['seg_model_path']}")
+    print(f"Segmentation conf: {config['seg_conf']}")
+    print(f"Teacher weights: {config['teacher_weights']}")
     print(f"Save dir: {save_dir}")
 
-    candidate_class_ids = stage14.parse_candidate_class_ids(args.candidate_class_ids)
+    candidate_class_ids = stage14.parse_candidate_class_ids(config["candidate_class_ids"])
     print(f"Stage-2 candidate classes: {stage14.format_candidate_class_ids(candidate_class_ids)}")
 
-    seg_model = YOLO(args.seg_model_path)
-    teacher = load_teacher(args, device)
+    seg_model = YOLO(config["seg_model_path"])
+    teacher = load_teacher(config, device)
 
     train_dataset = stage14.YOLOROIHeatmapDataset(
         stage14.TRAIN_IMG_DIR,
         stage14.TRAIN_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_train_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_train_samples"],
+        cache=config["cache"],
         candidate_class_ids=candidate_class_ids,
+        seg_conf=config["seg_conf"],
     )
     val_dataset = stage14.YOLOROIHeatmapDataset(
         stage14.VAL_IMG_DIR,
         stage14.VAL_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_val_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_val_samples"],
+        cache=config["cache"],
         candidate_class_ids=candidate_class_ids,
+        seg_conf=config["seg_conf"],
     )
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=True,
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=False,
         num_workers=0,
         pin_memory=device.type == "cuda",
@@ -180,16 +178,16 @@ def main():
     print(f"Val matched ROI samples: {len(val_dataset)}")
     print(f"Train index stats: {train_dataset.index_stats}")
     print(f"Val index stats: {val_dataset.index_stats}")
-    print(f"ROI size: {args.roi_size}")
-    print(f"Heatmap size: {args.heatmap_size}")
+    print(f"ROI size: {config['roi_size']}")
+    print(f"Heatmap size: {config['heatmap_size']}")
 
     if len(train_dataset) == 0 or len(val_dataset) == 0:
         raise RuntimeError("No matched ROI samples were found. Check YOLO masks, labels, and GT matching distance.")
 
     student = StudentROIHeatmapNet(
         in_channels=4,
-        base_channels=args.student_base_channels,
-        output_size=args.heatmap_size,
+        base_channels=config["student_base_channels"],
+        output_size=config["heatmap_size"],
     ).to(device)
 
     teacher_params = sum(param.numel() for param in teacher.parameters())
@@ -198,11 +196,11 @@ def main():
     print(f"Student params: {student_params:,}")
     print(f"Student/teacher params: {student_params / max(teacher_params, 1):.3f}")
 
-    optimizer = torch.optim.AdamW(student.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(student.parameters(), lr=config["lr"], weight_decay=config["weight_decay"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        T_max=max(args.epochs, 1),
-        eta_min=args.lr * 0.01,
+        T_max=max(config["epochs"], 1),
+        eta_min=config["lr"] * 0.01,
     )
 
     best_map = -1.0
@@ -214,7 +212,7 @@ def main():
     val_losses = []
     val_maps = []
 
-    epoch_pbar = tqdm(range(args.epochs), desc="Distill", ncols=120)
+    epoch_pbar = tqdm(range(config["epochs"]), desc="Distill", ncols=120)
 
     for epoch in epoch_pbar:
         student.train()
@@ -242,10 +240,10 @@ def main():
             distill, kl_loss, teacher_coord_loss = distillation_loss(
                 student_logits,
                 teacher_logits,
-                temperature=args.distill_temperature,
-                coord_weight=args.distill_coord_weight,
+                temperature=config["distill_temperature"],
+                coord_weight=config["distill_coord_weight"],
             )
-            loss = args.gt_weight * gt_loss + args.distill_weight * distill
+            loss = config["gt_weight"] * gt_loss + config["distill_weight"] * distill
 
             optimizer.zero_grad()
             loss.backward()
@@ -285,13 +283,13 @@ def main():
             torch.save(
                 {
                     "model": student.state_dict(),
-                    "args": vars(args),
+                    "config": config,
                     "best_epoch": best_epoch + 1,
                     "best_mAP50-95": best_map,
                     "best_val_loss": best_loss,
                     "student_params": student_params,
                     "teacher_params": teacher_params,
-                    "teacher_weights": args.teacher_weights,
+                    "teacher_weights": config["teacher_weights"],
                     "train_index_stats": train_dataset.index_stats,
                     "val_index_stats": val_dataset.index_stats,
                 },
@@ -322,7 +320,7 @@ def main():
     )
     all_errors_arr = np.asarray(all_errors, dtype=np.float32)
 
-    if args.epochs <= 0:
+    if config["epochs"] <= 0:
         best_loss = final_loss
         best_map = map_metrics["mAP50-95"]
         best_epoch = -1
@@ -330,13 +328,13 @@ def main():
             torch.save(
                 {
                     "model": student.state_dict(),
-                    "args": vars(args),
+                    "config": config,
                     "best_epoch": 0,
                     "best_mAP50-95": best_map,
                     "best_val_loss": best_loss,
                     "student_params": student_params,
                     "teacher_params": teacher_params,
-                    "teacher_weights": args.teacher_weights,
+                    "teacher_weights": config["teacher_weights"],
                     "train_index_stats": train_dataset.index_stats,
                     "val_index_stats": val_dataset.index_stats,
                 },
@@ -367,7 +365,7 @@ def main():
         val_dataset,
         device,
         save_dir,
-        max_visualizations=args.max_visualizations,
+        max_visualizations=config["max_visualizations"],
     )
     print(f"Visualizations: {visualization_dir} ({len(visualization_records)} images)")
 
@@ -412,8 +410,8 @@ def main():
                 "direction": "YOLO segmentation + ROI RGB/mask + distilled mobile keypoint heatmap",
                 "teacher_model": "014 ROIHeatmapNet",
                 "student_model": "015 ROIHeatmapNet",
-                "teacher_weights": args.teacher_weights,
-                "seg_model_path": args.seg_model_path,
+                "teacher_weights": config["teacher_weights"],
+                "seg_model_path": config["seg_model_path"],
                 "candidate_class_ids": None if candidate_class_ids is None else sorted(candidate_class_ids),
                 "candidate_classes": stage14.format_candidate_class_ids(candidate_class_ids),
                 "best_epoch": int(best_epoch + 1 if best_epoch >= 0 else 0),
@@ -440,7 +438,7 @@ def main():
                 "train_distill_losses": train_distill_losses,
                 "val_losses": val_losses,
                 "val_mAP50-95": val_maps,
-                "args": vars(args),
+                "config": config,
             },
             f,
             indent=2,

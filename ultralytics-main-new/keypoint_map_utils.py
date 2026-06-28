@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-DEFAULT_OKS_SIGMA = 0.1
+DEFAULT_OKS_SIGMA = 0.2
 DEFAULT_OKS_THRESHOLDS = np.arange(0.50, 1.00, 0.05, dtype=np.float32)
 
 

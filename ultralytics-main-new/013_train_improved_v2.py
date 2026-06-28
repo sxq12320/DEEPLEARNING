@@ -3,7 +3,6 @@ Train the direction-A second-stage model:
 YOLO segmentation -> flower ROI image + mask -> pollination keypoint heatmap.
 """
 
-import argparse
 import importlib.util
 import json
 import os
@@ -32,6 +31,22 @@ VAL_LABEL_DIR = r"E:\mastercode\data\shr_watermelon\pose\labels\val"
 MAX_GT_MATCH_DISTANCE_PX = 160
 IMAGE_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGE_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+TRAIN_CONFIG = {
+    "seed": 42,
+    "epochs": 100,
+    "batch_size": 16,
+    "roi_size": 128,
+    "heatmap_size": 64,
+    "base_channels": 32,
+    "lr": 1e-3,
+    "weight_decay": 1e-4,
+    "max_train_samples": 0,
+    "max_val_samples": 0,
+    "save_dir": SAVE_DIR,
+    "cache": True,
+    "max_visualizations": 0,
+}
 
 
 def load_roi_heatmap_net_class():
@@ -539,38 +554,21 @@ def evaluate(model, val_loader, device):
     return mean_loss, mean_error, median_error, errors, oks_scores, map_metrics
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--roi-size", type=int, default=128)
-    parser.add_argument("--heatmap-size", type=int, default=64)
-    parser.add_argument("--base-channels", type=int, default=32)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--weight-decay", type=float, default=1e-4)
-    parser.add_argument("--max-train-samples", type=int, default=0)
-    parser.add_argument("--max-val-samples", type=int, default=0)
-    parser.add_argument("--save-dir", default=SAVE_DIR)
-    parser.add_argument("--no-cache", action="store_true")
-    parser.add_argument("--max-visualizations", type=int, default=0)
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
+    config = TRAIN_CONFIG.copy()
 
-    random.seed(42)
-    np.random.seed(42)
-    torch.manual_seed(42)
+    random.seed(config["seed"])
+    np.random.seed(config["seed"])
+    torch.manual_seed(config["seed"])
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(42)
+        torch.cuda.manual_seed_all(config["seed"])
 
     print("=" * 60)
     print("Train ROIHeatmapNet")
     print("=" * 60)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    save_dir = args.save_dir
+    save_dir = config["save_dir"]
     print(f"Device: {device}")
     print(f"Segmentation model: {SEG_MODEL_PATH}")
     print(f"Save dir: {save_dir}")
@@ -581,31 +579,31 @@ def main():
         TRAIN_IMG_DIR,
         TRAIN_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_train_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_train_samples"],
+        cache=config["cache"],
     )
     val_dataset = YOLOROIHeatmapDataset(
         VAL_IMG_DIR,
         VAL_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_val_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_val_samples"],
+        cache=config["cache"],
     )
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=True,
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=False,
         num_workers=0,
         pin_memory=device.type == "cuda",
@@ -615,21 +613,21 @@ def main():
     print(f"Val source images: {len(val_dataset.img_files)}")
     print(f"Train ROI samples: {len(train_dataset)}")
     print(f"Val ROI samples: {len(val_dataset)}")
-    print(f"ROI size: {args.roi_size}")
-    print(f"Heatmap size: {args.heatmap_size}")
+    print(f"ROI size: {config['roi_size']}")
+    print(f"Heatmap size: {config['heatmap_size']}")
 
     if len(train_dataset) == 0 or len(val_dataset) == 0:
         raise RuntimeError("No matched ROI samples were found. Check YOLO masks, labels, and GT matching distance.")
 
-    model = ROIHeatmapNet(in_channels=4, base_channels=args.base_channels).to(device)
+    model = ROIHeatmapNet(in_channels=4, base_channels=config["base_channels"]).to(device)
     total_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
     print(f"Trainable params: {total_params:,}")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        T_max=max(args.epochs, 1),
-        eta_min=args.lr * 0.01,
+        T_max=max(config["epochs"], 1),
+        eta_min=config["lr"] * 0.01,
     )
 
     os.makedirs(save_dir, exist_ok=True)
@@ -641,7 +639,7 @@ def main():
     val_losses = []
     val_maps = []
 
-    epoch_pbar = tqdm(range(args.epochs), desc="Training", ncols=110)
+    epoch_pbar = tqdm(range(config["epochs"]), desc="Training", ncols=110)
 
     for epoch in epoch_pbar:
         model.train()
@@ -694,7 +692,7 @@ def main():
             torch.save(
                 {
                     "model": model.state_dict(),
-                    "args": vars(args),
+                    "config": config,
                     "best_epoch": best_epoch + 1,
                     "best_mAP50-95": best_map,
                     "best_val_loss": best_loss,
@@ -745,7 +743,7 @@ def main():
         val_dataset,
         device,
         save_dir,
-        max_visualizations=args.max_visualizations,
+        max_visualizations=config["max_visualizations"],
     )
     print(f"Visualizations: {visualization_dir} ({len(visualization_records)} images)")
 
@@ -799,7 +797,7 @@ def main():
                 "visualization_dir": visualization_dir,
                 "num_visualizations": int(len(visualization_records)),
                 "params": int(total_params),
-                "args": vars(args),
+                "config": config,
             },
             f,
             indent=2,

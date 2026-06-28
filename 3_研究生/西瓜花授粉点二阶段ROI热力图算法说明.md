@@ -45,10 +45,10 @@ flowchart LR
 3: blooming_female
 ```
 
-如果要让第二阶段处理所有 YOLO mask，可以使用：
+如果要让第二阶段处理所有 YOLO mask，把 `014_train_improved_v2.py` 顶部配置改成：
 
-```powershell
-python .\014_train_improved_v2.py --candidate-class-ids all
+```python
+TRAIN_CONFIG["candidate_class_ids"] = "all"
 ```
 
 ## 2. 数据路径
@@ -96,7 +96,7 @@ E:\mastercode\ultralytics-main-new\016_train_watermelon_seg_p2.py
 
 1. 用第一阶段 YOLO 对原图做实例分割。
 2. 从 YOLO 输出中取出每个实例的 `mask`、`class_id` 和 `confidence`。
-3. 按 `--candidate-class-ids` 过滤候选实例，默认只保留开放花类 `0,3`。
+3. 按 `TRAIN_CONFIG["candidate_class_ids"]` 过滤候选实例，默认只保留开放花类 `0,3`。
 4. 对候选 mask 计算外接矩形。
 5. 按 `margin_ratio=0.25` 向外扩展外接矩形，保留花瓣和花蕊周边上下文。
 6. 从原图中裁剪 RGB ROI。
@@ -366,18 +366,31 @@ Set-Location E:\mastercode\ultralytics-main-new
 
 如果要先训练新的第一阶段分割模型，运行 `016`：
 
+先在 `016_train_watermelon_seg_p2.py` 顶部修改 `TRAIN_CONFIG`。关键字段建议如下，不要删除字典里的其他字段：
+
+```python
+TRAIN_CONFIG.update({
+    "model": r"E:\mastercode\ultralytics-main-new\mine_yaml\016_yolo11n_seg_p2.yaml",
+    "data": r"E:\mastercode\ultralytics-main-new\208_shr_watermelon_seg.yaml",
+    "pretrained": r"E:\mastercode\yolo11n-seg.pt",
+    "epochs": 150,
+    "imgsz": 960,
+    "batch": 12,
+    "optimizer": "AdamW",
+    "lr0": 0.001,
+    "mask_ratio": 4,
+    "mosaic": 0.8,
+    "copy_paste": 0.1,
+    "close_mosaic": 20,
+    "name": "16_watermelon_seg_p2",
+    "smoke_test": False,
+})
+```
+
+然后一键运行：
+
 ```powershell
-python .\016_train_watermelon_seg_p2.py `
-  --epochs 150 `
-  --imgsz 960 `
-  --batch 12 `
-  --optimizer AdamW `
-  --lr0 0.001 `
-  --mask-ratio 4 `
-  --mosaic 0.8 `
-  --copy-paste 0.1 `
-  --close-mosaic 20 `
-  --name 16_watermelon_seg_p2
+python .\016_train_watermelon_seg_p2.py
 ```
 
 训练完成后，新的第一阶段分割权重默认位于：
@@ -386,52 +399,52 @@ python .\016_train_watermelon_seg_p2.py `
 E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt
 ```
 
-正式训练：
+训练 `014` 教师模型前，先在 `014_train_improved_v2.py` 顶部修改 `TRAIN_CONFIG`，关键字段如下：
 
-```powershell
-python .\014_train_improved_v2.py --epochs 100 --batch-size 16
+```python
+TRAIN_CONFIG.update({
+    "epochs": 100,
+    "batch_size": 16,
+    "roi_size": 128,
+    "heatmap_size": 64,
+    "base_channels": 16,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "seg_model_path": r"E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt",
+    "candidate_class_ids": [0, 3],
+    "save_dir": r"E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite",
+})
 ```
 
-常用参数：
+然后运行：
 
 ```powershell
-python .\014_train_improved_v2.py `
-  --epochs 100 `
-  --batch-size 16 `
-  --roi-size 128 `
-  --heatmap-size 64 `
-  --base-channels 16 `
-  --lr 0.001 `
-  --weight-decay 0.0001 `
-  --seg-model-path E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt `
-  --candidate-class-ids 0,3 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite
+python .\014_train_improved_v2.py
 ```
 
-如果没有训练 `016`，也可以不传 `--seg-model-path`，脚本会继续使用默认的 `results\09_watermelon_seg_2\weights\best.pt`。如果已经训练了 `016`，建议显式传入 `--seg-model-path`，这样 `results.json` 会记录实际使用的第一阶段分割权重。
+如果没有训练 `016`，就把 `seg_model_path` 保持为默认的 `results\09_watermelon_seg_2\weights\best.pt`。如果已经训练了 `016`，建议把 `seg_model_path` 改为 `016` 的 `best.pt`，这样 `results.json` 会记录实际使用的第一阶段分割权重。
 
-小样本调试建议使用单独输出目录，避免覆盖正式结果：
+小样本调试建议直接改 `TRAIN_CONFIG`，并使用单独输出目录，避免覆盖正式结果：
 
-```powershell
-python .\014_train_improved_v2.py `
-  --epochs 1 `
-  --batch-size 2 `
-  --max-train-samples 2 `
-  --max-val-samples 2 `
-  --max-visualizations 2 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_smoke
+```python
+TRAIN_CONFIG["epochs"] = 1
+TRAIN_CONFIG["batch_size"] = 2
+TRAIN_CONFIG["max_train_samples"] = 2
+TRAIN_CONFIG["max_val_samples"] = 2
+TRAIN_CONFIG["max_visualizations"] = 2
+TRAIN_CONFIG["save_dir"] = r"E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_smoke"
 ```
 
 更严格的候选压力测试：
 
-```powershell
-python .\014_train_improved_v2.py --candidate-class-ids all
+```python
+TRAIN_CONFIG["candidate_class_ids"] = "all"
 ```
 
 禁用样本缓存：
 
-```powershell
-python .\014_train_improved_v2.py --no-cache
+```python
+TRAIN_CONFIG["cache"] = False
 ```
 
 训练 `015` 蒸馏部署版前，应该先保证 `014` 教师权重存在：
@@ -440,42 +453,42 @@ python .\014_train_improved_v2.py --no-cache
 E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite\best.pth
 ```
 
-正式蒸馏训练：
+然后在 `015_train_distill_v2.py` 顶部修改 `TRAIN_CONFIG`，关键字段如下：
 
-```powershell
-python .\015_train_distill_v2.py --epochs 100 --batch-size 16
+```python
+TRAIN_CONFIG.update({
+    "epochs": 100,
+    "batch_size": 16,
+    "roi_size": 128,
+    "heatmap_size": 64,
+    "student_base_channels": 8,
+    "teacher_base_channels": 16,
+    "teacher_weights": r"E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite\best.pth",
+    "seg_model_path": r"E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt",
+    "gt_weight": 1.0,
+    "distill_weight": 0.7,
+    "distill_temperature": 2.0,
+    "distill_coord_weight": 0.25,
+    "candidate_class_ids": [0, 3],
+    "save_dir": r"E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill",
+})
 ```
 
-常用蒸馏参数：
+运行：
 
 ```powershell
-python .\015_train_distill_v2.py `
-  --epochs 100 `
-  --batch-size 16 `
-  --roi-size 128 `
-  --heatmap-size 64 `
-  --student-base-channels 8 `
-  --teacher-base-channels 16 `
-  --teacher-weights E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite\best.pth `
-  --seg-model-path E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt `
-  --gt-weight 1.0 `
-  --distill-weight 0.7 `
-  --distill-temperature 2.0 `
-  --distill-coord-weight 0.25 `
-  --candidate-class-ids 0,3 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill
+python .\015_train_distill_v2.py
 ```
 
-`015` 小样本调试命令：
+`015` 小样本调试同样直接改配置：
 
-```powershell
-python .\015_train_distill_v2.py `
-  --epochs 1 `
-  --batch-size 2 `
-  --max-train-samples 2 `
-  --max-val-samples 2 `
-  --max-visualizations 2 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill_smoke
+```python
+TRAIN_CONFIG["epochs"] = 1
+TRAIN_CONFIG["batch_size"] = 2
+TRAIN_CONFIG["max_train_samples"] = 2
+TRAIN_CONFIG["max_val_samples"] = 2
+TRAIN_CONFIG["max_visualizations"] = 2
+TRAIN_CONFIG["save_dir"] = r"E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill_smoke"
 ```
 
 训练时的主要步骤：
@@ -590,7 +603,7 @@ E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill
 
 建议优先做这些对比实验：
 
-1. `--candidate-class-ids 0,3` 和 `--candidate-class-ids all` 对比，观察候选冗余和定位精度变化。
+1. `candidate_class_ids=[0, 3]` 和 `candidate_class_ids="all"` 对比，观察候选冗余和定位精度变化。
 2. `014 base_channels=8 / 16 / 24` 对比，确认普通轻量网络的容量上限。
 3. `015 student-base-channels=6 / 8 / 12` 对比，观察移动端学生网络的参数量和精度折中。
 4. `distill-weight=0.3 / 0.7 / 1.0` 对比，确认教师约束是否过强。
@@ -653,57 +666,71 @@ layers = 30
 
 相对直接换大模型，这个改法更适合当前项目：第一阶段需要提高小目标 mask 质量，但后续还要在移动端部署完整流程，所以分割模型不应无节制变大。`P2` 分支会增加一些计算量，尤其在 `imgsz=960` 时更明显；如果显存或速度压力大，可以先降低 `imgsz` 或 `batch`，不要优先删掉 `P2`，因为 `P2` 正是这个版本的主要创新点。
 
-推荐训练命令：
+推荐运行方式是在 `016_train_watermelon_seg_p2.py` 顶部修改 `TRAIN_CONFIG`，然后直接运行脚本：
+
+```python
+TRAIN_CONFIG.update({
+    "model": r"E:\mastercode\ultralytics-main-new\mine_yaml\016_yolo11n_seg_p2.yaml",
+    "data": r"E:\mastercode\ultralytics-main-new\208_shr_watermelon_seg.yaml",
+    "pretrained": r"E:\mastercode\yolo11n-seg.pt",
+    "epochs": 150,
+    "imgsz": 960,
+    "batch": 12,
+    "optimizer": "AdamW",
+    "lr0": 0.001,
+    "lrf": 0.01,
+    "weight_decay": 0.0005,
+    "warmup_epochs": 3.0,
+    "patience": 50,
+    "mask_ratio": 4,
+    "overlap_mask": True,
+    "mosaic": 0.8,
+    "copy_paste": 0.1,
+    "close_mosaic": 20,
+    "name": "16_watermelon_seg_p2",
+})
+```
 
 ```powershell
 Set-Location E:\mastercode\ultralytics-main-new
-
-python .\016_train_watermelon_seg_p2.py `
-  --model E:\mastercode\ultralytics-main-new\mine_yaml\016_yolo11n_seg_p2.yaml `
-  --data E:\mastercode\ultralytics-main-new\208_shr_watermelon_seg.yaml `
-  --pretrained E:\mastercode\yolo11n-seg.pt `
-  --epochs 150 `
-  --imgsz 960 `
-  --batch 12 `
-  --optimizer AdamW `
-  --lr0 0.001 `
-  --lrf 0.01 `
-  --weight-decay 0.0005 `
-  --warmup-epochs 3.0 `
-  --patience 50 `
-  --mask-ratio 4 `
-  --overlap-mask true `
-  --mosaic 0.8 `
-  --copy-paste 0.1 `
-  --close-mosaic 20 `
-  --name 16_watermelon_seg_p2
+python .\016_train_watermelon_seg_p2.py
 ```
 
 小样本连通性检查：
 
-```powershell
-python .\016_train_watermelon_seg_p2.py --smoke
+```python
+TRAIN_CONFIG["smoke_test"] = True
 ```
 
-训练完 `016` 后，第二阶段不需要改 ROI 构建逻辑，只需要把新的第一阶段权重传给 `014` 或 `015`：
+训练完 `016` 后，第二阶段不需要改 ROI 构建逻辑，只需要把新的第一阶段权重写入 `014` 或 `015` 的 `TRAIN_CONFIG`：
+
+```python
+TRAIN_CONFIG.update({
+    "seg_model_path": r"E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt",
+    "epochs": 100,
+    "batch_size": 16,
+    "save_dir": r"E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_p2seg",
+})
+```
 
 ```powershell
-python .\014_train_improved_v2.py `
-  --seg-model-path E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt `
-  --epochs 100 `
-  --batch-size 16 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_p2seg
+python .\014_train_improved_v2.py
 ```
 
 如果训练蒸馏版 `015`，教师 `014` 最好也来自同一个 `016` 分割权重生成的 ROI 分布，否则教师和学生看到的 ROI 分布可能不完全一致：
 
+```python
+TRAIN_CONFIG.update({
+    "teacher_weights": r"E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_p2seg\best.pth",
+    "seg_model_path": r"E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt",
+    "epochs": 100,
+    "batch_size": 16,
+    "save_dir": r"E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill_p2seg",
+})
+```
+
 ```powershell
-python .\015_train_distill_v2.py `
-  --teacher-weights E:\mastercode\ultralytics-main-new\results\14_roi_heatmap_lite_p2seg\best.pth `
-  --seg-model-path E:\mastercode\ultralytics-main-new\results\16_watermelon_seg_p2\weights\best.pt `
-  --epochs 100 `
-  --batch-size 16 `
-  --save-dir E:\mastercode\ultralytics-main-new\results\15_roi_heatmap_distill_p2seg
+python .\015_train_distill_v2.py
 ```
 
 评估时不要只看第二阶段已匹配 ROI 的误差。`016` 是否真正有效，应该看这三组指标是否同时改善：
@@ -722,37 +749,37 @@ python .\015_train_distill_v2.py `
 
 | 参数 | 默认值 | 调大时的影响 | 调小时的影响 |
 | --- | --- | --- | --- |
-| `--imgsz` | `960` | 小花更清楚，显存和耗时增加 | 更快，但小目标和边界可能变差 |
-| `--batch` | `12` | 梯度更稳定，占用显存更多 | 省显存，但 batch 太小会抖 |
-| `--epochs` | `150` | 训练更充分，过拟合风险增加 | 更快，但可能未收敛 |
-| `--lr0` | `0.001` | 学习更快，过大可能震荡 | 更稳，但收敛慢 |
-| `--weight-decay` | `0.0005` | 正则更强，可能欠拟合 | 正则更弱，可能过拟合 |
-| `--mask-ratio` | `4` | 数值越大 mask 越粗、省显存 | 设为 `2` 可更细，但更吃显存 |
-| `--mosaic` | `0.8` | 增强更强，可能改变花朵局部结构 | 更贴近真实图，泛化可能下降 |
-| `--copy-paste` | `0.1` | 增加实例组合，过大可能不自然 | 更保守，增强不足 |
-| `--close-mosaic` | `20` | 最后更多 epoch 关闭 mosaic，利于收敛到真实分布 | 关闭太晚可能影响最终边界 |
+| `imgsz` | `960` | 小花更清楚，显存和耗时增加 | 更快，但小目标和边界可能变差 |
+| `batch` | `12` | 梯度更稳定，占用显存更多 | 省显存，但 batch 太小会抖 |
+| `epochs` | `150` | 训练更充分，过拟合风险增加 | 更快，但可能未收敛 |
+| `lr0` | `0.001` | 学习更快，过大可能震荡 | 更稳，但收敛慢 |
+| `weight_decay` | `0.0005` | 正则更强，可能欠拟合 | 正则更弱，可能过拟合 |
+| `mask_ratio` | `4` | 数值越大 mask 越粗、省显存 | 设为 `2` 可更细，但更吃显存 |
+| `mosaic` | `0.8` | 增强更强，可能改变花朵局部结构 | 更贴近真实图，泛化可能下降 |
+| `copy_paste` | `0.1` | 增加实例组合，过大可能不自然 | 更保守，增强不足 |
+| `close_mosaic` | `20` | 最后更多 epoch 关闭 mosaic，利于收敛到真实分布 | 关闭太晚可能影响最终边界 |
 
 优先调参顺序建议：
 
 1. 固定数据划分和随机种子。
 2. 先用默认 `016` 训练出基线。
-3. 如果小花漏检明显，优先尝试 `--imgsz 1024` 或 `--mask-ratio 2`。
-4. 如果显存不足，优先降低 `--batch`，其次降低 `--imgsz`。
-5. 如果误检候选变多，降低 `--copy-paste` 或 `--mosaic`，并检查类别混淆。
+3. 如果小花漏检明显，优先尝试 `imgsz=1024` 或 `mask_ratio=2`。
+4. 如果显存不足，优先降低 `batch`，其次降低 `imgsz`。
+5. 如果误检候选变多，降低 `copy_paste` 或 `mosaic`，并检查类别混淆。
 
 ### 15.2 014 ROI 热力图超参
 
 | 参数 | 默认值 | 作用 | 建议范围 |
 | --- | --- | --- | --- |
-| `--base-channels` | `16` | 控制教师网络容量 | `8 / 16 / 24` |
-| `--roi-size` | `128` | ROI 输入分辨率 | `128` 优先，显存允许再试 `160` |
-| `--heatmap-size` | `64` | 输出热力图分辨率 | 通常保持 `64` |
-| `--lr` | `0.001` | 学习率 | `0.0005 / 0.001 / 0.002` |
-| `--weight-decay` | `0.0001` | 正则强度 | `0.00005 / 0.0001 / 0.0005` |
-| `--candidate-class-ids` | `0,3` | 哪些 YOLO 类别进入二阶段 | `0,3` 或 `all` |
-| `--seg-model-path` | 旧 `09` 权重 | 第一阶段分割权重 | 推荐换成 `016` 的 `best.pt` |
+| `base_channels` | `16` | 控制教师网络容量 | `8 / 16 / 24` |
+| `roi_size` | `128` | ROI 输入分辨率 | `128` 优先，显存允许再试 `160` |
+| `heatmap_size` | `64` | 输出热力图分辨率 | 通常保持 `64` |
+| `lr` | `0.001` | 学习率 | `0.0005 / 0.001 / 0.002` |
+| `weight_decay` | `0.0001` | 正则强度 | `0.00005 / 0.0001 / 0.0005` |
+| `candidate_class_ids` | `[0, 3]` | 哪些 YOLO 类别进入二阶段 | `[0, 3]` 或 `"all"` |
+| `seg_model_path` | 旧 `09` 权重 | 第一阶段分割权重 | 推荐换成 `016` 的 `best.pt` |
 
-`014` 还有几项目前写在源码里，不是命令行参数：
+`014` 还有几项目前写在源码函数里，暂未放入 `TRAIN_CONFIG`：
 
 | 源码参数 | 默认值 | 位置/含义 |
 | --- | --- | --- |
@@ -762,20 +789,20 @@ python .\015_train_distill_v2.py `
 | `beta` | `20.0` | soft-argmax 温度系数 |
 | `coord_loss_weight` | `0.25` | 坐标 SmoothL1 损失权重 |
 
-这些源码参数不要优先改。更稳妥的顺序是先固定第一阶段分割模型，再调 `candidate-class-ids`、`base-channels`、`lr` 和 `batch-size`。只有当可视化发现热力图峰过尖、过散或 ROI 裁剪明显不够时，再考虑改 `sigma`、`beta` 或 `margin_ratio`。
+这些源码参数不要优先改。更稳妥的顺序是先固定第一阶段分割模型，再调 `candidate_class_ids`、`base_channels`、`lr` 和 `batch_size`。只有当可视化发现热力图峰过尖、过散或 ROI 裁剪明显不够时，再考虑改 `sigma`、`beta` 或 `margin_ratio`。
 
 ### 15.3 015 蒸馏学生网络超参
 
 | 参数 | 默认值 | 作用 | 建议范围 |
 | --- | --- | --- | --- |
-| `--student-base-channels` | `8` | 控制学生网络大小 | `6 / 8 / 12` |
-| `--teacher-base-channels` | `16` | 必须和教师训练时一致 | 跟随 014 |
-| `--teacher-weights` | `14_roi_heatmap_lite\best.pth` | 教师权重 | 使用同一分割权重训练出的教师 |
-| `--gt-weight` | `1.0` | GT 热力图监督权重 | 通常保持 `1.0` |
-| `--distill-weight` | `0.7` | 教师蒸馏权重 | `0.3 / 0.7 / 1.0` |
-| `--distill-temperature` | `2.0` | 教师空间分布软化程度 | `1.0 / 2.0 / 4.0` |
-| `--distill-coord-weight` | `0.25` | 教师坐标约束权重 | `0.1 / 0.25 / 0.5` |
-| `--seg-model-path` | 旧 `09` 权重 | 第一阶段分割权重 | 与教师训练时保持一致 |
+| `student_base_channels` | `8` | 控制学生网络大小 | `6 / 8 / 12` |
+| `teacher_base_channels` | `16` | 必须和教师训练时一致 | 跟随 014 |
+| `teacher_weights` | `14_roi_heatmap_lite\best.pth` | 教师权重 | 使用同一分割权重训练出的教师 |
+| `gt_weight` | `1.0` | GT 热力图监督权重 | 通常保持 `1.0` |
+| `distill_weight` | `0.7` | 教师蒸馏权重 | `0.3 / 0.7 / 1.0` |
+| `distill_temperature` | `2.0` | 教师空间分布软化程度 | `1.0 / 2.0 / 4.0` |
+| `distill_coord_weight` | `0.25` | 教师坐标约束权重 | `0.1 / 0.25 / 0.5` |
+| `seg_model_path` | 旧 `09` 权重 | 第一阶段分割权重 | 与教师训练时保持一致 |
 
 `015` 调参时要先确认教师模型可靠。如果 `014` 教师本身是用旧分割权重训练的，而 `015` 学生改用 `016` 分割权重，学生会看到不同的 ROI 分布，蒸馏目标会变得不干净。推荐流程是：
 

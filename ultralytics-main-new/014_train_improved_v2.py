@@ -1,9 +1,9 @@
+
 """
 Train the direction-A second-stage model:
 YOLO segmentation -> flower ROI image + mask -> pollination keypoint heatmap.
 """
 
-import argparse
 import importlib.util
 import json
 import os
@@ -36,6 +36,25 @@ IMAGE_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 SEG_CLASS_NAMES = ["blooming_male", "unknown", "closed_male", "blooming_female", "closed_female"]
 DEFAULT_CANDIDATE_CLASS_IDS = {0, 3}
 
+TRAIN_CONFIG = {
+    "seed": 42,
+    "epochs": 100,
+    "batch_size": 16,
+    "roi_size": 128,
+    "heatmap_size": 64,
+    "base_channels": 16,
+    "lr": 1e-3,
+    "weight_decay": 1e-4,
+    "max_train_samples": 0,
+    "max_val_samples": 0,
+    "save_dir": SAVE_DIR,
+    "cache": True,
+    "max_visualizations": 0,
+    "seg_model_path": SEG_MODEL_PATH,
+    "seg_conf": 0.25,
+    "candidate_class_ids": [0, 3],
+}
+
 
 def load_roi_heatmap_net_class():
     module_path = os.path.join(os.path.dirname(__file__), "014_improved_net_v2.py")
@@ -53,6 +72,11 @@ ROIHeatmapNet = load_roi_heatmap_net_class()
 def parse_candidate_class_ids(value):
     if value is None:
         return set(DEFAULT_CANDIDATE_CLASS_IDS)
+
+    if isinstance(value, (list, tuple, set)):
+        if not value:
+            return None
+        return {int(class_id) for class_id in value}
 
     text = str(value).strip().lower()
     if text in ("", "none", "all", "*"):
@@ -79,8 +103,8 @@ def format_candidate_class_ids(class_ids):
     return ",".join(f"{class_id}:{SEG_CLASS_NAMES[class_id]}" for class_id in sorted(class_ids))
 
 
-def extract_yolo_instances(seg_model, img_path, img_w, img_h, candidate_class_ids=None):
-    results = seg_model.predict(img_path, conf=0.25, verbose=False)
+def extract_yolo_instances(seg_model, img_path, img_w, img_h, candidate_class_ids=None, conf=0.25):
+    results = seg_model.predict(img_path, conf=conf, verbose=False)
     if not results or results[0].masks is None:
         return []
 
@@ -115,10 +139,10 @@ def extract_yolo_instances(seg_model, img_path, img_w, img_h, candidate_class_id
     return instances
 
 
-def extract_yolo_masks(seg_model, img_path, img_w, img_h, candidate_class_ids=None):
+def extract_yolo_masks(seg_model, img_path, img_w, img_h, candidate_class_ids=None, conf=0.25):
     return [
         instance["mask"]
-        for instance in extract_yolo_instances(seg_model, img_path, img_w, img_h, candidate_class_ids)
+        for instance in extract_yolo_instances(seg_model, img_path, img_w, img_h, candidate_class_ids, conf=conf)
     ]
 
 
@@ -278,6 +302,7 @@ class YOLOROIHeatmapDataset(Dataset):
         max_samples=None,
         cache=True,
         candidate_class_ids=None,
+        seg_conf=0.25,
     ):
         self.img_dir = img_dir
         self.label_dir = label_dir
@@ -286,6 +311,7 @@ class YOLOROIHeatmapDataset(Dataset):
         self.heatmap_size = heatmap_size
         self.cache_enabled = cache
         self.candidate_class_ids = candidate_class_ids
+        self.seg_conf = seg_conf
         self.cache = {}
 
         img_files = sorted(
@@ -330,7 +356,14 @@ class YOLOROIHeatmapDataset(Dataset):
                 continue
             h, w = image.shape[:2]
 
-            instances = extract_yolo_instances(self.seg_model, img_path, w, h, self.candidate_class_ids)
+            instances = extract_yolo_instances(
+                self.seg_model,
+                img_path,
+                w,
+                h,
+                self.candidate_class_ids,
+                conf=self.seg_conf,
+            )
             masks = [instance["mask"] for instance in instances]
             gt_points = load_gt_points(label_path, w, h)
             matches = match_masks_to_gt(masks, gt_points, w, h)
@@ -648,84 +681,64 @@ def evaluate(model, val_loader, device):
     return mean_loss, mean_error, median_error, errors, oks_scores, map_metrics
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--roi-size", type=int, default=128)
-    parser.add_argument("--heatmap-size", type=int, default=64)
-    parser.add_argument("--base-channels", type=int, default=16)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--weight-decay", type=float, default=1e-4)
-    parser.add_argument("--max-train-samples", type=int, default=0)
-    parser.add_argument("--max-val-samples", type=int, default=0)
-    parser.add_argument("--save-dir", default=SAVE_DIR)
-    parser.add_argument("--seg-model-path", default=SEG_MODEL_PATH, help="First-stage YOLO segmentation weights.")
-    parser.add_argument("--no-cache", action="store_true")
-    parser.add_argument("--max-visualizations", type=int, default=0)
-    parser.add_argument(
-        "--candidate-class-ids",
-        default="0,3",
-        help="YOLO segmentation classes sent to stage 2. Use ids/names like '0,3' or 'blooming_male,blooming_female'; use 'all' to disable class filtering.",
-    )
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
+    config = TRAIN_CONFIG.copy()
 
-    random.seed(42)
-    np.random.seed(42)
-    torch.manual_seed(42)
+    random.seed(config["seed"])
+    np.random.seed(config["seed"])
+    torch.manual_seed(config["seed"])
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(42)
+        torch.cuda.manual_seed_all(config["seed"])
 
     print("=" * 60)
     print("Train lightweight ROIHeatmapNet")
     print("=" * 60)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    save_dir = args.save_dir
+    save_dir = config["save_dir"]
     print(f"Device: {device}")
-    print(f"Segmentation model: {args.seg_model_path}")
+    print(f"Segmentation model: {config['seg_model_path']}")
+    print(f"Segmentation conf: {config['seg_conf']}")
     print(f"Save dir: {save_dir}")
 
-    candidate_class_ids = parse_candidate_class_ids(args.candidate_class_ids)
+    candidate_class_ids = parse_candidate_class_ids(config["candidate_class_ids"])
     print(f"Stage-2 candidate classes: {format_candidate_class_ids(candidate_class_ids)}")
 
-    seg_model = YOLO(args.seg_model_path)
+    seg_model = YOLO(config["seg_model_path"])
 
     train_dataset = YOLOROIHeatmapDataset(
         TRAIN_IMG_DIR,
         TRAIN_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_train_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_train_samples"],
+        cache=config["cache"],
         candidate_class_ids=candidate_class_ids,
+        seg_conf=config["seg_conf"],
     )
     val_dataset = YOLOROIHeatmapDataset(
         VAL_IMG_DIR,
         VAL_LABEL_DIR,
         seg_model,
-        roi_size=args.roi_size,
-        heatmap_size=args.heatmap_size,
-        max_samples=args.max_val_samples,
-        cache=not args.no_cache,
+        roi_size=config["roi_size"],
+        heatmap_size=config["heatmap_size"],
+        max_samples=config["max_val_samples"],
+        cache=config["cache"],
         candidate_class_ids=candidate_class_ids,
+        seg_conf=config["seg_conf"],
     )
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=True,
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=args.batch_size,
+        batch_size=config["batch_size"],
         shuffle=False,
         num_workers=0,
         pin_memory=device.type == "cuda",
@@ -737,25 +750,25 @@ def main():
     print(f"Val matched ROI samples: {len(val_dataset)}")
     print(f"Train index stats: {train_dataset.index_stats}")
     print(f"Val index stats: {val_dataset.index_stats}")
-    print(f"ROI size: {args.roi_size}")
-    print(f"Heatmap size: {args.heatmap_size}")
+    print(f"ROI size: {config['roi_size']}")
+    print(f"Heatmap size: {config['heatmap_size']}")
 
     if len(train_dataset) == 0 or len(val_dataset) == 0:
         raise RuntimeError("No matched ROI samples were found. Check YOLO masks, labels, and GT matching distance.")
 
     model = ROIHeatmapNet(
         in_channels=4,
-        base_channels=args.base_channels,
-        output_size=args.heatmap_size,
+        base_channels=config["base_channels"],
+        output_size=config["heatmap_size"],
     ).to(device)
     total_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
     print(f"Trainable params: {total_params:,}")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        T_max=max(args.epochs, 1),
-        eta_min=args.lr * 0.01,
+        T_max=max(config["epochs"], 1),
+        eta_min=config["lr"] * 0.01,
     )
 
     os.makedirs(save_dir, exist_ok=True)
@@ -767,7 +780,7 @@ def main():
     val_losses = []
     val_maps = []
 
-    epoch_pbar = tqdm(range(args.epochs), desc="Training", ncols=110)
+    epoch_pbar = tqdm(range(config["epochs"]), desc="Training", ncols=110)
 
     for epoch in epoch_pbar:
         model.train()
@@ -820,7 +833,7 @@ def main():
             torch.save(
                 {
                     "model": model.state_dict(),
-                    "args": vars(args),
+                    "config": config,
                     "best_epoch": best_epoch + 1,
                     "best_mAP50-95": best_map,
                     "best_val_loss": best_loss,
@@ -871,7 +884,7 @@ def main():
         val_dataset,
         device,
         save_dir,
-        max_visualizations=args.max_visualizations,
+        max_visualizations=config["max_visualizations"],
     )
     print(f"Visualizations: {visualization_dir} ({len(visualization_records)} images)")
 
@@ -910,7 +923,6 @@ def main():
             {
                 "model_type": "LightROIHeatmapNet",
                 "direction": "YOLO segmentation + ROI RGB/mask + lightweight keypoint heatmap",
-                "seg_model_path": args.seg_model_path,
                 "candidate_class_ids": None if candidate_class_ids is None else sorted(candidate_class_ids),
                 "candidate_classes": format_candidate_class_ids(candidate_class_ids),
                 "best_epoch": best_epoch + 1,
@@ -930,7 +942,7 @@ def main():
                 "visualization_dir": visualization_dir,
                 "num_visualizations": int(len(visualization_records)),
                 "params": int(total_params),
-                "args": vars(args),
+                "config": config,
             },
             f,
             indent=2,
