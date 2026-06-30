@@ -1,0 +1,11 @@
+300 epochs completed in 7.478 hours.
+Optimizer stripped from /home/sxq/data/ultralytics-main/0_results/JEURK_SEG/000_yolo11nano_base-2/weights/last.pt, 6.0MB
+Optimizer stripped from /home/sxq/data/ultralytics-main/0_results/JEURK_SEG/000_yolo11nano_base-2/weights/best.pt, 6.0MB
+
+Validating /home/sxq/data/ultralytics-main/0_results/JEURK_SEG/000_yolo11nano_base-2/weights/best.pt...
+Ultralytics 8.4.83 🚀 Python-3.10.12 torch-2.12.1+cu126 CUDA:0 (NVIDIA GeForce RTX 3050 Laptop GPU, 4096MiB)
+YOLO11-seg summary (fused): 114 layers, 2,834,763 parameters, 0 gradients, 9.6 GFLOPs
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95)     Mask(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.8it/s 4.6s
+                   all        100       2770      0.795      0.838      0.891      0.669      0.791      0.727       0.79      0.309
+Speed: 0.7ms preprocess, 9.1ms inference, 0.0ms loss, 8.1ms postprocess per image
+Results saved to /home/sxq/data/ultralytics-main/0_results/JEURK_SEG/000_yolo11nano_base-2
