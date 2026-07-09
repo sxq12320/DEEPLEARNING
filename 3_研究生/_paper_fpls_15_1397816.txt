@@ -1,0 +1,816 @@
+                                                                                                                      TYPE Original Research
+                                                                                                                      PUBLISHED 05 June 2024
+                                                                                                                      DOI 10.3389/fpls.2024.1397816
+
+
+
+
+                                                  Fusion of fruit image processing
+OPEN ACCESS                                       and deep learning: a study on
+EDITED BY
+Daobilige Su,
+China Agricultural University, China
+                                                  identiﬁcation of citrus ripeness
+REVIEWED BY
+Jinhai Wang,
+                                                  based on R-LBP algorithm and
+Foshan University, China
+Michael Payson,
+Zhongkai University of Agriculture and
+                                                  YOLO-CIT model
+Engineering, China
+Abdullah Beyaz,                                   Chenglin Wang 1, Qiyu Han 1, Chunjiang Li 1, Tianlong Zou 2*
+Ankara University, Türkiye
+                                                  and Xiangjun Zou 2,3
+*CORRESPONDENCE
+Tianlong Zou                                      1
+                                                    Faculty of Modern Agricultural Engineering, Kunming University of Science and Technology,
+   84174619@qq.com                                Kunming, China, 2 Foshan-Zhongke Innovation Research Institute of Intelligent Agriculture and
+                                                  Robotics, Guangzhou, China, 3 College of Intelligent Manufacturing and Modern Industry, Xinjiang
+RECEIVED 08 March 2024                            University, Wulumuqi, China
+ACCEPTED 17 April 2024
+PUBLISHED 05 June 2024
+
+CITATION
+                                                  Citrus fruits are extensively cultivated fruits with high nutritional value. The
+Wang C, Han Q, Li C, Zou T and Zou X (2024)
+Fusion of fruit image processing and deep         identiﬁcation of distinct ripeness stages in citrus fruits plays a crucial role in
+learning: a study on identiﬁcation of citrus      guiding the planning of harvesting paths for citrus-picking robots and facilitating
+ripeness based on R-LBP algorithm
+and YOLO-CIT model.                               yield estimations in orchards. However, challenges arise in the identiﬁcation of
+Front. Plant Sci. 15:1397816.                     citrus fruit ripeness due to the similarity in color between green unripe citrus
+doi: 10.3389/fpls.2024.1397816
+                                                  fruits and tree leaves, leading to an omission in identiﬁcation. Additionally, the
+COPYRIGHT                                         resemblance between partially ripe, orange-green interspersed fruits and fully
+© 2024 Wang, Han, Li, Zou and Zou. This is an
+open-access article distributed under the terms   ripe fruits poses a risk of misidentiﬁcation, further complicating the identiﬁcation
+of the Creative Commons Attribution License       of citrus fruit ripeness. This study proposed the YOLO-CIT (You Only Look Once-
+(CC BY). The use, distribution or reproduction
+                                                  Citrus) model and integrated an innovative R-LBP (Roughness-Local Binary
+in other forums is permitted, provided the
+original author(s) and the copyright owner(s)     Pattern) method to accurately identify citrus fruits at distinct ripeness stages.
+are credited and that the original publication    The R-LBP algorithm, an extension of the LBP algorithm, enhances the texture
+in this journal is cited, in accordance with
+accepted academic practice. No use,
+                                                  features of citrus fruits at distinct ripeness stages by calculating the coefﬁcient of
+distribution or reproduction is permitted         variation in grayscale values of pixels within a certain range in different directions
+which does not comply with these terms.           around the target pixel. The C3 model embedded by the CBAM (Convolutional
+                                                  Block Attention Module) replaced the original backbone network of the YOLOv5s
+                                                  model to form the backbone of the YOLO-CIT model. Instead of traditional
+                                                  convolution, Ghostconv is utilized by the neck network of the YOLO-CIT model.
+                                                  The fruit segment of citrus in the original citrus images processed by the R-LBP
+                                                  algorithm is combined with the background segment of the citrus images after
+                                                  grayscale processing to construct synthetic images, which are subsequently
+                                                  added to the training dataset. The experiment showed that the R-LBP algorithm
+                                                  is capable of amplifying the texture features among citrus fruits at distinct
+                                                  ripeness stages. The YOLO-CIT model combined with the R-LBP algorithm has
+                                                  a Precision of 88.13%, a Recall of 93.16%, an F1 score of 90.89, a mAP@0.5 of
+                                                  85.88%, and 6.1ms of average detection speed for citrus fruit ripeness
+
+
+
+
+Frontiers in Plant Science                                              01                                                              frontiersin.org
+Wang et al.                                                                                                                 10.3389/fpls.2024.1397816
+
+
+
+
+                                                  identiﬁcation in complex environments. The model demonstrates the capability
+                                                  to accurately and swiftly identify citrus fruits at distinct ripeness stages in real-
+                                                  world environments, effectively guiding the determination of picking targets and
+                                                  path planning for harvesting robots.
+
+
+
+
+                                                  KEYWORDS
+
+                                                  citrus, ripeness identiﬁcation, deep learning, image processing, LBP feature
+
+
+
+
+1 Introduction                                                                on morphological operations to effectively identify ripe citrus fruit
+                                                                              (Qiang et al., 2014). Xu applied the Otsu adaptive thresholding
+    Citrus fruits possess high nutritional and economic value and             method to the V component of the YUV color space. The Canny
+are widely cultivated globally (Wang et al., 2022). As the largest            edge detection algorithm was employed to obtain the
+citrus-cultivating country, China currently relies predominantly              morphological features of citrus fruits, enabling a more accurate
+on manual harvesting, leading to signiﬁcant labor and time costs              identiﬁcation in the environment (Xu et al., 2020). Texture
+(Pei et al., 2022). In the context of Agriculture 4.0, the                    features are also among the essential characteristics of citrus
+development of fruit-picking robots has emerged as a crucial                  fruits. In addressing the issue of green, unripe citrus fruits being
+research direction (Wang et al., 2022). The identiﬁcation of                  close in color to the background, Zhao combined the results of the
+distinct ripeness stages in citrus is instrumental in achieving               Adaptive Red-Blue color map (ARB) and Histogram Equalization
+intelligent sorting and harvesting, thereby enhancing orchard                 for Hue (HEH). By utilizing ﬁve selected texture features to
+productivity and fruit quality (Sun et al., 2019).                            eliminate false positives, accurate identiﬁcation of green, unripe
+    During the ripening process of citrus fruits, the accumulation of         citrus fruits was achieved (Zhao et al., 2016).
+sucrose leads to a reduction in chlorophyll and an increase in                    In recent years, deep learning models have been widely applied
+carotenoids. Consequently, the peel transitions from green to                 in harvesting robots, achieving high automation and effectively
+orange in color (Iglesias et al., 2001). Simultaneously, the                  improving the accurate classiﬁcation of complex ripeness features.
+synthesis of epicuticular wax on the fruit peel gradually occurs,             Xiong proposed a Des-YOLOv3 network, which accurately
+increasing the smoothness of the peel (Romero and Lafuente, 2020).            identiﬁes small and occluded citrus fruit targets (Xiong et al.,
+Based on its visual characteristics, citrus fruits with an orange area        2020). Based on the YOLOv5s network, the BCAM (bidirectional
+covering more than 80% of the total peel surface area are generally           cross attention mechanism) attention mechanism was added by
+deﬁned as ripe; otherwise, they are considered unripe. However,               Yang, resulting in enhanced identiﬁcation accuracy for various
+citrus fruits within the same orchard often exist at distinct ripeness        fruits, including citrus (Yang et al., 2022). Regarding the
+stages (Gupta et al., 2021). Therefore, harvesting robots need to             differences in characteristics among citrus fruits at distinct
+rapidly and accurately identify citrus fruits at distinct                     ripeness stages, Lu utilized a Resnet backbone structure that
+ripeness stages.                                                              integrates deep and shallow features to construct the Mask-Rcnn
+    The color, shape, texture, and other features of the fruits are           network. This approach precisely identiﬁed citrus fruits at distinct
+commonly used as criteria for ripeness identiﬁcation. Image                   ripeness stages (Lu et al., 2022). For real-time identiﬁcation of citrus
+processing methods are widely applied in the ﬁeld of citrus fruit             fruits, Chen combined the Canopy algorithm and K-Means++
+ripeness identiﬁcation. By combining the color difference map of              algorithm to automatically determine the input image size.
+citrus fruits under normal conditions with the brightness map                 Additionally, the Scientiﬁc Control of Pruning (SCOP) algorithm
+under illumination, and utilizing color characteristics for                   was applied to prune the YOLOv4 network, enabling real-time
+threshold segmentation, Lu effectively solves the impact of                   identiﬁcation of citrus fruits (Chen et al., 2022). The improved deep
+illumination on citrus ripeness identiﬁcation (Lu et al., 2014).              learning model can effectively detect the maturity of citrus fruits.
+Regarding the orange features in citrus images, which are                         Modern harvesting robots need to accurately identify unripe
+predominantly manifested in the Cr channel of the YCbCr color                 and ripe citrus fruits during the harvesting process, avoiding
+space, Peng employed an improved fuzzy C-means clustering                     picking unripe ones and ensuring the precise harvesting of ripe
+threshold segmentation method (FCM) to achieve accurate                       ones (Yang et al., 2020). However, the green color of unripe citrus
+identiﬁcation of ripe citrus fruits (Peng et al., 2014). Under                fruits is similar to the background color of leaves, resulting in
+complex weather conditions, the color features of citrus images               signiﬁcant detection omissions; Some partially unripe citrus fruits
+are variable. Qiang utilized the morphological features of citrus             exhibit both orange and green characteristics, making it challenging
+fruits and employed a multi-class support vector machine based                to differentiate them from ripe citrus fruits with similar color
+
+
+
+
+Frontiers in Plant Science                                               02                                                             frontiersin.org
+Wang et al.                                                                                                                        10.3389/fpls.2024.1397816
+
+
+
+
+features, leading to issues of misidentiﬁcation (Lu et al., 2018). This        contrast, and so on (Ojala et al., 2002). In the ripening process of
+study proposed an R-LBP (Roughness-Local Binary Pattern)                       citrus fruits, the synthesis of epicuticular wax leads to a noticeable
+algorithm, an improvement upon the LBP algorithm. By                           change in the roughness of the peel. In digital images, the roughness
+computing two sets of coefﬁcients of variation in grayscale values             of fruit peel can be represented by the degree of variation in pixel
+in eight different directions around the current pixel, one including          grayscale values. The calculation process of peel roughness for citrus
+the grayscale value of the current pixel and the other excluding it,           fruits at distinct ripeness stages is illustrated in Figure 1.
+the R-LBP algorithm determines encoding based on the difference                     In Step 1, citrus fruits at four distinct ripeness stages are
+in the degree of variation between the two sets of coefﬁcients. The            sequentially selected and converted into grayscale images. In Step
+citrus fruit images processed by this algorithm are added to the               2, for each grayscale image, the longer and shorter sides of its
+training dataset to better facilitate the learning of texture and              bounding rectangle are divided into four equal parts successively to
+morphological features of citrus fruits; Furthermore, a YOLO-CIT               obtain intersection points, deﬁning nine sampling regions. In each
+(You Only Look Once-Citrus) model, an improvement upon                         sampling region, the average pixel difference in eight directions is
+YOLOv5s, is proposed. The backbone network of this model                       calculated sequentially, as shown in Equations 1, 2.
+combines the C3 model with the CBAM (Convolutional Block                                                           N
+                                                                                                                       jX −X 0 j
+Attention Module) attention mechanism, leveraging both channel                                             Di = oi=1 N i                                 (1)
+and spatial features to enhance the model’s capability to extract
+characteristics of distinct ripeness stages in citrus. In the neck                                                     8
+                                                                                                                           Di
+                                                                                                             Pi = oi=18                                  (2)
+network of the model, a Ghostnet structure is utilized,
+transforming some regular convolutions into linear mappings to                     Where Xi represents the grayscale value of the pixel at position i,
+reduce computational complexity and improve the model’s                        N represents the number of pixels in that direction, X 0 represents
+inference speed. Multiple experiments were conducted to verify                 the average value of N pixels, and Di represents the mean difference
+the effectiveness of the proposed R-LBP algorithm and the                      of pixel grayscale values in that direction.
+performance of the YOLO-CIT model.                                                 In Step 3, the roughness of the fruit peel is obtained by
+                                                                               calculating the average of the nine sampling regions. The results
+                                                                               for distinct ripeness stages of the fruit are illustrated in Figure 2.
+2 Materials and methods                                                            Figure 2 shows that there is a decreasing trend in the roughness
+                                                                               of citrus fruit peel as it matures. Based on this characteristic, the R-
+2.1 R-LBP algorithm                                                            LBP algorithm, which utilizes peel roughness for encoding, is
+                                                                               proposed. The method’s workﬂow is illustrated in Figure 3.
+    The LBP algorithm is a method that reﬂects the local texture                   The R-LBP algorithm processes each pixel in the image
+features of an image by describing the texture variations around a             sequentially to calculate its ﬁnal grayscale value. In Step 1, the
+pixel. Common texture features include roughness, directionality,              encoding relies on the eight pixels surrounding the target pixel,
+
+
+
+
+   FIGURE 1
+   Calculation process for peel roughness of citrus fruits.
+
+
+
+
+Frontiers in Plant Science                                                03                                                                  frontiersin.org
+Wang et al.                                                                                                                        10.3389/fpls.2024.1397816
+
+
+
+
+                                                                                    Where Xi represents the grayscale value of the pixel at
+                                                                                coordinate i, and X 0 represents the mean value within the array.
+                                                                                    If the difference between CVa and CVb is greater than 15% of
+                                                                                CVa , it indicates that the addition of the target pixel signiﬁcantly
+                                                                                affects the roughness between the existing reference pixels in that
+                                                                                direction (Brown, 1998). Moreover, the texture features in that
+                                                                                direction are strong. In such cases, the encoding of the current
+                                                                                reference pixel is set to 1; otherwise, it is set to 0. The speciﬁc
+                                                                                encoding process is shown in Equation 5.
+                                                                                                      8           jCV a −CV b j
+                                                                                                      < 1            CV a       > 15 %
+                                                                                                                                                         (5)
+                                                                                                      : 0         jCV a −CV b j
+                                                                                                                                ≤ 15 %
+                                                                                                                     CV a
+
+   FIGURE 2
+                                                                                    In Step 4, the encoding results from the eight reference pixels
+   Peel roughness of citrus fruits with distinct ripeness stages.
+                                                                                are combined in the order of their numbering to obtain a binary
+                                                                                outcome. This binary result is then converted to decimal and serves
+which are named reference pixels. In Step 2, the reference pixels are           as the new grayscale value for the current pixel. The same process is
+numbered sequentially in a clockwise order. In Step 3, The                      applied to other pixels, and the ﬁnal result of the R-LBP algorithm
+coefﬁcient of variation reﬂects the ﬂuctuation in a set of data, and            processing is obtained.
+the variation in pixel grayscale values can represent the roughness
+of the peel. Taking reference pixel 1 as an example, the coefﬁcient of
+variation (CVa ) is calculated for the array formed by pixels 1, 9, and         2.2 Dataset construction of citrus images
+10 in its direction. Additionally, the coefﬁcient of variation (CVb ) is
+calculated for the array formed by adding the target pixel to the
+                                                                                2.2.1 Image acquisition of citrus data
+                                                                                    There are citrus orchards located in Zengcheng District,
+aforementioned array (pixels 0, 1, 9 and 10). The calculation process
+                                                                                Guangzhou City, Guangdong Province, China (23°16′N, 113°51′E)
+is shown in Equations 3, 4.
+                                                                                for dataset collection. The Canon 200D Mark II DSLR camera,
+                             0 qﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ 1
+                                   4         0 2
+                                   oi=2 (X i −X )
+                                                                                equipped with an 18-55mm lens set to fully automatic mode, is
+                    CV a = @                        A  100 %
+                                           3
+                                      X0
+                                                                    (3)         used for capturing images of citrus fruits. Take images every two days,
+                                                                                a total of 5 times, from 10 am to 12 am. A total of 1533 raw image
+                                                                                data were collected, and saved in.jpeg format, with a resolution of
+                             0 qﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ 1
+                                   4         0 2
+                                   oi=1 (X i −X )
+                                                                                4032×3024 pixels. The collection information for the initial data is
+                    CV b = @                        A  100 %
+                                           4
+                                      X0
+                                                                    (4)         presented in Table 1.
+                                                                                    The collected data underwent preliminary screening, removing
+                                                                                images with out-of-focus, motion blur, or severe distortion. Some
+                                                                                images from the initial dataset were augmented through random
+                                                                                ﬂips, tilts, and other operations. The initial dataset can be divided
+                                                                                into several categories based on lighting intensity and shooting
+                                                                                distance, as shown in Figure 4. The speciﬁc composition is detailed
+                                                                                in Supplementary Table 2.
+
+                                                                                2.2.2 R-LBP–based citrus images
+                                                                                texture enhancement
+                                                                                    The R-LBP algorithm primarily processes the fruit segment of
+                                                                                citrus images. Therefore, in this study, artiﬁcially synthesized
+
+                                                                                TABLE 1 Initial dataset composition table.
+
+
+                                                                                    Order             Date                 Weather              Num
+                                                                                       1             2022/10/09              Cloudy              297
+
+                                                                                       2             2022/10/11               Sunny              305
+
+                                                                                       3             2022/10/13               Sunny              312
+
+   FIGURE 3                                                                            4             2022/10/15               Sunny              285
+   R-LBP algorithm process.
+                                                                                       5             2022/10/17              Cloudy              334
+
+
+
+
+Frontiers in Plant Science                                                 04                                                                 frontiersin.org
+Wang et al.                                                                                                                                10.3389/fpls.2024.1397816
+
+
+
+
+                     A                                     B                                         C
+
+
+
+
+                     D                                     E                                         F
+
+
+
+
+   FIGURE 4
+   Sample image of initial dataset: (A) Medium distance exposure citrus image; (B) Medium range natural light citrus image; (C) Medium distance
+   backlight citrus image; (D) Close range exposure citrus image; (E) Close range natural light citrus image; (F) Close range backlight citrus image.
+
+
+
+
+images were obtained to enhance the texture features of the fruit                       Where s represents the sigmoid function, W0 ∈ Rc=r*c and W1
+segment at distinct ripeness stages in citrus images. The synthesized               ∈ Rc*c=r represent the shared weights of the MLP, r represents the
+                                                                                                                                                      c
+images are added to the training dataset to enhance the features that               reduction ratio, c represents the length of the feature map, Favg
+                                                                                                                                       c
+the model can learn. The processing workﬂow for artiﬁcially                         represents the average pooling feature, and Fmax represents the
+synthesized images is illustrated in Figure 5.                                      maximum pooling feature.
+     By using Photoshop, the citrus fruit area and background area are                  Channel attention and feature maps are broadcasted, and the
+separately extracted. The citrus fruit undergoes processing with the R-             intermediate feature output F ‘is calculated, as shown in Equation 7.
+LBP algorithm to enhance its texture features. The background region
+is converted to a grayscale image to remove its color characteristics. The                                        F 0 = M c (F) ⊗ F                              (7)
+two processed results are then combined to create the ﬁnal image.
+                                                                                        Average pooling and maximum pooling operations are applied
+     The additional training set consists of synthesized images based
+                                                                                    along the channel axis of the middle feature map, the two results are
+on close-range citrus images with clear texture features. It is used to
+                                                                                    connected through standard convolutional layers and spatial
+test the effect of adding images processed by the R-LBP algorithm to
+                                                                                    attention is generated. The calculation process is shown in Equation 8.
+the training set on model performance. The sample images of the
+                                                                                                                                              
+additional training set are shown in Figure 6, and the speciﬁc                                           M s (F) = s f 77 (½F savg ; F smax )                  (8)
+composition of the additional dataset is shown in Supplementary
+                                                                                                s
+Table 1.                                                                                 Where Favg represents the two-dimensional average pooling feature,
+                                                                                     s
+                                                                                    Fmax represents the two-dimensional maximum pooling feature, and
+                                                                                    f7*7
+                                                                                         represents the convolution operation with a ﬁlter size of 77.
+2.3 Construction of YOLO-CIT model                                                      Spatial attention further aggregates with the middle feature map
+                                                                                    through broadcasting, and the ﬁnal output F 00 of the module is
+2.3.1 Backbone network of the YOLO-CIT model                                        calculated, as shown in Equation 9.
+     The YOLO-CIT model proposed in this paper is built upon the
+YOLOv5s model. The backbone network structure of the YOLO-                                                       F 00 = M s (F 0 ) ⊗ F 0                         (9)
+CIT model is formed by combining the CBAM attention
+mechanism with the C3 module. The computational process is                          2.3.2 Neck network of the YOLO-CIT model
+illustrated in Figure 7.                                                                In the neck network of the YOLO-CIT model, Ghostconv is
+     The feature maps are entered into the CBAM Bottleneck, where                   used instead of regular convolution. The structure of Ghostconv for
+maximum pooling and average pooling features are computed.                          processing input content is shown in Figure 8.
+These two features are then input into a Multi-Layer Perceptron                         In the context of citrus fruit image processing, the initial
+(MLP), and channel attention is calculated. The computation                         features of the input image are extracted through an initial
+process is depicted in Equation 6.                                                  convolution process using convolution kernels. The outcomes of
+                                                                                the initial convolution are divided into two segments, where one
+              M c (F) = s W 1 W 0 (F cavg + W 1 (W 0 (F cmax )ÞÞ         (6)
+                                                                                    segment undergoes mapping, and the other segment, including a1,
+
+
+
+Frontiers in Plant Science                                                     05                                                                     frontiersin.org
+Wang et al.                                                                                                                     10.3389/fpls.2024.1397816
+
+
+
+
+   FIGURE 5
+   Image synthesis process.
+
+
+
+
+                        A                                  B                                   C
+
+
+
+
+   FIGURE 6
+   Sample image of additional dataset: (A) Grayscale citrus image; (B) Synthetic citrus images based on LBP; (C) Synthetic citrus images based on
+   R-LBP.
+
+
+
+
+a2, …, an initial convolutional feature maps, undergoes additional               the backbone network and processed by modules such as C3-
+convolutional operations. The outputs from these two segments are                CBAM to generate a feature map that combines channel attention
+then merged to generate the ﬁnal output feature map.                             and spatial attention; The feature map is further input into the
+                                                                                 neck network, and through lightweight convolution and up
+2.3.3 YOLO-CIT model                                                             sampling operations in the GhostConv module, a prediction box
+    The speciﬁc composition structure of the YOLO-CIT network                    is generated. Citrus fruits with distinct ripeness stages
+is shown in Figure 9. The initial image of citrus fruit is input into            are identiﬁed.
+
+
+
+
+   FIGURE 7
+   C3+CBAM module calculation process.
+
+
+
+
+Frontiers in Plant Science                                                  06                                                               frontiersin.org
+Wang et al.                                                                                                           10.3389/fpls.2024.1397816
+
+
+
+
+   FIGURE 8
+   Ghostconv module calculation process.
+
+
+
+
+2.4 Experiments                                                                  In the second set of experiments, the YOLO-CIT model was
+                                                                             trained on the basic training set, supplemented with additional
+     To validate the effectiveness of the YOLO-CIT model and R-              datasets processed using grayscale conversion, LBP algorithm, and
+LBP algorithm in this study, three sets of experiments were                  R-LBP algorithm respectively. The performance parameters of the
+conducted sequentially.                                                      model were recorded and analyzed.
+     In the ﬁrst set of experiments, 200 close-range images of citrus            In the third set of experiments, the YOLO-CIT model proposed
+fruits were selected. These images were divided into 50 groups, with         in this study, along with several common deep learning network
+each group containing four images representing distinct ripeness             models such as models of YOLOv4, YOLOv5s, YOLOv7, YOLOX,
+stages of the citrus fruit. Various algorithms, including grayscale          YOLOv8s, and faster-RCNN, was trained using the basic dataset. A
+processing, LBP algorithm, and R-LBP algorithm, were applied to              comparative performance analysis of the models was conducted.
+the fruit segment of the citrus fruit images respectively. The                   The experimental hardware setup primarily involves a
+difference in surface roughness, as introduced in Section 2.1.1,             computer system featuring an Intel i5-13600kf processor, 32 GB
+was used to evaluate the enhancement effects of different                    RAM, and a GeForce GTX 4080 GPU. The computer is conﬁgured
+algorithms on surface roughness. The average difference in                   with CUDA 11.2 parallel computing architecture and utilizes the
+roughness values between adjacent stages within each group of                NVIDIA cuDNN 8.0.5 GPU acceleration library. The software
+images after processing by different algorithms was recorded                 simulation environment is built on the PyTorch deep learning
+and analyzed.                                                                framework (Python version 3.10). The data pre-processing
+
+
+
+
+   FIGURE 9
+   YOLO-CIT Network Architecture.
+
+
+
+
+Frontiers in Plant Science                                              07                                                       frontiersin.org
+Wang et al.                                                                                                          10.3389/fpls.2024.1397816
+
+
+
+
+involved the utilization of Labeling, Photoshop 2018, and               representing the integral of accuracy rate to recall rate is equal to
+Matlab2020b. For conﬁguring and managing the virtual                    the area under the P-R curve. mAP @ 0:5 is the average of the
+environment, Anaconda was employed, and program compilation             average precision of all categories.
+and execution were carried out using Pycharm. Model performance
+metrics mainly include P (precision), R (recall), F1 (harmonic
+average), AP (average precision), and mAP@0.5 (mean average             3 Results
+precision) shown in Equations 10–14.
+
+                                                T
+                                                                        3.1 Performance analysis of citrus fruit
+                             precision = T p +p F p         (10)        texture enhancement
+
+                                            T                                In the ﬁrst set of experiments, distinct ripeness stages of citrus
+                              recall = T p +p F N           (11)
+                                                                        fruits were processed using grayscale conversion, LBP algorithm,
+                                                                        and R-LBP algorithm respectively, as shown in Figure 10. The
+                                    precision  recall
+                         F 1 = 2 precision + recall        (12)        differences in peel roughness between citrus fruits at different
+                                                                        maturity stages are depicted in Figure 11.
+                                        precision                            The median in peel roughness difference of images processed by
+                               AP = o N                     (13)
+                                                                        grayscale conversion is 122.3, with an upper quartile of 138.1, a
+                                                                        lower quartile of 111.2, and an interquartile range of 26.9. The
+                                                K
+                             mAP @ 0:5 = oi=1
+                                                    APi
+                                           NC
+                                                            (14)        dispersion of peel roughness in different images is relatively small;
+                                                                        The median in peel roughness difference of images processed with
+    where Tp represents the number of citrus fruits correctly           the LBP algorithm is 162.8, with an upper quartile of 184.3, lower
+identiﬁed, Fp represents the number of citrus fruits incorrectly        quartile of 142.8, and an interquartile range of 41.5. The results
+identiﬁed, FN represents the number of missed citrus fruits, N          show a higher level of dispersion among different images in this
+represents the total number of images, and NC represents the            case. The median peel roughness difference of images processed
+number of categories of citrus fruit ripeness stages. AP                with the R-LBP algorithm is 220.7, which is respectively 98.4 and
+
+
+
+
+   FIGURE 10
+   (A–D) Different ripening stages of citrus fruits.
+
+
+
+
+Frontiers in Plant Science                                         08                                                            frontiersin.org
+Wang et al.                                                                                                            10.3389/fpls.2024.1397816
+
+
+
+
+   FIGURE 11
+   Citrus fruit epidermal roughness difference across ripening stages.
+
+
+
+
+57.9 higher than the results obtained with the grayscale conversion           3.2 Comparison of identiﬁcation
+and LBP algorithm. The interquartile range of peel roughness for              performance of YOLO-CIT model trained
+images processed with the R-LBP algorithm is 33.6, which is 6.7               with different datasets
+higher than the grayscale conversion and 7.9 smaller than the LBP
+algorithm. The data dispersion is relatively stable. Images processed              In the second set of experiments, the YOLO-CIT model was
+with the R-LBP algorithm exhibit more distinct and relatively stable          trained using the same base dataset but with different additional
+texture features compared to images processed with grayscale                  datasets. The variation of map@0.5 during the training process is
+conversion and the LBP algorithm, which are useful for                        illustrated in Figure 12, and the performance parameters of the
+distinguishing distinct ripeness stages of citrus fruits.                     model are listed in Table 2.
+
+
+
+
+   FIGURE 12
+   Change in YOLO-CIT model’s mAP@0.5 trained on different datasets.
+
+
+
+
+Frontiers in Plant Science                                               09                                                       frontiersin.org
+Wang et al.                                                                                                                    10.3389/fpls.2024.1397816
+
+
+
+
+TABLE 2 Performance of models trained on different datasets.                    The YOLO-CIT model trained with the additional R-LBP dataset
+                                                                                exhibits the best overall performance.
+                                  Precision/       Recall/
+    dataset         mAP@0.5                                    F1score
+                                      %              %
+ Original dataset      83.52          87.50          90.01         88.74
+                                                                                3.3 Performance comparison among
+      Add                                                                       various network models
+    grayscale          84.17          86.42          91.31         88.79
+     images
+                                                                                     In the third set of experiments, different deep-learning models
+      Add
+                       83.39          88.70          91.63         90.14        were trained using the base dataset. The variation of mAP@0.5
+   LBP images
+                                                                                during the training process is illustrated in Figure 13, and the model
+     Add R-                                                                     performance parameters are shown in Table 3.
+                       85.88          88.73          93.16         90.89
+   LBP images
+                                                                                     Figure 13 shows that the mAP@0.5 curves of YOLO-CIT, YOLOX,
+                                                                                and YOLOv4 models gradually increase during the training process
+     By observing Figure 12, it can be seen that the four curves                and tend to stabilize after reaching epoch 150. This indicates that the
+exhibit signiﬁcant differences during the training process mAP@0.5              models can effectively learn features of citrus fruits at distinct ripeness
+The value rapidly increases and remains relatively stable after the             stages, resulting in a relatively stable improvement in accuracy in citrus
+epoch reaches 100. Among them, when the model uses the                          fruit identiﬁcation. The mAP@0.5 curves of the YOLOv5s, YOLOv7,
+additional dataset with R-LBP or LBP, the ﬂuctuation of the                     YOLOv8s, and Faster-RCNN models show a rapid initial rise during
+curve is smaller, and the mAP@0.5 value is more stable. The                     training. However, between epochs 100 and 150, there is a declining
+YOLO-CIT model trained with the R-LBP additional dataset                        trend, and after reaching epoch 150, there is a noticeable ﬂuctuation.
+exhibits a higher stable mAP@0.5 curve, indicating the best                     This indicates that these models exhibit differences in feature learning
+detection accuracy among the curves. According to Table 2, the                  during the training process, leading to temporary decreases in detection
+YOLO-CIT model trained with the R-LBP additional dataset                        accuracy and insufﬁcient stability in the models. The YOLO-CIT
+achieves mAP@0.5 values that are 2.36, 1.71, and 2.49 higher                    model achieved its best mAP@0.5 value of 83.52 during training,
+than the YOLO-CIT models trained with the base dataset,                         signiﬁcantly surpassing the mAP@0.5 values of the YOLOv4 and
+additional grayscale image dataset, and additional LBP dataset,                 YOLOX models, and slightly outperforming the YOLOv5s, YOLOv7,
+respectively. Its Precision is slightly higher than other results, and          YOLOv8s, and Faster-RCNN models. The YOLO-CIT model exhibits
+its Recall is approximately 2% higher than the others. The F1 score             the highest detection accuracy. Observing Table 3, it can be seen that
+of the YOLO-CIT model trained with the additional R-LBP dataset                 the YOLO-CIT model has Precision values higher than other models
+is 2.15, 2.1, and 0.75 higher than the other results, respectively.             by 0.49% to 11.29%, Recall values higher by 2.08% to 11.97%, and F1
+
+
+
+
+   FIGURE 13
+   Variation of mAP@0.5 during training across different models.
+
+
+
+
+Frontiers in Plant Science                                                 10                                                               frontiersin.org
+Wang et al.                                                                                                               10.3389/fpls.2024.1397816
+
+
+
+
+TABLE 3 Performance of models trained on different datasets.                    According to Figure 15, it can be noted that YOLO-CIT
+                                                                            accurately identiﬁes the ripeness stages of citrus fruits under
+                              Precision/       Recall/                      varying lighting conditions. For citrus fruits exposed to strong
+  dataset       mAP@0.5                                    F1score
+                                  %              %
+                                                                            light or signiﬁcant shadow coverage, the identiﬁcation conﬁdence
+   YOLOv4           70.83         76.89          81.02         78.90        reaches 0.8 or higher. In cases of dense growth or occlusion of citrus
+   YOLOv5s          79.81         86.10          85.19         85.64        fruits, for those close and with complete shapes, the conﬁdence in
+                                                                            ripeness identiﬁcation ranges from 0.88 to 0.94. For those farther
+   YOLOv7           78.34         85.82          82.33         84.04
+                                                                            away with incomplete shapes, the recognition conﬁdence is above
+   YOLOX            71.88         76.21          78.04         77.11        0.76. The above results show that the YOLO-CIT model is capable
+   YOLOv8s          82.60         86.15          85.67         85.91        of accurately and conﬁdently identifying the ripeness of citrus fruits
+                                                                            within the robot’s picking range under various environmental
+  YOLO-CIT          83.52         87.50          90.01         88.73
+                                                                            conditions. According to Table 4, it can be seen that the YOLO-
+    Faster-                                                                 CIT model achieves an accuracy of 86.54% and an FPS of 76.36
+                    81.31         87.01          87.93         87.47
+    RCNN
+                                                                            when detecting videos on GPU devices. Beyaz & Gül deployed a
+                                                                            YOLOv4-tiny model similar to this one on the NVIDIA Jetson TX2
+scores higher by 1.26 to 11.62. The YOLO-CIT model demonstrates the         AI board, achieving an FPS of over 12 during the detection process
+best performance.                                                           (Beyaz and Gül, 2023). The parameter count of the YOLO-CIT
+    The average detection time of the YOLO-CIT model compared               model is smaller than that of the YOLOv4-tiny model. Applying
+to other experimental models map@0.5 The distribution is shown              this model to the same type of AI board can also achieve similar
+in Figure 14.                                                               performance. It has a fast processing speed and can effectively
+    According to Figure 14, the YOLO-CIT, YOLOv5s, YOLOv7,                  connect cameras for real-time detection tasks.
+and YOLOv8s models exhibit high average detection accuracy while
+maintaining a fast detection speed. The average detection speed for
+these models ranges from 5ms to 7ms, meeting the requirements for           4 Discussion
+real-time detection. The detection speed of the YOLO-CIT model is
+slightly lower than that of the YOLOv5s, but it achieves higher                 The green unripe citrus fruits have a similar color to the
+average detection accuracy than the YOLOv5s model.                          background, making it challenging to identify them using color
+    To validate the ripeness identiﬁcation capability of the YOLO-          features alone. This study additionally investigates from the
+CIT model in real-world environments, the model was trained                 perspective of texture features. The R-LBP algorithm proposed in
+using the base dataset and an additional dataset processed with R-          Experiment 1 effectively ampliﬁes the differences in peel roughness
+LBP. The trained model was then utilized to identify citrus fruit           of citrus fruits at different ripeness stages. This increases the feature
+ripeness stages in diverse environmental conditions, encompassing           disparity between green citrus fruits and the green background,
+both images and videos. Results are shown in Figure 15 and Table 4.         signiﬁcantly improving the accuracy of identifying green citrus
+
+
+
+
+   FIGURE 14
+   Detection time and mAP@0.5 across various models.
+
+
+
+
+Frontiers in Plant Science                                             11                                                              frontiersin.org
+Wang et al.                                                                                                                   10.3389/fpls.2024.1397816
+
+
+
+
+                        A                                                    B
+
+
+
+
+                        C                                                    D
+
+
+
+
+                        E                                                    F
+
+
+
+
+                        G                                                    H
+
+
+
+
+   FIGURE 15
+   YOLO-CIT model: citrus ripeness identiﬁcation in varied environments: (A, B) Backlight environment; (C, D) Exposure environment; (E, F) The
+   situation where leaves cover the fruit; (G, H) The dense distribution of citrus fruits.
+
+
+
+
+fruits and reducing instances of missed recognition. At the same                 identiﬁcation, a conclusion that aligns with ﬁndings in other
+time, it also enhances the recognition ability of the model for citrus           research (Sharan et al., 2013).
+fruits with different maturities. Enhancing the differences in features              In Experiment 2, different types of additional datasets were added
+between various identiﬁcation targets is beneﬁcial for target                    to the basic training set to train the YOLO-CIT model. The
+
+TABLE 4 Performance of the model on video detection.
+
+
+                                                                                                Video processing
+              Model                      Device                     Accuracy/%                                                         FPS
+                                                                                                    time/sec
+          YOLO-CIT                 GPU(RTX-4080super)                    86.54                           4.51                          76.36
+
+                                     CPU(i5-13600KF)                     86.17                           30.02                         11.47
+
+
+
+
+Frontiers in Plant Science                                                 12                                                              frontiersin.org
+Wang et al.                                                                                                                       10.3389/fpls.2024.1397816
+
+
+
+
+performance of the model trained with added grayscale and LBP                       fruits with distinct ripeness stages. The synthesized images processed
+images did not show improvement and even slightly decreased. For                    by the R-LBP algorithm are added to the training set, which can
+grayscale images, this may be because the color features of grayscale               improve the identiﬁcation accuracy of the model for citrus fruits with
+images interfere with the model’s feature learning, leading to a decrease           distinct ripeness stages. This article also proposes an improved YOLO-
+in recognition accuracy. For LBP images, this may be because the                    CIT model based on YOLOv5s, which can accurately and
+texture features provided by the images processed by LBP are not                    comprehensively identiﬁes the ripeness stages of citrus fruits in
+sufﬁcient to improve the performance of the model. On the other hand,               complex environments, The speciﬁc conclusion is as follows:
+the model trained with the additional dataset using the R-LBP
+algorithm exhibited improved performance. This improvement is                            1. An R-LBP algorithm based LBP, is proposed. This algorithm
+attributed to the fact that the training set, while containing color                         utilizes the grayscale value coefﬁcient of variation for
+images providing color features, also includes additional images that                        encoding, enhancing the differentiation in peel roughness
+offer roughness texture features. This enhancement contributes to the                        among citrus fruits at distinct ripeness stages.
+model’s learning effectiveness. Including samples in the training set that               2. The fruit segment of citrus images is processed using the R-
+possess characteristics relevant to the application domain can effectively                   LBP algorithm, while the background is subjected to
+improve identiﬁcation performance. Similar conclusions can be found                          grayscale conversion to create synthetic images. Adding
+in related studies (Liu, 2020; Han et al., 2021).                                            these images to the base training set enhances the model’s
+     In Experiment 3, the YOLO-CIT model demonstrated the best                               performance, effectively improving the accuracy of
+Precision and mAP@0.5, indicating its ability to accurately identify                         identifying green citrus fruits against a green background.
+citrus fruits at distinct ripening stages. The model also exhibited the                      Simultaneously, it reduces the misidentiﬁcation rate for
+best Recall, suggesting that it has a lower tendency to miss detections,                     partially green and partially orange unripe citrus fruits.
+providing comprehensive detection of the ripeness of all citrus fruits                   3. The backbone network of the model is constructed using the
+within the images. Due to the clear citrus color and texture features in                     C3+CBAM structure, and the traditional convolution in the
+the training set, the YOLO-CIT model incorporates the CBAM                                   neck network is replaced by Ghostconv. Thus, the YOLO-
+attention mechanism into the C3 module. The structure of C3 and                              CIT model is established. The YOLO-CIT model, trained
+CBAM uses more computation to extract texture features of citrus. The                        using the base dataset combined with the additional dataset
+computational complexity is focused on the backbone network to learn                         processed with R-LBP, achieves a Precision of 88.13%,
+the texture features. In the model’s neck, where the feature maps have                       Recall of 93.16%, F1score of 90.89, and mAP@0.5 of
+already been initially formed, a lightweight Ghostconv module is                             85.88%. It demonstrates comprehensive identiﬁcation of
+utilized to reduce computational complexity. This not only avoids a                          the ripeness stages of citrus fruits in complex environments,
+loss in identiﬁcation accuracy but also enhances the model’s detection                       including exposure, backlight, and occlusion.
+speed. The above experiments concluded that introducing attention
+mechanisms in the backbone network while reducing computational                         These ﬁndings validate that the proposed YOLO-CIT model, in
+complexity in the neck network can enhance the overall performance                  conjunction with the R-LBP algorithm, can comprehensively and
+of the model. Similar conclusions can also be found in other research               accurately identify citrus fruits at distinct ripeness stages in complex
+(McCool et al., 2017; Xu et al., 2023). In the identiﬁcation results of             environments. This provides accurate data for obtaining target
+citrus ripeness in different environments, the model accurately                     coordinates and robotic arm parameters for the fruit-picking robot.
+identiﬁes citrus fruits at distinct ripeness stages. When the YOLO-                 In the future, we will study a harvesting path planning algorithm that
+CIT model is applied to GPU devices, its FPS exceeds 60 and detection               comprehensively considers both mature and immature fruits,
+accuracy exceeds 80%, indicating that the improved model can be                     avoiding rotten citrus fruits and jointly planning the harvesting path.
+combined with high frame rate cameras to provide real-time position
+information of different detection targets (Fang et al., 2019; Gündüz
+and Işık, 2023). It can be effectively applied to citrus harvesting robots,        Data availability statement
+laying the foundation for their efﬁcient harvesting operations. This aids
+in guiding the harvesting robot to avoid unripe citrus fruits, facilitating            The datasets presented in this study can be found in online
+subsequent tasks in path planning for harvesting ripe citrus fruits (Ning           repositories. The names of the repository/repositories and accession
+et al., 2022; Yi et al., 2024). There were instances in the experimental            number(s) can be found in the article/Supplementary Material.
+results where some citrus fruits at a distance were not identiﬁed. These
+fruits were located beyond the operational range of the harvesting                  Author contributions
+robot, rendering their ripeness identiﬁcation irrelevant, and therefore,
+they can be disregarded.                                                                CW: Conceptualization, Data curation, Investigation, Resources,
+                                                                                    Writing – review & editing. QH: Formal analysis, Methodology,
+                                                                                    Software, Writing – original draft, Writing – review & editing. CL:
+5 Conclusion                                                                        Data curation, Validation, Writing – review & editing. TZ: Funding
+                                                                                    acquisition, Project administration, Writing – review & editing. XZ:
+   This article ﬁrst proposes an improved R-LBP algorithm based on                  Funding acquisition, Project administration, Writing – review
+LBP, which can amplify the peel roughness characteristics of citrus                 & editing.
+
+
+Frontiers in Plant Science                                                     13                                                             frontiersin.org
+Wang et al.                                                                                                                                                  10.3389/fpls.2024.1397816
+
+
+
+
+Funding                                                                                            Publisher’s note
+    The author(s) declare ﬁnancial support was received for the                                        All claims expressed in this article are solely those of the
+research, authorship, and/or publication of this article. This work                                authors and do not necessarily represent those of their afﬁliated
+was supported by the Guangdong Basic and Applied Basic Research                                    organizations, or those of the publisher, the editors and the
+Foundation (grant number 2022A1515140162) and the Guangdong                                        reviewers. Any product that may be evaluated in this article, or
+Province International Cooperation Project (grant number                                           claim that may be made by its manufacturer, is not guaranteed or
+2023A0505050133).                                                                                  endorsed by the publisher.
+
+
+
+Conﬂict of interest                                                                                Supplementary material
+    The authors declare that the research was conducted in the                                         The Supplementary Material for this article can be found online
+absence of any commercial or ﬁnancial relationships that could be                                  at: https://www.frontiersin.org/articles/10.3389/fpls.2024.1397816/
+construed as a potential conﬂict of interest.                                                      full#supplementary-material
+
+
+
+
+References
+  Beyaz, A., and Gül, V. (2023). YOLOv4 and tiny YOLOv4 based forage crop                          and rational utilization: from pericarp to juice. Molecules 27, 2579. doi: 10.3390/
+detection with an artiﬁcial intelligence board. Braz. Arch. Biol. Technology. 66,                  molecules27082579
+e23220803. doi: 10.1590/1678-4324-2023220803
+                                                                                                     Peng, H., Zou, X., Xiong, J., Chen, Y., Guo, A., and Chen, K. (2014). Recognition of
+  Brown, C. (1998). “Coefﬁcient of variation,” in Applied Multivariate Statistics in               mature citrus in natural scene under the occlusion condition. J. Inf. Comput. Science.
+Geohydrology and Related Sciences, 155–157. doi: 10.1007/978-3-642-80328-4                         11, 1947–1958. doi: 10.12733/issn.1548-7741
+  Chen, W., Lu, S., Liu, B., Chen, M., Li, G., and Qian, T. (2022). CitrusYOLO: A                      Qiang, L., Cai, J., Bin, L., Lie, D., and Zhang, Y. (2014). Identiﬁcation of fruit and
+algorithm for citrus detection under orchard environment based on YOLOv4.                          branch in natural scenes for citrus harvesting robot using machine vision and support
+Multimed. Tools Appl. 81, 31363–31389. doi: 10.1007/s11042-022-12687-5                             vector machine. Int. J. Agric. Biol. Engineering. 7, 115–121. doi: 10.3965/
+  Fang, W., Wang, L., and Ren, P. (2019). Tinier-YOLO: A real-time object detection                j.ijabe.20140702.014
+method for constrained environments. IEEE Access 8, 1935–1944. doi: 10.1109/                         Romero, P., and Lafuente, M. (2020). Abscisic acid deﬁciency alters epicuticular wax
+Access.6287639                                                                                     metabolism and morphology that leads to in-creased cuticle permeability during sweet
+  Gündüz, M.Ş ., and Işık, G. (2023). A new YOLO-based method for real-time crowd                orange (Citrus sinensis) fruit ripening. Front. Plant Science. 11, 594184. doi: 10.3389/
+detection from video and performance analysis of YOLO models. J. Real-Time Image                   fpls.2020.594184
+Process. 20, 5. doi: 10.1007/s11554-023-01276-w                                                      Sharan, L., Liu, C., Rosenholtz, R., and Adelson, E. (2013). Recognizing materials
+   Gupta, A., Pathak, U., Tongbram, T., Medhi, M., Terdwongworakul, A., Magwaza, L.,               using perceptually inspired features. Int. J. Comput. Vision 103, 348–371. doi: 10.1007/
+et al. (2021). Emerging approaches to determine maturity of citrus fruit. Crit. Rev. Food          s11263-013-0609-0
+Sci. Nutr. 62, 5245–5266. doi: 10.1080/10408398.2021.1883547
+                                                                                                      Sun, Y., Singh, Z., Tokala, V., and Heather, B. (2019). Harvest maturity stage and cold
+  Han, E., Smith, A., Kemper, R., White, R., Kirkegaard, J., Thorup-Kristensen, K., et al.         storage period inﬂuence lemon fruit quality. Scientia Horticulturae. 249, 322–328.
+(2021). Digging roots is easier with AI. J. Exp. botany. 72, 4680–4690. doi: 10.1093/jxb/          doi: 10.1016/j.scienta.2019.01.056
+erab174
+                                                                                                     Wang, S., Xie, W., and Yan, X. (2022). Effects of future climate change on citrus
+   Iglesias, D., Tadeo, F., Legaz, F., Primo-millo, E., and Taló n, M. (2001). In vivo            quality and yield in China. Sustainability 14, 9366. doi: 10.3390/su14159366
+sucrose stimulation of colour change in citrus fruit epicarps: Interactions between
+nutritional and hormonal signals. Physiologia plantarum. 112, 244–250. doi: 10.1034/                 Wang, Z., Xun, Y., Wang, Y., and Yang, Q. (2022). Review of smart robots for fruit
+j.1399-3054.2001.1120213.x                                                                         and vegetable picking in agriculture. Int. J. Agric. Biol. Engineering. 15, 33–54.
+                                                                                                   doi: 10.25165/j.ijabe.20221501.7232
+  Liu, W. (2020). Interfruit : deep learning network for classifying fruit images. bioRxiv.
+doi: 10.1101/2020.02.09.941039                                                                       Xiong, J., Zheng, Z., Liang, J., Zhong, Z., Liu, B., and Sun, B. (2020). Citrus detection
+                                                                                                   method in night environment based on improved YOLO v3 network. Trans. Chin. Soc.
+  Lu, J., Lee, W., Gan, H., and Hu, X. (2018). Immature citrus fruit detection based on
+                                                                                                   Agric. Mach. 51, 199–206. doi: 10.6041/j.issn.1000-1298.2020.04.023
+local binary pattern feature and hierarchical contour analysis. Biosyst. Engineering. 171,
+78–90. doi: 10.1016/j.biosystemseng.2018.04.009                                                      Xu, X., Ding, Y., Lv, Z., Li, Z., and Sun, R. (2023). Optimized pointwise convolution
+   Lu, J., Sang, N., Hu, Y., and Fu, H. (2014). Detecting citrus fruits with highlight on          operation by Ghost blocks. Electronic Res. Archive. 31, 3187–3199. doi: 10.3934/
+tree based on fusion of multi-map. J. Light-and Electronoptic. 125, 1903–1907.                     era.2023161
+doi: 10.1016/j.ijleo.2013.04.135                                                                     Xu, L., Zhu, S., Chen, X., Wang, Y., Kang, Z., Huang, P., et al. (2020). Citrus
+  Lu, J., Yang, R., Yu, C., Lin, J., Chen, W., Wu, H., et al. (2022). Citrus green fruit           recognition in real scenarios based on machine vision. DYNA 95, 87–93. doi: 10.6036/
+detection via improved feature network extraction. Front. Plant Sci. 13, 946154.                   DYNAII
+doi: 10.3389/fpls.2022.946154                                                                        Yang, R., Hu, Y., Yao, Y., Gao, M., and Liu, R. (2022). Fruit target detection based on
+  McCool, C., Perez, T., and Upcroft, B. (2017). Mixtures of lightweight deep                      BCo-YOLOv5 model. Mob. Inf. Syst. 2022. doi: 10.1155/2022/8457173
+convolutional neural networks: applied to agricultural robotics. IEEE Robotics                       Yang, C., Xiong, L., Wang, Z., Wang, Y., Shi, G., Kuremot, T., et al. (2020). Integrated
+Automation Letters. 2, 1344–1351. doi: 10.1109/LRA.2017.2667039                                    detection of citrus fruits and branches using a convolutional neural network. Comput.
+  Ning, Z., Luo, L., Ding, X., Dong, Z., Yang, B., Cai, J., et al. (2022). Recognition of          Electron. Agric. 174, 105469. doi: 10.1016/j.compag.2020.105469
+sweet peppers and planning the robotic picking sequence in high-density orchards.                    Yi, T., Zhang, D., Luo, L., and Luo, J. (2024). View planning for grape harvesting
+Comput. Electron. Agriculture. 196, 106878. doi: 10.1016/j.compag.2022.106878                      based on active vision strategy under occlusion. IEEE Robot. Autom. Lett. 9, 2535–2542.
+  Ojala, T., Pietikainen, M., and Maenpaa, T. (2002). Multiresolution gray-scale and               doi: 10.1109/LRA.2024.3357397
+rotation invariant texture classiﬁcation with local binary patterns. IEEE Trans. Pattern             Zhao, C., Lee, W., and He, D. (2016). Immature green citrus detection based on
+Anal. Mach. Intell. 24, 971–987. doi: 10.1109/TPAMI.2002.1017623                                   colour feature and sum of absolute transformed difference (SATD) using colour images
+  Pei, Y., He, C., Liu, H., Shen, G., and Feng, J. (2022). Compositional analysis of four          in the citrus grove. Comput. Electron. Agric. 124, 243–253. doi: 10.1016/j.compag.
+kinds of citrus fruits with an NMR-based method for understanding nutritional value                2016.04.009
+
+
+
+
+Frontiers in Plant Science                                                                    14                                                                            frontiersin.org
+

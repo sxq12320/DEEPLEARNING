@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三个视觉课题调研总览</title>
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f4f6f3; color:#1f2933; font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif; }
+    header { max-width:1180px; margin:0 auto; padding:24px 20px 12px; }
+    h1 { margin:0 0 8px; font-size:30px; }
+    p { margin:6px 0; color:#5d6978; line-height:1.65; }
+    .tabs { max-width:1180px; margin:0 auto; padding:8px 20px 14px; display:flex; gap:10px; flex-wrap:wrap; }
+    button { border:1px solid #cfd8d0; background:#fff; color:#1f2933; border-radius:8px; padding:10px 14px; font-size:15px; cursor:pointer; }
+    button.active { background:#1f6f4a; color:#fff; border-color:#1f6f4a; }
+    .frame-wrap { width:100%; height:calc(100vh - 150px); border-top:1px solid #d9dfd6; background:#fff; }
+    iframe { width:100%; height:100%; border:0; background:#fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>三个视觉课题调研总览</h1>
+    <p>用下面按钮切换查看三个独立 HTML 文档：柑橘套袋、蘑菇去柄、废弃螺栓螺母收集分类。三个方向都按“意义、任务定义、痛点、算法方案、数据标注、泛化实验、参考文献”组织。</p>
+  </header>
+  <nav class="tabs">
+    <button class="active" data-src="citrus_bagging_vision_review.html">柑橘套袋</button>
+    <button data-src="mushroom_stipe_removal_review.html">蘑菇去柄</button>
+    <button data-src="bolt_nut_recycling_review.html">螺栓螺母回收</button>
+  </nav>
+  <div class="frame-wrap">
+    <iframe id="viewer" src="citrus_bagging_vision_review.html" title="课题调研文档"></iframe>
+  </div>
+  <script>
+    const buttons = document.querySelectorAll('button[data-src]');
+    const viewer = document.getElementById('viewer');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        buttons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        viewer.src = btn.dataset.src;
+      });
+    });
+  </script>
+</body>
+</html>

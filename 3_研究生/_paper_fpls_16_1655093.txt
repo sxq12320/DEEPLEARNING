@@ -1,0 +1,815 @@
+                                                                                                                        TYPE Original Research
+                                                                                                                        PUBLISHED 11 September 2025
+                                                                                                                        DOI 10.3389/fpls.2025.1655093
+
+
+
+
+                                                  Precision citrus segmentation
+OPEN ACCESS                                       and stem picking point
+EDITED BY
+Changkai Wen,
+China Agricultural University, China
+                                                  localization using improved
+REVIEWED BY
+Yanqiu Yang,
+                                                  YOLOv8n-seg algorithm
+The University of Tennessee, United States
+Mingwei Fang,                                     Han Li 1,2*, Zirui Yin 1,2, Zhijiang Zuo 1,2, Libo Pan 1,2
+Guangdong Polytechnic Normal University,
+China                                             and Junfeng Zhang 3
+*CORRESPONDENCE                                   1
+                                                    State Key Laboratory of Precision Blasting, Jianghan University, Wuhan, China, 2 Hubei Key Laboratory
+Han Li                                            of Blasting Engineering, Jianghan University, Wuhan, China, 3 Institute of Agricultural Mechanization,
+  gracelihan@jhun.edu.cn                          Wuhan Academy of Agricultural Sciences, Wuhan, China
+
+RECEIVED 27 June 2025
+ACCEPTED 25 August 2025
+PUBLISHED 11 September 2025
+                                                  Introduction: Due to the small size of citrus stems, their color similarity to
+CITATION                                          the background, and their variable position relative to the fruit, accurately
+Li H, Yin Z, Zuo Z, Pan L and Zhang J (2025)
+                                                  locating picking points using robots in natural environments presents
+Precision citrus segmentation and
+stem picking point localization using             signiﬁcant challenges.
+improved YOLOv8n-seg algorithm.                   Methods: To address this issue, this study proposes a method for segmenting
+Front. Plant Sci. 16:1655093.
+doi: 10.3389/fpls.2025.1655093                    citrus fruits and stems based on an improved YOLOv8n-seg model, combined
+                                                  with geometric constraints for stem matching to achieve accurate localization of
+COPYRIGHT
+© 2025 Li, Yin, Zuo, Pan and Zhang. This is an    picking points. First, all standard convolutions in the model are replaced with
+open-access article distributed under the terms   GhostConv to reduce the number of model parameters. Furthermore, a
+of the Creative Commons Attribution License
+(CC BY). The use, distribution or reproduction    convolutional block attention module (CBAM) and a small-object detection
+in other forums is permitted, provided the        layer are introduced to enhance the model’s feature representation and
+original author(s) and the copyright owner(s)
+                                                  segmentation accuracy for small objects. Then, by incorporating the positional
+are credited and that the original publication
+in this journal is cited, in accordance with      relationship between the fruit and the stem, constraints are deﬁned to match the
+accepted academic practice. No use,               target stem, and an algorithm is designed to determine the optimal picking point.
+distribution or reproduction is permitted
+which does not comply with these terms.
+                                                  Results: Experimental results show that the improved YOLOv8n-seg model
+                                                  achieves recall rates of 90.91% for fruits and stems, a mean average precision
+                                                  (mAP50) of 94.43%, and an F1-score of 93.51%. The precision rates for fruit and
+                                                  stem segmentation are 96.04% and 97.12%, respectively. The average detection
+                                                  rate of picking points reaches 88.38%, with an average localization time of 373.25
+                                                  milliseconds under GPU support, demonstrating high real-time performance.
+                                                  Compared with other models, the improved YOLOv8n-seg model shows
+                                                  signiﬁcantly better performance.
+                                                  Discussion: This study conﬁrms the reliability and effectiveness of the proposed
+                                                  citrus picking point localization method and lays a technical foundation for the
+                                                  automated harvesting of citrus fruits.
+
+
+
+
+                                                  KEYWORDS
+
+                                                  citrus, YOLOv8n-seg, picking point localization, instance segmentation, picking robot
+
+
+
+
+Frontiers in Plant Science                                               01                                                               frontiersin.org
+Li et al.                                                                                                                    10.3389/fpls.2025.1655093
+
+
+
+
+1 Introduction                                                                  presents greater challenges due to the small size of the stem, its color
+                                                                                similarity to stems and leaves, and its low pixel ratio in the image,
+     Citrus is an important agricultural crop in China, widely                  which categorizes it as a typical small object. Against this
+favored by consumers and holding a signiﬁcant position in                       background, segmentation methods based on deep learning,
+international markets. Since 2007, China has ranked ﬁrst globally               which offer more precise contour extraction, have become a focal
+in both the planting area and yield of citrus fruits (Nie, 2023; Li             point for stem detection research. (Su et al., 2025). introduced the
+et al., 2025). With increasing market demand, the scale of citrus               AP-UNet model to accurately detect guava fruits and stems at night.
+cultivation continues to expand. However, citrus harvesting is still            (Yang et al., 2023). adopted the YOLOv5s-seg segmentation model
+predominantly manual (Sun et al., 2023), which presents issues such             to detect strawberry stems on trellises, achieving a precision of
+as high labor intensity, low efﬁciency, and high costs (Xiao et al.,            82.74%, recall of 82.01%, and mean average precision of 80.67%.
+2024; Choi et al., 2025; Zhang et al., 2025). In the context of an aging        (Baek et al., 2025). proposed the AppleStem (AS)-YOLO model,
+population and a growing shortage of agricultural labor in China,               utilizing ghost bottlenecks and global attention mechanism to
+harvesting has become the most time-consuming, labor-intensive,                 segment apple stems. Compared to detection, segmentation
+and costly stage in fruit production (Yin et al., 2023), severely               methods provide greater advantages in handling weak-feature and
+restricting industrial development and farmer income. Therefore,                small-scale targets, providing more precise information for the
+promoting the mechanization and intelligent transformation of                   determination of cutting locations by harvesting robots. Based on
+citrus harvesting has become essential, and the development of                  this, this study proposes an improved YOLOv8-seg model to
+harvesting robots is a vital approach to addressing this issue.                 enhance the segmentation performance for citrus stem.
+     In the complex natural environment of orchards, the key to                      Most existing stem picking point detection methods infer stem
+achieving efﬁcient and non-destructive picking by harvesting robots             positions based on fruit locations, showing good adaptability for
+lies in the accurate recognition of fruits and their picking points             crops like kiwifruit, lychee, and apples, where stems are generally
+(Hou et al., 2024; Liang et al., 2025). Currently, visual recognition in        located directly above the fruit (Li et al., 2022). (Li et al., 2025).
+harvesting robots is mainly realized through traditional image                  determined stem picking points for kiwifruit by searching for fruit
+processing methods and deep learning algorithms (Fu et al.,                     pixel features along the stem’s vertical extension and establishing a
+2024). Traditional image processing relies on manually extracted                subordinate relationship between fruit and stem. (Xie et al., 2024).
+image features for object recognition. (Xu and Lü, 2015). extracted             proposed a compound model-based visual localization method,
+color features of bayberry images and used the Hough transform to               using object detection and instance segmentation to continuously
+ﬁt fruit contours for recognition. However, this method requires                detect strawberries and segment their stems, identifying picking
+high-quality images and can only identify a small number of fruits.             points and stem tilt angles. (Zhang et al., 2024). optimized the
+Although traditional methods have shown some success in fruit                   YOLOv5s model to detect mango stems via segmentation for cluster
+recognition, they lack robustness and adaptability due to limited               harvesting. These studies effectively realized stem detection and
+feature extraction and susceptibility to changes in lighting,                   picking point localization based on the physical connection between
+background, and fruit color (Xiao et al., 2023; Liu et al., 2024; Li            fruit and stem. However, due to tree structure and gravity, citrus
+et al., 2025). With the rapid development of machine vision, deep               fruits often hang at inclined angles ranging from 30° to 60°, or even
+learning techniques have been widely applied to fruit detection tasks           upside down, resulting in signiﬁcant stem position variability and
+due to their high accuracy and efﬁciency (Li et al., 2025; Zhao et al.,         increased detection difﬁculty.
+2025), such as blueberries (Wang et al., 2024), apples (Zhang and                    In summary, this study focuses on the dwarf-cultivated citrus
+Zhang, 2024), bananas (Wu et al., 2024), pears (Ren et al., 2025),              variety “Dafen No. 4” and proposes a segmentation method based on
+and tomatoes (Huang et al., 2025). Among these, the single-stage                an improved YOLOv8n-seg model to enhance the detection accuracy
+object detection algorithm YOLO (Redmon et al., 2015) has                       of citrus fruit and stems in natural environments. Based on this, a stem
+attracted signiﬁcant attention in the ﬁeld. This algorithm can                  matching method using geometric constraints is designed to establish
+directly input standardized images into a convolutional neural                  the correspondence between fruit and stem, identify the target stem,
+network for object detection. (Xu et al., 2023). proposed a high-               extract the skeleton line, and develop an algorithm to localize the
+precision lightweight detection method based on YOLOv4, using                   optimal picking point. This method provides both theoretical and
+the lightweight feature extraction network GhostNet to enhance                  technical support for improving the robustness and practicality of
+citrus feature representation, achieving an accuracy of 93.45%. (Liu            intelligent orchard harvesting systems.
+et al., 2024). developed a lightweight algorithm, Faster-YOLO-AP,
+based on YOLOv8n-seg, which achieved efﬁcient and accurate apple
+detection. However, these studies mainly focus on fruit detection,              2 Materials and methods
+with picking points typically located on the fruit itself, which is
+suitable for harvesting fruits with hard skins. For citrus fruits with          2.1 Citrus dataset construction
+thin peels and soft ﬂesh, picking directly from the fruit can easily
+cause mechanical damage. Therefore, the picking point should be                 2.1.1 Image acquisition
+positioned on the fruit stem to ensure the integrity of the fruit                   All citrus images used in this study were collected from the
+during harvesting. Compared to fruit recognition, stem detection                citrus cultivation area of the Wuhan Academy of Agricultural
+
+
+
+Frontiers in Plant Science                                                 02                                                             frontiersin.org
+Li et al.                                                                                                                     10.3389/fpls.2025.1655093
+
+
+
+
+Sciences, Hubei Province, China (latitude 30°43’30’’ N, longitude                 contours of both the citrus fruits and stems. All annotation ﬁles
+114°30’15’’ E). The cultivated variety used for image acquisition was             were then converted into TXT format to be compatible with the
+‘Dafen No. 4’. Images were captured using an Intel RealSense D435i                input format required by the segmentation network model. Finally,
+depth camera with a resolution of 1920×1080 pixels. All data were                 the dataset was randomly divided into training, validation, and test
+collected during daytime to avoid insufﬁcient lighting conditions                 sets in an 8:1:1 ratio. This ensured balanced data distribution during
+that could negatively affect image quality and subsequent visual                  model training and improved the model’s generalization ability.
+processing. During image acquisition, the relative position between               Following the dataset partitioning, a statistical analysis of class
+the camera and the canopy surface of the citrus trees was carefully               distribution was conducted across the training, validation, and test
+controlled to maintain a parallel distance of 0.3 to 0.6 meters. This             sets. The results indicate that the proportions of citrus fruits and
+ensured that the captured images accurately reﬂected the natural                  stems are comparable across the three subsets, reﬂecting a well-
+growth state of the fruit. Considering the complexity of the orchard              balanced and consistent data distribution. Table 1 presents the
+environment and the safety of the research personnel, data                        distribution of the citrus image dataset.
+collection was not conducted under extreme weather conditions                         Dafen No. 4 is a newly emerging citrus variety with high-quality
+such as heavy rainfall or low-light at night. This approach was                   peel and pulp characteristics. To enable non-destructive harvesting
+adopted to minimize the impact of adverse conditions factors on                   without damaging the peel or injuring the pulp, the picking robot is
+data quality.                                                                     required to perform the cutting operation on the stem at a certain
+    After image collection, the raw images were screened to remove                distance from the fruit. As the stems of this variety are generally
+blurred, duplicate, or other invalid images. A total of 1,568 clear               long, annotating the entire stem would not only increase the
+original citrus images were retained. Representative samples are                  complexity of data annotation but also introduce redundant
+shown in Figure 1. To enhance the diversity of the dataset and                    information. Therefore, in this study, image annotation focuses
+improve the model’s robustness under complex conditions such as                   only on the area near the connection between the fruit and the stem.
+varying shooting angles, different levels of occlusion, and motion                The central part of the segmented stem mask is selected as the
+blur, several data augmentation techniques were applied. These                    picking point region. This strategy effectively captures the relevant
+included ﬂipping, rotation, translation, brightness adjustment, noise             features of the picking point while simplifying the annotation task,
+addition, and Gaussian blurring, expanding the dataset to 4,023                   providing valuable data support for model training and picking
+images. Subsequently, a secondary screening was performed to                      point localization.
+eliminate lower-quality images, resulting in a ﬁnal dataset of
+4,000 high-quality citrus images.
+                                                                                  2.2 Citrus fruit and stem segmentation
+2.1.2 Image annotation                                                            network
+    In this study, Labelme software was used to manually annotate
+the images, establishing two categories: Citrus Fruit (Citrus) and                2.2.1 YOLOv8-seg segmentation model
+Citrus Stem (Stem). During annotation, fruits and stems that were                     YOLOv8-seg is an advanced instance segmentation model
+severely occluded or difﬁcult to identify due to poor lighting were               developed by the Ultralytics team as part of the YOLO series. It
+not annotated. To ensure data consistency and proper                              inherits the efﬁciency and speed of its predecessors, while
+correspondence, a one-to-one annotation strategy was adopted                      incorporating several architectural optimizations. The overall
+for fruits and their associated stems. As shown in Figure 2,                      architecture consists of four components: the Input layer,
+annotation was performed using polygonal outlines to trace the                    Backbone, Neck, and Head. Compared to the earlier YOLOv5-seg
+
+
+
+
+    FIGURE 1
+    Example of a citrus image. (A) No occlusion (B) Occlusion (C) Sufﬁcient illumination.
+
+
+
+
+Frontiers in Plant Science                                                   03                                                           frontiersin.org
+Li et al.                                                                                                                 10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 2
+    Data annotation. (A) Original image (B) Annotation visualization.
+
+
+
+
+model, YOLOv8-seg replaces the original C3 module with a C2f                   to the YOLOv8n-seg model based on the speciﬁc perception
+module, enhancing feature reuse and gradient ﬂow, thereby                      requirements of citrus harvesting tasks, aiming to enhance the
+improving feature representation. In addition, it removes                      model’s ability to segment critical regions. First, the GhostConv
+convolution operations in the upsampling stage and employs a                   module is introduced to replace the original standard convolution,
+decoupled detection head, which separates classiﬁcation and                    reducing the number of model parameters and achieving a
+bounding box regression tasks to improve detection performance.                lightweight network structure suitable for resource-constrained
+YOLOv8-seg also supports pixel-level multi-object segmentation,                agricultural scenarios. Second, the CBAM attention mechanism is
+making it suitable for tasks that demand precise object contours.              embedded into the backbone to strengthen the model’s
+The primary reason for selecting YOLOv8-seg as the baseline model              responsiveness to key features such as stems, thereby improving
+in this study, rather than adopting a newer version, lies in its               segmentation accuracy under complex backgrounds or partial
+relatively stable architecture, well-established performance, and              occlusion conditions. Finally, a small-object detection layer is
+extensive validation. These characteristics provide a reliable                 added to enhance the model’s multi-scale perception capability,
+foundation for subsequent network structure optimization and                   further improving the detection of small stem targets and thereby
+functional module integration.                                                 increasing the completeness and robustness of picking point
+                                                                               localization. The improved YOLOv8n-seg network architecture is
+2.2.2 Improved YOLOv8n-seg segmentation                                        illustrated in Figure 3.
+model                                                                               (1) Lightweight network reconstruction.
+    YOLOv8n-seg, as the lightest segmentation model in the                          Traditional convolution operations typically stack multiple
+YOLOv8 series, offers fast inference speed and high detection                  convolutional kernels and apply them to all channels of the input
+accuracy. However, in practical orchard environments, the                      feature map. While this approach allows for the extraction of rich
+segmentation of citrus fruits and stems still faces numerous                   image features, it results in slow computation and a large number of
+challenges. The small size of stems, their color similarity to the             parameters, which limits the deployment efﬁciency of models on
+background, frequent occlusions, and varying lighting conditions all           resource-constrained devices. To alleviate this burden, previous
+increase the difﬁculty of accurate target segmentation. To address             studies have proposed lightweight convolutional networks such as
+these issues, this study proposes targeted structural improvements             ShufﬂeNet and MobileNet by optimizing convolutional structures
+                                                                               for more efﬁcient computation (Howard et al., 2017; Zhang et al.,
+                                                                               2017). However, traditional convolution operations still consume
+TABLE 1 Distribution of citrus image datasets.                                 signiﬁcant memory resources. To address this issue, the present
+                                                                               study introduces the GhostConv module (Han et al., 2020) as a
+                   Number of         Number of            Number of
+ Dataset                                                                       replacement for standard convolution operations, aiming to
+                   images/           citrus fruits/       citrus stems/
+ type                                                                          improve feature representation efﬁciency and reduce the overall
+                   pieces            pieces               pieces
+                                                                               complexity of the network.
+ Training set      3200              5330                 4645
+                                                                                    As shown in Figure 4, the GhostConv module mainly consists of
+ Veriﬁcation set   400               650                  550                  three main steps. First, some feature maps are generated using
+ Test set          400               655                  560                  standard convolution operations. Then, a series of linear
+                                                                               transformations are applied to these feature maps to produce
+ Total             4000              6635                 5755
+                                                                               additional feature maps. Finally, both sets of feature maps are
+
+
+
+Frontiers in Plant Science                                                04                                                          frontiersin.org
+Li et al.                                                                                                           10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 3
+    Architecture of the improved YOLOv8n-seg model.
+
+
+
+
+concatenated to form the complete output. This structure effectively        unstructured backgrounds introduce signiﬁcant interference,
+reduces the computational cost associated with learning non-critical        resulting in a large amount of irrelevant information in the
+image features, thereby improving the feature representation                images. These challenges severely affect the model’s ability to
+efﬁciency of the network while maintaining model accuracy and               accurately recognize target objects. Attention mechanisms, which
+reducing parameter count.                                                   assign adaptive weights to feature maps, enable the model to
+    (2) Incorporation of attention mechanism.                               dynamically select and enhance key information. This can
+    In the complex environment of orchards, factors such as                 effectively improve the model’s discriminative capacity under
+varying lighting conditions, occlusion by branches and leaves, and          complex background conditions. Therefore, in this study, the
+
+
+
+
+    FIGURE 4
+    Structure of the GhostConv module.
+
+
+
+
+Frontiers in Plant Science                                             05                                                      frontiersin.org
+Li et al.                                                                                                                  10.3389/fpls.2025.1655093
+
+
+
+
+CBAM (Woo et al., 2018) is integrated into the backbone of the                 resulting in more stable segmentation performance under complex
+YOLOv8n-seg model to enhance the network’s ability to represent                backgrounds. Moreover, the added module maintains the
+target regions. The CBAM module is composed of a channel                       lightweight nature of the overall network, facilitating deployment
+attention module (CAM) followed by a spatial attention module                  on resource-constrained intelligent agricultural machinery with
+(SAM). CAM captures the importance of different channels by                    high practical applicability.
+applying both global average pooling and max pooling,
+emphasizing features related to fruits and stems. SAM models the
+spatial attention distribution using the feature map compressed
+                                                                               2.3 Citrus stem picking point localization
+along the channel dimension, improving the model’s response to
+                                                                               method
+the edges of small targets under complex backgrounds. While
+maintaining a lightweight architecture, the CBAM module                        2.3.1 Target stem determination strategy
+enhances the network’s perception of target regions. Figure 5
+                                                                                   As described in Section 2.2.2, after the citrus fruit and stem are
+shows the structural diagram of the CBAM module. Given an                      segmented, it is necessary to further determine whether the detected
+input feature map F∈RC×H×W, CBAM sequentially derives the                      stem region is the target stem connected to the corresponding fruit
+CAM map MC∈RC×1×1 and the SAM map MS∈R1×H×W. The                               in order to accurately identify the picking position. However, as
+overall process is as follows:                                                 shown in Figure 6, complex situations commonly occur in the tree
+                                                                               canopy, including multiple fruits on a single stem, fruit clusters,
+                              F 0 = MC (F) ⊗ F
+                                                                               occlusion by stems, and fruitless stems. These factors make it
+                                                                               difﬁcult to directly establish the correspondence between fruits
+                             F 00 = MS (F 0 ) ⊗ F 0
+                                                                               and stems. To address this challenge, this study proposes a stem
+    Here, ⊗ denotes element-wise multiplication. F’ represents the             matching method based on geometric constraints. First, the
+intermediate feature map after channel attention adjustment, and               segmented stem region is ﬁtted with a straight line using the least
+F” is the ﬁnal enhanced output feature map.                                    squares method to estimate its general geometric direction. Then,
+    (3) Introduction of small object detection layer.                          the Euclidean distance from each fruit centroid to the ﬁtted line is
+    To enhance the model’s ability to detect and segment small-                calculated, and the stem with the shortest distance is selected as the
+scale targets such as citrus stems, this study introduces an additional        preliminary candidate. Finally, by comparing the maximum
+shallow detection path on top of the original three-scale                      distance from the centroid to the fruit contour with the minimum
+segmentation structure (P3, P4, P5) of YOLOv8n-seg. This new                   distance from the centroid to the ﬁtted stem line, the ﬁnal target
+path constructs a fourth output branch by incorporating                        stem is identiﬁed.
+upsampling and feature fusion operations on shallow feature                        First, linear ﬁtting is performed on the segmented stem regions
+maps, aiming to compensate for the original segmentation head’s                to extract their geometric directional features. The least squares
+limited perception of small targets. Speciﬁcally, this path leverages          method is used to ﬁt a straight line to the contour points of each
+the rich spatial structure information in low-level feature maps and           stem. Suppose there are N stems in the image, forming a
+enhances it by fusing semantic features from deeper layers, thereby            setB = fli gNi=1 . Each stem li is represented by a ﬁtted line with
+improving the model’s perception consistency across different                  slope ai and intercept bi. The equation of the ﬁtted line for the i-
+object scales. Considering that citrus stems are small, slender, and           th stem is expressed as: y=aix+bi.
+prone to occlusion by branches and leaves, this architectural design               Next, to accurately obtain the centroid coordinates of the citrus
+enhances the model’s representational capacity for such targets,               fruits, it is necessary to parse the label ﬁles generated by the
+
+
+
+
+    FIGURE 5
+    Architecture of the CBAM.
+
+
+
+
+Frontiers in Plant Science                                                06                                                           frontiersin.org
+Li et al.                                                                                                                           10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 6
+    Relationship between citrus fruits and their stems. (A) One stem corresponds to two fruits; (B) fruits are clustered with stem occlusion; (C) no fruit
+    below the stem.
+
+
+
+
+improved YOLOv8n-seg model and extract the fruit segmentation                            (Stem 1 and Stem 2) represent the stem orientations estimated using
+masks. Since fruits may be clustered or touching, directly                               the least squares ﬁtting method. The red lines indicate the shortest
+calculating the centroid could lead to miscounting the number of                         distance from the centroid of each fruit to its corresponding stem
+fruits. Within the detected citrus region R, which contains M pixels,                    direction, while the cyan lines represent the maximum distance
+the centroid coordinates (xc, yc) are calculated as follows:                             from the fruit centroid to its contour boundary. Based on these
+                                                                                         geometric constraints, the structural association between each fruit
+                        1                   1
+                        M o(x,y) ∈ R
+                 xc =                x, yc = o(x,y) ∈ R y                                and stem can be determined. The ﬁgure illustrates the matching
+                                            M
+                                                                                         relationships, such as “Citrus 1 - Stem 1” and “Citrus 2 - Stem 2,”
+     To establish the correspondence between fruits and stems, it is                     providing an intuitive visualization of the fruit-to-stem
+necessary to calculate the distance from the fruit centroid (xc, yc) to                  matching process.
+all ﬁtted stem lines. The calculation formula is as follows:
+
+                                    jai xc − yc + bi j                                   2.3.2 Stem picking point localization
+                             di =       pﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ                                        After matching the target stem using the geometric constraint
+                                           a2i + 1
+                                                                                         method, further localization of the picking point on the target stem
+     Obviously, the smaller the distance di, the more likely the stem li                 is necessary to achieve automated harvesting. First, the stem
+corresponds to the target stem of the fruit. Let the minimum                             segmentation mask output by the YOLOv8n-seg model is used to
+distance be denoted as d1. Then, the candidate target stem should                        extract the region of interest (ROI), which is then converted into a
+satisfy the following equation, and the corresponding stem lmin is                       corresponding binary image. This image is then processed using
+selected as the candidate target stem:                                                   morphological opening operations to eliminate falsely connected
+                                                                                         regions and edge noise, thereby enhancing the main structure of the
+                             lmin = arg minli ∈ B di
+                                                                                         stem. Next, an image thinning algorithm is applied to extract the
+    Let the set of boundary points on the fruit’s maximum contour                        skeleton of the preprocessed image, allowing for simpliﬁcation of
+                M
+be D = (xj , yj ) j=1 .Then, the shortest distance from the centroid to                  the stem’s structural information by identifying its central axis.
+the boundary is deﬁned as:                                                               Based on this skeleton, the midpoint of the centerline is selected as
+                                       qﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ        the picking point, and its spatial coordinates are obtained through
+                d = min(xj ,yj ) ∈ D    (xC − xj )2 + (yC − yj )2                        coordinate transformation. The ﬂowchart of the picking point
+                                                                                         localization strategy is shown in Figure 8.
+     Since the boundary points of the fruit contour represent its
+maximum physical extent, the maximum distance d from the fruit
+centroid to the contour boundary can be used as a constraint for                         3 Experimental results
+matching. This ensures that the matched stem is structurally
+connected to the corresponding fruit. The constraint helps                               3.1 Experimental environment and
+eliminate stems that are not clearly associated with any fruit,                          parameter conﬁguration
+thereby improving the accuracy of the matching process. If the
+shortest distance d1 from the fruit centroid to the ﬁtted stem line                          The model training and testing in this study were conducted
+satisﬁes the condition d1< d, the stem is considered to be validly                       under the same environment. The host operating system was
+matched with the fruit and identiﬁed as the target stem. Otherwise,                      Windows 11, with a Gen Intel(R) Core(TM) i7-12650H CPU @
+it is regarded as unmatched. A visual example of citrus fruit and                        2.3GHz, 32 GB RAM, and an NVIDIA GeForce RTX 4060 Laptop
+stem matching is shown in Figure 7. In Figure 7B, the green lines                        GPU. The neural network was trained in an Anaconda 3 virtual
+
+
+
+Frontiers in Plant Science                                                          07                                                           frontiersin.org
+Li et al.                                                                                                                            10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 7
+    Visualization of citrus fruit–stem matching: (A) Original image; (B) Matching result image.
+
+
+
+
+environment using the PyTorch 2.5.1 deep learning framework,                       target pixels. Average Precision is the mean of precision values at
+conﬁgured with Python 3.8, and supported by CUDA 11.8 and                          different recall levels. The mAP0.5 represents the average AP across
+cuDNN 9.1.0 for GPU parallel computing. Detailed training                          all classes when the Intersection over Union (IoU) threshold is set to
+parameters of the model are listed in Table 2.                                     0.5, and it is used to comprehensively assess the overall performance
+                                                                                   of the model in citrus fruit and stem segmentation tasks. The F1-
+                                                                                   score is the harmonic mean of precision and recall, reﬂecting the
+3.2 Segmentation evaluation metrics                                                model’s balanced performance in terms of accuracy and
+                                                                                   completeness. The corresponding formulas are deﬁned as follows:
+    In this study, the model performance was evaluated using
+                                                                                                                              TP
+several metrics, including Precision (P), Recall (R), mean Average                                           Precision =
+                                                                                                                            TP + FP
+Precision at IoU threshold 0.5 (mAP0.5), F1-score, number of
+parameters, and model size. Precision measures the accuracy of
+                                                                                                                             TP
+the segmentation results, representing the proportion of correctly                                             Recall =
+                                                                                                                           TP + FN
+predicted target pixels among all pixels predicted as target regions.
+Recall indicates the completeness of the segmentation, referring to                                                   Z 1
+the proportion of correctly identiﬁed target pixels among all actual                                           AP =         P(R)dR
+                                                                                                                       0
+
+
+
+
+    FIGURE 8
+    Flowchart of the picking point localization strategy. (A) Stem region of interest; (B) Image binarization; (C) Morphological processing; (D) Skeleton
+    extraction; (E) Picking point localization.
+
+
+
+
+Frontiers in Plant Science                                                    08                                                                 frontiersin.org
+Li et al.                                                                                                                    10.3389/fpls.2025.1655093
+
+
+
+
+TABLE 2 Model training parameters.                                                 In the above formula, TP is the count of correctly predicted
+                                                                                positives; FP is the count of negatives wrongly predicted as
+ Parameter category                     Parameter setting                       positives; FN is the count of positives wrongly predicted as
+ Initial learning rate                  0.01                                    negatives; N is the number of classes, which is 2 in this study.
+ Number of iteration rounds             200
+
+ Batch size                             8
+                                                                                3.3 Segmentation evaluation metrics
+ Picture size                           640×640
+
+ Optimizer                              Stochastic gradient descent(SGD)            To visually demonstrate the performance of the model in citrus
+                                                                                image segmentation, three representative images were randomly
+ Momentum parameter                     0.937
+                                                                                selected from the test set for comparative analysis, as shown in
+                                                                                Figure 9. It can be observed that the improved YOLOv8n-seg model
+                                      1 N                                       outperforms the original model in both object detection and
+                                      No
+                              mAP =         APi
+                                        i=1
+                                                                                segmentation performance. Speciﬁcally, the enhanced model is
+                                                                                capable of identifying target regions missed by the original model,
+                                      2PR                                       resulting in more complete segmentation outputs. In addition, the
+                               F1 =                                             improved model exhibits generally higher conﬁdence scores in the
+                                      P+R
+
+
+
+
+    FIGURE 9
+    Comparison of segmentation results. (A) Original image; (B) Segmentation result using the original YOLOv8n-seg model; (C) Segmentation result
+    using the improved YOLOv8n-seg model.
+
+
+
+Frontiers in Plant Science                                                 09                                                             frontiersin.org
+Li et al.                                                                                                                10.3389/fpls.2025.1655093
+
+
+
+
+segmentation results, demonstrating stronger discriminative                   Despite a slight increase in parameter count and model size, the
+capability and localization accuracy, thereby enhancing the                   model remained lightweight and highly deployable.
+reliability and practical applicability of the segmentation outcomes.
+
+                                                                              3.5 Comparative experiments of different
+3.4 Ablation study                                                            algorithms
+
+    To verify the impact of each module on model performance,                     To validate the performance of the improved YOLOv8n-seg
+ablation experiments were conducted on the small object detection             model in citrus fruit and stem segmentation tasks, we conducted
+layer, the lightweight GhostConv module, and the CBAM attention               comparative experiments against YOLOv5n-seg, YOLOv6n-seg,
+mechanism. The results are shown in Table 3. The baseline model               YOLOv9s-seg, and the original lightweight YOLOv8n-seg model.
+without any improvements achieved an overall precision of 93.08%.             The results are shown in Table 4.
+The segmentation precision for fruits and stems was 96.25% and                    The improved YOLOv8n-seg model demonstrated superior
+89.91%, respectively. The recall reached 88.83%, mAP50 was                    performance across key metrics in the segmentation task. The
+91.71%, and the F1-score was 90.81%.                                          model outperformed the baseline models in terms of precision,
+    After adding the small object detection layer, all performance            recall, mAP0.5, and F1-score, reaching 96.56 percent, 90.91 percent,
+metrics improved. Precision, recall, mAP50, and F1-score increased            94.43 percent, and 93.51 percent, respectively. Compared with the
+to 95.36%, 90.35%, 93.71%, and 92.64%, respectively. The stem                 original YOLOv8n-seg model, these metrics increased by 3.48
+segmentation precision rose to 94.21%. Although the model size                percent, 2.08 percent, 2.72 percent, and 2.70 percent, respectively.
+slightly increased, the parameter count changed marginally, and the           Furthermore, in comparison with the YOLOv5n-seg, YOLOv6n-
+performance gain was signiﬁcant, indicating the module’s                      seg, and YOLOv9s-seg models, the mAP0.5 of the improved model
+effectiveness in enhancing small object segmentation.                         increased by 5.36 percent, 2.67 percent, and 1.02 percent,
+Subsequently, replacing standard convolution with the                         respectively, indicating enhanced segmentation performance. In
+GhostConv module reduced the number of parameters from                        terms of model complexity, the improved YOLOv8n-seg achieved
+3.24M to 2.93M and the model size from 6.53MB to 5.96MB,                      a parameter count of 2.94 million and a model size of 5.98
+achieving a more lightweight architecture. While maintaining high             megabytes, maintaining a lightweight architecture while
+accuracy, recall and F1-score improved slightly. The segmentation             signiﬁcantly improving performance. Compared with YOLOv5n-
+precision for fruits and stems reached 95.99% and 96.27%,                     seg, the model showed a slight increase in parameter size but
+respectively, demonstrating a good balance between performance                delivered substantial performance gains. Compared with the more
+and efﬁciency. Finally, incorporating the CBAM attention                      complex YOLOv9s-seg, the improved model achieved higher
+mechanism further enhanced the model. The precision, recall,                  segmentation accuracy with reduced complexity. The model
+mAP50, and F1-score increased to 96.56%, 90.91%, 94.43%, and                  achieves favorable segmentation performance for citrus fruits and
+93.51%, respectively. Fruit segmentation precision remained at                stems, while maintaining a smaller model size and higher
+96.04%, while stem segmentation precision increased to 97.12%.                detection accuracy.
+
+TABLE 3 Results of the ablation study.
+
+
+ Small target detection                                 P/      PFruit/       PStem/   R/        mAP50/   F1/     Parameters/         Model size/
+                               GhostConv       CBAM
+ layer                                                  %       %             %        %         %        %       M                   MB
+ —                             —               —        93.08   96.25         89.91    88.83     91.71    90.81   3.26                6.45
+
+ ✓                             —               —        95.36   96.51         94.21    90.35     93.71    92.64   3.24                6.53
+
+ ✓                             ✓               —        96.13   95.99         96.27    90.06     93.45    92.84   2.93                5.96
+
+ ✓                             ✓               ✓        96.56   96.04         97.12    90.91     94.43    93.51   2.94                5.98
+
+
+
+
+TABLE 4 Comparative results of different models.
+
+
+ Model                        P/%              R/%               mAP50/%                 F1/%              Parameters/M        Model size/MB
+ YOLOv5n-seg                  91.31            86.17             89.07                   88.51             2.76                5.51
+
+ YOLOv6n-seg                  94.59            88.99             91.76                   91.57             4.40                8.62
+
+ YOLOv9s-seg                  94.01            90.67             93.41                   92.24             7.55                15.20
+
+ YOLOv8n-seg                  93.08            88.83             91.71                   90.81             3.26                6.45
+
+ Improve YOLOv8n-seg          96.56            90.91             94.43                   93.51             2.94                5.98
+
+
+
+
+Frontiers in Plant Science                                               10                                                             frontiersin.org
+Li et al.                                                                                                                    10.3389/fpls.2025.1655093
+
+
+
+
+3.6 Citrus picking point localization                                           Figure 11a. Second, inaccurate stem segmentation occurs; even if
+experiments                                                                     the stem is visible, segmentation errors affect the accuracy of picking
+                                                                                point localization, as shown in Figure 11b. These observations
+    To evaluate the adaptability and accuracy of the citrus picking             indicate that occlusion and segmentation accuracy are key factors
+point localization method in complex real-world orchard                         affecting robustness. Future research could incorporate multi-view
+environments, RGB images captured under natural orchard                         image fusion or RGB-D information synergistic modeling to
+conditions using a D435i depth camera were selected for                         mitigate the impact of occlusion. Meanwhile, optimizing the
+localization experiments. A total of 100 images were randomly                   segmentation algorithm by adopting more robust network
+sampled from the test dataset, comprising 155 annotated picking                 architectures could enhance the model’s generalization ability in
+points and covering diverse conditions including varying lighting,              complex orchard environments.
+viewing angles, and backgrounds. Images were categorized into
+three scenarios based on the visibility of fruits and stems: no
+occlusion, mild occlusion, and moderate occlusion. Mild                         4 Discussion
+occlusion indicates that both fruits and stems have over 60%
+visible area, while moderate occlusion refers to visibility between                 In recent years, with the rapid advancement of smart
+30% and 60%. The citrus picking point localization results under                agriculture, automated fruit picking technology has gradually
+different scenarios are presented in Table 5. The improved                      become a crucial component of orchard mechanization. However,
+YOLOv8n-seg model correctly segmented 150 target stems, with                    in natural environments, citrus fruits and stems exhibit complex
+137 picking points accurately localized. Five localization errors were          morphology and small dimensions, and are often subject to
+caused by stem segmentation failures, and 13 failures were due to               occlusion and background interference. These challenges result in
+stem occlusion, resulting in an average picking point detection rate            limited accuracy and robustness for traditional object detection and
+of 88.38%. Additionally, with GPU support, the system’s average                 segmentation methods, especially in stem recognition and precise
+processing time from input image to completion of both                          picking point localization. Therefore, there is an urgent need for
+segmentation and picking point localization was 373.25                          efﬁcient and reliable solutions tailored to these issues.
+milliseconds, demonstrating strong real-time performance and                        This study focuses on the dwarf cultivar “Dafen No. 4” citrus
+practical deployment potential.                                                 and investigates segmentation methods for fruits and stems, as well
+    Figure 10 illustrates representative examples of the picking                as strategies for accurate picking point localization. A comparative
+point localization results. As shown, the proposed algorithm                    analysis of various YOLO-based models was conducted on a citrus
+demonstrates high accuracy and stability across a variety of                    dataset, leading to the selection of an improved YOLOv8n-seg
+complex backgrounds. It consistently maintains reliable                         segmentation model for citrus recognition tasks. In related
+localization performance under diverse environmental conditions.                research, (Qi et al., 2024). enhanced the feature extraction
+The algorithm effectively extracts the geometric structural features            capability and detection robustness of YOLOv8-seg by modifying
+between the citrus fruit and its stem, enabling accurate inference of           the neck structure with BiFPN-based cross-layer connections and
+reasonable picking positions. These results highlight the method’s              weighted fusion, and by replacing the SPPF module with a Soft-
+strong robustness and adaptability to varying environments.                     SPPF module. Similarly, (Si et al., 2024). improved stem
+Experimental results indicate that the proposed approach exhibits               segmentation performance under occlusion by incorporating a
+promising application potential in real orchard settings, with a                GCT module into the backbone and an EMA mechanism into the
+localization accuracy that meets the practical requirements for                 C2f module for enhanced multi-scale feature fusion. In this study,
+citrus harvesting operations.                                                   conventional convolution layers were replaced with GhostConv
+    This study presents a visualization of typical failure cases in             structures to reduce model parameters and size. Additionally, a
+picking point localization, as shown in Figure 11. The main causes              CBAM and a small-object detection layer were introduced to
+of localization failure are as follows: ﬁrst, the stem is occluded by           improve the model’s sensitivity to critical regions and compensate
+leaves or fruits. Although the fruit is successfully segmented, the             for its limitations in ﬁne-structure detection. Compared with other
+connection between the fruit and its stem cannot be identiﬁed,                  YOLO models (as shown in Table 4), the improved YOLOv8n-seg
+resulting in failure to infer the picking point, as illustrated in              model achieved a mAP50 of 94.4%, effectively balancing detection
+
+
+TABLE 5 Experimental results of citrus picking point localization under different scenarios.
+
+
+                             Image      Total           Accurate picking          Segmentation        Stem occlusion        Average localization
+ Scene type
+                             count      targets         point localization        failures            failures              time (ms)
+ No obstruction              30         32              29                        1                   2                     328.33
+
+ Mild occlusion              30         46              41                        1                   4                     422.67
+
+ Moderate occlusion          40         77              67                        3                   7                     368.75
+
+ Total/Average               100        155             137                       5                   13                    373.25
+
+
+
+
+Frontiers in Plant Science                                                 11                                                            frontiersin.org
+Li et al.                                                                                                                            10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 10
+    Visualization of citrus picking point localization in orchard environments. (A) Original images; (B) Model prediction results.
+
+
+
+
+accuracy and model efﬁciency. Despite these improvements, the                        This method effectively reduces mismatches during stem recognition
+model still faces challenges in complex scenarios such as severe                     by utilizing the relatively stable spatial relationship between the fruit
+occlusion, low lighting conditions, and overlapping fruits. Further                  and its stem. Furthermore, the target stem region is structurally
+work is required to enhance model robustness and address the                         simpliﬁed, and geometric features are extracted to derive the stem’s
+generalization limitations of the current dataset.                                   central axis. The picking point is then determined based on this axis,
+    To improve the accuracy of citrus picking point localization, this               providing a structurally stable and low-error localization result. Unlike
+study builds upon the output of the improved YOLOv8n-seg model by                    traditional approaches that rely on the fruit center or rule-based
+incorporating a stem matching strategy based on geometric constraints.               estimation, the proposed method aligns more closely with practical
+
+
+
+Frontiers in Plant Science                                                      12                                                              frontiersin.org
+Li et al.                                                                                                                     10.3389/fpls.2025.1655093
+
+
+
+
+    FIGURE 11
+    Examples of picking point localization failure in citrus. (A) Stem occlusion; (B) Stem segmentation error.
+
+
+
+
+harvesting requirements and accurately reﬂects the spatial                                 modules to achieve a more lightweight network structure.
+characteristics of the stem. This localization strategy not only                           In addition, the CBAM module and a small-object
+improves the precision of picking point determination but also                             detection layer were introduced to enhance feature
+provides a more reliable foundation for subsequent picking path                            extraction for small targets. The improved model
+planning and robotic arm control.                                                          achieved precision, recall, mAP50, and F1-score of
+                                                                                           96.56%, 90.91%, 94.43%, and 93.51%, respectively, for
+                                                                                           citrus fruits and stems. Compared with the original
+5 Conclusion                                                                               YOLOv8n-seg model, these metrics increased by 3.48%,
+                                                                                           2.08%, 2.72%, and 2.70%, respectively. Among lightweight
+    In this study, a citrus fruit and stem segmentation method based                       models including YOLOv5n-seg, YOLOv6n-seg,
+on an improved YOLOv8n-seg model was proposed. By integrating                              YOLOv9s-seg, and YOLOv8n-seg, the proposed model
+geometric constraints for stem matching, accurate localization of                          achieved the best segmentation performance.
+citrus picking points was achieved. The proposed method enhances                        2. Based on the segmentation results, a stem matching
+localization accuracy while maintaining model lightweight                                  method guided by geometric constraints was proposed to
+characteristics, demonstrating strong robustness and practical                             achieve accurate localization of citrus picking points. This
+application potential. The main conclusions are as follows:                                method establishes geometric relationships between fruits
+                                                                                           and stems to accurately match the target stem regions. The
+       1. The YOLOv8n-seg model was improved by replacing the                              region of interest (ROI) corresponding to the matched stem
+          original standard convolution layers with GhostConv                              is then subjected to morphological processing to extract the
+
+
+
+Frontiers in Plant Science                                                     13                                                         frontiersin.org
+Li et al.                                                                                                                                                     10.3389/fpls.2025.1655093
+
+
+
+
+            stem skeleton, and the midpoint of the skeleton is                                        Writing – review & editing, Supervision. LP: Writing – review &
+            designated as the picking point. The approach was tested                                  editing, Supervision, Funding acquisition, Resources, Formal analysis,
+            on 100 citrus images with a resolution of 1920 × 1080                                     Project administration. JZ: Investigation, Writing – review & editing,
+            collected by the camera. The results show that the method                                 Supervision, Resources, Data curation.
+            achieves an average picking point detection rate of 88.38%.
+            With GPU support, the system completes segmentation
+            and picking point localization in an average processing                                   Funding
+            time of 373.25 milliseconds, demonstrating high real-
+            time performance.                                                                             The author(s) declare ﬁnancial support was received for the
+                                                                                                      research and/or publication of this article. This research was
+    Overall, this study demonstrates promising progress in                                            supported by the Natural Science Foundation of Hubei Province
+improving the accuracy of citrus segmentation and the efﬁciency                                       (Grant No. 2025AFB176), and State Key Laboratory of Precision
+of picking point localization. However, certain limitations remain in                                 Blasting and Hubei Key Laboratory of Blasting Engineering,
+practical applications. During the citrus ripening process, various                                   Jianghan University (Grant No. BL2021-22).
+natural factors such as light conditions, nutrient distribution, and
+ventilation contribute to signiﬁcant differences in fruit maturity
+even within the same orchard. These variations increase the                                           Conﬂict of interest
+complexity of determining the appropriate time for harvesting.
+Therefore, future research could focus on integrating citrus                                              The authors declare that the research was conducted in the
+maturity detection with picking point decision-making                                                 absence of any commercial or ﬁnancial relationships that could be
+algorithms. This approach would enable intelligent identiﬁcation                                      construed as a potential conﬂict of interest.
+of mature fruits, thereby enhancing the operational performance
+and practical value of picking robots and supporting their large-
+scale deployment in real orchard environments.                                                        Generative AI statement
+                                                                                                          The author(s) declare that no Generative AI was used in the
+Data availability statement                                                                           creation of this manuscript.
+                                                                                                          Any alternative text (alt text) provided alongside ﬁgures in this
+    The original contributions presented in the study are included                                    article has been generated by Frontiers with the support of artiﬁcial
+in the article/supplementary material. Further inquiries can be                                       intelligence and reasonable efforts have been made to ensure
+directed to the corresponding author.                                                                 accuracy, including review by the authors wherever possible. If
+                                                                                                      you identify any issues, please contact us.
+
+Author contributions
+                                                                                                      Publisher’s note
+    HL: Conceptualization, Investigation, Project administration,
+Funding acquisition, Supervision, Methodology, Formal analysis,                                           All claims expressed in this article are solely those of the
+Resources, Writing – original draft, Writing – review & editing. ZY:                                  authors and do not necessarily represent those of their afﬁliated
+Investigation, Writing – review & editing, Software, Writing – original                               organizations, or those of the publisher, the editors and the
+draft, Validation, Conceptualization, Methodology, Visualization,                                     reviewers. Any product that may be evaluated in this article, or
+Data curation, Formal analysis. ZZ: Conceptualization, Funding                                        claim that may be made by its manufacturer, is not guaranteed or
+acquisition, Resources, Data curation, Project administration,                                        endorsed by the publisher.
+
+
+
+
+References
+  Baek, N. R., Lee, Y., Noh, D. H., Lee, H. M., and Cho, S. W. (2025). AS-                              Han, K., Wang, Y., Tian, Q., Guo, J., Xu, C., and Xu, C. (2020). “GhostNet: more
+YOLO: enhanced YOLO using ghost bottleneck and global attention                                       features from cheap operations,” in Proceedings of the IEEE/CVF Conference on
+mechanism for apple stem segmentation. Sensors. 25, 1422. doi: 10.3390/                               Computer Vision and Pattern Recognition. (Piscataway, NJ, USA: IEEE) 1577–1586.
+S25051422                                                                                             doi: 10.1109/CVPR42600.2020.00165
+  Choi, D. W., Park, J. H., Yoo, J. H., and Ko, K. E. (2025). AI-driven adaptive grasping               Hou, C. J., Xu, J. L., Tang, Y., Zhuang, J. J., Tan, Z. P., Chen, W. L., et al. (2024).
+and precise detaching robot for efﬁcient citrus harvesting. Comput. Electron Agric. 232,              Detection and localization of citrus picking points based on binocular vision. Precis
+110131. doi: 10.1016/J.COMPAG.2025.110131                                                             Agric. 25, 2321–2355. doi: 10.1007/S11119-024-10169-2
+   Fu, Y. L., Li, W. H., Li, G., Dong, Y. Z., Wang, S. L., Zhang, Q. Y., et al. (2024). Multi-          Howard, A. G., Zhu, M., Chen, B., Kalenichenko, D., Wang, W., Weyand, T., et al.
+stage tomato fruit recognition method based on improved YOLOv8. Front. Plant Sci.                     (2017). MobileNets: efﬁcient convolutional neural networks for mobile vision
+15. doi: 10.3389/FPLS.2024.1447263                                                                    applications. arXiv preprint.
+
+
+
+
+Frontiers in Plant Science                                                                       14                                                                           frontiersin.org
+Li et al.                                                                                                                                                           10.3389/fpls.2025.1655093
+
+
+
+
+  Huang, W. Y., Liao, Y. R., Wang, P. L., Chen, Z., Yang, Z. Q., Xu, L. J., et al. (2025).                  Wang, C. L., Han, Q. Y., Li, J. N., Li, C. J., and Zou, X. J. (2024). YOLO-BLBE: a novel
+AITP-YOLO: improved tomato ripeness detection model based on multiple strategies.                          model for identifying blueberry fruits with different maturities using the I-MSRCR
+Front. Plant Sci. 16. doi: 10.3389/FPLS.2025.1596739                                                       method. Agronomy. 14. doi: 10.3390/AGRONOMY14040658
+  Li, L., Li, K., He, Z., Li, H., and Cui, Y. J. (2025). Kiwifruit segmentation and                           Woo, S., Park, J., Lee, J. Y., and Kweon, I. S. (2018). “CBAM: convolutional block
+identiﬁcation of picking point on its stem in orchards. Comput. Electron Agric. 229,                       attention module,” in Proceedings of the European Conference on Computer Vision.
+109748. doi: 10.1016/J.COMPAG.2024.109748                                                                  (Cham, Switzerland: Springer), 3–19.
+   Li, Y. W., Li, J. X., Luo, L., Wang, L. Q., and Zhi, Q. Y. (2025). Tomato ripeness and                    Wu, R. D., Zhang, S. A., Fu, G. P., Chen, T. C., Lai, Y. J., Luo, W. X., et al. (2024).
+stem recognition based on improved YOLOX. Sci. Rep. 15, 1924. doi: 10.1038/S41598-                         Banana target detection and localization based on improved YOLOv7 with rotated
+024-84869-0                                                                                                bounding boxes. Trans. Chin. Soc. Agric. Eng. 40, 115–123. doi: 10.11975/j.issn.1002-
+  Li, Y., Li, C. P., Zhu, T. T., Zhang, S. R., Liu, L., and Guan, Z. P. (2025). A recognition              6819.202404143
+model for winter peach fruits based on improved ResNet and multi-scale feature fusion.                       Xiao, X., Wang, Y. N., Jiang, Y. M., Wu, H. T., and Zhou, B. (2024). Monocular pose
+Front. Plant Sci. 16. doi: 10.3389/FPLS.2025.1545216                                                       estimation method for automatic citrus harvesting using semantic segmentation and
+  Li, D. H., Sun, X. X., Lv, S. P., Elkhouchlaa, H., Jia, Y. H., Yao, Z. W., et al. (2022). A novel        rotating target detection. Foods 13, 2208. doi: 10.3390/foods13142208
+approach for the 3D localization of branch picking points based on deep learning applied to                  Xiao, F., Wang, H. B., Li, Y. X., Cao, Y., Lv, X. M., and Xu, G. F. (2023). Object
+longan harvesting UAVs. Comput. Electron Agric. 199. doi: 10.1016/J.COMPAG.2022.107191                     detection and recognition techniques based on digital image processing and traditional
+   Li, Y. P., Ye, L., Liang, W. H., Deng, C. M., Liu, Y. Q., and Xie, Z. H. (2025). Current                machine learning for fruit and vegetable harvesting robots: an overview and review.
+situation and countermeasures of the "One Village, One Product" development of citrus                      Agronomy 13, 639. doi: 10.3390/AGRONOMY13030639
+industry in China. Chin. South Fruits, 1–9. doi: 10.13938/j.issn.1007-1431.20250062                          Xie, H. H., Zhang, Z. J., Zhang, K. L., Yang, L., Zhang, D. X., and Yu, Y. (2024).
+  Liang, Y., Jiang, W. P., Liu, Y. F., Wu, Z. H., and Zheng, R. (2025). Picking-point                      Research on the visual location method for strawberry picking points under complex
+localization algorithm for citrus fruits based on improved YOLOv8 model. Agriculture                       conditions based on composite models. J. Sci. Food Agric. 104, 8566–8579. doi: 10.1002/
+15, 237. doi: 10.3390/AGRICULTURE15030237                                                                  JSFA.13684
+
+  Liu, Z., Abeyrathna, R. M. R. D., Sampurno, R. M., Nakaguchi, V. M., and Ahamed,                           Xu, L. M., and Lü, J. D. (2015). Application of SUSAN operator and Hough
+T. (2024). Faster-YOLO-AP: A lightweight apple detection algorithm based on                                transform in waxberry fruit recognition. Chin. J. Agric. Mech. 36, 216–220.
+improved YOLOv8 with a new efﬁcient PDWConv in orchard. Comput. Electron                                   doi: 10.13733/j.jcam.issn.2095-5553.2015.06.052
+Agric. 223, 109118. doi: 10.1016/j.compag.2024.109118                                                        Xu, L. J., Wang, Y. H., Shi, X. S., Tang, Z. L., Chen, X. Y., Wang, Y. C., et al. (2023).
+  Liu, S. H., Xue, J. L., Zhang, T. Y., Lv, P. F., Qin, H. H., and Zhao, T. X. (2024).                     Real-time and accurate detection of citrus in complex scenes based on HPL-YOLOv4.
+Research progress and prospect of key technologies of fruit target recognition for                         Comput. Electron Agric. 205, 108705. doi: 10.1016/J.COMPAG.2022.107590
+robotic fruit picking. Front. Plant Sci. 15. doi: 10.3389/FPLS.2024.1423338                                  Yang, Z., Gong, W. X., Li, K., Hao, W., He, Z., Ding, X. T., et al. (2023). Fruit
+  Nie, Y. M. (2023). Rural revitalization and development of China's citrus industry:                      recognition and peduncle segmentation of strawberry grown on elevated beds. Trans.
+An empirical study based on the value chain model. J. South-Cent Univ Nat. Sci. Ed 42,                     Chin. Soc. Agric. Eng. 39, 172–181. doi: 10.11975/j.issn.1002-6819.202305134
+283–288. doi: 10.20056/j.cnki.ZNMDZK.20230220                                                                Yin, H. S., Sun, Q. X., Ren, X., Guo, J., Yang, Y. L., Wei, Y. J., et al. (2023).
+  Qi, Z. X., Hua, W. J., Zhang, Z. Q., Deng, X., Yuan, T., and Zhang, W. Q. (2024). A novel                Development, integration, and ﬁeld evaluation of an autonomous citrus-harvesting
+method for tomato stem diameter measurement based on improved YOLOv8-seg and RGB-D                         robot. J. Field Robot 40, 1363–1387. doi: 10.1002/ROB.22178
+data. Comput. Electron Agric. 226, 109387. doi: 10.1016/j.compag.2024.109387                                 Zhang, G. M., Li, L., Zhang, Y. F., Liang, J. Y., and Chun, C. P. (2025). Citrus pose
+ Redmon, J., Divvala, S. K., Girshick, R. B., and Farhadi, A. (2015). You Only Look                        estimation under complex orchard environment for robotic harvesting. Eur. J. Agron.
+Once: Uniﬁed, real-time object detection. CoRR.                                                            162, 127418. doi: 10.1016/J.EJA.2024.127418
+
+  Ren, R., Zhang, S. J., Sun, H. X., Wang, N., Yang, S., Zhao, H. M., et al. (2025). YOLO-RCS: a             Zhang, B., Xia, Y. Y., Wang, R. R., Wang, Y., Yin, C. H., Fu, M., et al. (2024).
+method for detecting phenological period of 'Yuluxiang' pear in unstructured environment.                  Recognition of mango and location of picking point on stem based on a multi-task
+Comput. Electron Agric. 229, 109819. doi: 10.1016/J.COMPAG.2024.109819                                     CNN model named YOLOMS. Precis. Agric. 25, 1454–1476. doi: 10.1007/S11119-024-
+                                                                                                           10119-Y
+  Si, Y. S., Kong, D. H., Wang, K. J., Liu, L. X., and Yang, X. (2024). Apple inﬂorescence
+thinning method for single branch based on improved YOLOv8-Seg. Trans. Chin. Soc.                            Zhang, E. Y., and Zhang, H. (2024). An intelligent apple identiﬁcation method via the
+Agric. Eng 40, 100–108. doi: 10.11975/j.issn.1002-6819.202312096                                           collaboration of YOLOv5 algorithm and fast-guided ﬁlter theory. J. Circuits Syst.
+                                                                                                           Comput. 33, 2450205. doi: 10.1142/S0218126624501883
+  Su, Y. M., Xiong, J. T., Tang, K., Huang, Q. Y., Liao, K. N., Wu, Z. X., et al. (2025).
+Identifying guava and its fruit stem in nighttime environment based on AP-UNet. J.                            Zhang, X. Y., Zhou, X. Y., Lin, M. X., and Sun, J. (2017). ShufﬂeNet: an extremely
+Food Compos Anal. 140, 107211. doi: 10.1016/j.jfca.2024.107211                                             efﬁcient convolutional neural network for mobile devices. CoRR.
+  Sun, Q. X., Zhong, M., Chai, X. J., Zeng, Z. K., Yin, S. H., Zhou, G. M., et al. (2023).                   Zhao, G. R., Dong, S., Wen, J., Ban, Y. C., and Zhang, X. W. (2025). Selective fruit
+Citrus pose estimation from an RGB image for automated harvesting. Comput. Electron                        harvesting prediction and 6D pose estimation based on YOLOv7 multi-parameter
+Agric. 211. doi: 10.1016/j.compag.2023.108022                                                              recognition. Comput. Electron Agric. 229, 109815. doi: 10.1016/J.COMPAG.2024.109815
+
+
+
+
+Frontiers in Plant Science                                                                            15                                                                            frontiersin.org
+

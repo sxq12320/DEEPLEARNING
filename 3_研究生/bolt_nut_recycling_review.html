@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>废弃螺栓螺母收集分类视觉课题调研</title>
+  <style>
+    :root { --bg:#f6f7f4; --paper:#fff; --ink:#1f2933; --muted:#637083; --line:#d9dfd6; --green:#425f7a; --blue:#225d8f; --orange:#9a5b00; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif; line-height:1.72; }
+    main { max-width:1180px; margin:0 auto; padding:30px 20px 64px; }
+    header { border-bottom:3px solid var(--green); padding-bottom:18px; margin-bottom:22px; }
+    h1 { margin:0 0 8px; font-size:31px; line-height:1.25; }
+    h2 { margin:34px 0 14px; padding-left:12px; border-left:5px solid var(--green); font-size:23px; }
+    h3 { margin:22px 0 8px; font-size:18px; }
+    p { margin:8px 0; }
+    a { color:#1769aa; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    table { width:100%; border-collapse:collapse; background:var(--paper); border:1px solid var(--line); margin:14px 0 22px; font-size:14px; }
+    th,td { border:1px solid var(--line); padding:10px 12px; text-align:left; vertical-align:top; }
+    th { background:#eef2ec; }
+    ul,ol { padding-left:22px; }
+    .subtitle { color:var(--muted); max-width:920px; }
+    .callout { background:#e8f1fb; border:1px solid var(--line); border-left:5px solid var(--blue); border-radius:8px; padding:13px 15px; margin:14px 0; }
+    .warning { background:#fff4df; border-left-color:var(--orange); }
+    .tag { display:inline-block; padding:2px 8px; margin:2px 4px 2px 0; border-radius:999px; background:#edf2ff; color:#244b7a; font-size:13px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>废弃螺栓螺母收集分类视觉课题调研</h1>
+    <p class="subtitle">面向工厂废弃紧固件回收的视觉课题。推荐把任务定义为“大类检测 + 实例分割 + 标定尺寸测量 + 规格判定”，核心输出包括螺栓/螺母/垫圈/螺钉类别、直径或孔径、长度、是否可回收分拣。</p>
+  </header>
+
+  <section>
+    <h2>1. 课题意义</h2>
+    <p>这个课题有工程意义，但论文表述要避免只写“垃圾分类”。它更准确地属于<strong>工业废弃紧固件的视觉分拣与尺寸测量</strong>。<a href="https://www.dfki.de/fileadmin/user_upload/import/16094_A_Review_of_Computer_Vision_for_Industrial-Grade_Waste_Classification.pdf">工业级废弃物视觉分类综述</a>指出，低成本 RGB 传感器结合深度学习有潜力支撑可扩展的材料分类和分拣。<a href="https://www.sciencedirect.com/science/article/abs/pii/S0952197622006558">Nuts&amp;bolts: YOLO-v5 and image processing</a>已经证明 YOLO 检测加图像处理可用于紧固件识别和空间尺寸估计。</p>
+    <div class="callout">
+      <strong>实用价值：</strong>工厂废弃件往往混有螺栓、螺母、垫圈、螺钉、破损件和非目标金属。人工分类受经验、疲劳和安全风险影响。视觉系统能把“能不能回收、分到哪一类、规格是多少”变成稳定输出。
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 任务是否可做</h2>
+    <p>可做，但必须控制场景。RGB 单相机可以完成<strong>平面输送线</strong>上的大类检测和直径估计；若零件严重堆叠、竖立、互相遮挡，二维视觉很难保证毫米级测量。论文里应把应用边界写清楚：经振动盘或输送带初步摊平后的废弃紧固件。</p>
+    <table>
+      <tr><th>输出</th><th>二维 RGB 是否可行</th><th>实现方式</th></tr>
+      <tr><td>大类检测</td><td>可行</td><td>YOLOv8/YOLO11 检测或实例分割</td></tr>
+      <tr><td>螺母孔径 / 外接尺寸</td><td>可行，需标定</td><td>分割内孔和外轮廓，像素到毫米换算</td></tr>
+      <tr><td>螺栓杆径和长度</td><td>可行，需零件平放</td><td>旋转框、骨架线、边缘拟合</td></tr>
+      <tr><td>螺纹牙距</td><td>较难，但可作为加分项</td><td>侧视图或高分辨率局部边缘分析</td></tr>
+      <tr><td>材质/合金类别</td><td>RGB 不稳</td><td>需要光谱、磁性、重量或人工规则辅助</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. 已有研究支撑</h2>
+    <table>
+      <tr><th>文献</th><th>已有成果</th><th>对本课题启发</th></tr>
+      <tr>
+        <td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0952197622006558">Nuts&amp;bolts: YOLO-v5 and image processing based component identification</a></td>
+        <td>利用 YOLO-v5 按头部和侧向形状识别航空装配紧固件，并估计空间尺寸和螺距。</td>
+        <td>这是本课题最直接支撑：检测负责类别，传统视觉负责尺寸。</td>
+      </tr>
+      <tr>
+        <td><a href="https://publicacoes.softaliza.com.br/cilamce2022/article/view/5576">Image-based detection and classification of screws and nuts using YOLOv4</a></td>
+        <td>使用 MVTec Screws 数据集做螺钉、螺母检测分类，包含长度、宽度、直径、颜色和头部差异。</td>
+        <td>说明细粒度紧固件分类有数据和方法基础。</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.theseus.fi/bitstream/handle/10024/865428/Patabendige_Thumula.pdf?isAllowed=y&sequence=2">Machine Vision for Sorting</a></td>
+        <td>比较 YOLO、SSD、Faster R-CNN 分拣螺母、螺栓、螺钉、垫圈和轴承，YOLO 更适合实时任务。</td>
+        <td>你的 baseline 可以照此设置。</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.sciencedirect.com/science/article/abs/pii/S026322411630731X">Computer vision algorithms for measurement and inspection of screw threads</a></td>
+        <td>提出视觉系统测量螺纹多项特征，可标定为公制和英制单位。</td>
+        <td>支撑“尺寸测量”不是主观设想。</td>
+      </tr>
+      <tr>
+        <td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10346874/">A cost-effective method for automatically measuring mechanical parts</a></td>
+        <td>面向机械零件的低成本平面尺寸自动测量。</td>
+        <td>支撑用单相机和标定板进行低成本尺寸估计。</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.temjournal.com/content/143/TEMJournalAugust2025_1992_2002.pdf">Machine vision system for damage detection in M12, M14, M16 hexagon nuts</a></td>
+        <td>使用 OpenCV、PLC 和摄像头对六角螺母规格和损伤进行分拣。</td>
+        <td>支撑 M 规格判定和工业分拣链路。</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 最推荐的小论文题目</h2>
+    <div class="callout">
+      <strong>推荐题目：</strong>面向工业废弃紧固件回收的轻量化检测分割与尺寸判定方法
+    </div>
+    <p>不要拆成“大类检测”和“直径判定”两篇。检测一篇不够，直径测量单独一篇又像工程项目。最稳是合成一篇：检测分类解决“是什么”，实例分割解决“在哪里”，尺寸测量解决“规格是多少”，拒识机制解决“重叠或不可测”。</p>
+  </section>
+
+  <section>
+    <h2>5. Baseline 和网络创新</h2>
+    <p><strong>主 baseline：</strong>YOLOv8n-seg 或 YOLO11n-seg。相比纯检测，实例分割能提供更稳定的外轮廓和内孔区域，便于计算直径。<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 可作为经典对照，<a href="https://arxiv.org/abs/1911.09070">EfficientDet/BiFPN</a> 可支撑多尺度特征设计。</p>
+    <table>
+      <tr><th>模块</th><th>解决问题</th><th>创新写法</th></tr>
+      <tr><td>Rotated/Oriented box head</td><td>螺栓、螺钉细长，普通水平框包含大量背景</td><td>方向归一化后再测长度和直径</td></tr>
+      <tr><td>Instance mask + hole mask</td><td>螺母需要区分外轮廓和内孔</td><td>螺母双轮廓约束，输出外接尺寸、内孔直径、对边距</td></tr>
+      <tr><td>Dimension head</td><td>像素分类不能直接给规格</td><td>增加直径/长度回归头，和传统几何测量做融合</td></tr>
+      <tr><td>Calibration-aware loss</td><td>论文要体现机械专业优势</td><td>像素误差换算为毫米误差，优化 MAE(mm)</td></tr>
+      <tr><td>Overlap reject</td><td>堆叠零件不能准确测量</td><td>输出可测/不可测，保证分拣可靠性</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. 数据采集与标注</h2>
+    <p>这个课题数据最容易自己做，不建议买数据后写“自采”。可以买废旧螺栓螺母作为实物，然后自己拍摄，这样论文中“自采数据集”是成立的。若购买的是别人已经拍好的图片数据，则不能写成自采，只能写“公开/委托数据”。</p>
+    <table>
+      <tr><th>采集项</th><th>建议</th><th>标注</th></tr>
+      <tr><td>零件类别</td><td>螺栓、螺母、垫圈、螺钉、破损件、其他金属</td><td>class、bbox、mask</td></tr>
+      <tr><td>规格</td><td>M3、M4、M5、M6、M8、M10、M12，先选 5-7 类</td><td>直径值、规格标签、长度值</td></tr>
+      <tr><td>姿态</td><td>平放、旋转、轻微重叠、油污、锈蚀</td><td>方向角、遮挡等级、可测性</td></tr>
+      <tr><td>标定</td><td>每批图像放标尺或棋盘格，固定相机高度</td><td>像素/mm 比例、相机编号</td></tr>
+    </table>
+    <div class="callout warning">
+      <strong>快速方案：</strong>用俯视相机 + 黑色哑光背景 + 环形/漫反射光源 + 标尺板。每个规格用游标卡尺测 20-30 个样本作为真实值。先做单层摊平场景，重叠场景作为鲁棒性测试和拒识实验。
+    </div>
+  </section>
+
+  <section>
+    <h2>7. 难点与解决方法</h2>
+    <table>
+      <tr><th>痛点</th><th>原因</th><th>方法</th><th>评价指标</th></tr>
+      <tr><td>规格差异小</td><td>M6/M8 这类差异在图像中可能只有少量像素</td><td>高分辨率拍摄、标定、局部 ROI 超分辨率或边缘拟合</td><td>直径 MAE、规格分类准确率</td></tr>
+      <tr><td>金属反光</td><td>高光会破坏边缘和内孔分割</td><td>偏振片、漫反射光、曝光锁定、HSV/灰度增强</td><td>强反光分组 AP 和 MAE</td></tr>
+      <tr><td>堆叠遮挡</td><td>重叠后真实边界不可见，尺寸不可测</td><td>实例分割 + 遮挡等级 + 不可测拒识</td><td>拒识后测量合格率</td></tr>
+      <tr><td>脏污锈蚀</td><td>废弃件外观变化大</td><td>锈蚀增强、颜色归一化、跨域测试</td><td>新批次泛化 mAP</td></tr>
+      <tr><td>二维缺少厚度</td><td>单相机无法知道高度和材质</td><td>论文边界限定为平面几何规格；厚度/材质作为未来工作</td><td>明确任务边界</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>8. 实验设计</h2>
+    <table>
+      <tr><th>实验</th><th>比较对象</th><th>证明什么</th></tr>
+      <tr><td>检测分割对比</td><td>YOLOv8-det、YOLOv8-seg、Mask R-CNN、你的方法</td><td>实例分割对尺寸测量更稳</td></tr>
+      <tr><td>尺寸测量对比</td><td>bbox 直接换算、mask 几何、dimension head、融合方法</td><td>你的方法直径误差更小</td></tr>
+      <tr><td>重叠鲁棒性</td><td>无拒识 vs 有拒识</td><td>拒识机制提高可用测量比例</td></tr>
+      <tr><td>泛化实验</td><td>不同背景、不同光照、不同锈蚀批次</td><td>证明不是只记住实验台</td></tr>
+      <tr><td>实时性</td><td>FPS、单件处理时间</td><td>支撑输送线应用</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>9. 最终总结</h2>
+    <p>该课题适合机械专业学生快速做出“视觉 + 工业测量”的论文。整体架构是：用目标检测解决大类识别，用实例分割解决零件轮廓和内孔，用相机标定解决像素到毫米转换，用几何测量和尺寸回归解决直径/长度判定，用拒识机制处理重叠、反光和不可测目标。最终目标是让系统输出<strong>是什么零件、规格是多少、该分到哪个回收盒</strong>。</p>
+  </section>
+
+  <section>
+    <h2>10. 参考文献与链接</h2>
+    <ol>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0952197622006558">Nuts&amp;bolts: YOLO-v5 and image processing based component identification system.</a></li>
+      <li><a href="https://publicacoes.softaliza.com.br/cilamce2022/article/view/5576">Image-based detection and classification of screws and nuts using deep learning.</a></li>
+      <li><a href="https://www.theseus.fi/bitstream/handle/10024/865428/Patabendige_Thumula.pdf?isAllowed=y&sequence=2">Machine Vision for Sorting: YOLO, SSD and Faster R-CNN for nuts, bolts, screws, washers and bearings.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S026322411630731X">Computer vision algorithms for measurement and inspection of screw threads.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10346874/">A Cost-Effective Method for Automatically Measuring Mechanical Parts.</a></li>
+      <li><a href="https://www.temjournal.com/content/143/TEMJournalAugust2025_1992_2002.pdf">Development of a Machine Vision System for Damage Detection in Hexagon Nuts Sorting Machine.</a></li>
+      <li><a href="https://www.dfki.de/fileadmin/user_upload/import/16094_A_Review_of_Computer_Vision_for_Industrial-Grade_Waste_Classification.pdf">A Review of Computer Vision for Industrial-Grade Waste Classification.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9319482/">Vision-Based Detection of Bolt Loosening Using YOLOv5.</a></li>
+      <li><a href="https://www.mdpi.com/2076-3417/14/9/3716">FSS-YOLO for rail fastener screw detection.</a></li>
+      <li><a href="https://arxiv.org/abs/1703.06870">Mask R-CNN.</a></li>
+      <li><a href="https://arxiv.org/abs/1911.09070">EfficientDet and BiFPN.</a></li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

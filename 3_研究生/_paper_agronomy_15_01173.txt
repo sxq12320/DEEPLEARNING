@@ -1,0 +1,1648 @@
+Article
+
+A Lightweight Citrus Ripeness Detection Algorithm Based on
+Visual Saliency Priors and Improved RT-DETR
+Yutong Huang † , Xianyao Wang † , Xinyao Liu, Liping Cai, Xuefei Feng and Xiaoyan Chen *
+
+
+                                          College of Information Engineering, Sichuan Agriculture University, Ya’an 625000, China;
+                                          202205961@stu.sicau.edu.cn (Y.H.); 202205858@stu.sicau.edu.cn (X.W.); 202205621@stu.sicau.edu.cn (X.L.);
+                                          202308541@stu.sicau.edu.cn (L.C.); 202308536@stu.sicau.edu.cn (X.F.)
+                                          * Correspondence: chenxy@sicau.edu.cn; Tel.: +86-138-8244-2989
+                                          † These authors contributed equally to this work.
+
+
+
+                                          Abstract: As one of the world’s economically valuable fruit crops, citrus has its quality and
+                                          productivity closely tied to the degree of fruit ripeness. However, accurately and efficiently
+                                          detecting citrus ripeness in complex orchard environments for selective robotic harvesting
+                                          remains a challenge. To address this, we constructed a citrus ripeness detection dataset un-
+                                          der complex orchard conditions, proposed a lightweight algorithm based on visual saliency
+                                          priors and the RT-DETR model, and named it LightSal-RTDETR. To reduce computational
+                                          overhead, we designed the E-CSPPC module, which efficiently combines cross-stage partial
+                                          networks with gated and partial convolutions, combined with cascaded group attention
+                                          (CGA) and inverted residual mobile block (iRMB), which minimizes model complexity and
+                                          computational demand and simultaneously strengthens the model’s capacity for feature
+                                          representation. Additionally, the Inner-SIoU loss function was employed for bounding
+                                          box regression, while a weight initialization method based on visual saliency maps was
+                                          proposed. Experiments on our dataset show that LightSal-RTDETR achieves a mAP@50
+                                          of 81%, improving by 1.9% over the original model while reducing parameters by 28.1%
+                                          and computational cost by 26.5%. Therefore, LightSal-RTDETR effectively solves the citrus
+                                          ripeness detection problem in orchard scenes with high complexity, offering an efficient
+                                          solution for smart agriculture applications.
+
+Academic Editor: Jayme Garcia             Keywords: citrus; RT-DETR; ripeness detection; visual saliency maps; smart agriculture
+Arnal Barbedo
+
+Received: 9 April 2025
+Revised: 9 May 2025
+Accepted: 9 May 2025                      1. Introduction
+Published: 12 May 2025
+                                                Citrus, a highly valuable fruit crop globally, is packed with essential nutrients such
+Citation: Huang, Y.; Wang, X.; Liu, X.;
+                                          as vitamins, carotenoids, and dietary fiber. It also contains bioactive compounds like
+Cai, L.; Feng, X.; Chen, X. A
+Lightweight Citrus Ripeness Detection
+                                          flavonoids and limonene, making it valuable for both consumption and medicinal pur-
+Algorithm Based on Visual Saliency        poses [1]. A key factor in determining fruit quality is its ripening stage, which is typically
+Priors and Improved RT-DETR.              classified manually by field experts. However, this is a labor-intensive and error-prone
+Agronomy 2025, 15, 1173. https://         process, particularly under complex natural conditions which require a high level of exper-
+doi.org/10.3390/agronomy15051173
+                                          tise from the operator [2]. In recent years, to address the growing gap between population
+Copyright: © 2025 by the authors.         growth and labor shortages, the application of agricultural robotics in fruit harvesting
+Licensee MDPI, Basel, Switzerland.        has been increasing significantly [3]. Therefore, developing a lightweight, efficient, and
+This article is an open access article
+                                          accurate citrus ripeness detection model is crucial for enabling automated citrus harvesting.
+distributed under the terms and
+                                                Recently, computer vision has gained significant attention in fruit ripeness detection
+conditions of the Creative Commons
+Attribution (CC BY) license
+                                          owing to its non-contact, high-accuracy, and fast detection advantages. Early studies
+(https://creativecommons.org/             mainly focused on color, texture, and morphology. For example, Malik et al. converted
+licenses/by/4.0/).                        RGB images to the HSV color space and achieved 81.6% accuracy in tomato detection
+
+
+Agronomy 2025, 15, 1173                                                                                    https://doi.org/10.3390/agronomy15051173
+Agronomy 2025, 15, 1173                                                                                            2 of 20
+
+
+
+                          tasks [4]. The method proposed by Ling et al. integrates AdaBoost with color analysis for
+                          tomato detection and has been successfully adopted by harvesting robots [5]. However,
+                          traditional feature extraction methods struggle in complex environments due to noise
+                          and lighting variations. With deep learning advancements, models including LeNet [6],
+                          AlexNet [7], VGG [8], GoogleNet [9], and ResNet [10] have further promoted the application
+                          of CNNs to complex tasks. Deep learning technology has shown significant advantages in
+                          agriculture, with researchers applying it to agricultural applications. For instance, Fan et al.
+                          combined dark channel enhancement and YOLOv5 for strawberry ripeness identification,
+                          achieving over 90% accuracy [11]. Wang et al. optimized Faster R-CNN to detect the
+                          ripeness of tomatoes, demonstrating remarkable performance in difficult scenarios [12].
+                                Within the context of smart agriculture, deep learning has shown great potential,
+                          but research on citrus ripeness detection involving complex shapes and color variations
+                          remains limited. To achieve more accurate detection in complex orchard scenes, Xu et al.
+                          proposed HPL-YOLOv4, a modified version of the YOLOv4 architecture [13]. To enhance
+                          green citrus detection in natural conditions, Zheng et al. developed YOLO BP by intro-
+                          ducing Bi-PANet to better integrate features across layers [14]. However, neither approach
+                          considered the ripeness information, limiting their effectiveness. A two-stage ripeness
+                          detection framework was developed by Chen et al., combining YOLOv5 for identifying
+                          fruit regions with saliency-based analysis for ripeness classification [15]. While insightful,
+                          its high computational cost may hinder real-time harvesting in large orchards. Moreover,
+                          the green appearance of unripe citrus fruits is often similar to the color of surrounding
+                          foliage, leading to significant missed detections. Some unripe fruits also exhibit both orange
+                          and green hues, making them visually similar to ripe fruits and thus prone to misclassi-
+                          fication [16]. Therefore, it is necessary to develop a lightweight and accurate detection
+                          framework that can perform robustly in complex orchard environments and can support
+                          real-time applications.
+                                To handle the aforementioned difficulties, recent advancements in model architectures
+                          and attention mechanisms offer new opportunities. Transformer-based detectors such as
+                          DETR [17] and RT-DETR [18] introduce global attention, which enables better modeling of
+                          contextual relationships and improves robustness to scale and occlusion issues. RT-DETR,
+                          in particular, combines the global information processing capability of transformers with
+                          the efficient feature extraction capability of convolutional neural networks (CNNs), aiming
+                          to achieve real-time object detection while maintaining high accuracy. In terms of design,
+                          RT-DETR removes the complex candidate box generation and non-maximum suppression
+                          (NMS) steps commonly used in traditional object detection, instead adopting a direct
+                          prediction method for object bounding boxes and class labels from feature maps. This
+                          end-to-end design not only simplifies the model structure but also reduces computational
+                          resource consumption, enabling RT-DETR to operate on edge devices and meet real-time
+                          application requirements.
+                                Meanwhile, visual saliency detection, inspired by human attention mechanisms, has
+                          shown promise in guiding neural networks toward informative regions. Despite its po-
+                          tential for enhancing feature extraction, the integration of saliency priors directly into
+                          object detection pipelines remains limited, particularly in agricultural scenarios such as
+                          citrus ripeness detection. Existing approaches like Chen et al.’s [15] perform detection first
+                          and then crop individual fruit regions for separate saliency-guided classification, rather
+                          than embedding saliency cues within the detection process itself. This two-stage strategy
+                          increases computational complexity and limits real-time applicability in large-scale orchard
+                          environments. Traditional saliency algorithms such as the Itti model [19] and FT [20] are
+                          efficient but inadequate in complex natural scenes. Deep learning-based saliency models
+                          offer better accuracy but require large, labeled datasets and high computational costs. In
+Agronomy 2025, 15, 1173                                                                                           3 of 20
+
+
+
+                          comparison, traditional color-based saliency detection methods offer greater robustness
+                          and interpretability under low-resource and small-sample conditions. In light of this, this
+                          study leverages techniques from traditional saliency detection methods, such as color
+                          space transformation and grayscale mapping, to enhance the model’s overall detection
+                          effectiveness. By combining lightweight saliency priors with modern detection frameworks
+                          like RT-DETR, we can improve feature focus and model efficiency, offering a promising
+                          solution that distinguishes itself from traditional approaches.
+                                Building upon the advancements in detection frameworks and saliency-guided feature
+                          enhancement, this paper presents an innovative citrus ripeness detection method that
+                          integrates visual saliency priors with the improved RT-DETR model, named LightSal-
+                          RTDETR. LightSal-RTDETR integrates visual saliency priors to enhance feature extraction,
+                          incorporates an improved backbone with the iRMB-cascaded block combining the cascaded
+                          group attention (CGA) mechanism and the inverted residual mobile block (iRMB), and
+                          introduces an efficient module that combines cross-stage partial networks with gated and
+                          partial convolution mechanisms (E-CSPPC) to reduce computational cost. In addition, the
+                          loss function is optimized by combining Inner-IoU and SIoU for more precise bounding box
+                          regression. Considering the absence of publicly available citrus ripeness detection datasets,
+                          we also constructed a comprehensive dataset covering a wide range of backgrounds,
+                          distances, and lighting conditions to support robust model training and evaluation.
+                                The principal innovations and contributions of this work are described as follows:
+                          1.   Establishment of a citrus ripeness dataset. A citrus ripeness dataset was developed
+                               under various backgrounds, distances, and lighting conditions, resulting in greater
+                               adaptability and precision under a wide range of environments. This provides a robust
+                               foundation for training models capable of handling complex orchard scenarios.
+                          2.   iRMB-cascaded block. A new iRMB-cascaded block was designed by integrating the
+                               CGA mechanism with the iRMB, enhancing the backbone’s residual structure. This
+                               integration improves feature extraction efficiency while reducing computational load
+                               without compromising performance.
+                          3.   E-CSPPC module. A novel E-CSPPC module was introduced to minimize unnecessary
+                               computations and memory usage, enhancing the efficiency of the lightweight network
+                               and further optimizing the model’s performance under resource-constrained conditions.
+                          4.   Optimized loss function. The loss function was refined by combining Inner-IoU and
+                               SIoU, resulting in more accurate bounding box regression, thereby improving overall
+                               detection precision.
+                          5.   Visual saliency maps-based initialization. A new weight transfer strategy was applied,
+                               where model weights trained on a combination of visual saliency maps and RGB
+                               images were used to initialize the new model. This strategy facilitates more efficient
+                               extraction of key image features by the model.
+
+                          2. Materials and Methods
+                          2.1. Data Acquisition and Dataset Construction
+                               The citrus image dataset used in this study was collected through on-site photography
+                          by research team members from orchards in Meishan City, Sichuan Province, China. The
+                          images were captured using a Canon R-10 (Canon Inc., Tokyo, Japan) and an OPPO Reno8
+                          Pro+ mobile phone (Guangdong OPPO Mobile Telecommunications Corp., Ltd., Dongguan,
+                          China), covering citrus fruits at different growth stages. The dataset consists of 1912 images
+                          captured under various lighting conditions, capture distances, and levels of occlusion,
+                          with a resolution of 4096 × 3072 pixels. It includes 9144 citrus targets, of which 4287 were
+                          ripe and 4857 were unripe. All images are stored in JPEG format, which can effectively
+                          tially occluded by branches and leaves, the bounding boxes were determined by estimat-
+                          ing the complete contours of the fruits based on their visible regions. A total of 1339, 188,
+Agronomy 2025, 15, 1173   and 385 images were allocated to the training, validation, and test sets, respectively, using4 of 20
+                          a 7:1:2 split. This split ensures a suﬃciently large training set while maintaining a larger
+                          test set, which contributes to a more robust model evaluation. These images, collected
+                          from
+                          control  thecitrus
+                                 real         orchards,
+                                        file volume     present
+                                                     while       challenges
+                                                            ensuring        for ripeness
+                                                                      high image  quality.detection, such as overlapping,
+                                                                                           Figure 1 illustrates citrus fruits
+                          at various visual
+                          occlusion,           of ripenesstowithin
+                                       stages similarity     the orchard background,
+                                                                   complex            and dense
+                                                                            environmental         target distribution.
+                                                                                            settings.
+
+
+
+
+                          Figure 1.
+                          Figure    Images of
+                                 1. Images   of citrus        at diﬀerent
+                                                citrus fruits
+                                                       fruits at           ripeness stages
+                                                                 different ripeness        in complex
+                                                                                    stages in                    scenes: (a)
+                                                                                                       orchard scenes:
+                                                                                              complex orchard            (a) under
+                                                                                                                             under the
+                                                                                                                                   the
+                          sunlight, (b)
+                          sunlight, (b) in the shade,
+                                        in the shade, (c)   overlap, (d)
+                                                                     (d) occlusion,
+                                                        (c) overlap,                (e) near
+                                                                         occlusion, (e) near scene, and (f)
+                                                                                             scene, and     far scene.
+                                                                                                        (f) far scene.
+
+                                The classification criteria of mature and immature fruits combined the shooting time
+                          2.2. Generation of Visual Saliency Maps
+                          and biological characteristics: images of immature fruits were mainly collected in October
+                          2024,To  highlight
+                                 while        citrus
+                                         mature           wereand
+                                                      targets
+                                                 fruits             enhance ripeness
+                                                                concentrated           diﬀerences,
+                                                                               in December    2024. this study
+                                                                                                      At the    introduces
+                                                                                                             same    time, the a
+                          simple   visual saliency
+                          shape characteristics              fruits were strategy
+                                                     map generation
+                                                  of citrus              combined  that
+                                                                                     for integrates traditional
+                                                                                         comprehensive           image
+                                                                                                          judgment.        pro-
+                                                                                                                        Unripe
+                          citrus fruits are usually green or yellow-green, indicating that they have yet to reach the
+                          cessing  techniques    with   task-specific adaptations.   First, images  are  converted     into  the
+                          HSV   domain,   in which   the  hue, saturation,  and  value  channels  are employed    to
+                          optimal harvesting period. Ripe citrus fruits, on the other hand, are considered to be at   filter the
+                          the ideal harvesting stage, characterized by an orange color, which indicates their full
+                          ripeness. At this stage, picking will not negatively affect the final product quality. Based
+                          on specified characteristics, citrus images were annotated using LabelImg [21], and the
+                          bounding box labels were saved in a YOLO-compatible text format. Unripe citrus fruits
+                          were annotated as ‘unripe_mandarin’, typically exhibiting a green to yellowish-green peel,
+                          while ripe citrus fruits were labeled as ‘mandarin’, characterized by an orange peel. During
+                          the annotation process, each citrus fruit was enclosed with a tightly fitted rectangular
+                          bounding box following its contour. In cases where fruits were overlapped or partially
+                          occluded by branches and leaves, the bounding boxes were determined by estimating the
+                          complete contours of the fruits based on their visible regions. A total of 1339, 188, and
+                          385 images were allocated to the training, validation, and test sets, respectively, using
+                          a 7:1:2 split. This split ensures a sufficiently large training set while maintaining a larger
+                          test set, which contributes to a more robust model evaluation. These images, collected
+                          from real citrus orchards, present challenges for ripeness detection, such as overlapping,
+                          occlusion, visual similarity to the orchard background, and dense target distribution.
+
+                          2.2. Generation of Visual Saliency Maps
+                               To highlight citrus targets and enhance ripeness differences, this study introduces
+                          a simple visual saliency map generation strategy that integrates traditional image pro-
+                          cessing techniques with task-specific adaptations. First, images are converted into the
+                          HSV domain, in which the hue, saturation, and value channels are employed to filter
+                          the citrus color range (from orange to green). A binary mask is generated by applying
+                          appropriate color thresholds to separate ripe and unripe fruit regions. To enhance regional
+                          continuity and eliminate noise, morphological operations (closing and opening) are applied
+                          to refine the mask. Next, adaptive grayscale mapping is applied to citrus regions based
+Agronomy 2025, 15, 1173    citrus color range (from orange to green). A binary mask is generated by applying appro-       5 of 20
+                           priate color thresholds to separate ripe and unripe fruit regions. To enhance regional con-
+                           tinuity and eliminate noise, morphological operations (closing and opening) are applied
+                          on  their hue
+                           to refine  the distribution, such thatgrayscale
+                                          mask. Next, adaptive    ripe orange   areas appear
+                                                                            mapping            withtohigh
+                                                                                        is applied          brightness,
+                                                                                                       citrus            unripe
+                                                                                                               regions based   on
+                          green   areas  with   medium    brightness, and  the   background     with   the  lowest
+                           their hue distribution, such that ripe orange areas appear with high brightness, unripe  brightness.
+                          Specifically,   the maximum
+                           green areas with                grayscale and
+                                               medium brightness,        thefor
+                                                                     value       ripe regions
+                                                                              background        is the
+                                                                                             with  defined
+                                                                                                       lowest    Gmax , and Spe-
+                                                                                                              asbrightness.  the
+                          minimum      grayscale  value  for unripe regions  as G
+                           cifically, the maximum grayscale value for ripe regionsmin . Linear mapping     is performed   using
+                                                                                           is defined as Gmax , and the mini-
+                          the
+                           mum following
+                                  grayscaleequation:
+                                              value for unripe regions as Gmin . Linear mapping is performed using the
+                          following equation:
+                                                                          Gmax − G
+                                                 G =Gmax − (H − Hlow ) ×Gmax - Gminmin                       (1)
+                                                G = Gmax - H − Hlow × Hhigh − Hlow                            (1)
+                                                                        Hhigh − Hlow
+                          where HHlow and
+                          where        andHHhighrepresent  thelower
+                                                 representthe        andupper
+                                                               lowerand  upperhue  limits for
+                                                                                           for orange
+                                                                               huelimits              and green,
+                                                                                               orange and green,
+                                    low         high
+                           respectively.The
+                          respectively.     Theresulting
+                                                  resulting   saliency
+                                                           saliency     maps
+                                                                     maps       eﬀectively
+                                                                            effectively      highlight
+                                                                                         highlight      the ripeness-related
+                                                                                                    the ripeness-related         fea-
+                                                                                                                            features
+                           tures  of  citrus  fruits in complex     environments,    facilitating  downstream
+                          of citrus fruits in complex environments, facilitating downstream object detection tasks.object  detection
+                           tasks. Examples
+                          Examples               of the generated
+                                       of the generated              visual maps
+                                                           visual saliency         are maps
+                                                                             saliency  shownare     shown2.inNotably,
+                                                                                                in Figure       Figure 2.  Notably,
+                                                                                                                        during   the
+                           during   the  initial training  stage,  the generated   visual  saliency  maps   are fed into
+                          initial training stage, the generated visual saliency maps are fed into the model alongside     the model
+                               originalthe
+                           alongside
+                          the               original
+                                          RGB   images RGB   imagesguide
+                                                         to jointly   to jointly guide
+                                                                            feature     feature extraction.
+                                                                                     extraction.              The model
+                                                                                                   The obtained    obtained   model
+                                                                                                                           weights,
+                           weights,    enriched    with prior   saliency   knowledge,    are later used   for initializing
+                          enriched with prior saliency knowledge, are later used for initializing the final model,          the final
+                                                                                                                                  as
+                           model, as
+                          detailed   in detailed   in Section 2.7.
+                                        Section 2.7.
+
+
+
+
+                           Figure2.2.Illustration
+                          Figure      Illustrationof  thegenerated
+                                                   ofthe           visualsaliency
+                                                         generatedvisual          maps:(a)
+                                                                          saliencymaps: (a)initial
+                                                                                            initialimages  and(b)
+                                                                                                    imagesand  (b)corresponding
+                                                                                                                   corresponding
+                          generated    visual saliency  maps.
+                           generated visual saliency maps.
+                          2.3. The LightSal-RTDETR Model Architecture
+                           2.3. The LightSal-RTDETR Model Architecture
+                                LightSal-RTDETR is a lightweight model designed to efficiently detect citrus ripeness
+                                 LightSal-RTDETR is a lightweight model designed to eﬃciently detect citrus ripeness
+                          in natural environments. RT-DETR simplifies the detection pipeline by removing compo-
+                           in natural environments. RT-DETR simplifies the detection pipeline by removing compo-
+                          nents such as anchor generation and NMS, achieving an effective balance between accuracy
+                           nents such as anchor generation and NMS, achieving an eﬀective balance between accu-
+                          and model complexity. However, in practical applications, limited hardware resources
+                           racy and model complexity. However, in practical applications, limited hardware re-
+                          remain a challenge, highlighting the need to reduce computational load. This study pro-
+                           sources remain a challenge, highlighting the need to reduce computational load. This
+                          poses the LightSal-RTDETR model, which addresses these issues through a lightweight
+                           study proposes the LightSal-RTDETR model, which addresses these issues through a
+                          architectural design.
+                           lightweight architectural design.
+                                In LightSal-RTDETR, the CGA mechanism [22] is integrated with the iRMB [23] to
+                          form IntheLightSal-RTDETR,
+                                      iRMB-cascaded blockthe CGA
+                                                              module,mechanism      [22] is integrated
+                                                                          which strengthens              with the
+                                                                                                 the residual        iRMB of
+                                                                                                                structure   [23]theto
+                           form   the  iRMB-cascaded    block  module,     which   strengthens    the residual   structure
+                          backbone network. This integration improves feature extraction efficiency while reducing           of  the
+                           backbone network.
+                          computational          This integration
+                                            complexity.             improves
+                                                         Additionally,          feature
+                                                                         to further      extraction
+                                                                                      minimize        eﬃciency
+                                                                                                 redundant        while reducing
+                                                                                                              computation,      the
+                           computational     complexity. Additionally,    to further  minimize     redundant
+                          model employs partial convolution (PConv) [24] to refine the RepC3 module, resulting computation,      the
+                           model
+                          in       employs partial
+                              the proposed               module. (PConv)
+                                                     convolution
+                                               E-CSPPC                         losstofunction,
+                                                                       For the[24]     refine thetheRepC3  module,
+                                                                                                       model   combinesresulting
+                                                                                                                            Inner- in
+                           the  proposed   E-CSPPC    module.   For  the loss function,   the model    combines
+                          IoU [25] with SIoU [26], forming a new Inner-SIoU to enhance the accuracy of bounding    Inner-IoU    [25]
+                           withregression.
+                          box    SIoU [26], Moreover,
+                                              forming a Anew   Inner-SIoU
+                                                           weight            tostrategy
+                                                                      transfer  enhanceisthe    accuracy
+                                                                                             adopted,      of bounding
+                                                                                                                 weights box
+                                                                                                        where              jointlyre-
+                           gression.   Moreover,  A  weight  transfer   strategy  is adopted,   where   weights
+                          trained on visual saliency maps and RGB images are used for model initialization. This   jointly trained
+                           on visual saliency
+                          improves              maps and RGB
+                                       feature localization       object are
+                                                            andimages          used for
+                                                                           detection      model initialization.
+                                                                                       performance.      Figure 3This    improves
+                                                                                                                    presents    the
+                          overall architecture of LightSal-RTDETR.
+     Agronomy 2025, 15, x FOR PEER REVIEW                                                                                   6 of 21
+
+     Agronomy 2025, 15, x FOR PEER REVIEW                                                                                   6 of 21
+
+Agronomy 2025, 15, 1173                                                                                                                     6 of 20
+                                     feature localization and object detection performance. Figure 3 presents the overall archi-
+                                     feature of
+                                     tecture    LightSal-RTDETR.
+                                             localization and object detection performance. Figure 3 presents the overall archi-
+                                     tecture of LightSal-RTDETR.
+
+
+
+
+                                    Figure 3.3.Network
+                                    Figure      Networkarchitecture of LightSal-RTDETR.
+                                                          architecture   of LightSal-RTDETR.
+                                     Figure 3. Network architecture of LightSal-RTDETR.
+                                    2.4.  Improved
+                                    2.4. Improved   Backbone
+                                                  Backbone
+
+                                           TheResNet18
+                                           The
+                                     2.4. Improved
+                                                ResNet18   backbone
+                                                    Backbone  backboneconsists  of a series
+                                                                            consists    of aofseries
+                                                                                               basic block  modules,
+                                                                                                      of basic  blockwhich     use skip
+                                                                                                                        modules,     which use skip
+                                    connections
+                                           The     to introduce
+                                               ResNet18         identity
+                                                           backbone       mappings,
+                                                                      consists  of a   thus enhancing
+                                                                                     series of  basic   gradient
+                                                                                                      block       flow which
+                                                                                                                       and mitigating
+                                                                                                            modules,           use  skip
+                                    connections to introduce identity mappings, thus enhancing gradient flow and mitigating
+                                    the   vanishing
+                                     connections      introduceissue
+                                                   to gradient        [10].mappings,
+                                                                 identity   To enhance    feature  extraction  capabilities, this study
+                                    the   vanishing
+                                    integrates  the CGA
+                                                        gradient
+                                                           mechanism
+                                                                    issue   [10].
+                                                                        andTo
+                                                                                   To thus
+                                                                             theenhance
+                                                                                       enhance
+                                                                                 iRMB into
+                                                                                            enhancing    gradient
+                                                                                                   feature
+                                                                                             the basic
+                                                                                                                  flow and mitigating
+                                                                                                             extraction
+                                                                                                       block structure.
+                                                                                                                           capabilities,
+                                                                                                                        The this
+                                                                                                                             improved
+                                                                                                                                         this study
+                                     the vanishing    gradient issue [10].                feature  extraction  capabilities,      study
+                                    integrates
+                                    backbone      the CGA is  mechanism       and the4.iRMB into the basic block structure. The improved
+                                     integrates architecture            and in
+                                                                illustrated
+                                                the CGA mechanism            theFigure
+                                                                                 iRMB into the basic block structure. The improved
+                                    backbone  architecture
+                                    backbone architecture      is illustrated
+                                                          is illustrated       in Figure
+                                                                         in Figure 4.    4.
+
+
+
+
+                                     Figure 4. Depiction of the improved backbone.
+                                    Figure      Depiction
+                                    Figure 4.4.Depiction     of the
+                                                         of the     improved
+                                                                improved      backbone.
+                                                                         backbone.
+                                           CGA enhances the feature extraction process, enabling the model to better capture
+                                     intricate
+                                           CGA patterns
+                                                enhances    employing
+                                                        by the  feature a cascadedprocess,
+                                                                        extraction            mechanism
+                                                                                    attentionenabling       across to
+                                                                                                       the model   multiple
+                                                                                                                      better feature
+                                                                                                                             capture
+                                           CGA    enhances     the  feature  extraction    process,   enabling    the  model     to better capture
+                                     intricateEach
+                                     groups.        attention
+                                               patterns       head is assigned
+                                                        by employing            a distinct
+                                                                        a cascaded         subset
+                                                                                    attention     of featureacross
+                                                                                               mechanism     channels,  structurally
+                                                                                                                    multiple  feature
+                                    intricate patterns by employing a cascaded attention mechanism across multiple feature
+                                     groups. Each attention head is assigned a distinct subset of feature channels, structurally
+                                    groups. Each attention head is assigned a distinct subset of feature channels, structurally
+                                    partitioning the attention computations across heads to improve representation diversity
+                                    and efficiency [22]. The attention mechanism is mathematically formulated as follows:
+                                                                      ~                                      
+                                                                      Xij = Attn Xij WQ
+                                                                                      ij , Xij WK
+                                                                                                ij , Xij W V
+                                                                                                           ij   ,                              (2)
+
+                                                                           ~            ~ 
+                                                                           Xi+1 = Concat Xij j=1:h WPi                                         (3)
+
+                                        The input feature Xi is divided into h segments, denoted as Xi = [Xi1 , Xi2 , . . . , Xih ],
+                                    where h is the total number of attention heads. The j-th attention head performs self-
+                          partitioning the attention computations across heads to improve representation diversity
+Agronomy 2025, 15, 1173                                                                                                                       7 of 20
+                          and eﬃciency [22]. The attention mechanism is mathematically formulated as follows:
+                                                                                  Q
+                                                               Xij = Attn Xij Wij , Xij WK         V
+                                                                                         ij , Xij Wij ,                              (2)
+                          attention on its corresponding segment Xij . EachP head uses the projection matrices WQ
+                                                                                                                ij ,
+                                                              Xi + 1 = Concat Xij         Wi                                         (3)
+                          WK         V                               j=1:h
+                           ij , and Wij to transform its segment into query, key, and value subspaces, respectively.
+                          AfterThe     input feature
+                                   computing                   outputsinto
+                                                       Xi is divided
+                                                   attention            for hallsegments,
+                                                                                  heads, a denoted   as Xi = [Xi1W
+                                                                                            linear projection    , XPi2is
+                                                                                                                       , ...,applied
+                                                                                                                              Xih ], to the
+                                                                                                                    i
+                           where    h is the  total number   of attention heads.   The j-th attention head  performs
+                          concatenated result to restore the original dimensionality. To increase representational        self-at-
+                                                                                                                                Q
+                           tention onCGA
+                          capacity,      its corresponding
+                                               projects the Q,   K, andXV
+                                                              segment          Each head uses
+                                                                          ij . embeddings       theenhanced
+                                                                                             onto              matricessubspaces
+                                                                                                    projectionfeature         Wij ,    that
+                             K           V
+                           Wij , and more
+                          encode               transform
+                                       Wij todiverse   andits discriminative
+                                                              segment into query,    key, and value
+                                                                                 information.        subspaces,
+                                                                                                 Attention   mapsrespectively.
+                                                                                                                      are computed in
+                                  computing attention outputs for all heads, a linear projection WPi is applied to the
+                          aAfter
+                             cascaded      sequence, where the output of each head serves as input to the next, enabling
+                           concatenated result to restore the original dimensionality. To increase representational
+                          progressive refinement of the feature representations.
+                          capacity, CGA projects the Q, K, and V embeddings onto enhanced feature subspaces that
+                          encode more diverse and discriminative information.
+                                                                           ~         Attention maps are computed in a
+                                                            Xij′ =ofXijeach
+                          cascaded sequence, where the output           + Xhead    , 1 <as
+                                                                             i(j−1)serves j≤   h to the next, enabling
+                                                                                             input                                                (4)
+                          progressive refinement of the feature representations.
+                                                                                                                                             ~
+                                  As shown in Equation (4),XX’ ij′= is           the sum of the j-th input split Xij and the output Xi(j−1)
+                                                                          ij Xij + Xi j 1 , 1 < j ≤ h                                     (4)
+                          from the (j − 1)-th head (calculated by Equations (2) and (3)), which replaces Xij as the new
+                          input       shown
+                                  Asfor  the j-thin Equation
+                                                      head in the      X’ij is the sum of
+                                                                 (4), self-attention         the j-th input After
+                                                                                          computation.        split Xthe
+                                                                                                                      ij and  the output a token
+                                                                                                                           Q projection,
+                          X
+                          interaction
+                            i j-1  from    the  (j − 1)-th   head  (calculated
+                                             layer is incorporated to help the self-attention mechanism [27]Xcapture
+                                                                                   by Equations   (2)  and (3)), which    replaces     ij as     local
+                          the   new   input    for  the j-th  head  in  the  self-attention   computation.    After
+                          and global contextual information, further enhancing the expressiveness of features. This  the  Q  projection,    a
+                          token interaction layer is incorporated to help the self-attention mechanism [27] capture
+                          cascaded design, similar to group convolutions [28], reduces floating-point operations
+                          local and global contextual information, further enhancing the expressiveness of features.
+                          (FLOPs) and parameters by providing each attention head with different feature splits,
+                          This cascaded design, similar to group convolutions [28], reduces floating-point opera-
+                          which     increases the diversity of the attention maps. Moreover, this design increases network
+                          tions (FLOPs) and parameters by providing each attention head with diﬀerent feature
+                          depth,     further
+                          splits, which          improving
+                                             increases           model of
+                                                          the diversity     capacity    without
+                                                                               the attention  maps.adding    extrathis
+                                                                                                                    parameters.
+                                                                                                      Moreover,         design increases
+                          network To extract      rich ripeness
+                                       depth, further       improvinginformation       from without
+                                                                           model capacity                orchard
+                                                                                              complexadding         environments
+                                                                                                                        parameters. while main-
+                                                                                                                extra
+                          taining      a lightweight
+                                  To extract                  model,
+                                                  rich ripeness          we also employed
+                                                                    information      from complex   theorchard
+                                                                                                         iRMB [23],      integrating
+                                                                                                                  environments       while it into the
+                          maintaining
+                          backbone           a lightweight
+                                         network                         we also employed
+                                                               model,extraction.
+                                                       for feature                     iRMB isthe    iRMB [23],
+                                                                                                 a hybrid        integrating
+                                                                                                             network     module it into
+                                                                                                                                     thattheintegrates
+                          backbone network
+                          depthwise         separablefor feature  extraction.
+                                                            convolution             (3 ×is3aDW-Conv)
+                                                                              [29]iRMB       hybrid networkwith module     that integrates
+                                                                                                                  a self-attention       mechanism.
+                          depthwise
+                          A               separable convolution
+                              1 × 1 convolution            is employed   [29]to(3reduce
+                                                                                  × 3 DW-Conv)      with athe
+                                                                                           and expand       self-attention   mechanism. enhanc-
+                                                                                                                channel dimensions,
+                          A 1 × 1 convolution is employed to reduce and expand the channel dimensions, enhancing
+                          ing computational efficiency. The depthwise separable convolution effectively captures
+                          computational eﬃciency. The depthwise separable convolution eﬀectively captures spa-
+                          spatial patterns, while the attention mechanism models global feature dependencies. The
+                          tial patterns, while the attention mechanism models global feature dependencies. The ar-
+                          architectural design of iRMB is depicted in Figure 5. Additionally, the SE module [30] was
+                          chitectural design of iRMB is depicted in Figure 5. Additionally, the SE module [30] was
+                          introduced totoreweight
+                          introduced             reweight      channels
+                                                            channels   based based    on global
+                                                                                 on global         information
+                                                                                            information            and is positioned
+                                                                                                                                  after the after the
+                                                                                                           and is positioned
+                          depthwise         convolution,       as depicted
+                          depthwise convolution, as depicted in Figure 4.        in Figure   4.
+
+
+
+
+                          Figure 5. Depiction of inverted residual mobile block (iRMB).
+
+                               The iRMB-cascaded block integrates the strengths of both CGA and iRMB mecha-
+                          nisms, creating a powerful feature extraction module that enhances the ability to capture
+                          complex feature relationships while maintaining computational efficiency, as detailed in
+                          Figure 4. CGA strengthens the ability to capture complex feature relationships by applying
+                          cascaded attention across different groups, thereby improving cross-group correlation mod-
+                          eling. Meanwhile, the iRMB mechanism optimizes internal information flow, enhancing
+                          the robustness and accuracy of feature representations while maintaining computational
+                                  Figure 5. Depiction of inverted residual mobile block (iRMB).
+
+                                        The iRMB-cascaded block integrates the strengths of both CGA and iRMB mecha-
+Agronomy 2025, 15, 1173           nisms, creating a powerful feature extraction module that enhances the ability to capture          8 of 20
+                                  complex feature relationships while maintaining computational eﬃciency, as detailed in
+                                  Figure 4. CGA strengthens the ability to capture complex feature relationships by apply-
+                                  ing cascaded attention across diﬀerent groups, thereby improving cross-group correlation
+                                     efficiency. Incorporating the iRMB-cascaded block into ResNet18 not only enhances feature
+                                  modeling. Meanwhile, the iRMB mechanism optimizes internal information flow, enhanc-
+                                  ingextraction   capability
+                                       the robustness         but also
+                                                      and accuracy       improves
+                                                                    of feature      overall performance
+                                                                               representations              without
+                                                                                               while maintaining       increasing computa-
+                                                                                                                  computa-
+                                     tional
+                                  tional     complexity.
+                                         eﬃciency.  Incorporating the iRMB-cascaded block into ResNet18 not only enhances
+                                  feature extraction capability but also improves overall performance without increasing
+                                     2.5. Improved
+                                  computational      Efficient Hybrid Encoder
+                                                  complexity.
+                                           RT-DETR is composed of a backbone, an encoder, and a decoder. Its notable detection
+                                  2.5. Improved Eﬃcient Hybrid Encoder
+                                    performance mainly benefits from the efficient hybrid encoder, which effectively handles
+                                       RT-DETR is composed of a backbone, an encoder, and a decoder. Its notable detection
+                                    multi-scale feature representation by decoupling intra-scale interactions and cross-scale
+                                  performance mainly benefits from the eﬃcient hybrid encoder, which eﬀectively handles
+                                               featureWithin
+                                    fusion [18].
+                                  multi-scale                  the encoder,
+                                                        representation          the re-parameterized
+                                                                       by decoupling                       convolution
+                                                                                      intra-scale interactions             module, RepC3, is
+                                                                                                               and cross-scale
+                                    deployed
+                                  fusion         to enhance
+                                         [18]. Within                the extraction.
+                                                               feature
+                                                       the encoder,                  However,
+                                                                         re-parameterized        despite
+                                                                                          convolution      improving
+                                                                                                        module,  RepC3,feature
+                                                                                                                         is de- representation,
+                                  ployed
+                                    RepC3 to enhance  feature extraction.
+                                              may introduce               However,
+                                                                   redundant        despite improving
+                                                                                 convolution           feature during
+                                                                                                operations     representation,
+                                                                                                                        inference, leading to
+                                  RepC3 may introduce redundant convolution operations during inference, leading to in-
+                                    increased computational complexity. To tackle this issue, we developed the E-CSPPC
+                                  creased computational complexity. To tackle this issue, we developed the E-CSPPC mod-
+                                    module based on PConv to reduce model complexity and computation. The structure of
+                                  ule based on PConv to reduce model complexity and computation. The structure of E-
+                                    E-CSPPC
+                                  CSPPC                in Figurein
+                                                 is depicted
+                                          is depicted            6. Figure 6.
+
+
+
+
+                                     Figure
+                                  Figure     6. Depiction
+                                         6. Depiction                 module. module.
+                                                             of the E-CSPPC
+                                                      of the E-CSPPC
+
+                                                 PConv
+                                             PConv          performs
+                                                     performs          convolution
+                                                                convolution               only on
+                                                                              only on a portion      a portion
+                                                                                                 of the          of theextracting
+                                                                                                        input channels,    input channels,
+                                                                                                                                     spa-       extracting
+                                            featuresfeatures
+                                       tialspatial             while preserving
+                                                      while preserving               the other
+                                                                        the other channels                   unchanged
+                                                                                                  channels[24].
+                                                                                               unchanged         Figure 7a,b[24].
+                                                                                                                               show Figure
+                                                                                                                                      the 7a,b show the
+                                       structures
+                                          structuresof partial       regular
+                                                                andand
+                                                         of partial            convolution.
+                                                                         regular              Compared
+                                                                                    convolution.           to traditional
+                                                                                                     Compared              convolution,
+                                                                                                                  to traditional     convolution, PConv
+                                       PConv improves local feature capture and enhances recognition capability. For regular
+                                          improves local feature capture and enhances recognition capability. For regular memory
+                                       memory access, we opt for the first or last cp channels to represent the full feature map,
+                                          access, we opt for the first or last cp channels to represent the full feature map, assuming
+                                       assuming the number of channels in both the         input and output feature maps is identical.
+         Agronomy 2025, 15, x FOR PEER REVIEW                                                                               9 of 21
+                                          the number
+                                       Therefore,   when ofthechannels   in isboth
+                                                               input shape      h×w the
+                                                                                      × cinput   and output feature maps          is identical. Therefore,
+                                                                                          p and the kernel size is k × k, the FLOPs of
+                                          when
+                                       PConv    arethe  input shape is h × w × cp and the kernel size is k × k, the FLOPs of PConv are
+                                                    as follows:
+                                     as follows:                     1
+                                          With a partial ratio of r = , the FLOPs
+                                                                                                              1
+                                                                                       k2 × c2pare reduced to 16 that of regular
+                                                                              h × wof×PConv
+                                                                     4                                                             (5)
+                                                                                                     2    2
+                                     convolution. Additionally, PConv requires only h ×  thew          × cp of regular convolu-
+                                                                                                × k access                                              (5)
+                                                                                       1
+                                                                                            memory
+                                                                                           4
+                                     tion.
+
+
+
+
+                                     Figure 7. Diagram of the structure for partial convolution and convolution.
+                                     Figure 7. Diagram of the structure for partial convolution and convolution.
+                                           Gated convolution (GatedConv) dynamically adjusts convolution outputs through a
+                                      gatingWith   a partial
+                                             mechanism   [31]. Specifically, = 14input
+                                                                ratio of r the     , thefeature
+                                                                                          FLOPs mapof   PConv are
+                                                                                                     is processed by areduced     to 16
+                                                                                                                       standard con-
+                                                                                                                                      1
+                                                                                                                                        that of regular con-
+                                                                                                      1
+                                     volution.    Additionally,
+                                      volution to extract             PConv
+                                                          local features.  A 1 ×requires
+                                                                                                      4 the memory access of regular convolution.
+                                                                                               onlylayer
+                                                                                   1 convolutional         subsequently produces a
+                                      weight map that matches the dimensions of the input feature map. The weight map, fol-
+                                            Gated convolution (GatedConv) dynamically adjusts convolution outputs through
+                                      lowing sigmoid activation, is multiplied by the corresponding elements in the feature map
+                                     atogating   mechanism
+                                        modify its                 [31].
+                                                   feature intensity. ThisSpecifically,
+                                                                            mechanism allows  thetheinput
+                                                                                                     networkfeature    mapretain
+                                                                                                              to selectively  is processed
+                                                                                                                                   or        by a standard
+                                     convolution
+                                      suppress specificto extract
+                                                        regional     localenhancing
+                                                                  features,  features.      A 1 extraction
+                                                                                         feature × 1 convolutional
+                                                                                                            and robustness.layer subsequently produces
+                                           The P_GatedConv module, combining GatedConv with PConv, is integrated into the
+                                     a weight     map that matches the dimensions of the input feature map. The weight map,
+                                      E-CSPPC module. This reduces computational and memory redundancy and lowers the
+                                     following     sigmoidItactivation,
+                                      number of parameters.                      is multiplied
+                                                                 also reduces model                  by the corresponding
+                                                                                        size and development                       elements in the feature
+                                                                                                               costs for hierarchical
+                                      devices.
+
+                                     2.6. The Improved Loss Function
+                                          To enhance the evaluation accuracy, Inner-SIoU is used to replace the IoU loss func-
+                                     tion in this model. During training, a smaller auxiliary boundary is used for loss compu-
+Agronomy 2025, 15, 1173                                                                                                                                9 of 20
+
+
+
+                                      map to modify its feature intensity. This mechanism allows the network to selectively retain
+                                      or suppress specific regional features, enhancing feature extraction and robustness.
+                                           The P_GatedConv module, combining GatedConv with PConv, is integrated into the
+                                      E-CSPPC module. This reduces computational and memory redundancy and lowers the
+                                      number of parameters. It also reduces model size and development costs for hierarchi-
+                                      cal devices.
+
+                                      2.6. The Improved Loss Function
+                                           To enhance the evaluation accuracy, Inner-SIoU is used to replace the IoU loss func-
+                                      tion in this model. During training, a smaller auxiliary boundary is used for loss com-
+                                      putation, and a scaling factor is applied to adjust the auxiliary boundary ratio. Based
+                                      on Equations (5)–(8), Inner-IoU [25] is applied to the SIoU loss function [26] calculation
+                                      as follows:
+
+                                                                          gt                    gt                        gt              gt
+                                                   inter = (min( br , br ) − max(bl , bl )) × (min( bb , bb ) − max(bt , bt ))                             (6)
+
+                                                          union = wgt × hgt × (radio)2 + (w × h) × (radio)2 − inter
+                                                                           
+                                                                                                                                                           (7)
+                                                                                                           inter
+                                                                                          IoUinner =                                                       (8)
+                                                                                                           union
+                                                                               LInner-SIoU = LSIoU + IoU − IoUinner                                        (9)
+
+                                           Define bgt as the ground truth box and b as the anchor box, with their widths and
+                                      heights represented by wgt , hgt and w, h, respectively. The ratio serves as a parameter that
+                                      determines the scale of the auxiliary boundary. The SIoU loss function LSIoU is composed
+                                      of four components: angle, distance, shape, and IoU losses. Inner-SIoU improves the
+                                      regression accuracy for high IoU samples by optimizing the internal area of the box and
+                                      introducing small-scale auxiliary boundaries for loss computation, effectively reducing the
+                                      influence of low IoU samples during training.
+
+                                      2.7. Weight Transfer
+                                                 This study adopts a weight initialization strategy, using model weights obtained from
+                                          joint training on RGB images and visual saliency maps as the initialization parameters for
+                                          the new model. Guided by saliency maps, the model can acquire richer key information
+                                          during the early training stage, improving its representation of10salient
+         Agronomy 2025, 15, x FOR PEER REVIEW                                                                                    of 21   features. In addition,
+                                          this initialization method provides better optimization guidance during model optimiza-
+                                          tion, reducing focus on non-salient regions, thereby improving detection accuracy under
+                                          addition, this initialization method provides better optimization guidance during model
+                                                         reducing focus onand
+                                          cluttered backgrounds
+                                          optimization,                                  regions, The
+                                                                                 occlusions.
+                                                                             non-salient               model
+                                                                                                  thereby       obtained
+                                                                                                          improving  detectionfrom
+                                                                                                                                accu- joint training on visual
+                                          saliency
+                                          racy         maps and
+                                               under cluttered         RGB images
+                                                                 backgrounds            is shown
+                                                                              and occlusions.        in Figure
+                                                                                              The model  obtained 8. Tojoint
+                                                                                                                  from    ensure
+                                                                                                                             trainingthe compatibility of the
+                                          on visual saliency maps and RGB images is shown in Figure 8. To ensure the compatibility
+                                          weights, the structure of this model is basically consistent with LightSal-RTDETR.
+                                      of the weights, the structure of this model is basically consistent with LightSal-RTDETR.
+
+
+
+
+                                      Figure 8. Schematic diagram of the model jointly trained on visual saliency maps and original
+                                      Figure 8. Schematic diagram of the model jointly trained on visual saliency maps and original RGB
+                                      RGB images.
+                                      images.
+
+
+                                      3. Results
+                                      3.1. Training Environment and Settings
+                                           To train and test the proposed model, the experiments were conducted in an Ubuntu
+                                      22.04 environment, equipped with an AMD EPYC 9754 128-core CPU and an NVIDIA
+Agronomy 2025, 15, 1173                                                                                          10 of 20
+
+
+
+                          3. Results
+                          3.1. Training Environment and Settings
+                               To train and test the proposed model, the experiments were conducted in an Ubuntu
+                          22.04 environment, equipped with an AMD EPYC 9754 128-core CPU and an NVIDIA
+                          GeForce RTX 4090 D GPU with 24 GB of RAM. The programming language used was
+                          Python 3.8.10, with PyTorch version 2.0.0 and CUDA version 11.8 as the deep learn-
+                          ing framework.
+                               For consistency, input images were uniformly scaled to 640 × 640 pixels throughout
+                          the training phase. The training was conducted over 150 epochs using a batch size of 16,
+                          with the AdamW optimizer configured for a learning rate of 0.0005 and a weight decay
+                          of 0.0001. To ensure objectivity, all experimental evaluations of the proposed method
+                          were carried out using identical hyperparameter settings. These hyperparameters were
+                          tuned based on validation performance to ensure good convergence and generalization.
+                          The training process was monitored using the validation mean average precision (mAP).
+                          As shown in Figure 9a, the validation mAP increased steadily and plateaued in the later
+                          epochs, reaching a best value of 80.8% at mAP@50. The final test set mAP was 81%,
+                          which is consistent with the validation performance, suggesting that the model effectively
+                          generalizes without overfitting.
+
+                          3.2. Evaluation Metrics
+                               A comparative analysis of detection performance before and after enhancement is
+                          conducted under the same experimental setup to validate the algorithm’s improvements.
+                          The performance assessment in this work is based on precision, recall, F1 score, mean
+                          average precision (mAP), total parameters, and GFLOPs. All reported precision, recall,
+                          and F1 scores are calculated using macro-averaging. For NMS, the following thresholds
+                          are used: YOLO series (confidence = 0.25, IoU = 0.7), SSD (confidence = 0.5, IoU = 0.45),
+                          and Faster R-CNN (confidence = 0.5, IoU = 0.3). These threshold values are chosen based
+                          on the default settings used in the respective models’ original implementations, ensuring
+                          consistency with standard practices in object detection tasks. In contrast, DETR-based
+                          models do not require NMS thresholds during evaluation due to their transformer-based
+                          architecture. During the prediction phase, a confidence threshold of 0.25 is applied to filter
+                          out low-confidence predictions, while all predictions are included in the evaluation phase
+                          to compute the precision-recall curve and mAP.
+                               Precision represents the model’s effectiveness in correctly predicting positive outcomes.
+                          The formula is defined in Equation (10):
+
+                                                                             TP
+                                                             Precision =                                            (10)
+                                                                           TP + FP
+
+                              TP denotes the correct positive predictions, whereas FP refers to incorrect ones.
+                              Recall reflects how well the model detects positive samples. The formula is defined in
+                          Equation (11):
+                                                                          TP
+                                                             Recall =                                           (11)
+                                                                       TP + FN
+                               FN refers to positive instances that were incorrectly classified as negative.
+                               The F1 score offers a comprehensive evaluation of model performance. The F1 score is
+                          defined in Equation (12):
+
+                                                                        Precision × Recall
+                                                       F1 score = 2 ×                                               (12)
+                                                                        Precision + Recall
+Agronomy 2025, 15, 1173                                                                                                   11 of 20
+
+
+
+                                       The mean average precision (mAP) is a comprehensive performance metric for object
+                                  detection tasks that accounts for both the precision and recall of the model at different
+                                  thresholds. Prior to computing AP, the area under the precision–recall curve (AUC) is
+                                  estimated via interpolation. In this paper, we use the 101-point interpolation method, where
+                                  interpolated precision is sampled at 101 equally spaced recall thresholds between 0 and 1.
+                                  Notably, Section 3.4 follows the COCO-style evaluation protocol to ensure fair comparison
+                                  with lightweight DETR benchmarks, while all other experiments adopt the default mAP
+                                  computation used in the YOLO framework, which is also based on 101-point interpolation.
+                                  The formula for mAP is shown as Equation (13):
+
+                                                                                     1 N
+                                                                                     N i∑
+                                                                             mAP =         APi                                 (13)
+                                                                                        =1
+
+                                  APi represents the average precision of the i-th class, and N represents the number of classes.
+                                        The parameter count indicates the cumulative number of parameters that can be
+                                  learned by the model. It is typically used to evaluate model complexity.
+                                        GFLOPs serves as a measure of its computational efficiency. During inference, GFLOPs
+                                  provides a useful estimate of the computational load a model imposes, making it suitable
+                                  for cross-model efficiency comparisons on the same device. Fewer GFLOPs indicate higher
+                                  computational efficiency.
+
+                                  3.3. Ablation Study
+                                       To evaluate the effectiveness of the modules introduced, an ablation study was con-
+                                  ducted using the dataset constructed in this study. In the experiment, i_C Block represents
+                                  the iRMB-cascaded block module, E-C represents the E-CSPPC module, and Inner-SIoU
+                                  refers to the use of the Inner-SIoU loss. The weight_load refers to the initialization of model
+                                  weights obtained from joint training with visual saliency maps and RGB images. Table 1
+                                  presents the findings from the ablation study. The ablation study includes five groups of
+                                  experiments, with each experiment adding different modules. The models are evaluated
+                                  against the original RT-DETR model based on precision, recall, mAP, parameter count,
+                                  and GFLOPs.
+
+                                  Table 1. Results of the ablation study.
+
+                           i_C      Inner-     Weight_      Precision       Recall   mAP@50      mAP@50:95
+ Methods      E-C                                                                                            Params    GFLOPs
+                          Block     SIoU        Load          (%)            (%)      (%)          (%)
+    1          -
+               √           -          -            -          80.0           76.5     79.1         57.1      19.87 M    56.9
+    2          √           -
+                           √          -            -          79.7           77.8     79.3         59.2      18.87 M    52.0
+    3          √           √          -
+                                      √            -          80.5           77.4     79.5         58.9      14.28 M    41.8
+    4          √           √          √            -
+                                                   √          81.2            78      80.5         59.6      14.28 M    41.8
+    5                                                         81.6           79.2     81.0         60.5      14.28 M    41.8
+
+
+                                       As shown in Table 1, integrating the E-CSPPC module into the network leads to
+                                  increases of 0.2% in mAP@50 and 2.1% in mAP@50:95, while simultaneously lowering the
+                                  number of parameters and computational overhead. By combining the iRMB-cascaded
+                                  block and E-CSPPC, the detection performance is further boosted, with mAP@50 increasing
+                                  by 0.4% and mAP@50:95 by 1.8%. Compared to the baseline RT-DETR, this approach
+                                  cuts the parameter count to 14.28 M and the computational cost to 41.8 GFLOPs, repre-
+                                  senting reductions of 28.1% and 26.5%, respectively. Furthermore, integrating the Inner-
+                                  SIoU loss function leads to a 1.0% improvement in mAP@50. A comparison between
+                                  Experiment 4 and Experiment 5 indicates that initializing with weights trained on both
+                                  visual saliency maps and RGB images in Experiment 5 leads to improvements of 0.5%
+   Agronomy 2025, 15, 1173                                                                                                   12 of 20
+
+
+
+                                  in mAP@50 and 0.9% in mAP@50:95, relative to random initialization. Finally, with all
+                                  enhancements applied, LightSal-RTDETR demonstrates performance gains of 1.9% for
+                                  mAP@50 and 3.4% for mAP@50:95. It also reduces the parameter count and GFLOPs
+                                  by 28.1% and 26.5% compared to the baseline. Beyond improving detection accuracy,
+                                  LightSal-RTDETR significantly reduces model complexity and computational cost, enhanc-
+                                  ing its suitability for real-world deployment. This demonstrates the practical value of the
+                                  proposed improvements.
+
+                                  3.4. Comparison Experiments
+                                        The effectiveness of the proposed LightSal-RTDETR was evaluated by comparing it
+                                   with a range of mainstream detectors, including SSD [32], Faster R-CNN [33], YOLOv5,
+                                   YOLOv8, YOLOv10 [34], YOLO11, YOLOv12 [35], and RT-DETR networks. Figure 9a
+                                   presents the performance curves of all nine models evaluated on the proposed dataset.
+                                   Faster R-CNN has significantly more parameters and higher computational complexity
+                                   than the other models, while its average precision remains relatively low. Due to its limited
+                                   practical value, Figure 9b excludes Faster R-CNN and illustrates the relationship between
+                                   parameter count, computational complexity, and mAP@50:95 for the remaining models.13As
+Agronomy 2025, 15, x FOR PEER REVIEW                                                                                           of 21
+                                   shown, LightSal-RTDETR demonstrates a clear advantage in terms of accuracy–efficiency
+                                   trade-offs.
+
+
+
+
+                                    (a)                                                        (b)
+
+                                  Figure9.9.Results
+                                Figure                   comparisonexperiments.
+                                             Resultsofofcomparison  experiments.(a)
+                                                                                 (a)Accuracy
+                                                                                     Accuracyvariation
+                                                                                              variationof  nineobject
+                                                                                                        ofnine        detectors, and
+                                                                                                                objectdetectors, and (b)
+                                       chartchart
+                                 (b) bubble
+                                bubble            of parameters,
+                                             of parameters,      GFLOPs,
+                                                            GFLOPs,  andand mAP@50:95.
+                                                                         mAP@50:95.
+
+                                        Table22presents
+                                      Table     presents aa comparison  of different
+                                                            comparison of  diﬀerent models
+                                                                                       modelsin    termsofofaccuracy,
+                                                                                                interms      accuracy, recall, mAP,
+                                                                                                                         recall, mAP,
+                                  model parameters, and GFLOPs. Compared with SSD, Faster R-CNN, YOLOv5, YOLOv10,
+                                model parameters, and GFLOPs. Compared with SSD, Faster R-CNN, YOLOv5,
+                                  YOLO11, and YOLOv12, LightSal-RTDETR achieves higher average precision by 1.6%,
+                                YOLOv10, YOLO11, and YOLOv12, LightSal-RTDETR achieves higher average precision
+                                  5.9%, 0.6%, 4.1%, 0.4%, and 0.5%, respectively, at an IoU of 0.5. Although YOLOv8 achieves
+                                by 1.6%, 5.9%, 0.6%, 4.1%, 0.4%, and 0.5%, respectively, at an IoU of 0.5. Although
+                                  a high accuracy of 82.2%, it comes at the cost of considerably higher parameter size and
+                                YOLOv8 achieves a high accuracy of 82.2%, it comes at the cost of considerably higher
+                                  computational burden compared to LightSal-RTDETR. LightSal-RTDETR surpasses the
+                                parameter size and computational burden compared to LightSal-RTDETR. LightSal-
+                                  baseline RT-DETR by 1.9% in mAP@50 and 3.4% in mAP@50:95, while also delivering
+                                RTDETR      surpasses
+                                  1.6% higher   accuracytheand a 2.7% RT-DETR
+                                                             baseline            by 1.9%
+                                                                      boost in recall.     in mAP@50
+                                                                                       Overall,           and 3.4%offers
+                                                                                                                      in mAP@50:95,
+                                                                                                LightSal-RTDETR             a favor-
+                                while   also delivering
+                                  able trade-off  between 1.6%  higherand
+                                                            accuracy   accuracy
+                                                                          resourceand   a 2.7% boost
+                                                                                     consumption,       in recall. Overall,
+                                                                                                     maintaining             LightSal-
+                                                                                                                    high detection
+                                  precisionoﬀers
+                                RTDETR               favorable
+                                              with areduced     trade-oﬀsize
+                                                                          between
+                                                              parameter                              demands,consumption,
+                                                                                    accuracy and resource
+                                                                              and computational                   thus supportingmain-
+                                taining   high   detection   precision
+                                  efficient lightweight deployment.    with  reduced    parameter     size  and  computational     de-
+                                mands, thus supporting eﬃcient lightweight deployment.
+
+                                Table 2. Results of the comparison experiments.
+
+                                                       Precision      Recall      mAP@50 mAP@50:95
+                                          Model                                                    Params                  GFLOPs
+                                                          (%)          (%)         (%)     (%)
+                                          SSD            76.3          72.6        79.4    50.6    23.74 M                    60.85
+Agronomy 2025, 15, 1173                                                                                           13 of 20
+
+
+
+                          Table 2. Results of the comparison experiments.
+
+                                                Precision     Recall    mAP@50         mAP@50:95
+                                 Model                                                              Params     GFLOPs
+                                                   (%)         (%)       (%)             (%)
+                                  SSD              76.3        72.6          79.4        50.6      23.74 M      60.85
+                             Faster R-CNN          52.1        82.3          75.1        41.3      136.71 M     369.74
+                               YOLOv5              76.5        72.9          80.4        57.7      25.04 M       64.0
+                               YOLOv8              74.2        78.3          82.2        59.4      25.84 M       78.7
+                               YOLOv10             70.0        72.6          76.9        55.6      16.45 M       63.4
+                               YOLO11              74.3        75.6          80.6        57.5      20.03 M       67.7
+                               YOLOv12             78.1        72.1          80.5        57.0      20.10 M       67.1
+                               RT-DETR             80.0        76.5          79.1        57.1      19.87 M       56.9
+                           LightSal-RTDETR         81.6        79.2          81.0        60.5      14.28 M       41.8
+
+
+                               In addition, to further validate the effectiveness of the proposed model, we compared
+                          LightSal-RTDETR with several state-of-the-art lightweight DETR-based models, namely
+                          D-FINE [36], LW-DETR [37], and DEIM-D-FINE [38]. The comparison results are shown
+                          in Table 3. The mAP evaluation metrics used in this experiment follow the official COCO
+                          evaluation protocol. As shown in the table, LightSal-RTDETR achieves a good balance
+                          between accuracy and model complexity. Specifically, it achieves 80.5% on mAP@50 and
+                          60.0% on mAP@50:95, both outperforming the other compared models and demonstrating
+                          superior object detection capability. Meanwhile, it maintains a low model size of only
+                          14.28 M parameters and 41.8 GFLOPs, which are lower than those of D-FINE, LW-DETR,
+                          and DEIM-D-FINE, highlighting its lightweight advantage. These results indicate that
+                          LightSal-RTDETR not only offers better detection performance but also demonstrates
+                          improved adaptability to edge devices with limited resources.
+
+                          Table 3. Comparison of lightweight DETR variants.
+
+                                    Model               mAP@50 (%)          mAP@50:95 (%)       Params        GFLOPs
+                                  RT-DETR                   78.5                56.8            19.87 M        56.9
+                                   D-FINE                   79.0                58.0            19.19 M        56.3
+                                 LW-DETR                    77.9                54.7            28.24 M        42.8
+                               DEIM-D-FINE                  78.0                57.3            19.19 M        56.3
+                              LightSal-RTDETR               80.5                60.0            14.28 M        41.8
+
+
+                          3.5. Visualization Analysis
+                               In natural environments, citrus ripeness detection is influenced by various factors, in-
+                          cluding uneven lighting, occlusion by leaves or branches, and overlapping fruits. Figure 10
+                          presents a comparison of citrus ripeness prediction generated by LightSal-RTDETR and
+                          the original RT-DETR. Various example scenarios are used to demonstrate detection ef-
+                          fectiveness, such as under direct sunlight, in shaded conditions, with overlapping or
+                          occluded objects, and in high-density environments. The results indicate that LightSal-
+                          RTDETR demonstrates strong robustness in adapting to lighting variations and detecting
+                          overlapping fruits.
+                               To gain deeper insights into the effectiveness of the proposed algorithm under complex
+                          orchard backgrounds in citrus ripeness detection, this study employs GradCAM++ [39] for
+                          heatmap analysis. In the resulting heatmaps, red regions represent the model’s focus areas,
+                          with darker shades indicating higher levels of attention. Figure 11 provides a comparative
+                          visualization of the heatmaps generated by the original and improved models. The results
+                          demonstrate that the optimized model exhibits a stronger focus on target regions while
+                          effectively reducing computational overhead in non-target areas, thereby confirming the
+                          effectiveness of the improvements.
+                                      the original RT-DETR. Various example scenarios are used to demonstrate detection ef-
+                                      fectiveness, such as under direct sunlight, in shaded conditions, with overlapping or oc-
+                                      cluded objects, and in high-density environments. The results indicate that LightSal-
+    Agronomy 2025, 15, 1173           RTDETR demonstrates strong robustness in adapting to lighting variations and detecting
+                                                                                                                          14 of 20
+                                      overlapping fruits.
+
+
+
+
+Agronomy 2025, 15, x FOR PEER REVIEW                                                                                                  15 of 21
+                                   Figure      Comparative experimental
+                                           10. Comparative
+                                    Figure10.                           analysis. (a)
+                                                           experimental analysis.  (a)Direct sunlight,(b)
+                                                                                      Directsunlight,      shadowcoverage,
+                                                                                                       (b)shadow             (c)overlap,
+                                                                                                                  coverage,(c)   overlap,
+                                      (d)occlusion,
+                                     (d)             and(e)
+                                          occlusion,and      high-density distribution.
+                                                         (e) high-density distribution.
+
+                                            To gain deeper insights into the eﬀectiveness of the proposed algorithm under com-
+                                      plex orchard backgrounds in citrus ripeness detection, this study employs GradCAM++
+                                      [39] for heatmap analysis. In the resulting heatmaps, red regions represent the model’s
+                                      focus areas, with darker shades indicating higher levels of attention. Figure 11 provides a
+                                      comparative visualization of the heatmaps generated by the original and improved mod-
+                                      els. The results demonstrate that the optimized model exhibits a stronger focus on target
+                                      regions while eﬀectively reducing computational overhead in non-target areas, thereby
+                                      confirming the eﬀectiveness of the improvements.
+
+
+
+
+                                     Figure11.
+                                   Figure           visualization examples
+                                                Thevisualization
+                                            11.The                examplesgenerated
+                                                                           generatedbyby
+                                                                                       GradCAM++. (a)(a)
+                                                                                         GradCAM++.   Original images,
+                                                                                                         Original      (b) results
+                                                                                                                  images,          of of
+                                                                                                                            (b) results
+                                             and(c)
+                                    RT-DETR,and
+                                   RT-DETR,          results of
+                                                 (c) results of LightSal-RTDETR.
+                                                                LightSal-RTDETR.
+                                     3.6. Comparative Experiments on Backbone Network
+                                   3.6. Comparative Experiments on Backbone Network
+                                           The RT-DETR model in this study adopts ResNet-18 as the backbone network. To
+                                         The RT-DETR
+                                     evaluate              modelofin
+                                               the effectiveness      this study
+                                                                    enhancing theadopts   ResNet-18
+                                                                                  basic block         as the
+                                                                                              in ResNet18    backbone
+                                                                                                          through       network. To
+                                                                                                                  the integration
+                                   evaluate   the eﬀectiveness    of enhancing   the basic block  in ResNet18  through
+                                     of iRMB and CGA, we conducted comparative experiments with several representative   the integra-
+                                   tion  of iRMB and
+                                     convolutional      CGA, we
+                                                     structures, as conducted  comparative
+                                                                    shown in Table 4.         experiments with several representa-
+                                   tive convolutional structures, as shown in Table 4.
+                                     Table 4. Results of the comparison experiments on backbone network.
+                                         As shown in Table 4, compared with the baseline model, the introduction of the
+                                              Backbone
+                                   iRMB-cascaded                    mAP@50
+                                                        block not only        (%)        reduces (%)
+                                                                                      mAP@50:95
+                                                                          significantly                     Params
+                                                                                                   the number              GFLOPs
+                                                                                                                 of parameters    and com-
+                                   putational    cost
+                                             Basic     but also improves
+                                                    Block                79.1 the detection57.1
+                                                                                             accuracy. Notably,              56.9of 1.1% in
+                                                                                                            19.87 Man increase
+                                            Pconv Block                  78.6               58.8            14.00 M          42.8
+                                   mAP@50 is achieved. In comparison to using iRMB alone, the iRMB-cascaded block yields
+                                          DualConv Block                 79.5               55.8            15.86 M          47.3
+                                   a 0.6% improvement
+                                             iRMB Block                  79.6 reducing the
+                                                              in mAP while                    parameter count
+                                                                                            59.1            16.41byM 1.13 M and
+                                                                                                                             49.1 lowering
+                                        computationalBlock
+                                   the iRMB_Cascaded        complexity80.2 by 2.3 GFLOPs.59.3 Furthermore,15.28              46.8integrates
+                                                                                                               thisMstudy also
+                                   PConv and DualConv [40] into the original basic block module for comparison purposes.
+                                          As shown
+                                   Although             in Table
+                                                both PConv         4, compared
+                                                                 and  DualConvwith      the model
+                                                                                   reduce              model,
+                                                                                            baselinesize      the introduction
+                                                                                                         and computation,        of the
+                                                                                                                              they   lead to
+                                     iRMB-cascaded       block  not only  significantly reduces  the  number  of parameters
+                                   performance degradation, with PConv causing a 0.5% drop in mAP@50, and DualConv           and   com-
+                                     putational
+                                   resulting   in acost
+                                                    1.3%     also improves
+                                                        butdecrease            the detection
+                                                                      in mAP@50:95,     whichaccuracy.   Notably,
+                                                                                                fails to meet      an increase
+                                                                                                              the accuracy     of 1.1%
+                                                                                                                            requirements
+                                   for citrus ripeness detection. Through a comprehensive comparison, the proposed iRMB-
+                                   cascaded block demonstrates superior overall performance.
+
+                                   Table 4. Results of the comparison experiments on backbone network.
+Agronomy 2025, 15, 1173                                                                                         15 of 20
+
+
+
+                          in mAP@50 is achieved. In comparison to using iRMB alone, the iRMB-cascaded block
+                          yields a 0.6% improvement in mAP while reducing the parameter count by 1.13 M and
+                          lowering the computational complexity by 2.3 GFLOPs. Furthermore, this study also
+                          integrates PConv and DualConv [40] into the original basic block module for compari-
+                          son purposes. Although both PConv and DualConv reduce model size and computation,
+                          they lead to performance degradation, with PConv causing a 0.5% drop in mAP@50, and
+                          DualConv resulting in a 1.3% decrease in mAP@50:95, which fails to meet the accuracy
+                          requirements for citrus ripeness detection. Through a comprehensive comparison, the
+                          proposed iRMB-cascaded block demonstrates superior overall performance.
+
+                          3.7. Generalization Assessment of E-CSPPC Module
+                               To further evaluate the generalization capability of the E-CSPPC module, we con-
+                          ducted validation experiments using the YOLO11 model based on the YOLO architecture.
+                          In this experiment, the original C3K2 module in the neck of YOLO11 was replaced with
+                          the proposed E-CSPPC module to assess its effectiveness in feature extraction following
+                          feature fusion. The experimental results are presented in Table 5.
+
+                          Table 5. Generalization performance of E-CSPPC module.
+
+                                   Model              mAP@50 (%)      mAP@50:95 (%)         Params        GFLOPs
+                                RT-DETR                      79.1            57.1           19.87 M          56.9
+                            RT-DETR+E-CSPPC                  79.3            59.2           18.87 M          52.0
+                                YOLO11                       80.6            57.5           20.03 M          67.7
+                            YOLO11+E-CSPPC                   80.2            57.0           17.96 M          61.1
+
+
+                               As shown in the results, the performance of the E-CSPPC module varies across differ-
+                          ent model architectures. In the RT-DETR model, integrating the E-CSPPC module improved
+                          mAP@50 from 79.1% to 79.3% and mAP@50:95 from 57.1% to 59.2% while reducing the
+                          number of parameters by 1 M and computational cost by 4.9 GFLOPs. In contrast, when
+                          applied to YOLO11, the introduction of E-CSPPC slightly reduced mAP@50 from 80.6% to
+                          80.2% and mAP@50:95 from 57.5% to 57.0%, though it still reduced parameters by 2.07 M
+                          and GFLOPs by 6.6 G.
+                               These outcomes indicate that the performance impact of E-CSPPC is closely related to
+                          the target architecture. In our study focused on optimizing RT-DETR, integrating E-CSPPC
+                          resulted in improved accuracy and reduced computational cost. In contrast, a slight drop
+                          in detection accuracy was observed when applying E-CSPPC to YOLO11, though it still
+                          achieved notable reductions in model parameters and GFLOPs. This suggests that the
+                          practical benefits of E-CSPPC, particularly in terms of model lightweighting, depend on
+                          how well it aligns with the architectural characteristics of the base model. We acknowledge
+                          that E-CSPPC may not be universally applicable to all detection frameworks, and further
+                          evaluation on broader model families is left as future work.
+
+                          3.8. Validity of Weight Transfer
+                                To further evaluate the effectiveness of weight transfer from models jointly trained on
+                          visual saliency maps and RGB images, we conducted an experiment comparing various
+                          weight initialization strategies for citrus ripeness detection. The results are presented in
+                          Table 6. In this experiment, both models, RT-DETR and improved RT-DETR, used random
+                          initialization, while RT-DETR (pretrained) and improved RT-DETR (pretrained) employed
+                          pretrained weights from the COCO [41] and Objects365 [42] datasets. It is also worth noting
+                          that improved RT-DETR and LightSal-RTDETR share an identical network architecture.
+Agronomy 2025, 15, 1173                                                                                                   16 of 20
+
+
+
+                          Table 6. Results of different weight initializations.
+
+                                        Model                   F1 Score (%)      Precision (%)   Recall (%)    mAP@50 (%)
+                                     RT-DETR                          78.2            80.0           76.5              79.1
+                               RT-DETR (Pretrained)                   79.8            79.6           80.0              78.8
+                                Improved RT-DETR                      79.6            81.2           78.0              80.5
+                           Improved RT-DETR (Pretrained)              79.7            81.9           77.7              79.9
+                                 LightSal-RTDETR                      80.4            81.6           79.2              81.0
+
+
+                                The experimental results indicate that RT-DETR (pretrained) achieves a 1.6% improve-
+                          ment in F1 score compared to its randomly initialized counterpart. However, mAP@50
+                          is 0.3% lower than the random initialization model. The improved RT-DETR (pretrained)
+                          shows a 0.6% lower mAP@50 than the random initialization version of the improved RT-
+                          DETR, indicating that pretrained weights from COCO and Objects365 may not be suitable
+                          for the citrus dataset. In contrast, LightSal-RTDETR (the model with weights trained jointly
+                          using visual saliency maps and RGB images) shows significant improvements in both F1
+                          score and mAP@50, suggesting that this transfer learning approach is more suitable for
+                          citrus ripeness detection.
+
+                          3.9. Applicability
+                               To explore the model’s generalization ability to other fruit types, we utilized the Melon
+                          Puspalebo Dataset [43] from Roboflow. This public dataset contains melons at various
+                          ripeness stages in orchard environments, categorized into two classes: ripe and unripe.
+                          A 7:2:1 proportion was used to allocate the dataset to the training, validation, and testing
+                          phases. The dataset, which includes augmented images as part of the original collection,
+                          was expanded to a total of 1038 images. Table 7 displays the performance evaluation
+                          outcomes of LightSal-RTDETR on the dataset.
+
+                          Table 7. Performance metrics for different categories.
+
+                                  Classes                 F1 Score (%)             mAP@50 (%)               mAP@50:95 (%)
+                                     all                       96.9                     95.5                    93.8
+                                    ripe                       98.3                     99.5                    97.0
+                                   unripe                      95.5                     91.5                    90.6
+
+
+                               Table 7 indicates that the proposed LightSal-RTDETR model exhibits high effectiveness
+                          on this dataset. Specifically, the mAP@50 for ripe and unripe categories achieves 99.5%
+                          and 91.5%, respectively. Furthermore, the results from additional evaluation metrics reflect
+                          strong performance. These results highlight the applicability and adaptability of LightSal-
+                          RTDETR in assessing fruit ripeness across different categories.
+
+                          3.10. Deployment Plan
+                                To enable the practical application of the proposed algorithm in orchard environments,
+                          it is planned to be deployed on an intelligent fruit-picking robot. The system will be built
+                          on an embedded computing platform powered by the NVIDIA Jetson Orin Nano, which
+                          offers high computational efficiency and low power consumption, making it suitable for
+                          edge computing scenarios. The robot will be equipped with a high-resolution industrial
+                          camera (e.g., IDS uEye FA series) for image acquisition via a USB 3.0 interface and will
+                          support remote data transmission through Wi-Fi or 4G networks. To enhance system
+                          stability and robustness in complex orchard conditions such as high humidity and vibration,
+                          the camera module will adopt a shock-absorbing structural design. By integrating the
+                          proposed algorithm, the robot will be capable of autonomous orchard inspection and
+Agronomy 2025, 15, 1173                                                                                         17 of 20
+
+
+
+                          intelligent fruit ripeness detection, providing effective support for orchard management
+                          and harvesting operations.
+
+                          4. Discussion
+                               The experimental results indicate that the proposed model improves the accuracy of
+                          citrus ripeness detection in complex orchard environments while simultaneously reducing
+                          model parameters and computational cost. The ablation study further verifies the effective-
+                          ness of the proposed architectural enhancements. The E-CSPPC module, iRMB-cascaded
+                          block, and Inner-SIoU loss function were introduced, and the weights obtained through
+                          the hybrid training of RGB images and visual saliency maps were used for weight initial-
+                          ization. Compared to the baseline model, LightSal-RTDETR achieved improvements of
+                          1.6%, 2.7%, 1.9%, and 3.4% in precision, recall, mAP@50, and mAP@50:95, respectively.
+                          Meanwhile, the model’s parameters and computational cost were reduced by 28.1% and
+                          26.5%, respectively. These results demonstrate that the improved model effectively detects
+                          citrus maturity under complex orchard backgrounds and extracts features representing
+                          the citrus ripening stages. In the comparative experiments, we compared the improved
+                          model with mainstream object detection models and, using the COCO mAP calculation
+                          standard, also compared it with leading lightweight DETR-based models, D-FINE, LW-
+                          DETR, and DEIM-D-FINE. LightSal-RTDETR exhibited significantly lower parameter count
+                          and computational cost while maintaining high detection accuracy, indicating an optimal
+                          balance between computational load and detection performance. In the visual analysis, we
+                          visualized detection results in complex orchard environments, including various lighting
+                          conditions, overlaps, occlusions, and multiple fruits. The results demonstrated the model’s
+                          robustness in challenging orchard scenarios. The proposed method holds promise for
+                          enhancing citrus harvest quality in future automated harvesting platforms.
+                               Despite the promising detection performance of the model, limitations in data collec-
+                          tion still remain. Although this study includes citrus samples at various ripeness stages
+                          collected from complex orchard environments, certain data gaps are evident. For instance,
+                          the dataset lacks instances of decayed citrus fruits and images captured under extreme
+                          weather conditions. These limitations suggest potential areas for improvement. Future
+                          research should focus on gathering a more varied range of datasets to improve the model’s
+                          robustness and generalization ability.
+                               From an architectural design perspective, LightSal-RTDETR introduces CGA to en-
+                          hance feature extraction capability and improve modeling of occluded areas while incorpo-
+                          rating PConv to reduce the model size and computational cost. However, these modules
+                          may face performance degradation under certain conditions. For instance, when the input
+                          image contains significant object occlusion or blurred edges, the local attention mechanism,
+                          due to its limited receptive field, may struggle to model global dependencies across regions,
+                          leading to decreased detection accuracy. Furthermore, in cases of high occlusion or extreme
+                          lighting conditions, partial convolutions may erroneously suppress features in the target
+                          area, negatively impacting the model’s performance. In addition, the E-CSPPC module,
+                          proposed as a lightweight enhancement block, demonstrated varying levels of effectiveness
+                          across different architectures. While it improved both accuracy and efficiency in the RT-
+                          DETR framework, it led to a slight accuracy drop in YOLO11, despite significantly reducing
+                          model complexity. This further reinforces the importance of aligning module design with
+                          architectural characteristics. Future work may explore how such modules can be better
+                          adapted to different model types.
+                               Additionally, the proposed LightSal-RTDETR achieves an mAP of 81%, which meets
+                          the fundamental requirements for industrial deployment. However, there remains room
+                          for further enhancement in detection accuracy. Current maturity detection methods are
+Agronomy 2025, 15, 1173                                                                                                              18 of 20
+
+
+
+                                  still at the algorithmic stage, and there remains a certain gap in their deployment in real-
+                                  world scenarios. The application and deployment of LightSal-RTDETR in citrus orchards
+                                  still require further research and exploration. In the future, our research will continue to
+                                  transform this algorithm into a deployable system to ensure its effectiveness and reliability
+                                  in real orchard environments.
+
+                                  5. Conclusions
+                                       To overcome the difficulties posed by complex orchard environments in citrus ripeness
+                                  detection, we proposed a lightweight algorithm, LightSal-RTDETR, based on the RT-DETR
+                                  architecture. Experimental evaluation confirms that the algorithm achieves 81% in mAP@50
+                                  and 60.5% in mAP@50:95. The proposed approach maintains a favorable balance between
+                                  detection model complexity and precision when compared with popular object detection
+                                  algorithms. LightSal-RTDETR outperforms the original RT-DETR by increasing mAP@50
+                                  by 1.9% and mAP@50:95 by 3.4%, simultaneously achieving a 28.1% reduction in parameter
+                                  count and a 26.5% reduction in computational cost. These results demonstrate the feasibility
+                                  of this method for citrus ripeness detection, enabling more accurate identification of ripe
+                                  and unripe fruits in natural environments and offering robust technical support for the
+                                  development of smart orchards. It should be noted that variations in environmental condi-
+                                  tions and citrus cultivars may influence the model’s detection performance. Subsequent
+                                  studies will aim to refine the model architecture, enrich the dataset, and enhance detection
+                                  accuracy and robustness under diverse and challenging conditions, thereby contributing
+                                  to the advancement of modern agricultural automation. Based on cutting-edge practices
+                                  in agricultural robotics, we propose a feasible prospective deployment plan. Potential
+                                  applications include automated orchard harvesting systems. These implementations are
+                                  expected to significantly enhance the automation level of the citrus industry, optimize
+                                  harvest timing decisions, reduce post-harvest losses, and provide data-driven support for
+                                  precision agriculture, ultimately accelerating the intelligent transformation and upgrading
+                                  of the citrus industry.
+
+                                  Supplementary Materials: The following supporting information can be downloaded at: https:
+                                  //www.mdpi.com/article/10.3390/agronomy15051173/s1, Figures: Images from the Constructed
+                                  Citrus Ripeness Detection Dataset.
+
+                                  Author Contributions: Conceptualization, Y.H. and X.W.; methodology, Y.H.; validation, Y.H., X.W.
+                                  and X.L.; formal analysis, X.L.; investigation, L.C.; resources, X.C.; data curation, X.F.; writing—
+                                  original draft preparation, Y.H.; writing—review and editing, X.F.; visualization, X.L.; supervision,
+                                  L.C.; project administration, X.W.; funding acquisition, X.C. All authors have read and agreed to the
+                                  published version of the manuscript.
+
+                                  Funding: This research was funded by the National Undergraduate Training Program on Innovation
+                                  and Entrepreneurship. Grant Number: 202410626005.
+
+                                  Data Availability Statement: The dataset used in this study is part of ongoing research and is not
+                                  publicly available due to continued use in related experiments. However, a portion of the dataset
+                                  is provided in the Supplementary Materials. The source code is available at https://github.com/
+                                  ZoeHuangYT/LightSal-RTDETR (accessed on 8 May 2025).
+
+                                  Conflicts of Interest: The authors declare no conflicts of interest.
+
+References
+1.   Lu, X.; Zhao, C.; Shi, H.; Liao, Y.; Xu, F.; Du, H.; Xiao, H.; Zheng, J. Nutrients and bioactives in citrus fruits: Different citrus
+     varieties, fruit parts, and growth stages. Crit. Rev. Food Sci. Nutr. 2023, 63, 2018–2041. [CrossRef]
+2.   Rizzo, M.; Marcuzzo, M.; Zangari, A.; Gasparetto, A.; Albarelli, A. Fruit ripeness classification: A survey. Artif. Intell. Agric. 2023,
+     7, 44–57. [CrossRef]
+Agronomy 2025, 15, 1173                                                                                                              19 of 20
+
+
+
+3.    Zhou, H.Y.; Wang, X.; Au, W.; Kang, H.W.; Chen, C. Intelligent robots for fruit harvesting: Recent developments and future
+      challenges. Precis. Agric. 2022, 23, 1856–1907. [CrossRef]
+4.    Malik, M.H.; Zhang, T.; Li, H.; Zhang, M.; Shabbir, S.; Saeed, A. Mature tomato fruit detection algorithm based on improved HSV
+      and watershed algorithm. IFAC-PapersOnLine 2018, 51, 431–436. [CrossRef]
+5.    Ling, X.; Zhao, Y.S.; Gong, L.; Liu, C.L.; Wang, T. Dual-arm cooperation and implementing for robotic harvesting tomato using
+      binocular vision. Robot. Auton. Syst. 2019, 114, 134–143. [CrossRef]
+6.    LeCun, Y.; Bottou, L.; Bengio, Y.; Haffner, P. Gradient-based learning applied to document recognition. Proc. IEEE 1998, 86,
+      2278–2324. [CrossRef]
+7.    Krizhevsky, A.; Sutskever, I.; Hinton, G.E. Imagenet classification with deep convolutional neural networks. Adv. Neural Inf.
+      Process. Syst. 2012, 25, 1097–1105. [CrossRef]
+8.    Simonyan, K.; Zisserman, A. Very deep convolutional networks for large-scale image recognition. arXiv 2014, arXiv:1409.1556.
+9.    Szegedy, C.; Liu, W.; Jia, Y.; Sermanet, P.; Reed, S.; Anguelov, D.; Erhan, D.; Vanhoucke, V.; Rabinovich, A. Going deeper
+      with convolutions. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, Boston, MA, USA,
+      7–12 June 2015; pp. 1–9.
+10.   He, K.; Zhang, X.; Ren, S.; Sun, J. Deep residual learning for image recognition. In Proceedings of the IEEE Conference on
+      Computer Vision and Pattern Recognition, Las Vegas, NV, USA, 27–30 June 2016; pp. 770–778.
+11.   Fan, Y.C.; Zhang, S.Y.; Feng, K.; Qian, K.C.; Wang, Y.T.; Qin, S.Z. Strawberry Ripeness Recognition Algorithm Combining Dark
+      Channel Enhancement and YOLOv5. Sensors 2022, 22, 419. [CrossRef]
+12.   Wang, Z.; Ling, Y.M.; Wang, X.L.; Meng, D.Z.; Nie, L.X.; An, G.Q.; Wang, X.H. An improved Faster R-CNN model for multi-object
+      tomato ripeness detection in complex scenarios. Ecol. Inform. 2022, 72, 12. [CrossRef]
+13.   Xu, L.J.; Wang, Y.H.; Shi, X.S.; Tang, Z.L.; Chen, X.Y.; Wang, Y.C.; Zou, Z.Y.; Huang, P.; Liu, B.; Yang, N.; et al. Real-time and
+      accurate detection of citrus in complex scenes based on HPL-YOLOv4. Comput. Electron. Agric. 2023, 205, 16. [CrossRef]
+14.   Zheng, Z.H.; Xiong, J.T.; Lin, H.; Han, Y.L.; Sun, B.X.; Xie, Z.M.; Yang, Z.G.; Wang, C.L. A Method of Green Citrus Detection in
+      Natural Environments Using a Deep Convolutional Neural Network. Front. Plant Sci. 2021, 12, 13. [CrossRef]
+15.   Chen, S.M.; Xiong, J.T.; Jiao, J.M.; Xie, Z.M.; Huo, Z.W.; Hu, W.X. Citrus fruits ripeness detection in natural environments based
+      on convolutional neural networks and visual saliency map. Precis. Agric. 2022, 23, 1515–1531. [CrossRef]
+16.   Lu, J.; Lee, W.S.; Gan, H.; Hu, X. Immature citrus fruit detection based on local binary pattern feature and hierarchical contour
+      analysis. Biosyst. Eng. 2018, 171, 78–90. [CrossRef]
+17.   Carion, N.; Massa, F.; Synnaeve, G.; Usunier, N.; Kirillov, A.; Zagoruyko, S. End-to-end object detection with transformers. In
+      Proceedings of the European Conference on Computer Vision, Glasgow, UK, 23–28 August 2020; pp. 213–229.
+18.   Zhao, Y.; Lv, W.; Xu, S.; Wei, J.; Wang, G.; Dang, Q.; Liu, Y.; Chen, J. DETRs Beat YOLOs on Real-time Object Detection. arXiv 2023,
+      arXiv:2304.08069.
+19.   Itti, L.; Koch, C.; Niebur, E. A model of saliency-based visual attention for rapid scene analysis. IEEE Trans. Pattern Anal. Mach.
+      Intell. 2002, 20, 1254–1259. [CrossRef]
+20.   Achanta, R.; Hemami, S.; Estrada, F.; Susstrunk, S. Frequency-tuned salient region detection. In Proceedings of the 2009 IEEE
+      Conference on Computer Vision and Pattern Recognition, Miami, FL, USA, 20–25 June 2009; pp. 1597–1604.
+21.   Tzutalin, D. LabelImg.Git Code. 2015. Available online: https://github.com/tzutalin/labelImg (accessed on 20 March 2025).
+22.   Liu, X.; Peng, H.; Zheng, N.; Yang, Y.; Hu, H.; Yuan, Y. Efficientvit: Memory efficient vision transformer with cascaded group
+      attention. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, Vancouver, BC, Canada,
+      17–24 June 2023; pp. 14420–14430.
+23.   Zhang, J.; Li, X.; Li, J.; Liu, L.; Xue, Z.; Zhang, B.; Jiang, Z.; Huang, T.; Wang, Y.; Wang, C. Rethinking mobile block for efficient
+      attention-based models. In Proceedings of the 2023 IEEE/CVF International Conference on Computer Vision (ICCV), Paris, France,
+      1–6 October 2023; pp. 1389–1400.
+24.   Chen, J.; Kao, S.-h.; He, H.; Zhuo, W.; Wen, S.; Lee, C.-H.; Chan, S.-H.G. Run, don’t walk: Chasing higher FLOPS for faster neural
+      networks. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, Vancouver, BC, Canada,
+      17–24 June 2023; pp. 12021–12031.
+25.   Zhang, H.; Xu, C.; Zhang, S. Inner-iou: More effective intersection over union loss with auxiliary bounding box. arXiv 2023,
+      arXiv:2311.02877.
+26.   Gevorgyan, Z. SIoU loss: More powerful learning for bounding box regression. arXiv 2022, arXiv:2205.12740.
+27.   Vaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.; Jones, L.; Gomez, A.N.; Kaiser, Ł.; Polosukhin, I. Attention is all you need. Adv.
+      Neural Inf. Process. Syst. 2017, 30, 5998–6008.
+28.   Zhang, X.; Zhou, X.; Lin, M.; Sun, J. Shufflenet: An extremely efficient convolutional neural network for mobile devices. In
+      Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, Salt Lake City, UT, USA, 18–23 June 2018;
+      pp. 6848–6856.
+Agronomy 2025, 15, 1173                                                                                                               20 of 20
+
+
+
+29.   Chollet, F. Xception: Deep learning with depthwise separable convolutions. In Proceedings of the IEEE Conference on Computer
+      Vision and Pattern Recognition, Honolulu, HI, USA, 21–26 July 2017; pp. 1251–1258.
+30.   Hu, J.; Shen, L.; Sun, G. Squeeze-and-excitation networks. In Proceedings of the IEEE Conference on Computer Vision and Pattern
+      Recognition, Salt Lake City, UT, USA, 18–23 June 2018; pp. 7132–7141.
+31.   Yu, J.; Lin, Z.; Yang, J.; Shen, X.; Lu, X.; Huang, T.S. Free-form image inpainting with gated convolution. In Proceedings of the
+      IEEE/CVF International Conference on Computer Vision, Seoul, Republic of Korea, 27 October–2 November 2019; pp. 4471–4480.
+32.   Liu, W.; Anguelov, D.; Erhan, D.; Szegedy, C.; Reed, S.; Fu, C.-Y.; Berg, A.C. Ssd: Single shot multibox detector. In Proceedings of
+      the Computer Vision–ECCV 2016: 14th European Conference, Amsterdam, The Netherlands, 11–14 October 2016; Proceedings,
+      Part I 14, 2016; pp. 21–37.
+33.   Ren, S.; He, K.; Girshick, R.; Sun, J. Faster R-CNN: Towards real-time object detection with region proposal networks. IEEE Trans.
+      Pattern Anal. Mach. Intell. 2016, 39, 1137–1149. [CrossRef]
+34.   Wang, A.; Chen, H.; Liu, L.; Chen, K.; Lin, Z.; Han, J. Yolov10: Real-time end-to-end object detection. Adv. Neural Inf. Process. Syst.
+      2024, 37, 107984–108011.
+35.   Tian, Y.; Ye, Q.; Doermann, D. Yolov12: Attention-centric real-time object detectors. arXiv 2025, arXiv:2502.12524.
+36.   Peng, Y.; Li, H.; Wu, P.; Zhang, Y.; Sun, X.; Wu, F. D-FINE: Redefine regression Task in DETRs as Fine-grained distribution
+      refinement. arXiv 2024, arXiv:2410.13842.
+37.   Chen, Q.; Su, X.; Zhang, X.; Wang, J.; Chen, J.; Shen, Y.; Han, C.; Chen, Z.; Xu, W.; Li, F. LW-DETR: A transformer replacement to
+      yolo for real-time detection. arXiv 2024, arXiv:2406.03459.
+38.   Huang, S.; Lu, Z.; Cun, X.; Yu, Y.; Zhou, X.; Shen, X. DEIM: DETR with Improved Matching for Fast Convergence. arXiv 2024,
+      arXiv:2412.04234.
+39.   Chattopadhay, A.; Sarkar, A.; Howlader, P.; Balasubramanian, V.N. Grad-cam++: Generalized gradient-based visual explanations
+      for deep convolutional networks. In Proceedings of the 2018 IEEE Winter Conference on Applications of Computer Vision
+      (WACV), Lake Tahoe, NV, USA, 12–15 March 2018; pp. 839–847.
+40.   Zhong, J.; Chen, J.; Mian, A. DualConv: Dual convolutional kernels for lightweight deep neural networks. IEEE Trans. Neural
+      Netw. Learn. Syst. 2022, 34, 9528–9535. [CrossRef]
+41.   Lin, T.-Y.; Maire, M.; Belongie, S.; Hays, J.; Perona, P.; Ramanan, D.; Dollár, P.; Zitnick, C.L. Microsoft coco: Common objects in con-
+      text. In Proceedings of the Computer Vision–ECCV 2014: 13th European Conference, Zurich, Switzerland, 6–12 September 2014;
+      Proceedings, Part V 13, 2014; pp. 740–755.
+42.   Shao, S.; Li, Z.; Zhang, T.; Peng, C.; Yu, G.; Zhang, X.; Li, J.; Sun, J. Objects365: A large-scale, high-quality dataset for
+      object detection. In Proceedings of the IEEE/CVF International Conference on Computer Vision, Seoul, Republic of Korea,
+      27 October–2 November 2019; pp. 8430–8439.
+43.   Golulus. Melon Puspalebo Dataset. Available online: https://universe.roboflow.com/golulus/melon-puspalebo (accessed on
+      2 April 2025).
+
+
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+

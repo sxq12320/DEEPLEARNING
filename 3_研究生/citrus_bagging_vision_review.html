@@ -1,0 +1,3169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>柑橘套袋视觉课题论文规划</title>
+  <style>
+    :root {
+      --bg: #f5f7f4;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #64707d;
+      --line: #d9dfd6;
+      --green: #2f7d32;
+      --green-soft: #e8f3e8;
+      --blue: #235f9c;
+      --blue-soft: #e8f1fb;
+      --orange: #9a5b00;
+      --orange-soft: #fff4df;
+      --red: #9b2c2c;
+      --red-soft: #fff0f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      line-height: 1.72;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    header {
+      padding: 26px 0 22px;
+      border-bottom: 3px solid var(--green);
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 36px 0 14px;
+      padding-left: 12px;
+      border-left: 5px solid var(--green);
+      font-size: 23px;
+      line-height: 1.35;
+    }
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+    p { margin: 8px 0; }
+    a { color: #1769aa; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      background: #edf2f7;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+    }
+    ul, ol { padding-left: 22px; }
+    li { margin: 5px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 14px 0 22px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2ec;
+      font-weight: 700;
+    }
+    .subtitle {
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .two-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .card strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green);
+    }
+    .callout {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--green);
+      background: var(--green-soft);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .blue {
+      border-left-color: var(--blue);
+      background: var(--blue-soft);
+    }
+    .warning {
+      border-left-color: var(--orange);
+      background: var(--orange-soft);
+    }
+    .danger {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      border-radius: 999px;
+      background: #edf2ff;
+      color: #25477a;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .flow div {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    footer {
+      margin-top: 34px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+    @media (max-width: 900px) {
+      .grid, .two-grid, .flow { grid-template-columns: 1fr; }
+      h1 { font-size: 26px; }
+      table { font-size: 13px; }
+      th, td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>柑橘套袋视觉课题论文规划</h1>
+    <p class="subtitle">核心结论：柑橘套袋不是采摘的简单改名。采摘重点是识别、定位和分离果实；套袋重点是让袋口安全包络仍连接在树上的果实，因此必须关注果实边界、果梗连接点、袋口进入方向、遮挡风险和多目标作业顺序。</p>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <strong>原方案风险</strong>
+      论文一只做实例分割，容易被认为是 YOLO/<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 的农业场景应用，创新厚度不足。
+    </div>
+    <div class="card">
+      <strong>新论文一</strong>
+      面向柑橘套袋的实例分割、果梗连接点定位与二维套袋方向估计。
+    </div>
+    <div class="card">
+      <strong>新论文二</strong>
+      显著性引导的柑橘套袋目标优先级排序与顺序决策。
+    </div>
+  </section>
+  <div class="callout">
+    <strong>引用阅读说明：</strong>本文档的每个关键判断都按“直接支撑、迁移支撑、创新组合”三类处理。直接支撑来自柑橘视觉、果实套袋或农业机器人论文；迁移支撑来自苹果、梨、桃等套袋任务和柑橘采摘任务；创新组合表示目前没有完全同名论文，但可以由已有文献和套袋动作需求合理推出。
+  </div>
+
+  <section>
+    <h2>导读：全文逻辑主线</h2>
+    <div class="blue callout">
+      <strong>建议你对老师这样讲：</strong>本文档不是单纯讨论“柑橘分割精度怎么提高”，而是围绕柑橘自动套袋的视觉前端建立一条完整逻辑：为什么套袋值得做 → 套袋和采摘有什么不同 → 套袋视觉到底需要看见什么 → 遮挡和密集果簇如何处理 → 用哪些算法形成可投稿的小论文。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>逻辑层级</th>
+          <th>要回答的问题</th>
+          <th>本文档对应内容</th>
+          <th>最后落到哪里</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>第一层：意义</td>
+          <td>柑橘套袋视觉为什么值得做？是否有实用、经济和社会价值？</td>
+          <td>第 0 节讨论套袋的农艺价值、人工成本、设备成本和低成本 RGB 视觉前端的意义。</td>
+          <td>论文引言中的研究背景和应用价值。</td>
+        </tr>
+        <tr>
+          <td>第二层：任务定义</td>
+          <td>套袋和采摘到底有什么不同？为什么不能只做果实检测或实例分割？</td>
+          <td>第 1-4 节说明已有分割精度较高，套袋需要边界、连接点、入口方向、遮挡风险和作业顺序。</td>
+          <td>论文中的问题定义和创新动机。</td>
+        </tr>
+        <tr>
+          <td>第三层：核心痛点</td>
+          <td>套袋视觉最难的地方是什么？</td>
+          <td>第 11 节重点分析两大痛点：果柄连接点被遮挡、柑橘密集分布且严重遮挡；同时回应“只是分割+关键点”“三维绕不开”“工作量够不够”的质疑。</td>
+          <td>论文方法设计的直接依据。</td>
+        </tr>
+        <tr>
+          <td>第四层：算法方案</td>
+          <td>每个算法模块解决哪个套袋问题？</td>
+          <td>第 5、6、15 节把实例分割、关键点检测、可见性判断、二维方向估计、可套袋评分和显著性排序串成完整闭环。</td>
+          <td>论文一和论文二的方法框架。</td>
+        </tr>
+        <tr>
+          <td>第五层：数据与实验</td>
+          <td>怎样快速采集、标注、验证，保证能发小论文？</td>
+          <td>第 7-10、12 节说明数据共用、快速标注、泛化实验、购买/委托采集规范和实施路线。</td>
+          <td>论文实验设计、数据集描述和可复现性说明。</td>
+        </tr>
+        <tr>
+          <td>第六层：最终总结</td>
+          <td>课题最后到底是什么？目标是什么？</td>
+          <td>第 15 节用“算法模块解决问题”的方式总结整体架构，第 16 节提供参考文献。</td>
+          <td>开题汇报、论文摘要和结论部分。</td>
+        </tr>
+      </tbody>
+    </table>
+    <h3>一页版课题大纲</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>核心说法</th>
+          <th>对应算法</th>
+          <th>输出</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>研究意义</td>
+          <td>套袋具有果实保护、商品性提升和减少重复劳动的价值；自动套袋需要可靠视觉前端。</td>
+          <td>不涉及具体网络，属于背景论证。</td>
+          <td>研究必要性。</td>
+        </tr>
+        <tr>
+          <td>重要任务</td>
+          <td>套袋不是采摘，重点不是把果摘下来，而是让袋口从合适方向进入并完整包络果实。</td>
+          <td>任务定义：RGB-only 2D bagging affordance。</td>
+          <td>可套袋目标、二维入口方向、风险判断。</td>
+        </tr>
+        <tr>
+          <td>痛点一</td>
+          <td>果柄连接点常被叶片、枝条或邻果遮挡，不能盲目预测。</td>
+          <td>ROI 关键点 heatmap + visible/occluded/uncertain 可见性分支 + 低置信度拒识。</td>
+          <td>连接点坐标、可见性、是否跳过。</td>
+        </tr>
+        <tr>
+          <td>痛点二</td>
+          <td>柑橘密集成簇，果实边界粘连、小目标多、遮挡严重。</td>
+          <td>实例分割 + P2/<a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/注意力 + 边界辅助 + <a href="https://arxiv.org/abs/2202.06934">SAHI</a> + 遮挡分组实验。</td>
+          <td>单果 mask、边界完整度、遮挡等级。</td>
+        </tr>
+        <tr>
+          <td>论文一</td>
+          <td>先把单个果实“能否看清、方向是否可靠”做扎实。</td>
+          <td>Bagging-YOLO：分割、连接点、可见性、二维方向多任务网络。</td>
+          <td>mask、连接点、可见性、方向角、风险等级。</td>
+        </tr>
+        <tr>
+          <td>论文二</td>
+          <td>再解决多个果实“先套哪个、后套哪个、哪个跳过”。</td>
+          <td>任务显著性排序：规则评分 / <a href="https://arxiv.org/abs/1711.06160">LightGBM Ranker</a> / <a href="https://arxiv.org/abs/1710.10903">GAT</a> 或 <a href="https://arxiv.org/abs/1706.03762">Transformer</a> 关系建模。</td>
+          <td>Top-K 优先目标、skip 目标、排序分数。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>最简总述：</strong>本课题以 RGB 图像为输入，以自动套袋为目标，将柑橘实例分割、果梗连接点定位、连接点可见性判断、二维入口方向估计和多目标优先级排序组成一个视觉闭环。它的重点不是刷新普通分割 mAP50，而是把视觉结果转化为“可套、不可套、从哪侧套、先套哪个”的作业信息。
+    </div>
+  </section>
+
+  <section>
+    <h2>0. 课题意义：为什么柑橘套袋视觉值得做</h2>
+    <div class="blue callout">
+      <strong>核心判断：</strong>套袋本身有明确农艺价值，但套袋自动化是否值得做，取决于人工成本、果园规模、套袋时期集中程度和设备可靠性。你的论文不需要证明一台完整机器人已经能替代人工，而应证明“低成本 RGB 视觉前端”能为后续套袋机器人提供果实定位、连接点、入口方向和优先级队列。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>意义类型</th>
+          <th>可以怎么写</th>
+          <th>文献或资料支撑</th>
+          <th>写作边界</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>实用意义</td>
+          <td>套袋是幼果期集中完成的高重复劳动，人工需要逐果识别、开袋、套入和固定。视觉系统若能稳定筛选“优先套、可套、暂不套”目标，可减少人工判断时间，并为机械臂减少无效运动。</td>
+          <td>水果套袋综述指出套袋可保护果实、改善外观并降低病虫和环境伤害；自动水果套袋机器人和梨幼果末端执行器论文说明套袋动作确实需要自动化视觉定位和机构配合。</td>
+          <td>不要直接写“完全替代人工”。更稳的说法是“降低人工依赖、提高作业标准化、为自动套袋装备提供视觉基础”。</td>
+        </tr>
+        <tr>
+          <td>效率意义</td>
+          <td>人工套袋的瓶颈不仅是动作慢，还包括密集枝叶中寻找目标、判断方向和处理遮挡。本文的实例分割、连接点定位和排序模块，目标是把人工判断转为机器可计算的候选队列。</td>
+          <td>自动套袋机器人、梨幼果套袋末端执行器和蜜桃幼果套袋跟踪论文均说明，视觉定位、目标稳定性、开袋包络和固定动作会共同影响套袋效率。</td>
+          <td>如果没有真实机器人实验，不要写“效率提高 X%”。可以写“以 Top-K 可套袋率、方向误差和跳过率作为效率潜力指标”。</td>
+        </tr>
+        <tr>
+          <td>经济意义</td>
+          <td>同类果园中，果袋和人工成本占比高。中国果袋产业研究估计苹果从套袋到采摘每个果的人工和纸袋成本约 0.2 元，1 kg 苹果约 5 个袋、约 1 元，占果园支出的 40%-50%；另有苹果病害管理资料提到黄土高原双层纸袋的袋材与人工成本约 0.3-0.5 元/果。</td>
+          <td><a href="https://www.mdpi.com/2071-1050/12/3/1106">Production, Use and Recycling of Fruit Cultivating Bags in China</a>；<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9696287/">Sustainable Apple Disease Management in China</a>。</td>
+          <td>这是苹果等同类果园参考，不是柑橘实测成本。论文里应写“参考同类套袋果园，人工和袋材成本较高”，不要写成柑橘全国统一成本。</td>
+        </tr>
+        <tr>
+          <td>设备成本意义</td>
+          <td>完整套袋机器人包括移动平台、机械臂、末端执行器、相机和边缘计算单元，成本可能达到数万元甚至更高；但本文只做 RGB 视觉前端，硬件可由普通 RGB 相机和边缘计算板组成，成本明显低于 RGB-D/多传感器系统。</td>
+          <td><a href="https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/">NVIDIA Jetson Orin Nano Super Developer Kit</a> 官方价格为 249 美元；轻小型机械臂公开报价从约 995 美元到 3500 美元以上；自动套袋机器人论文也多采用相机、机械臂和专用末端执行器组合。</td>
+          <td>不要把论文写成“低成本整机”。应写“低成本 RGB 视觉方案可降低感知端成本，整机经济性需结合机械结构和作业规模评估”。</td>
+        </tr>
+        <tr>
+          <td>社会意义</td>
+          <td>果园套袋季节性强、劳动强度高、重复性高。随着农村劳动力老龄化和用工成本上升，发展自动化套袋视觉有助于缓解集中用工压力，并提升作业一致性。</td>
+          <td>中国果袋产业研究明确提到农村人口老龄化、用工难和用工贵问题；果树产业机械化研究普遍把劳动力短缺作为自动化需求背景。</td>
+          <td>社会意义要服务论文，不要写太大。重点放在“减少高强度重复劳动”和“适应果园机械化趋势”。</td>
+        </tr>
+        <tr>
+          <td>生态与食品安全意义</td>
+          <td>套袋可作为物理防护手段，减少病虫、鸟害、机械损伤、日灼和部分农药残留风险，有助于绿色生产和商品果外观一致性。</td>
+          <td><a href="https://journals.ashs.org/view/journals/horttech/31/1/article-p4.xml">Preharvest bagging</a> 综述、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7918571/">Influence of Bagging on Fruit Development and Quality</a>、葡萄柚套袋品质研究均支持套袋对外观品质和防护作用的价值。</td>
+          <td>也要承认套袋材料回收问题。自动化课题可以进一步促进规范套袋和袋材回收流程，但不能夸大为天然环保。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>一个可写进论文的经济测算框架：</strong>若果园每季需要套袋 <code>N</code> 个果，人工和袋材综合成本参考同类果园为 <code>C = 0.2-0.5 元/果</code>，则传统套袋成本约为 <code>N × C</code>。当 <code>N = 100000</code> 时，单季成本约为 2-5 万元。你的视觉系统若只是 RGB 前端，硬件成本主要来自相机、计算板和安装件；若扩展为完整机器人，则还要加入机械臂、移动平台、末端执行器和维护成本。因此，本课题最稳的经济定位是“降低自动套袋感知端成本，并提升候选目标选择效率”，不是直接承诺整机当年回本。
+    </div>
+    <p><strong>本节主要依据：</strong>果实套袋农艺价值来自 <a href="https://journals.ashs.org/view/journals/horttech/31/1/article-p4.xml">Preharvest Bagging</a> 综述、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7918571/">Influence of Bagging</a> 综述和葡萄柚套袋研究；人工和果袋成本来自中国果袋生产、使用与回收研究以及苹果病害管理综述；设备成本来自 <a href="https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/">NVIDIA Jetson</a> 官方资料和轻型机械臂公开报价；自动化必要性来自自动水果套袋机器人、梨幼果套袋末端执行器和蜜桃幼果套袋跟踪论文。</p>
+    <div class="warning callout">
+      <strong>答辩时最稳的一句话：</strong>“本课题的直接价值不是马上造出商业化柑橘套袋机器人，而是解决自动套袋装备最前端的视觉判断问题：哪些果能套、从哪侧套、哪些先套、哪些应跳过。这个问题解决后，后续机械臂和末端执行器才有可靠输入。”
+    </div>
+  </section>
+
+  <section>
+    <h2>1. 为什么不建议实例分割单独成文</h2>
+    <div class="danger callout">
+      <strong>判断：</strong>“复杂环境下柑橘果实实例分割方法”可以作为模块，但单独成文风险较高。除非你有大规模自建数据集、明显优于现有方法的模型结构、严格遮挡分组实验，否则论文容易显得工作量偏薄。
+    </div>
+    <p>这个判断不是主观猜测，而是由现有论文推出的。第一，果实检测和分割已经是农业视觉中非常成熟的方向，苹果、柑橘、猕猴桃、草莓等都有大量 YOLO、<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a>、<a href="https://arxiv.org/abs/1706.03762">Transformer</a> 改进工作。第二，柑橘相关研究已经出现“果实 + 果梗 + 采摘点定位”的联合方法，例如 2025 年 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">improved YOLOv8n-seg</a> 工作已经实现柑橘果实和果梗分割，并报告 mAP50 达到 94.43%、采摘点平均检测率 88.38%。第三，<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 等数据集已经把遮挡、密集、小目标、光照变化定义为柑橘 RGB 视觉的共性难点。因此，单独做实例分割很容易落入已有研究范围。</p>
+    <p>因此，你的论文不应该只回答“柑橘在哪里”，而应该回答“这个柑橘是否适合套袋、袋口应该从哪一侧进入、视觉结果是否足够可靠”。这才是机械专业 + 计算机视觉结合的价值。</p>
+    <p><strong>本节主要依据：</strong><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 的柑橘果实/果梗分割与采摘点定位、<a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2022.946154/full">Lu et al. 2022</a> 的柑橘 <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 检测、<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 柑橘检测数据集、YOLOv11/YOLOv8 果实实例分割对比。</p>
+  </section>
+
+  <section>
+    <h2>2. 推荐的两篇论文总体设计</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>论文</th>
+          <th>建议题目</th>
+          <th>核心问题</th>
+          <th>主要输出</th>
+          <th>创新重心</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>论文一</td>
+          <td>面向柑橘自动套袋的果实实例分割与果梗连接点定位方法</td>
+          <td>果实在哪里？果梗连接点在哪里？二维套袋方向是多少？</td>
+          <td>果实 mask、果实中心、连接点、方向角、置信度</td>
+          <td>套袋任务驱动的联合感知，而不是单独分割</td>
+        </tr>
+        <tr>
+          <td>论文二</td>
+          <td>显著性引导的柑橘套袋目标优先级排序与顺序决策方法</td>
+          <td>单张图中多个柑橘，哪个应先套？哪个后套？哪些应跳过？</td>
+          <td>实例 mask、显著性分数、可套袋性分数、优先级序列</td>
+          <td>把无序分割结果转化为有序作业序列</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>两篇之间的关系：</strong>论文一解决“每个果实如何定位和估计方向”，论文二解决“多个候选果实按照什么顺序套袋”。论文二可以使用论文一的实例、关键点和方向输出，但研究目标变为显著性排序和作业顺序决策，不是简单重复。
+    </div>
+    <p><strong>本节主要依据：</strong>论文一借鉴柑橘采摘点定位、单目柑橘采摘位姿和自动水果套袋机器人；论文二借鉴 <a href="https://arxiv.org/abs/2106.05047">Salient Object Ranking</a>、柑橘采摘顺序规划和桃幼果套袋路径规划。</p>
+  </section>
+
+  <section>
+    <h2>3. 文献证据链：哪些已有，哪些还能做</h2>
+    <p>下面这张表是本课题最重要的依据。它的作用不是简单罗列文献，而是判断“哪些内容已经被别人做到较高水平，哪些内容还可以转化为你的创新点”。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>文献证据</th>
+          <th>已有研究说明了什么</th>
+          <th>对你课题的直接启发</th>
+          <th>你的可创新空间</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al., 2025, improved YOLOv8n-seg 柑橘果实/果梗分割与采摘点定位</a></td>
+          <td>该研究针对自然环境中柑橘果梗小、颜色接近背景、位置变化大的问题，使用改进 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> 分割果实和果梗，并结合几何约束定位采摘点；文中报告 mAP50 为 94.43%，采摘点平均检测率为 88.38%。</td>
+          <td>这直接证明“果实 + 果梗 + 操作点”联合感知是可行的，也说明单独做柑橘分割已经不够新。</td>
+          <td>把采摘点定位转化为套袋连接点定位和袋口进入方向估计；采摘关注“剪切点”，套袋关注“果实包络、连接点、进入方向和可操作性”。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2022.946154/full">Lu et al., 2022, improved Mask R-CNN 柑橘绿色果检测</a></td>
+          <td>绿色柑橘和叶片背景颜色相近会导致分割精度下降；该文通过改进 <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 特征提取提高绿色果检测精度，报告平均检测精度为 95.36%。</td>
+          <td>说明果叶颜色相近是柑橘视觉的真实难点，不是你凭空假设的难点。</td>
+          <td>你的论文不应只重复“提高检测精度”，而应进一步讨论密集遮挡场景下分割结果如何服务套袋方向。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/html/2309.05645v3">James et al., 2024, CitDet 柑橘检测基准数据集</a></td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 提供 579 张高分辨率柑橘树图像和 3.2 万余个果实框标注，明确指出 RGB 果园图像存在光照变化、严重遮挡、小目标、单图多实例等问题。</td>
+          <td>这为你的“密集、多果、遮挡严重”问题提供数据集级证据。</td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 主要是检测框，不提供套袋所需的 mask、果梗连接点、方向角和可套袋性标签；你的数据集可围绕这些标签扩展。</td>
+        </tr>
+        <tr>
+          <td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11276354/">Xiao et al., 2024, 单目 RGB 柑橘自动采摘位姿估计</a></td>
+          <td>该类工作说明单目 RGB 可以用于采摘场景中的目标姿态或操作方向估计，但通常需要对任务进行几何约束和场景假设。</td>
+          <td>证明没有深度相机并不等于不能做操作视觉，但表述必须谨慎。</td>
+          <td>你的论文应写“二维套袋方向估计”或“低成本 RGB 前端视觉引导”，不要声称完整三维套袋位姿。</td>
+        </tr>
+        <tr>
+          <td><a href="https://academic.oup.com/fqs/article/doi/10.1093/fqsafe/fyac049/6652345">Jiang et al., 2022, 葡萄柚套袋对理化品质影响</a></td>
+          <td>该研究指出套袋常用于保护柑橘类果实免受昆虫和不良环境影响；实验表明套袋主要影响果皮颜色，对糖酸、氨基酸、黄酮等内在成分影响较小，且效果与袋材、时间和品种有关。</td>
+          <td>这能支撑“套袋有农艺与商品价值”，同时提醒不能夸大为所有品质指标都会提升。</td>
+          <td>你的课题意义应写成“提升套袋作业自动化和标准化”，而不是单纯宣称套袋一定显著提升所有果实品质。</td>
+        </tr>
+        <tr>
+          <td><a href="https://iroboticsjournal.org/index.php/irobotics/article/view/170">Development of an Automatic Agricultural Fruit Bagging Robot, 2023</a></td>
+          <td>该自动套袋机器人使用 RGB-D 相机识别幼果并计算果实与机器人相对位置，末端机构需要完成抬袋包围、夹合袋口、绕扎带、切断和扭紧等连续动作。</td>
+          <td>说明套袋是“包围并固定袋口”的操作，不是把果实从树上摘下；视觉输出必须服务袋口进入和包络过程。</td>
+          <td>你的 RGB 课题可以定位为低成本视觉前端：不声称完整三维控制，而是输出实例、连接点、二维入口方向和风险等级。</td>
+        </tr>
+        <tr>
+          <td><a href="https://link.springer.com/article/10.1007/s11694-026-04505-5">Feng &amp; Mhamed, 2026, YOLOv8n-pose 苹果幼果关键点与姿态估计</a></td>
+          <td>该文明确以水果套袋为应用背景，提出轻量关键点检测与深度辅助姿态估计；其摘要指出自动套袋难在复杂田间环境下幼果检测、关键点精度、姿态估计和计算成本。</td>
+          <td>支撑“关键点 + 姿态/方向”是套袋视觉的合理技术路线。</td>
+          <td>你的不同点是柑橘 RGB-only 场景下做二维连接点和方向估计，并把严重遮挡样本转为不确定性判断。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0168169923009717">Zhang et al., 2024, 蜜桃幼果套袋多目标跟踪</a></td>
+          <td>该文指出幼果套袋机器人常优先选择预测框最大的目标，但检测框不稳定会导致机械运动期望终点不断变化，影响套袋效率；作者用 DeepSORT-SCAE 跟踪幼果目标。</td>
+          <td>说明“先套哪个”和“目标是否稳定”是套袋作业中的真实问题，不是人为增加的后处理。</td>
+          <td>第二篇可以把单图显著性排序扩展为作业优先级：优先处理稳定、可见、方向可靠、干涉小的目标。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.mdpi.com/2227-9717/12/2/259">Design and Simulation of End Effector for Young-Pear-Bagging Robot, 2024</a></td>
+          <td>梨幼果套袋末端执行器研究强调袋口打开、包络和固定机构设计；文中还提到纸袋开合速度、行程和受力会影响袋体破损与机构振动。</td>
+          <td>说明套袋视觉不能只给中心点，必须考虑袋口路径、果实包络和安全间隙。</td>
+          <td>论文一可引入“安全包络框/扩张 mask”和“入口方向可用率”，让视觉指标与机构动作对应。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/html/2410.19869v3">YOLOv11/YOLOv8 果实实例分割对比研究</a></td>
+          <td>近年已有工作直接比较 YOLOv8、YOLOv11 等模型在遮挡与非遮挡果实实例分割中的表现。</td>
+          <td>说明“换一个 YOLO 版本做果实分割”很难成为强创新。</td>
+          <td>YOLO11-seg 可以作为你的工程底座，但论文创新应落在套袋任务定义、连接点、方向和可操作性判断。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2106.05047">Fang et al., 2021, Salient Object Ranking with Position-Preserved Attention</a></td>
+          <td>显著目标排序研究指出，传统显著目标检测只分割显著区域，但不能表达多个实例之间“哪个更显著、更优先”。<a href="https://arxiv.org/abs/2106.05047">SOR</a> 将实例分割与显著性排序结合起来。</td>
+          <td>这正好对应柑橘套袋中的“有顺序分割”：不仅知道图中有哪些果，还要知道哪个应优先处理。</td>
+          <td>把通用显著目标排序迁移到农业套袋场景，定义“套袋显著性”：可见性、可达性、遮挡程度、方向可靠性和作业收益共同决定排序。</td>
+        </tr>
+        <tr>
+          <td><a href="https://link.springer.com/article/10.1007/s11760-023-02676-y">Li et al., 2023, Recognition of citrus fruit and planning the robotic picking sequence in orchards</a></td>
+          <td>该研究将柑橘识别和机器人采摘顺序规划结合起来，把视野内柑橘采摘顺序规划为三维空间 TSP 问题，用于缩短路径并提高作业效率。</td>
+          <td>说明“先作业哪个目标”不是附属问题，而是农业机器人任务规划中的真实问题。</td>
+          <td>你的第二篇可以不做机械臂完整路径规划，而做 RGB 视觉前端的目标优先级排序，为后续机构执行提供有序候选队列。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="blue callout">
+      <strong>由文献推出的结论：</strong>果实检测/分割、果梗分割、采摘点定位、单目 RGB 操作方向估计都已有基础。第二篇如果只做可套袋性分类，仍然偏后处理；如果引入显著性排序，就能把问题提升为“无序视觉识别结果如何转化为有序作业队列”，更适合作为独立论文。
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 柑橘套袋存在的关键事情：任务差异、视觉需求与真实痛点</h2>
+    <div class="danger callout">
+      <strong>答辩时要先把任务定义讲清楚：</strong>采摘的终点是“果实脱离植株”，套袋的终点是“袋口从合适方向进入、果实被完整包络、袋口固定且不伤果梗”。因此，套袋视觉不能只沿用采摘中的果实中心点或采摘点，而要输出能指导袋口运动的边界、连接点、进入方向和作业优先级。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>比较维度</th>
+          <th>采摘视觉</th>
+          <th>套袋视觉</th>
+          <th>对你论文的影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>作业目标</td>
+          <td>定位成熟果，完成抓取、剪切或扭转，使果实脱离植株。</td>
+          <td>果实仍保留在树上，袋口需要包围果实并在果梗附近固定。</td>
+          <td>不能只写“定位果实”，必须写“面向包络操作的视觉感知”。</td>
+        </tr>
+        <tr>
+          <td>关键视觉量</td>
+          <td>果实中心、采摘点、果柄或剪切点、三维坐标。</td>
+          <td>果实可见边界、安全包络、果梗连接点、袋口进入方向、遮挡和干涉风险。</td>
+          <td>论文一应从实例分割扩展到连接点和二维方向，形成闭环。</td>
+        </tr>
+        <tr>
+          <td>失败模式</td>
+          <td>漏摘、夹伤、剪切失败、定位误差导致抓取失败。</td>
+          <td>袋口碰到枝叶或邻果、果实未完全入袋、袋口方向错误、果梗处无法固定、目标顺序混乱。</td>
+          <td>论文二研究优先级排序和 skip 决策是有必要的。</td>
+        </tr>
+        <tr>
+          <td>RGB-only 限制</td>
+          <td>可通过单目估计或几何假设辅助采摘，但三维定位仍有限。</td>
+          <td>袋口包络更依赖深度和空间间隙，单 RGB 不宜声称完整三维套袋。</td>
+          <td>建议表述为“二维视觉前端”和“低成本作业候选决策”。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4.1 套袋课题真正的痛点</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>痛点</th>
+          <th>文献证据</th>
+          <th>解决策略</th>
+          <th>可写成的论文贡献</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>实例分割不足以指导套袋</td>
+          <td>自动套袋机器人文献表明，机构要把幼果放入纸袋并固定袋口；梨幼果套袋末端执行器研究也强调袋口打开、包络和固定。</td>
+          <td>在果实 mask 外增加安全包络区域，估计果实中心到连接点的入口方向，并计算边界完整度。</td>
+          <td>提出“面向包络操作的果实实例分割与方向估计”，区别于普通检测/分割。</td>
+        </tr>
+        <tr>
+          <td>果梗连接点常被遮挡</td>
+          <td>柑橘果梗分割与采摘点定位研究指出果梗小、颜色接近背景、位置变化大；<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 也把遮挡、密集实例、小目标和光照变化列为柑橘 RGB 视觉难点。</td>
+          <td>关键点标签分为 visible、occluded、uncertain；模型输出坐标同时输出可见性置信度。</td>
+          <td>从“强行预测关键点”改成“遮挡感知连接点定位 + 不确定性拒识”。</td>
+        </tr>
+        <tr>
+          <td>单图多果密集，顺序会影响效率</td>
+          <td>蜜桃幼果套袋跟踪研究指出，优先选择最大框目标会因检测框波动导致机械期望终点变化，降低套袋效率；柑橘采摘顺序规划研究也证明作业顺序会影响机器人效率。</td>
+          <td>把每个实例的可见性、连接点可靠性、邻果距离、遮挡程度转为任务显著性分数。</td>
+          <td>第二篇提出“显著性引导的有序套袋分割/优先级排序”，不是简单分类。</td>
+        </tr>
+        <tr>
+          <td>RGB 没有深度，不能证明完整空间位姿</td>
+          <td>自动套袋机器人多使用 RGB-D 计算相对位置；苹果套袋关键点研究也使用深度辅助 3D 姿态估计。</td>
+          <td>把论文边界限定为 RGB 图像平面的方向、风险和排序；实验用角度误差、Top-K 可套袋率、排序一致性证明视觉前端价值。</td>
+          <td>提出“低成本 RGB 套袋视觉前端”，避免和 RGB-D 完整控制系统硬碰硬。</td>
+        </tr>
+        <tr>
+          <td>严重遮挡目标不应被强行套袋</td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 明确把自然果园中的遮挡、密集、小目标和光照变化列为柑橘检测基准中的核心困难。</td>
+          <td>设置 skip 标签和不确定样本评价；严重遮挡、连接点不可见、边界不完整的目标后置或跳过。</td>
+          <td>把遮挡从“模型误差来源”提升为“作业风险识别对象”。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="blue callout">
+      <strong>最稳的故事线：</strong>别人已经证明了果实检测、果梗/采摘点定位、单目或 RGB-D 姿态估计、果实作业顺序规划分别可行；你的创新不是重新证明这些模块，而是把它们重组为“柑橘套袋”需要的视觉闭环：安全包络、连接点、二维入口方向、可套袋风险和优先级队列。
+    </div>
+  </section>
+
+  <section>
+    <h2>5. 论文一：实例分割 + 连接点定位 + 套袋方向估计</h2>
+    <h3>5.1 建议题目</h3>
+    <ul>
+      <li>中文题目：<strong>面向柑橘自动套袋的遮挡感知果实实例分割与果梗连接点定位方法</strong></li>
+      <li>英文题目：<strong>Occlusion-aware Citrus Fruit Instance Segmentation and Stem-junction Localization for Automatic Bagging</strong></li>
+    </ul>
+
+    <h3>5.2 这篇论文要讲清楚的科学问题</h3>
+    <p>普通实例分割只输出果实区域，无法直接指导套袋机构。套袋动作至少需要三个视觉量：果实边界、果梗连接点、袋口进入方向。因此论文一应定义为一个面向套袋的联合视觉任务。</p>
+    <div class="flow">
+      <div>RGB 图像</div>
+      <div>果实实例分割</div>
+      <div>果实中心估计</div>
+      <div>果梗连接点定位</div>
+      <div>二维套袋方向</div>
+    </div>
+    <p>方向角建议拆成两个量来写，避免概念混乱：果梗轴方向为 <code>theta_stem = atan2(Ky-Cy, Kx-Cx)</code>，表示果实中心 <code>C(x,y)</code> 指向果梗连接点 <code>K(x,y)</code> 的图像平面方向；袋口推荐进入侧为连接点的相反侧，可写成 <code>theta_entry = theta_stem + 180°</code>。注意，这里只能称为二维图像平面方向或低成本 RGB 前端方向，不要写成完整三维位姿。</p>
+    <div class="blue callout">
+      <strong>文献支撑：</strong><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 已经证明“柑橘果实分割 + 果梗分割 + 操作点定位”可以作为一个联合感知问题处理；<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11276354/">Xiao et al. 2024</a> 证明单目 RGB 也可以在柑橘采摘中估计操作相关的姿态信息。因此，论文一不是凭空拼接模块，而是把已有“采摘视觉”中的操作点思想迁移到“套袋视觉”，并把输出从采摘点改成连接点和套袋方向。
+    </div>
+
+    <h3>5.3 创新点设计</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>创新点</th>
+          <th>具体做法</th>
+          <th>为什么成立</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>套袋任务驱动的数据标注体系</td>
+          <td>每个果实标注 visible mask、果实中心、果梗连接点、连接点可见性、安全包络框/扩张 mask、方向角。</td>
+          <td>区别于普通检测/分割数据集，直接服务套袋作业。</td>
+        </tr>
+        <tr>
+          <td>分割引导的连接点定位</td>
+          <td>先由实例分割获得单果 ROI，再在 ROI 内预测果梗连接点，减少密集多果干扰。</td>
+          <td>柑橘单图数量多，top-down 结构比全图直接预测关键点更稳定。</td>
+        </tr>
+        <tr>
+          <td>遮挡感知关键点预测</td>
+          <td>连接点标注 visible / occluded / uncertain，网络同时输出坐标和可见性置信度。</td>
+          <td>果梗经常被叶片和相邻果遮挡，强制预测一个点会产生伪精度。</td>
+        </tr>
+        <tr>
+          <td>方向估计评价指标</td>
+          <td>除 mAP、PCK 外，增加角度误差和方向成功率。</td>
+          <td>机械套袋关心方向是否可用，而不只是像素点是否接近。</td>
+        </tr>
+        <tr>
+          <td>安全包络与风险拒识</td>
+          <td>根据果实 mask 生成袋口需要覆盖的扩张区域，检测该区域内是否存在枝叶、邻果或边界缺失。</td>
+          <td>套袋失败往往不是看不见果实，而是袋口路径和包络区域不安全。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.4 推荐模型方案</h3>
+    <p>工程上建议先做两阶段，论文表述上可以写成“分割引导的多任务框架”。这样实现难度可控，也便于发小论文。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>推荐实现</th>
+          <th>可写的改进点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>实例分割</td>
+          <td>YOLO11-seg / YOLOv8-seg / <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 作为基线</td>
+          <td>增加小目标层、注意力模块、边界损失、切片推理 <a href="https://arxiv.org/abs/2202.06934">SAHI</a></td>
+        </tr>
+        <tr>
+          <td>ROI 生成</td>
+          <td>根据 mask 外接框裁剪单果区域，扩大 10%-20% 保留果梗上下文</td>
+          <td>减少单图多果干扰，同时保留枝条和叶片上下文</td>
+        </tr>
+        <tr>
+          <td>关键点检测</td>
+          <td>YOLO-Pose、<a href="https://arxiv.org/abs/2303.07399">RTMPose</a>、<a href="https://arxiv.org/abs/1902.09212">HRNet</a> 或轻量 heatmap head</td>
+          <td>加入可见性分支和局部注意力，专门处理细小果梗点</td>
+        </tr>
+        <tr>
+          <td>方向估计</td>
+          <td>由中心点和连接点几何计算，或增加方向回归分支</td>
+          <td>比较“几何计算”和“直接回归”两种方式的角度误差</td>
+        </tr>
+        <tr>
+          <td>安全包络判断</td>
+          <td>对果实 mask 做尺度扩张，统计扩张区内叶片/枝条/邻果占比或背景缺口</td>
+          <td>把视觉结果转成“可套、风险、跳过”三类作业建议</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.4.1 论文一 baseline 怎么选</h3>
+    <div class="callout">
+      <strong>最推荐：</strong>主 baseline 选 <strong><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a></strong>，不是一上来选最新最复杂模型。原因是柑橘果实/果梗分割与采摘点定位已有 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">improved YOLOv8n-seg</a> 论文，文献链最好解释；代码成熟、训练快，适合你当前“尽快发小论文”的目标。YOLO11-seg 可以作为增强对比或最终工程版本，但不要让它变成论文不可复现的风险点。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>模型</th>
+          <th>在论文中的角色</th>
+          <th>为什么这样安排</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a></td>
+          <td>主 baseline</td>
+          <td>轻量、训练快、农业果实分割文献多，且已有柑橘果实/果梗/采摘点相关论文可直接支撑。</td>
+        </tr>
+        <tr>
+          <td>YOLO11n-seg</td>
+          <td>强 baseline / 工程对比</td>
+          <td>如果你本地代码已经跑通，可以展示新版本模型效果；但文献解释不如 YOLOv8 稳。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a></td>
+          <td>经典实例分割 baseline</td>
+          <td>作为两阶段实例分割代表，能证明你的方法不是只和 YOLO 系列内部比较。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2112.01527">Mask2Former</a> / <a href="https://arxiv.org/abs/1904.02689">YOLACT</a></td>
+          <td>可选强对比</td>
+          <td>如果时间充足再做；时间紧时不建议强行加入，配置成本可能超过收益。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.4.2 论文一网络创新怎么做</h3>
+    <p>论文一的网络创新不要写成“随便加注意力模块”。建议把模型命名为 <strong>Bagging-YOLO</strong> 或 <strong>BSJ-YOLO</strong>，核心是“面向套袋的多任务视觉网络”：同一个 backbone 提取特征，同时输出果实 mask、果梗连接点、连接点可见性和二维入口方向。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>改进模块</th>
+          <th>具体实现</th>
+          <th>解决的套袋痛点</th>
+          <th>参考文献支撑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>小目标与密集果实特征层</td>
+          <td>在 YOLO neck 中增加 P2 小目标检测/分割层，或采用 <a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/加权特征融合。</td>
+          <td>果实密集、远处果实小、果梗连接点细小，普通 P3-P5 特征容易丢细节。</td>
+          <td><a href="https://arxiv.org/abs/1911.09070">EfficientDet</a> 的 <a href="https://arxiv.org/abs/1911.09070">BiFPN</a>；<a href="https://arxiv.org/abs/2202.06934">SAHI</a> 小目标切片推理；<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 对小目标和密集遮挡的分析。</td>
+        </tr>
+        <tr>
+          <td>轻量注意力模块</td>
+          <td>在 backbone 后段或 neck 中加入 <a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a>、<a href="https://arxiv.org/abs/1807.06521">CBAM</a> 或 EMA，优先选一种。</td>
+          <td>增强果实边界、细长果梗和叶片背景之间的区分，不建议多个注意力堆叠。</td>
+          <td><a href="https://arxiv.org/abs/1807.06521">CBAM</a>、<a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a> 论文；农业 YOLO 改进论文常用注意力增强复杂背景特征。</td>
+        </tr>
+        <tr>
+          <td>连接点 heatmap 分支</td>
+          <td>在实例 ROI 或共享特征上增加 1 个关键点热力图头，预测果梗-果实连接点。</td>
+          <td>把“果实在哪里”提升为“套袋入口参考点在哪里”。</td>
+          <td><a href="https://arxiv.org/abs/1902.09212">HRNet</a>、<a href="https://arxiv.org/abs/2303.07399">RTMPose</a>、YOLO-Pose；柑橘采摘点定位论文。</td>
+        </tr>
+        <tr>
+          <td>可见性分类分支</td>
+          <td>每个连接点输出 visible / occluded / uncertain，遮挡样本降低或取消坐标损失。</td>
+          <td>果梗经常被叶片遮挡，强行回归不可见点会制造假精度。</td>
+          <td><a href="https://arxiv.org/abs/1405.0312">COCO keypoint visibility</a> 标注；<a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">Rethinking Visibility in Human Pose Estimation</a>。</td>
+        </tr>
+        <tr>
+          <td>方向向量回归分支</td>
+          <td>回归 <code>(cos theta_entry, sin theta_entry)</code>，并与几何计算方向做对比。</td>
+          <td>套袋真正需要的是入口方向，关键点误差不一定等于方向不可用。</td>
+          <td>单目柑橘采摘位姿估计；苹果套袋关键点姿态估计。</td>
+        </tr>
+        <tr>
+          <td>多任务损失</td>
+          <td><code>L = Lseg + λ1 Lkp + λ2 Lvis + λ3 Ldir + λ4 Lboundary</code>。</td>
+          <td>用任务损失约束网络输出对套袋有用的信息，而不是只优化 mAP。</td>
+          <td><a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 多任务思想；姿态估计 heatmap loss；实例分割边界优化研究。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>最小可发版本：</strong><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> + <a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a>/<a href="https://arxiv.org/abs/1911.09070">BiFPN</a> 二选一 + 连接点 heatmap head + 可见性分支。不要同时加 5 个模块，否则审稿人会认为是堆模块，也很难做消融。
+    </div>
+
+    <h3>5.4.3 论文一必须做的消融实验</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>实验组</th>
+          <th>目的</th>
+          <th>主要指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> baseline</td>
+          <td>证明基础分割能力。</td>
+          <td>mask mAP、Recall、FPS</td>
+        </tr>
+        <tr>
+          <td>baseline + 小目标/特征融合模块</td>
+          <td>证明密集小目标和遮挡果实分割改善。</td>
+          <td>重遮挡 AP、密集场景 AP、Recall</td>
+        </tr>
+        <tr>
+          <td>baseline + 连接点 head</td>
+          <td>证明网络可以从分割扩展到套袋操作点。</td>
+          <td>PCK、像素误差、OKS-mAP</td>
+        </tr>
+        <tr>
+          <td>baseline + 可见性分支</td>
+          <td>证明遮挡样本不强行预测，提升可靠性。</td>
+          <td>visible PCK、uncertain 识别 F1、方向成功率</td>
+        </tr>
+        <tr>
+          <td>完整 Bagging-YOLO</td>
+          <td>证明分割、连接点、方向和风险判断形成闭环。</td>
+          <td>mAP、PCK、角度误差、可套袋前端成功率</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.5 数据采集与标注</h3>
+    <ul>
+      <li>采集数量：初期 800-1500 张 RGB 图像；如果时间有限，至少保证 500 张高质量图像。</li>
+      <li>场景覆盖：晴天、阴天、逆光、近景、远景、叶片遮挡、果实重叠、高密度果簇。</li>
+      <li>实例标注：每个可见柑橘标注 visible mask，不建议一开始做完整 amodal mask，工作量太大。</li>
+      <li>关键点标注：每个果实标注果梗-果实连接点；看不清时标为 occluded 或 uncertain。</li>
+      <li>安全包络标注：由 mask 自动扩张生成候选包络区，再人工标注是否存在明显枝叶/邻果干涉。</li>
+      <li>遮挡等级：轻度遮挡 0%-30%，中度 30%-60%，重度超过 60%。</li>
+    </ul>
+
+    <h3>5.6 实验指标</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>任务</th>
+          <th>指标</th>
+          <th>必须报告的分组结果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>实例分割</td>
+          <td>mask mAP、AP50、AP75、Recall、FPS</td>
+          <td>轻/中/重遮挡，低/中/高密度</td>
+        </tr>
+        <tr>
+          <td>关键点定位</td>
+          <td>PCK、OKS-mAP、平均像素误差</td>
+          <td>连接点 visible 与 occluded 分开统计</td>
+        </tr>
+        <tr>
+          <td>方向估计</td>
+          <td>平均角度误差、误差小于 15° 的比例、误差小于 20° 的比例</td>
+          <td>不同遮挡等级下的方向可用率</td>
+        </tr>
+        <tr>
+          <td>套袋前端可用性</td>
+          <td>安全包络准确率、风险识别 F1、可套/跳过分类准确率</td>
+          <td>轻/中/重遮挡和密集果簇场景分别统计</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.7 论文一的风险和兜底</h3>
+    <div class="warning callout">
+      <strong>最大风险：</strong>果梗连接点在很多图像中根本不可见。如果强行让模型预测所有样本，论文会被质疑标注不可靠、评价不公平。
+    </div>
+    <ul>
+      <li>兜底方案一：只对 visible 和部分 occluded 样本评价关键点坐标，对 uncertain 样本评价“是否识别为不确定”。</li>
+      <li>兜底方案二：如果关键点精度不高，把贡献转为“连接点可见性判断 + 方向粗估计”。</li>
+      <li>兜底方案三：如果实例分割效果已经很好，把论文重点放在“分割结果如何转化为套袋方向”。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6. 论文二：显著性引导的套袋优先级排序</h2>
+    <h3>6.1 为什么这个方向比原来的第二篇更出彩</h3>
+    <p>原来的第二篇“可套袋性判别”只回答某个果实能不能套，容易被认为是论文一结果的后处理。老师提出的显著性检测可以把问题升级为：在一张图中存在多个柑橘时，系统不仅要分割每个果实，还要输出一个有顺序的套袋队列，即哪个先套、哪个后套、哪个暂时跳过。</p>
+    <div class="blue callout">
+      <strong>文献支撑：</strong>显著目标排序 <a href="https://arxiv.org/abs/2106.05047">SOR</a> 研究说明，传统分割只能得到目标区域，不能表达多个实例之间的优先关系；柑橘采摘顺序规划研究说明，农业机器人中“先作业哪个目标”会影响路径长度、效率和安全性。因此第二篇可以从“可不可套”进一步提升为“套袋目标显著性排序与顺序决策”。
+    </div>
+
+    <h3>6.2 建议题目</h3>
+    <ul>
+      <li>中文题目：<strong>显著性引导的柑橘套袋目标优先级排序与顺序决策方法</strong></li>
+      <li>英文题目：<strong>Saliency-guided Priority Ranking for Citrus Fruit Bagging Targets in Dense Orchard Scenes</strong></li>
+    </ul>
+
+    <h3>6.3 这篇论文的任务定义</h3>
+    <p>论文二的核心不是普通显著性检测，而是<strong>任务显著性</strong>。普通显著性关心人眼最容易注意到哪个目标；套袋显著性关心机器人最应该优先处理哪个目标。</p>
+    <ul>
+      <li><span class="tag">输入</span> 一张 RGB 图像，以及论文一输出的果实实例、连接点、方向角和置信度。</li>
+      <li><span class="tag">输出 1</span> 每个果实的套袋显著性分数，例如 0-1。</li>
+      <li><span class="tag">输出 2</span> 有序套袋序列，例如 Fruit-3 → Fruit-1 → Fruit-5。</li>
+      <li><span class="tag">输出 3</span> 跳过目标列表，例如遮挡严重、连接点不可靠、边界不完整。</li>
+    </ul>
+    <p>可以把每个果实的优先级定义为：</p>
+    <p><code>Priority = w1 * 可见性 + w2 * 连接点可靠性 + w3 * 方向可靠性 + w4 * 可达性 - w5 * 遮挡风险 - w6 * 相互干涉风险</code></p>
+    <p>如果没有机械臂参数，先不要写真实空间可达性，可以用图像级代理指标：果实面积、距图像中心距离、遮挡比例、邻近果实距离、连接点置信度、方向角稳定性。</p>
+
+    <h3>6.4 创新点设计</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>创新点</th>
+          <th>具体做法</th>
+          <th>论文价值</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>从无序分割到有序分割</td>
+          <td>实例分割后不只输出 mask，而是给每个实例分配套袋优先级。</td>
+          <td>解决“识别到了很多果，但机器人不知道先处理哪个”的问题。</td>
+        </tr>
+        <tr>
+          <td>任务显著性定义</td>
+          <td>将视觉显著性、可套袋性、连接点可靠性和干涉风险融合为一个排序分数。</td>
+          <td>区别于普通 SOD/<a href="https://arxiv.org/abs/2106.05047">SOR</a>，显著性由作业需求决定，而不是由人眼注意决定。</td>
+        </tr>
+        <tr>
+          <td>遮挡与密集场景下的顺序策略</td>
+          <td>优先选择连接点可见、遮挡少、周围干涉小的果；重叠严重目标后置或跳过。</td>
+          <td>把遮挡问题从“提高识别精度”扩展为“降低作业失败风险”。</td>
+        </tr>
+        <tr>
+          <td>排序质量评价</td>
+          <td>引入 Spearman 相关系数、NDCG、Top-K 命中率、平均优先级误差等指标。</td>
+          <td>使第二篇具备独立评价体系，不只是分类准确率。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.5 显著性排序如何实现</h3>
+    <p>建议先做可解释的“几何特征 + 学习排序”方案，再尝试深度排序网络。这样更适合硕士论文，也便于和导师解释。这里的显著性不是传统“画面中最吸引人眼的物体”，而是“最适合当前被套袋机构优先处理的目标”。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>输入</th>
+          <th>输出</th>
+          <th>建议</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>规则评分基线</td>
+          <td>mask 面积、遮挡比例、连接点置信度、邻近果距离、中心距离</td>
+          <td>优先级分数</td>
+          <td>必须做，作为论文 baseline，解释性强。</td>
+        </tr>
+        <tr>
+          <td>学习排序模型</td>
+          <td>每个果实的视觉特征 + 几何特征 + 论文一置信度</td>
+          <td>排序分数或成对偏好</td>
+          <td>推荐使用 <a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>、<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> ranker 或 pairwise ranking loss。</td>
+        </tr>
+        <tr>
+          <td>显著性图监督</td>
+          <td>整图 RGB + 实例 mask + 人工优先级热图</td>
+          <td>套袋显著性图</td>
+          <td>更像视觉论文，但标注成本更高，可作为增强方案。</td>
+        </tr>
+        <tr>
+          <td>序列优化</td>
+          <td>候选果实坐标、优先级、相互干涉关系</td>
+          <td>最终套袋序列</td>
+          <td>可用贪心、TSP 启发式或图排序；RGB-only 阶段先做图像平面序列。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>推荐的论文实现强度：</strong>第一层做规则评分，保证方法可解释；第二层做 pairwise learning-to-rank，证明模型能从数据学习“哪个更适合先套”；第三层可选做显著性热图或实例级 saliency head，提升视觉论文味道。时间不够时，前两层已经可以形成完整第二篇。
+    </div>
+
+    <h3>6.5.1 论文二 baseline 怎么选</h3>
+    <p>论文二不能只和“无排序”比较，否则说服力不足。推荐把 baseline 分成四类：简单规则、单目标排序学习、通用显著目标排序、加入关系建模的你的方法。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>baseline</th>
+          <th>做法</th>
+          <th>它代表什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>无序 baseline</td>
+          <td>直接按检测置信度或图像读取顺序输出。</td>
+          <td>证明普通实例分割本身没有作业顺序能力。</td>
+        </tr>
+        <tr>
+          <td>规则排序 baseline</td>
+          <td>按面积、中心距离、连接点置信度、遮挡率、邻果距离加权。</td>
+          <td>必须做，作为最强可解释传统方法。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a> / <a href="https://arxiv.org/abs/1711.06160">LightGBM Ranker</a></td>
+          <td>输入每个果实的几何特征和论文一置信度，学习 pairwise preference。</td>
+          <td>证明排序不是手工规则，模型能从标注顺序中学习。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2106.05047">SOR/PPA</a> 类显著目标排序</td>
+          <td>如果代码能跑，用通用显著目标排序方法做迁移对比。</td>
+          <td>说明人眼显著性不等于套袋优先级。</td>
+        </tr>
+        <tr>
+          <td>你的 TaskSal-Rank 网络</td>
+          <td>实例特征 + 几何特征 + 邻接关系建模，输出优先级分数和 skip 概率。</td>
+          <td>第二篇的网络创新主体。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.5.2 论文二网络创新怎么做</h3>
+    <p>建议把第二篇网络写成 <strong>TaskSal-Rank</strong>：面向套袋任务显著性的实例级排序网络。它不重新做分割，而是接收论文一的实例结果，把每个果实变成一个节点，学习“哪个更应该先套”。这样两篇论文既关联，又不重复。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>具体实现</th>
+          <th>创新解释</th>
+          <th>参考文献支撑</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>实例特征池化</td>
+          <td>从 YOLO/Mask 特征图中对每个果实做 RoIAlign 或 mask pooling，得到实例视觉特征。</td>
+          <td>排序对象是“果实实例”，不是整图像素显著图。</td>
+          <td><a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 的 RoI 思想；<a href="https://arxiv.org/abs/2106.05047">SOR</a> 将实例分割与显著排序结合。</td>
+        </tr>
+        <tr>
+          <td>任务几何特征融合</td>
+          <td>拼接面积、中心距离、连接点置信度、遮挡率、邻果最小距离、方向稳定性。</td>
+          <td>把套袋机械需求显式注入排序网络，避免只学到“大的果更显著”。</td>
+          <td>柑橘采摘顺序规划、桃幼果套袋路径规划、learning-to-rank 文献。</td>
+        </tr>
+        <tr>
+          <td>实例关系建模</td>
+          <td>用轻量 <a href="https://arxiv.org/abs/1706.03762">Transformer</a> encoder 或 <a href="https://arxiv.org/abs/1710.10903">Graph Attention Network</a> 建模果实之间的遮挡和邻近关系。</td>
+          <td>密集果簇中，一个果的优先级取决于周围果和叶片干涉，不是独立分类问题。</td>
+          <td>Graph Attention Networks；<a href="https://arxiv.org/abs/1706.03762">Transformer</a>/注意力排序思想；农业作业顺序规划。</td>
+        </tr>
+        <tr>
+          <td>排序头 + 跳过头</td>
+          <td>排序头输出 priority score，跳过头输出 skip probability。</td>
+          <td>符合套袋实际：不是所有识别出的果都应该马上套袋。</td>
+          <td><a href="https://arxiv.org/abs/2106.05047">SOR</a> 的排序输出；采摘/套袋机器人中的可达性和作业序列思想。</td>
+        </tr>
+        <tr>
+          <td>排序损失</td>
+          <td>使用 pairwise <a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a> loss、listwise NDCG loss 或 margin ranking loss，并加入 skip BCE。</td>
+          <td>评价目标从“分类对不对”变成“顺序排得是否合理”。</td>
+          <td><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>、<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">LambdaRank</a>/<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">LambdaMART</a>、<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> ranking。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="blue callout">
+      <strong>最小可发版本：</strong>如果深度关系网络来不及，就做“规则排序 + <a href="https://arxiv.org/abs/1711.06160">LightGBM Ranker</a> + MLP <a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a> + 消融”。如果要体现网络创新，则在 MLP <a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a> 前加一个实例关系模块，写成 TaskSal-Rank。第二篇的关键不是模型多大，而是你定义了“套袋任务显著性”并用排序指标证明它有效。
+    </div>
+
+    <h3>6.5.3 论文二必须做的消融实验</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>实验组</th>
+          <th>证明什么</th>
+          <th>指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>按置信度/面积/中心距离排序</td>
+          <td>简单视觉显著性不足以代表套袋优先级。</td>
+          <td>NDCG@K、Top-1、Spearman</td>
+        </tr>
+        <tr>
+          <td>规则评分</td>
+          <td>人工规则能提供合理下限。</td>
+          <td>NDCG@3、Top-3 可套袋率</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>/<a href="https://arxiv.org/abs/1711.06160">LightGBM Ranker</a></td>
+          <td>学习排序优于固定规则。</td>
+          <td>NDCG@K、Kendall Tau</td>
+        </tr>
+        <tr>
+          <td>TaskSal-Rank 去掉关系模块</td>
+          <td>验证邻果干涉和遮挡关系建模是否有用。</td>
+          <td>密集场景 NDCG@K、skip F1</td>
+        </tr>
+        <tr>
+          <td>TaskSal-Rank 去掉连接点/方向特征</td>
+          <td>证明论文一输出对论文二有贡献。</td>
+          <td>Top-1、方向误差、前 K 个目标可套袋率</td>
+        </tr>
+        <tr>
+          <td>完整 TaskSal-Rank</td>
+          <td>证明有序套袋视觉队列优于无序实例分割。</td>
+          <td>NDCG@K、Top-K、Spearman、skip F1</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.6 标注怎么做</h3>
+    <p>第二篇需要新增“顺序标签”。不要让标注员凭感觉乱排，应制定规则，并保留人工主观判断。</p>
+    <ul>
+      <li>每张图先标出所有可套袋候选果实。</li>
+      <li>人工给出优先级：1 表示最优先，2 表示次优先，依次排序。</li>
+      <li>若果实明显不可套，标为 skip，不参与前 K 个排序评价。</li>
+      <li>记录排序依据：连接点可见、遮挡少、果实独立、靠近图像中心、方向可靠、干涉少。</li>
+      <li>建议至少 2 名标注者独立排序，计算一致性；不一致样本作为 hard case。</li>
+    </ul>
+
+    <h3>6.7 先后顺序的合理规则</h3>
+    <p>柑橘套袋顺序可以先采用图像级规则，后续再接机械臂路径规划。推荐顺序逻辑如下：</p>
+    <ul>
+      <li>优先套连接点可见、方向角稳定的果实。</li>
+      <li>优先套遮挡少、mask 边界完整的果实。</li>
+      <li>优先套与其他果实距离较远、袋口不易碰撞的果实。</li>
+      <li>优先套位于图像中心、尺寸适中、置信度高的果实。</li>
+      <li>果实重叠严重、连接点不可见、方向不确定的目标后置或跳过。</li>
+      <li>如果两果相互遮挡，可优先处理前景果，再处理被遮挡果。</li>
+    </ul>
+    <p>这就把“显著性”定义成套袋任务里的优先处理程度，而不是传统视觉里的颜色或对比度显著。</p>
+
+    <h3>6.8 如何证明“先后顺序”不是主观想象</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>质疑</th>
+          <th>回应方法</th>
+          <th>实验设计</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>排序标签是人主观排的</td>
+          <td>制定明确规则：连接点可见、遮挡少、包络安全、邻果干涉小、方向可靠优先。</td>
+          <td>两名以上标注者独立排序，报告 Kendall Tau 或 Spearman 一致性。</td>
+        </tr>
+        <tr>
+          <td>没有机械臂，怎么证明先套这个更好</td>
+          <td>论文定位为 RGB 视觉前端，不证明完整机械臂路径最优。</td>
+          <td>比较排序前 K 个目标的平均遮挡率、方向误差、skip 率和包络风险。</td>
+        </tr>
+        <tr>
+          <td>显著性检测和普通分割有什么区别</td>
+          <td>普通分割输出无序实例，套袋显著性输出实例级优先级和暂不处理目标。</td>
+          <td>设置 YOLO/<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 无序输出、规则排序、学习排序三组对比。</td>
+        </tr>
+        <tr>
+          <td>只按面积或中心距离排序是否足够</td>
+          <td>面积和中心距离只能代表易检测程度，不能代表袋口包络安全。</td>
+          <td>做消融实验：去掉连接点可靠性、去掉包络风险、去掉邻近干涉，观察 NDCG@K 和 Top-1 准确率下降。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.9 论文二的实验指标</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>指标</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>排序一致性</td>
+          <td>Spearman 相关系数、Kendall Tau</td>
+          <td>评价预测顺序和人工顺序是否一致。</td>
+        </tr>
+        <tr>
+          <td>Top-K 优先目标</td>
+          <td>Top-1 Accuracy、Top-3 命中率、NDCG@K</td>
+          <td>评价模型是否能选出最应该先套的果。</td>
+        </tr>
+        <tr>
+          <td>跳过目标识别</td>
+          <td>Precision、Recall、F1-score</td>
+          <td>评价严重遮挡、不可套目标是否被正确后置或跳过。</td>
+        </tr>
+        <tr>
+          <td>顺序收益</td>
+          <td>前 K 个目标的平均方向误差、可套袋率、遮挡风险</td>
+          <td>证明显著性排序后，优先处理的目标更可靠。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.10 论文二的风险和兜底</h3>
+    <ul>
+      <li>风险一：排序标签主观性强。解决：制定排序准则，采用多标注者一致性，使用 pairwise preference 降低绝对名次争议。</li>
+      <li>风险二：没有机械臂，无法验证真实最短路径。解决：明确论文定位为 RGB 前端优先级排序，用图像平面距离和遮挡风险做离线验证。</li>
+      <li>风险三：显著性容易被误解为传统 SOD。解决：在论文中明确提出“套袋任务显著性”，强调它由可套袋性、方向可靠性和干涉风险定义。</li>
+      <li>风险四：数据量不够。解决：先做规则评分和学习排序，再根据数据量决定是否训练深度显著性图网络。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7. 两篇论文的数据如何共用但不重复</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>标注内容</th>
+          <th>论文一使用</th>
+          <th>论文二使用</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果实 mask</td>
+          <td>训练和评价实例分割</td>
+          <td>计算可见面积、边界完整度、密集程度</td>
+        </tr>
+        <tr>
+          <td>果梗连接点</td>
+          <td>训练关键点定位和方向估计</td>
+          <td>作为优先级排序中的方向可靠性特征</td>
+        </tr>
+        <tr>
+          <td>连接点可见性</td>
+          <td>遮挡感知关键点评价</td>
+          <td>影响套袋显著性分数和 skip 决策</td>
+        </tr>
+        <tr>
+          <td>遮挡类型</td>
+          <td>分组评价模型鲁棒性</td>
+          <td>计算遮挡风险和相互干涉风险</td>
+        </tr>
+        <tr>
+          <td>可套袋等级</td>
+          <td>可作为补充分析</td>
+          <td>作为排序标签的组成部分</td>
+        </tr>
+        <tr>
+          <td>优先级序号</td>
+          <td>不使用，避免和论文一混淆</td>
+          <td>核心训练标签，用于学习“先套哪个、后套哪个”</td>
+        </tr>
+        <tr>
+          <td>skip 标签</td>
+          <td>可作为错误案例分析</td>
+          <td>识别严重遮挡、连接点不可靠、暂不适合套袋的目标</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>这样安排后，同一套数据可以服务两篇论文，但每篇论文的核心问题不同：论文一是“定位精度”，论文二是“排序决策”。</p>
+  </section>
+
+  <section>
+    <h2>8. 快速发小论文的数据集采集与标注方案</h2>
+    <div class="danger callout">
+      <strong>现实目标：</strong>如果当前最重要的是快速毕业和尽快发出第一篇小论文，不建议一开始做“大而全”的套袋数据集。最稳路线是先完成论文一：实例分割 + 连接点可见性 + 少量可见连接点定位 + 二维入口方向。论文二的优先级排序可以作为后续扩展，不要让它拖慢第一篇。
+    </div>
+
+    <h3>8.1 最小可发表数据规模</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>数据层级</th>
+          <th>建议数量</th>
+          <th>标注内容</th>
+          <th>用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A 级：完整精标</td>
+          <td>200-300 张图</td>
+          <td>果实 mask、连接点、可见性、遮挡等级、可套/跳过</td>
+          <td>训练和评价论文一核心方法。</td>
+        </tr>
+        <tr>
+          <td>B 级：分割标注</td>
+          <td>300-600 张图</td>
+          <td>只标果实 mask 或框转 mask，不强制标关键点</td>
+          <td>增强实例分割鲁棒性，降低精标压力。</td>
+        </tr>
+        <tr>
+          <td>C 级：外部泛化</td>
+          <td>50-150 张图</td>
+          <td>从公开数据或委托采集数据中少量补标 mask/连接点</td>
+          <td>做泛化实验，不追求大规模。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>不要把每张图所有小果都标完。为了速度，可以设规则：面积太小、严重模糊、连接点完全不可判断的果实只标为 ignore 或 skip，不参与关键点坐标损失。</p>
+
+    <h3>8.2 采集前要准备什么</h3>
+    <ul>
+      <li>设备：手机或普通 RGB 相机即可，保留原图，不要用社交软件压缩后的图片。</li>
+      <li>命名：按 <code>date_orchard_tree_view_0001.jpg</code> 命名，例如 <code>20260704_A_tree03_front_0001.jpg</code>。</li>
+      <li>记录表：至少记录日期、地点/果园、品种或树编号、天气、拍摄距离、拍摄人、相机型号。</li>
+      <li>拍摄距离：近景 0.4-0.8 m 用于关键点，远景 1-2 m 用于密集多果分割；不要全是远景。</li>
+      <li>拍摄角度：正面、左 30°、右 30°、略俯视、略仰视；同一果簇多角度拍 2-3 张即可，避免大量重复。</li>
+      <li>场景覆盖：晴天、阴天、侧光、逆光、叶片遮挡、果实重叠、密集果簇各保留一部分。</li>
+    </ul>
+
+    <h3>8.3 最快标注策略</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>标签</th>
+          <th>是否必须</th>
+          <th>快速标注方法</th>
+          <th>注意事项</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果实 mask</td>
+          <td>必须</td>
+          <td>用 <a href="https://arxiv.org/abs/2304.02643">SAM</a>、CVAT、LabelMe 或 Roboflow 先生成轮廓，再人工修边。</td>
+          <td>只标可见区域 visible mask，不做完整 amodal mask。</td>
+        </tr>
+        <tr>
+          <td>果梗连接点</td>
+          <td>必须，但只标可判断样本</td>
+          <td>在 mask 对应果实上点一个点，表示果梗与果实的交界。</td>
+          <td>看不清就标 occluded/uncertain，不要硬猜。</td>
+        </tr>
+        <tr>
+          <td>连接点可见性</td>
+          <td>必须</td>
+          <td>三类：visible、occluded、uncertain。</td>
+          <td>这是你处理遮挡痛点的关键标签。</td>
+        </tr>
+        <tr>
+          <td>遮挡等级</td>
+          <td>建议</td>
+          <td>轻度、中度、重度三档即可。</td>
+          <td>不要追求精确百分比，三档更快。</td>
+        </tr>
+        <tr>
+          <td>可套/跳过</td>
+          <td>建议</td>
+          <td>good、risk、skip 三档。</td>
+          <td>可由连接点可见性、遮挡等级、邻果干涉共同决定。</td>
+        </tr>
+        <tr>
+          <td>优先级顺序</td>
+          <td>第二篇再标</td>
+          <td>每张图只排前 3 个最适合套袋目标。</td>
+          <td>为了速度，不要给所有果实完整排序。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.4 一周到两周的执行安排</h3>
+    <ol>
+      <li><strong>第 1-2 天：</strong>拍 300-500 张，先删掉模糊、重复、过远图片，保留 250-350 张可用图。</li>
+      <li><strong>第 3-5 天：</strong>完成 150-200 张 mask 标注，先训练一个 YOLO-seg baseline。</li>
+      <li><strong>第 6-8 天：</strong>在 baseline 预测结果上继续修 mask，补到 300 张左右。</li>
+      <li><strong>第 9-11 天：</strong>给连接点可见的果实标 <code>K_stem</code>，给果脐可见的果实标 <code>K_calyx</code>，同时补 <code>view_state</code> 和 visible/occluded/uncertain 状态。</li>
+      <li><strong>第 12-14 天：</strong>划分 train/val/test，跑遮挡分组实验和角度误差实验。</li>
+    </ol>
+    <div class="blue callout">
+      <strong>最省时间的投稿版本：</strong>数据集写成“自建 RGB 柑橘套袋视觉数据集”，核心标签包括 visible mask、stem-junction keypoint、visibility flag 和 bagging direction。先不承诺大规模公开，也不要把顺序排序作为第一篇必须完成项。
+    </div>
+  </section>
+
+  <section>
+    <h2>9. 泛化性实验怎么做</h2>
+    <p>泛化性实验要现实。公开柑橘数据集通常有检测框或分类标签，例如 <a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 有 579 张高分辨率图像和 3.2 万余个果实框，Campaneta-Orange-Fruit 有 UAV 采集的橙园 RGB/多光谱图像，Mendeley citrus dataset 偏分类/检测用途。这些数据通常没有果梗连接点标签，因此不能要求它们直接评价关键点。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>泛化实验</th>
+          <th>怎么做</th>
+          <th>评价什么</th>
+          <th>工作量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>内部泛化</td>
+          <td>按日期、树编号、光照或果园划分训练/测试，而不是随机划分。</td>
+          <td>模型是否适应新树、新光照、新遮挡。</td>
+          <td>低，必须做。</td>
+        </tr>
+        <tr>
+          <td>遮挡分组泛化</td>
+          <td>轻/中/重遮挡分别报告 mAP、PCK、角度误差。</td>
+          <td>证明方法解决了真正难点。</td>
+          <td>低，依赖你的遮挡标签。</td>
+        </tr>
+        <tr>
+          <td>外部检测/分割泛化</td>
+          <td>在 <a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 或其他橙子公开数据上测试果实检测/分割迁移能力。</td>
+          <td>只评价果实定位，不评价连接点。</td>
+          <td>中，公开数据多为框标注。</td>
+        </tr>
+        <tr>
+          <td>外部小样本关键点泛化</td>
+          <td>从公开数据或委托采集图中抽 50-100 张，自己补标连接点。</td>
+          <td>评价关键点 PCK、可见性分类、方向角误差。</td>
+          <td>中，但可控。</td>
+        </tr>
+        <tr>
+          <td>少样本适应</td>
+          <td>外部数据只用 10、30、50 张微调，比较微调前后性能。</td>
+          <td>证明方法不需要大量新标注也能迁移。</td>
+          <td>中，论文说服力较强。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>推荐写法：</strong>“由于公开柑橘数据集通常不提供果梗连接点标注，本文采用两级泛化评价：第一，在公开数据集上评价果实定位泛化；第二，随机抽取少量外部图像补充连接点标注，评价套袋方向估计泛化。” 这样说是诚实且可操作的。
+    </div>
+  </section>
+
+  <section>
+    <h2>10. 关于购买或委托采集数据</h2>
+    <div class="danger callout">
+      <strong>底线：</strong>如果图片是在咸鱼或其他渠道购买的，论文里不能写成“本人亲自拍摄”。这属于数据来源不实，风险很高。可以购买或委托采集，但必须如实写成“委托采集数据”“授权采集数据”或“自建数据集由研究团队按统一协议采集”，前提是你能证明数据来源合法。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>做法</th>
+          <th>是否建议</th>
+          <th>论文中怎么写</th>
+          <th>需要保留的证据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>自己去果园拍</td>
+          <td>最稳</td>
+          <td>“使用 RGB 相机在某果园采集……”</td>
+          <td>原图 EXIF、采集记录表、现场照片。</td>
+        </tr>
+        <tr>
+          <td>请同学/果农按你的协议拍</td>
+          <td>可行</td>
+          <td>“由研究团队或委托人员按照统一采集协议采集……”</td>
+          <td>拍摄协议、原图、时间地点记录、授权说明。</td>
+        </tr>
+        <tr>
+          <td>咸鱼购买现成图片</td>
+          <td>谨慎，不推荐作为主数据</td>
+          <td>只能写“授权购买的外部图像数据”，不能写自采。</td>
+          <td>购买记录、授权许可、原图来源说明、可用于科研发表的书面确认。</td>
+        </tr>
+        <tr>
+          <td>网上随便爬图</td>
+          <td>不建议</td>
+          <td>版权和重复风险高，不适合做主数据集。</td>
+          <td>很难证明合法来源。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>如果你确实想买数据，比较安全的方式是“委托采集”而不是“购买现成包”：给对方拍摄协议，让他按距离、角度、天气、原图格式拍摄，并提供原始照片和授权说明。论文中可以写“本研究构建的数据集由研究团队设计采集方案，并由委托人员在果园现场采集”，不要写“本人拍摄”。</p>
+  </section>
+
+  <section>
+    <h2>11. 痛点问题与解决方案</h2>
+    <div class="blue callout">
+      <strong>本节专项结论：</strong>柑橘套袋视觉最核心的两个痛点不是“模型精度不够”这么简单，而是视觉信息本身不完整：第一，果柄连接点经常被叶片、枝条或相邻果遮挡；第二，柑橘在果园中密集成簇，实例边界粘连、尺度变化大、小目标多。对应策略应从“强行预测”改为“可见则定位、不可见则判断不确定并触发跳过/二次观察”；从“单张图全局检测”改为“高分辨率多尺度分割 + 密集遮挡分组 + 排序决策”。
+    </div>
+
+    <h3>11.1 痛点一：果柄连接点被遮挡怎么处理</h3>
+    <p><strong>文献证明这个问题真实存在：</strong><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 在柑橘果实和果梗分割研究中明确指出柑橘果梗小、细长，容易被枝叶遮挡；<a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB citrus stem pose estimation</a> 也指出非结构化果园中果柄会被枝叶和重叠果实遮挡，导致采摘定位精度下降。葡萄、番茄、草莓和苹果等采摘/套袋关键点研究也反复把“果柄小、遮挡重、低对比度”列为关键点定位难点。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>文献证据</th>
+          <th>它证明了什么</th>
+          <th>对柑橘套袋的启发</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025 improved YOLOv8n-seg</a></td>
+          <td>柑橘果梗是细长小目标，且常受叶片、枝条和重叠果实干扰；论文把果实、果梗分割和采摘点定位组合起来。</td>
+          <td>你的连接点不能只当普通关键点，应先用果实/果梗分割约束搜索区域，再估计袋口入口方向。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB citrus stem pose estimation</a></td>
+          <td>在非结构化果园中，果柄会被枝叶遮挡并受果实重叠影响；论文通过 ROI 检测、深度点云和 oriented bounding box 估计果柄姿态。</td>
+          <td>你没有深度相机，因此不能照搬 3D 姿态，但可以借鉴“先定位 ROI、再估计果柄方向”的思路，降级为 RGB 二维方向。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.sciencedirect.com/science/article/pii/S1537511024000989">Tomato peduncle node 3D pose</a>、<a href="https://www.mdpi.com/2073-4395/14/12/3027">TomatoPoseNet</a>、string tomato keypoint papers</td>
+          <td>番茄采摘把 peduncle node、主茎和果柄上的多个解剖点作为关键点，说明“果柄连接结构”比果心更接近真实操作点。</td>
+          <td>柑橘套袋可以把果实中心、连接点、局部果柄轴线共同定义为入口方向，而不是只预测一个孤立点。</td>
+        </tr>
+        <tr>
+          <td>草莓/辣椒 peduncle keypoint 研究</td>
+          <td>小果柄、遮挡、低对比度和复杂背景会显著降低关键点定位稳定性，top-down 检测框或 ROI 关键点流程更常见。</td>
+          <td>你的模型应采用“实例分割后的局部 ROI heatmap”，并单独报告 occluded 子集的失败率。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/1405.0312">COCO keypoint visibility</a> 与 <a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">WACV 2024 occluded pose reasoning</a></td>
+          <td>通用关键点领域并不把所有被遮挡点都同等处理，而是显式建模可见性或遮挡推理。</td>
+          <td>最稳的标注是 visible / occluded / uncertain；visible 算坐标误差，occluded/uncertain 算可见性和拒识能力。</td>
+        </tr>
+        <tr>
+          <td><a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">Active perception fruit harvesting review</a>、<a href="https://www.sciencedirect.com/science/article/pii/S1537511024002204">next-best-view</a> tomato/fruit harvesting</td>
+          <td>农业机器人常用主动换视角解决作物遮挡，因为单张图像无法恢复所有被遮挡操作点。</td>
+          <td>对严重遮挡连接点，论文中应写“跳过或二次近景采集”，不要写成单 RGB 可以看穿遮挡。</td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <thead>
+        <tr>
+          <th>处理层级</th>
+          <th>推荐方法</th>
+          <th>解决什么问题</th>
+          <th>文献依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>标注层</td>
+          <td>把连接点标成 <code>visible / occluded / uncertain</code>。只有 visible 样本参与坐标精度评价；occluded 样本评价可见性分类；uncertain 样本只要求网络识别为不可靠。</td>
+          <td>避免在果柄完全不可见时强行标一个“想象点”，减少伪标签和伪精度。</td>
+          <td><a href="https://arxiv.org/abs/1405.0312">COCO keypoint visibility</a>、<a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">Rethinking Visibility in Human Pose Estimation</a>、柑橘果梗遮挡失败案例。</td>
+        </tr>
+        <tr>
+          <td>网络层</td>
+          <td>采用“果实实例分割 → 扩大 ROI → 连接点 heatmap head”的 top-down 流程；ROI 扩大 10%-25%，保留果梗和枝叶上下文。</td>
+          <td>单图果实多时，全图关键点容易错配；先分割单果再定位连接点，能减少相邻果干扰。</td>
+          <td><a href="https://arxiv.org/abs/1902.09212">HRNet/RTMPose</a> top-down 姿态估计、YOLO-Pose、草莓多遮挡关键点定位、苹果套袋 YOLOv8n-pose。</td>
+        </tr>
+        <tr>
+          <td>辅助分支</td>
+          <td>增加连接点可见性分支和方向向量分支，输出 <code>(x, y, visibility, cosθ, sinθ)</code>，而不是只输出坐标。</td>
+          <td>套袋更关心方向是否可靠。连接点略有误差但方向可用时仍有价值；连接点不可见时应拒识。</td>
+          <td>单目柑橘采摘位姿估计、<a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB</a> 果柄姿态估计、番茄 peduncle keypoint pose estimation。</td>
+        </tr>
+        <tr>
+          <td>几何后处理</td>
+          <td>若果梗局部可见，先分割/检测细长果梗，再用骨架化、PCA 或直线拟合估计果梗轴线，与果实 mask 边界交点作为连接点候选。</td>
+          <td>当果柄不是一个清晰点，而是一段细长结构时，直接点回归不稳定；轴线与果实边界交点更符合套袋方向。</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 的果梗分割与采摘点几何定位、<a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB stem pose</a>、番茄/葡萄 peduncle 姿态估计。</td>
+        </tr>
+        <tr>
+          <td>主动感知兜底</td>
+          <td>当 visibility 低或方向置信度低时，不输出套袋方向，转为“二次近景拍摄/换视角/暂时跳过”。RGB-only 阶段可模拟为同一果实拍摄 2-3 个角度。</td>
+          <td>单张 RGB 图像不能凭空看穿叶片。真正可靠的系统应把不可见目标交给二次观察或跳过策略。</td>
+          <td><a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">Active perception fruit harvesting review</a>、multi-view active vision、<a href="https://www.sciencedirect.com/science/article/pii/S1537511024002204">next-best-view</a> planning、safe leaf manipulation。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>具体算法路线：</strong>训练时使用 <code>L = Lmask + Lkp_visible + λ1 Lvisibility + λ2 Ldirection</code>。其中 <code>Lkp_visible</code> 只对 visible 连接点计算 heatmap 或 OKS 损失；occluded 和 uncertain 样本不计算坐标损失，只训练可见性分类。推理时若 <code>visibility_score &lt; 0.5</code> 或方向熵过高，就输出“不可套/需二次观察”，而不是给出一个不可信方向。
+    </div>
+    <div class="warning callout">
+      <strong>论文里最稳的写法：</strong>不要说“本文能准确定位所有被遮挡果柄连接点”。应写“本文提出遮挡感知连接点定位：对可见连接点进行精确定位，对遮挡或不确定连接点进行可靠性判断，并将低可靠目标从套袋候选队列中后置或剔除。” 这比强行预测所有点更科学，也更符合真实套袋作业。
+    </div>
+    <h4>遮挡分级后的实际处理策略</h4>
+    <p>果梗连接点遮挡不能只用一个“关键点回归”概念带过。更适合小论文的写法是：先判断连接点是否可见，再决定定位、粗估、拒识或复拍。这样既能形成创新点，也能避免被质疑“被挡住的点没有真实视觉证据”。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>遮挡场景</th>
+          <th>视觉判断</th>
+          <th>算法处理</th>
+          <th>论文依据与写法</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>连接点清晰可见</td>
+          <td>果实 mask 完整，连接点附近有果梗纹理或局部枝条线索。</td>
+          <td>正常训练连接点 heatmap/坐标回归，同时输出果心到连接点的二维方向向量。</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 已把柑橘果实、果梗分割和采摘点定位组合为操作视觉任务；你的论文可迁移为“套袋连接点定位”。</td>
+        </tr>
+        <tr>
+          <td>轻度遮挡，果梗局部可见</td>
+          <td>连接点可能被叶缘挡住，但果梗有一段可见，果实边界仍可分割。</td>
+          <td>先分割/检测细长果梗，再用骨架化、PCA 或最小二乘直线拟合估计果梗轴线；轴线与果实 mask 边界交点作为连接点候选，置信度降低。</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 用果梗 mask、细化骨架和几何约束定位采摘点；<a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB citrus stem pose</a> 说明果柄方向可作为采摘姿态依据。</td>
+        </tr>
+        <tr>
+          <td>连接点被叶片或邻果完全遮挡</td>
+          <td>果实主体可见，但连接点处没有可靠纹理，人工也难以确定精确点。</td>
+          <td>不计算连接点坐标损失，只训练 <code>visibility=occluded</code>；推理时输出“不可直接套袋/需要换视角/排序后置”。可保留低置信度方向，但不计入成功样本。</td>
+          <td><a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">Sun et al. 2024</a> 指出把遮挡关键点和可见关键点混在一起训练会引入不可靠遮挡特征；<a href="https://arxiv.org/abs/1405.0312">COCO</a> 也区分关键点可见性。</td>
+        </tr>
+        <tr>
+          <td>果实重遮挡，边界也不完整</td>
+          <td>visible mask 面积小，果实完整轮廓和连接点都不稳定。</td>
+          <td>用遮挡等级或可见率作为风险分数；重遮挡目标不进入第一批套袋队列。若时间允许，只在少量样本上补充 amodal/椭圆补全标注验证可见率。</td>
+          <td><a href="https://www.sciencedirect.com/science/article/pii/S0168169923002429">Gené-Mola et al. 2023</a> 用 modal/amodal mask 计算果实可见率，并证明过滤低可见率目标可提升尺寸估计精度；这支持“低可见率拒识”。</td>
+        </tr>
+        <tr>
+          <td>单张 RGB 无法判断</td>
+          <td>模型输出低可见性、低方向置信度或多候选连接点冲突。</td>
+          <td>触发二次近景拍摄、左右小角度复拍，或在实验中模拟为同一果簇多角度 RGB 图像；仍然不做点云。</td>
+          <td><a href="https://www.sciencedirect.com/science/article/pii/S1537511024002204">Burusa et al. 2024</a> 的 next-best-view 研究说明主动换视角可处理植物部位遮挡；<a href="https://arxiv.org/html/2409.17389v2">Yao et al. 2024</a> 进一步说明重遮挡甚至需要移叶暴露目标。</td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>是否需要做非模态标注</h4>
+    <div class="blue callout">
+      <strong>建议：</strong>不要把大规模非模态分割作为主任务，否则标注量会明显增加。对你现在“快速发一篇小论文”的目标，更稳的是做 <strong>visible mask + 连接点可见性 + 遮挡等级 + 可套袋性</strong>。非模态只做小子集验证，作为遮挡分析的补充实验。
+    </div>
+    <p>非模态分割的价值在于估计被遮挡果实的完整外形和可见率，但它不能直接恢复被叶片遮住的真实果梗连接点。<a href="https://www.sciencedirect.com/science/article/pii/S0168169923002429">Gené-Mola et al. 2023</a> 证明 modal mask 与 amodal mask 可以计算果实可见率，并把可见率作为测量置信度；因此你可以借鉴“可见率”思想，而不是必须给每个柑橘都标完整 amodal mask。</p>
+    <p>最省力的标注方案是：每个果实标 visible mask；连接点标 <code>visible / occluded / uncertain</code>；遮挡等级标 <code>0=无遮挡、1=轻遮挡、2=中遮挡、3=重遮挡</code>；再标 <code>baggable / skip</code>。若要增强论文说服力，可抽取 100-200 张重遮挡图像额外标一个椭圆补全轮廓或 amodal mask，用于证明“可见率越低，连接点误差越大，拒识越有必要”。</p>
+    <h4>可以写成的小论文创新点</h4>
+    <p>这部分可以凝练为“遮挡感知的果梗连接点定位”。具体创新不是发明一个从零开始的新网络，而是在 YOLO/Mask R-CNN 类实例分割基础上增加三个与套袋强相关的输出：连接点 heatmap、连接点可见性、二维入口方向。训练时只对 visible 连接点计算坐标损失，对 occluded/uncertain 样本计算可见性损失；推理时用可见性和方向置信度控制是否进入套袋队列。这个设计能直接回应师兄的问题：你的工作不是普通分割+关键点，而是面向套袋动作的“可见性判断、方向可靠性和风险拒识”。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>怎么做</th>
+          <th>指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>可见性分类实验</td>
+          <td>把连接点分为 visible、occluded、uncertain，训练可见性 head。</td>
+          <td>Visibility Accuracy、F1-score、uncertain 召回率。</td>
+        </tr>
+        <tr>
+          <td>可见连接点定位实验</td>
+          <td>只在 visible 样本上计算连接点定位误差。</td>
+          <td>PCK、OKS-mAP、平均像素误差。</td>
+        </tr>
+        <tr>
+          <td>方向可靠性实验</td>
+          <td>用果心到连接点方向或方向分支输出套袋入口方向。</td>
+          <td>平均角度误差、误差小于 15°/20° 的比例。</td>
+        </tr>
+        <tr>
+          <td>拒识收益实验</td>
+          <td>比较“不拒识强行预测”和“低置信度跳过/二次观察”。</td>
+          <td>Top-K 可套袋率、错误方向率、跳过目标准确率。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 痛点二：柑橘密集分布和严重遮挡怎么处理</h3>
+    <p><strong>文献证明这个问题真实存在：</strong><a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 把柑橘检测中的小目标、密集实例、遮挡和多品种场景作为数据集挑战；<a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO</a> 专门针对果叶遮挡和果实重叠造成的漏检提出全局上下文融合；<a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Dense TRU-YOLO</a>、<a href="https://www.sciencedirect.com/science/article/pii/S2772375525008214">YOLO-FCAP</a> 等柑橘检测研究也把自然果园中的小目标、遮挡、果叶相似和边缘设备限制作为主要难点。水果 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a> 研究进一步说明，重叠遮挡会导致只看可见区域时形状、尺寸和位置估计不完整。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>文献证据</th>
+          <th>它证明了什么</th>
+          <th>对柑橘套袋的启发</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a> benchmark</td>
+          <td>真实柑橘树图像中存在单图多实例、小目标、遮挡和复杂光照；数据集规模达到数万果实框。</td>
+          <td>你的论文必须做密度/遮挡分组实验，否则“复杂环境”没有被量化。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO</a></td>
+          <td>果叶遮挡和果实重叠会导致漏检；该文通过 NextViT 和 Global Context Fusion Module 增强全局上下文。</td>
+          <td>密集果簇不是只靠浅层纹理能分开，需要局部边界 + 全局上下文共同判断。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Dense-TRU-YOLO</a></td>
+          <td>自然环境中远距离小目标检测困难；该文使用 Denseblock、<a href="https://arxiv.org/abs/1706.03762">Transformer</a> 和 UNet++-FPN 增强多尺度融合。</td>
+          <td>可以把 P2 小目标层、<a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/UNet++-style neck 作为你处理密集小果的网络改进依据。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.sciencedirect.com/science/article/pii/S2772375525008214">YOLO-FCAP</a>、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11039839/">YCCB-YOLO</a>、<a href="https://ijabe.org/index.php/ijabe/article/view/8935">ELD-YOLO</a></td>
+          <td>轻量化、多尺度特征保留、小目标层和注意力模块常用于果园遮挡、小目标和边缘部署场景。</td>
+          <td>你的改进应控制在轻量范围：小目标层 + 一个注意力/上下文模块 + 边界辅助，不要堆太多模块。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/1912.08193">PointRend</a>、<a href="https://arxiv.org/abs/2104.05239">Boundary Patch Refinement</a>、绿色果实边界分割论文</td>
+          <td>重叠或边界模糊时，粗 mask 会在边界处过平滑；点渲染或边界补丁能改善边界质量。</td>
+          <td>两个柑橘粘连时，边界辅助分支比单纯提高 backbone 更直接对应痛点。</td>
+        </tr>
+        <tr>
+          <td>Fruit <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a>、<a href="https://arxiv.org/abs/2602.23953">GDA-YOLO11</a> amodal harvesting</td>
+          <td>遮挡会让可见 mask 低估完整果实形状；<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a> 能估计不可见区域，但标注成本更高。</td>
+          <td>快速毕业版本先做 visible mask + 遮挡等级 + 安全包络；amodal 只作为增强实验或未来工作。</td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <thead>
+        <tr>
+          <th>处理层级</th>
+          <th>推荐方法</th>
+          <th>解决什么问题</th>
+          <th>文献依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>数据层</td>
+          <td>采集时强制覆盖低/中/高密度果簇，标注遮挡等级：轻度 0%-30%、中度 30%-60%、重度 &gt;60%。每张图记录实例数量和邻果最小距离。</td>
+          <td>没有遮挡分组实验，模型提升无法证明是针对密集遮挡有效。</td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a>、<a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO</a> occlusion subset、草莓多遮挡关键点数据集。</td>
+        </tr>
+        <tr>
+          <td>输入与推理层</td>
+          <td>使用较高分辨率训练/推理，如 960 或 1280；对远景高密度图使用 <a href="https://arxiv.org/abs/2202.06934">SAHI</a> 切片推理，再做实例融合。</td>
+          <td>密集果簇中单个果实像素占比小，直接 640 输入容易漏检和边界粗糙。</td>
+          <td><a href="https://arxiv.org/abs/2202.06934">SAHI</a> 小目标检测、<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 小目标分布、<a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Dense TRU-YOLO</a> 小目标检测。</td>
+        </tr>
+        <tr>
+          <td>特征层</td>
+          <td>在 YOLO neck 中加入 P2 小目标层、<a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/UNet++-FPN 或全局上下文模块；注意力只选 <a href="https://arxiv.org/abs/1807.06521">CBAM</a>、<a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a> 或 <a href="https://arxiv.org/abs/1706.03762">Transformer</a>-style global context 中一种。</td>
+          <td>浅层细节保留果实边界，全局上下文区分果实与叶片，避免相邻果粘连。</td>
+          <td><a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO</a> Global Context Fusion、<a href="https://arxiv.org/abs/1911.09070">EfficientDet</a> <a href="https://arxiv.org/abs/1911.09070">BiFPN</a>、<a href="https://arxiv.org/abs/1807.06521">CBAM</a>、<a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a>、<a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Dense TRU-YOLO</a>。</td>
+        </tr>
+        <tr>
+          <td>实例分离层</td>
+          <td>增加边界分支或中心点分支：mask head 预测果实区域，同时预测边界/中心热图，用于分开粘连果实。</td>
+          <td>两个相邻柑橘颜色相近，普通 mask 容易连成一个实例。</td>
+          <td><a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a>、<a href="https://arxiv.org/abs/1912.08193">PointRend</a>/边界细化思想、南瓜 fruit-stem instance segmentation 中 transformer + point rendering 处理重叠。</td>
+        </tr>
+        <tr>
+          <td>遮挡表达层</td>
+          <td>短期不做完整 amodal mask，而是标注 visible mask + occlusion level + safety envelope；如果时间充足，再尝试可见 mask 到完整轮廓的 amodal/ellipse completion。</td>
+          <td>套袋要知道袋口包络风险，但完整 amodal 标注成本高，容易拖慢第一篇。</td>
+          <td>水果 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a>、End-to-End Robotic Harvesting via Amodal Instance Segmentation。</td>
+        </tr>
+        <tr>
+          <td>作业决策层</td>
+          <td>对密集果簇不强求全部立即套袋。使用论文二的任务显著性排序：优先处理可见度高、边界完整、邻果距离大、连接点可靠的果；重叠严重目标后置或跳过。</td>
+          <td>密集遮挡不是纯分割问题，也会影响袋口进入路径和碰撞风险。</td>
+          <td><a href="https://arxiv.org/abs/2106.05047">Salient Object Ranking</a>、柑橘采摘顺序规划、桃幼果套袋路径规划。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="blue callout">
+      <strong>可投稿的网络方案：</strong>以 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> 为 baseline，构建 Dense-Bagging-YOLO：P2 小目标分支 + <a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/全局上下文融合 + 边界辅助分支 + 连接点可见性分支。推理阶段加入 <a href="https://arxiv.org/abs/2202.06934">SAHI</a> 处理远景密集小目标，后处理阶段加入遮挡等级和任务显著性排序。这样每个模块都对应一个真实痛点，而不是为了改网络而改网络。
+    </div>
+    <div class="callout">
+      <strong>实际落地优先级：</strong>第一优先做遮挡/密度标签和分组实验；第二优先做高分辨率或 <a href="https://arxiv.org/abs/2202.06934">SAHI</a>，通常见效快；第三优先加 P2 或 <a href="https://arxiv.org/abs/1911.09070">BiFPN</a>；第四优先加边界辅助分支。不要一开始同时做 <a href="https://arxiv.org/abs/1706.03762">Transformer</a>、amodal、排序和主动视觉，否则第一篇小论文会被拖慢。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>实验</th>
+          <th>怎么做</th>
+          <th>指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>密度分组实验</td>
+          <td>按每张图果实数量分为低密度、中密度、高密度。</td>
+          <td>mask mAP、Recall、漏检率、FPS。</td>
+        </tr>
+        <tr>
+          <td>遮挡分组实验</td>
+          <td>按轻/中/重遮挡统计分割和连接点结果。</td>
+          <td>AP50、AP75、visible PCK、方向成功率。</td>
+        </tr>
+        <tr>
+          <td>小目标实验</td>
+          <td>比较 640、960、1280 和 <a href="https://arxiv.org/abs/2202.06934">SAHI</a> 切片推理。</td>
+          <td>小目标 AP、Recall、推理时间。</td>
+        </tr>
+        <tr>
+          <td>边界/实例分离实验</td>
+          <td>比较无边界分支、边界分支、中心点辅助分支。</td>
+          <td>重叠果簇 AP、实例粘连错误率。</td>
+        </tr>
+        <tr>
+          <td>排序收益实验</td>
+          <td>比较全量处理、按置信度处理、按任务显著性处理。</td>
+          <td>Top-K 可套袋率、平均遮挡率、邻果干涉率。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>论文里最稳的写法：</strong>不要承诺“解决所有密集遮挡”。应写“通过多尺度特征增强、切片推理、边界辅助分割和任务显著性排序，提升密集遮挡场景下的可见实例分割质量，并优先选择视觉可靠、机械干涉风险低的果实进入套袋队列。”
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>难点</th>
+          <th>为什么难</th>
+          <th>解决方法</th>
+          <th>写论文时怎么表达</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果梗连接点被遮挡</td>
+          <td>叶片、枝条、相邻果会挡住连接点，人工也难以判断。</td>
+          <td>引入 visible / occluded / uncertain 标签；对 uncertain 不强行回归坐标。</td>
+          <td>提出遮挡感知连接点定位，而不是普通关键点检测。</td>
+        </tr>
+        <tr>
+          <td>单图果实数量多</td>
+          <td>密集果簇中实例边界粘连，关键点容易分配错误。</td>
+          <td>先实例分割，再单果 ROI 关键点检测；论文二进一步对多个实例进行优先级排序。</td>
+          <td>提出从“多目标识别”到“有序套袋队列”的视觉决策框架。</td>
+        </tr>
+        <tr>
+          <td>RGB 图像没有深度</td>
+          <td>无法直接获得袋口和果实的三维相对位置。</td>
+          <td>限定为二维方向估计和前端作业决策；必要时固定拍摄距离或二次近景拍摄。</td>
+          <td>强调低成本 RGB 视觉，不与 RGB-D 直接竞争。</td>
+        </tr>
+        <tr>
+          <td>果实颜色与叶片相近</td>
+          <td>未成熟柑橘和叶片都偏绿色，纹理差异弱。</td>
+          <td>多光照数据增强、注意力模块、边界监督、困难样本重采样。</td>
+          <td>复杂自然环境下的鲁棒实例分割。</td>
+        </tr>
+        <tr>
+          <td>套袋成功缺少真实机构验证</td>
+          <td>没有完整机器人系统时，难以证明真实套袋成功率。</td>
+          <td>用方向角误差、Top-K 可套袋率、排序一致性和简易模拟装置验证。</td>
+          <td>定位为视觉感知前端研究，不夸大为完整自动套袋系统。</td>
+        </tr>
+        <tr>
+          <td>优先级排序标签主观</td>
+          <td>不同人对“先套哪个”的判断可能不同。</td>
+          <td>制定排序准则，采用多标注者一致性；将绝对排序转为成对偏好学习。</td>
+          <td>提出套袋任务显著性，而不是纯主观显著性。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.3 面对“只是分割+关键点、mAP50 已很高、三维绕不开、工作量不够”的回应</h3>
+    <div class="danger callout">
+      <strong>核心调整：</strong>不要把论文讲成“柑橘分割 + 关键点检测”。应讲成“面向柑橘套袋动作的遮挡感知视觉可供性评估”：输入 RGB 图像，输出每个果实的可见 mask、连接点、连接点可见性、二维入口方向、套袋风险、skip 决策和优先级。分割和关键点只是中间变量，最终目标是判断“这个果现在能不能套、从哪个方向套、先套还是后套”。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>质疑</th>
+          <th>不能这样回答</th>
+          <th>建议这样回答</th>
+          <th>文献依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>“你不就是分割 + 关键点吗？”</td>
+          <td>“我的精度更高。”</td>
+          <td>“已有研究已经证明柑橘分割和果梗采摘点定位可行。我的差异不是单纯识别，而是把视觉结果转成套袋动作所需的可套袋性：连接点是否可见、袋口入口方向是否可靠、边界是否足以安全包络、密集果簇中是否应跳过或后置。”</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 证明分割+采摘点已有基础；套袋机器人和梨幼果末端执行器证明套袋需要开袋、包络和固定，不等同于采摘。</td>
+        </tr>
+        <tr>
+          <td>“人家 mAP50 都 94% 了，你怎么做？”</td>
+          <td>“我也争取做到 95%。”</td>
+          <td>“mAP50 不能代表套袋可用性。mAP50=0.5 的 IoU 阈值较宽，边界、果梗连接点、方向角和遮挡拒识仍可能失败。本文不只报告 mAP50，还报告 AP75、mAP50-95、重遮挡 AP、连接点 PCK、方向角误差、错误方向率和 Top-K 可套袋率。”</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 报告 mAP50 94.43% 和采摘点检测率 88.38%；<a href="https://arxiv.org/abs/1405.0312">COCO</a> 使用 AP50:95 综合评价定位质量；<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 强调遮挡、小目标和密集实例是难点。</td>
+        </tr>
+        <tr>
+          <td>“三维绕不开。”</td>
+          <td>“我不做三维。”</td>
+          <td>“本文不研究三维点云和机械臂 6D 位姿，而研究 RGB 图像中的套袋视觉可供性。完整机器人执行当然可以接入深度相机，但在套袋前端，首先要解决哪些果可套、连接点是否可见、二维入口方向是否可靠、严重遮挡目标是否跳过。本文把三维执行问题后置，把二维视觉前端做完整。”</td>
+          <td><a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB</a> 柑橘果柄姿态估计使用 RealSense 深度和点云；自动套袋机器人使用 RGB-D 获取目标相对位置；单目柑橘采摘位姿说明 RGB 可提供操作相关视觉先验。</td>
+        </tr>
+        <tr>
+          <td>“工作量够不够？”</td>
+          <td>“我做两篇论文，所以够。”</td>
+          <td>“一篇完整论文的工作量应包括：自建套袋视觉数据集、mask+连接点+可见性+遮挡等级+可套/跳过标签，多任务网络，遮挡分组实验，方向误差实验，拒识收益实验，外部小样本泛化。这样不是单模块，而是一个套袋视觉闭环。”</td>
+          <td>现有论文多只覆盖检测/分割/采摘点之一；套袋任务需要把识别、方向、风险和顺序组织成作业输入。</td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>最推荐的论文主线改法</h4>
+    <p>把第一篇题目从“复杂环境下柑橘果实实例分割方法”改成：</p>
+    <div class="callout">
+      <strong>面向自动套袋的遮挡感知柑橘实例分割、果梗连接点定位与二维入口方向估计方法</strong>
+    </div>
+    <p>这篇论文的创新点不要写成“改进 YOLO 分割精度”，而写成三个任务贡献：</p>
+    <ol>
+      <li><strong>任务定义创新：</strong>提出柑橘套袋视觉可供性，包括可见实例、连接点可见性、二维入口方向、遮挡风险和 skip 决策。</li>
+      <li><strong>数据标签创新：</strong>建立 RGB 套袋视觉数据集，标注 mask、stem-junction、visible/occluded/uncertain、遮挡等级、可套/跳过。</li>
+      <li><strong>方法创新：</strong>构建多任务网络，采用小目标/边界增强分割、ROI 连接点 heatmap、可见性分支和方向向量分支；对不可见连接点拒识，而不是强行预测。</li>
+    </ol>
+    <h4>坚持二维路线：不做点云，但把边界说清楚</h4>
+    <div class="blue callout">
+      <strong>推荐立场：</strong>你的论文主线应明确为 <strong>RGB-only 2D bagging affordance</strong>，即二维套袋可供性评估。不要为了回应“三维绕不开”而临时加入点云。临时点云通常会带来标定、配准、深度噪声、3D 标注和机械臂坐标系问题，工作量很大，且容易冲散第一篇小论文。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>问题</th>
+          <th>你可以做什么</th>
+          <th>论文中怎么写</th>
+          <th>边界</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>如何定义二维输出</td>
+          <td>输出图像平面二维入口方向 <code>d=(cosθ, sinθ)</code>、连接点可见性、边界完整度和可套袋风险。</td>
+          <td>“本文研究 RGB 条件下的二维套袋视觉可供性，不输出真实 6D 位姿。”</td>
+          <td>不声称完成三维避障、机械臂轨迹和真实空间碰撞检测。</td>
+        </tr>
+        <tr>
+          <td>如何回应尺度问题</td>
+          <td>采集时固定大致拍摄距离，并在少量图中放标尺或已知尺寸参照物，只做像素尺度到实际袋口尺寸的粗略校验。</td>
+          <td>“在固定拍摄距离下，本文用像素尺度和果实可见直径估计袋口包络裕量。”</td>
+          <td>这是尺度校验，不是三维重建。</td>
+        </tr>
+        <tr>
+          <td>如何处理单视角遮挡</td>
+          <td>同一果簇拍 2-3 个角度，模拟人工换视角；比较单视角和多视角下连接点可见率、skip 率、方向稳定性。</td>
+          <td>“对低可见性样本引入二维多视角复拍策略，验证换视角对连接点可见性的补偿作用。”</td>
+          <td>多视角仍只使用 RGB 图像，不做点云融合。</td>
+        </tr>
+        <tr>
+          <td>如何引用三维文献</td>
+          <td>把 RGB-D/点云论文作为“完整机器人执行层”的对照，说明它们依赖深度设备，而本文选择低成本 RGB 前端。</td>
+          <td>“现有 RGB-D 研究解决三维执行位姿，本文解决 RGB 条件下的候选目标筛选和二维方向先验，两者处于不同层级。”</td>
+          <td>不要把 RGB-D 文献写成你的直接实验方法。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>不建议做的事：</strong>不要临时上点云、不要写 3D reconstruction、不要写 6D pose、不要承诺真实机械臂避障。你的毕业优先级是快速形成可投稿小论文，二维主线更可控。
+    </div>
+    <h4>让工作量显得足够的实验矩阵</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>实验模块</th>
+          <th>最低要做</th>
+          <th>证明什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>基础对比</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a>、YOLO11-seg、<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a>、你的方法。</td>
+          <td>不是只和一个弱 baseline 比。</td>
+        </tr>
+        <tr>
+          <td>遮挡分组</td>
+          <td>轻/中/重遮挡分别报告 AP、PCK、角度误差。</td>
+          <td>证明你针对真实痛点，而不是平均指标好看。</td>
+        </tr>
+        <tr>
+          <td>密度分组</td>
+          <td>低/中/高密度分别报告 Recall、漏检率、粘连错误率。</td>
+          <td>回应“柑橘密集遮挡怎么办”。</td>
+        </tr>
+        <tr>
+          <td>多任务消融</td>
+          <td>baseline、+P2/边界、+连接点、+可见性、+方向分支。</td>
+          <td>证明每个模块不是随便堆的。</td>
+        </tr>
+        <tr>
+          <td>拒识收益</td>
+          <td>比较强行预测所有连接点 vs 低置信度跳过。</td>
+          <td>证明遮挡感知比“盲猜关键点”更适合套袋。</td>
+        </tr>
+        <tr>
+          <td>二维边界说明</td>
+          <td>固定拍摄距离、少量尺度参照、多角度 RGB 复拍，不做点云。</td>
+          <td>承认完整执行需要三维，但本文只验证二维入口方向、可套袋性和遮挡拒识。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="blue callout">
+      <strong>答辩话术：</strong>“如果只做柑橘实例分割，我确实很难超过已有 mAP50 94% 的工作。因此我没有把 mAP50 作为唯一目标，而是把任务重新定义为套袋视觉可供性评估。套袋需要知道果实能否被袋口安全包络、果梗连接点是否可见、入口方向是否可靠，以及密集果簇中哪些目标应跳过或后置。本文不做点云和 6D 位姿，而是把二维 RGB 前端做完整；完整机器人后续可以在本文输出的候选目标和方向先验基础上再接入三维执行层。”</strong>
+    </div>
+
+    <h3>11.4 老师与师兄意见逐条回应：成本、遮挡、机构、复拍与相机部署</h3>
+    <div class="danger callout">
+      <strong>总判断：</strong>这 8 个问题本质上不是否定课题，而是要求把课题从“算法识别”改成“套袋作业决策”。最稳的论文边界是：本文解决低成本 RGB 视觉前端，输出可套袋目标、连接点可见性、二维入口方向、遮挡风险和作业顺序；完整三维避障、真实机械臂轨迹和整机商业化回本不作为本文核心贡献。
+    </div>
+
+    <h4>问题 1：农业机器人成本如何重新核算</h4>
+    <p><strong>结论：</strong>不要在论文里直接承诺“机器人一年回本”。应写成盈亏平衡模型和敏感性分析。套袋机器人是否有经济意义，取决于果园规模、单果人工套袋费、机器人年作业量、设备寿命、维护成本和成功率。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>核算项</th>
+          <th>建议写法</th>
+          <th>注意边界</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>传统人工成本</td>
+          <td><code>C_labor = N × c_labor</code>，其中 <code>N</code> 为每季套袋果数，<code>c_labor</code> 为单果人工套袋费。若资料只给“人工+纸袋”综合成本，应把袋材成本单独扣出，因为机器人并不节省果袋。</td>
+          <td>苹果、梨等套袋果园成本只能作为同类参考，不能直接写成柑橘全国统一成本。</td>
+        </tr>
+        <tr>
+          <td>机器人年化成本</td>
+          <td><code>C_robot = (P - R) / L + C_maintenance + C_energy + C_operator + C_downtime</code>，其中 <code>P</code> 为购置价，<code>R</code> 为残值，<code>L</code> 为寿命年限。</td>
+          <td>如果老师要求“一年内回本”，则条件变成 <code>P + 首年维护 ≤ 首年节省人工</code>，这对完整机器人很苛刻。</td>
+        </tr>
+        <tr>
+          <td>论文中的经济性结论</td>
+          <td>写“低成本 RGB 视觉前端可降低感知端成本，并减少无效机械动作；整机经济性需要结合果园规模和装备价格进一步核算”。</td>
+          <td>不要把视觉模块的低成本夸大成整机低成本。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong>中国果袋产业研究给出苹果套袋人工和纸袋成本参考；农业机器人经济性研究强调要计算折旧、维护、效率和工资变化；早期柑橘采摘机器人经济评估显示，若效率不足，机器人可能比人工更贵。因此本文最稳的意义不是“立刻替代人工”，而是“减少季节性集中用工压力，并为自动套袋装备提供低成本视觉输入”。参考：<a href="https://www.mdpi.com/2071-1050/12/3/1106">Production, Use and Recycling of Fruit Cultivating Bags in China</a>、<a href="https://s3.wp.wsu.edu/uploads/sites/908/2026/01/JAAEA-2025-Robot-Charlton-Economic-viability-of-robotic-fruit-harvesters-to-reduce-large-seasonal-labor.pdf">Economic viability of robotic fruit harvesters</a>、<a href="https://www.cambridge.org/core/journals/robotica/article/robotic-picking-of-citrus/C84664DD820503C31CE4158C1FD03E44">Robotic picking of citrus</a>。</p>
+
+    <h4>问题 2：轻微遮挡的柑橘果实用什么算法解决</h4>
+    <p><strong>结论：</strong>轻微遮挡可以用算法处理，严重遮挡不能硬猜，应交给复拍、拨果或后置。论文中应把遮挡分成轻度、中度、重度，并分别给出策略。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>遮挡等级</th>
+          <th>视觉处理方法</th>
+          <th>论文指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>轻度遮挡</td>
+          <td>实例分割可见区域；对 bbox 或 mask 外扩 10%-25%；用椭圆/圆形先验补全果实外轮廓；在扩展 ROI 内检测果梗连接点。</td>
+          <td>AP75、边界 F1、连接点 PCK、方向角误差。</td>
+        </tr>
+        <tr>
+          <td>中度遮挡</td>
+          <td>增加可见度分支，估计 <code>visibility = visible area / estimated full area</code>；连接点可见才回归坐标，不可见则输出低置信度。</td>
+          <td>可见性分类准确率、拒识后方向错误率下降幅度。</td>
+        </tr>
+        <tr>
+          <td>重度遮挡</td>
+          <td>不强行预测连接点，输出 <code>skip / re-shoot / pull-out</code> 决策。</td>
+          <td>错误套袋方向率、Top-K 可套袋率、复拍收益。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong><a href="https://www.sciencedirect.com/science/article/pii/S0168169923002429">Gené-Mola et al. 2023</a> 用 amodal 分割估计果实完整形状和可见比例，说明可见度可作为遮挡条件下是否可靠估计的依据；<a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 的柑橘果实和果梗分割研究指出，果梗小、细、与背景相似且易遮挡，连接点遮挡会导致采摘点推断失败；<a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">Sun et al. 2024</a> 证明关键点任务中可见性建模很重要，遮挡点不应和可见点用同一种方式盲目回归。</p>
+
+    <h4>问题 3：是否需要成熟度判定</h4>
+    <p><strong>结论：</strong>不需要。老师的意见是对的。套袋不是采摘，实际生产中通常是在一个农事时期对一批幼果集中套袋，而不是成熟一个套一个。成熟度判定会把论文引到果实品质和采摘决策，反而冲散主线。</p>
+    <div class="blue callout">
+      <strong>建议替代表述：</strong>本文默认图像采集发生在套袋适宜农事时期，所有目标果实在农艺上均属于待套袋对象。视觉系统不判断成熟度，而判断“当前视角和当前遮挡条件下是否适合机械套袋”。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>不要标</th>
+          <th>应该标</th>
+          <th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>绿色/黄色、成熟/未成熟</td>
+          <td>可套袋、需复拍、需拨果、暂跳过</td>
+          <td>套袋核心是作业可行性，不是成熟度决策。</td>
+        </tr>
+        <tr>
+          <td>颜色阈值</td>
+          <td>遮挡等级、连接点可见性、入口方向置信度</td>
+          <td>光照会导致同一果实一侧偏绿、一侧偏黄，颜色成熟度标签不稳定。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>问题 4：果园遮挡复杂，机械臂如何避障，有没有这种结构</h4>
+    <p><strong>结论：</strong>二维 RGB 视觉不能直接保证真实三维避障，但可以提供“遮挡风险图”和“可接近性评分”。机械层面应采用柔顺末端和拨叶/拨果结构，而不是让刚性夹爪直接伸进密集枝叶。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>结构或策略</th>
+          <th>作用</th>
+          <th>与你论文的关系</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>软质拨叶/拨果手指</td>
+          <td>轻柔推开叶片、枝条或相邻果实，让目标果实和果梗连接点露出。</td>
+          <td>视觉模块输出“需要拨果”和建议拨动方向。</td>
+        </tr>
+        <tr>
+          <td>喇叭口或环形导向袋口</td>
+          <td>增大袋口容错范围，使轻微位置误差不会导致套袋失败。</td>
+          <td>视觉模块估计二维入口方向和果实包络大小。</td>
+        </tr>
+        <tr>
+          <td>C 形夹爪/开袋机构</td>
+          <td>完成开袋、包覆、靠近果梗和收口。</td>
+          <td>连接点定位用于确定收口区域，而不是只找果心。</td>
+        </tr>
+        <tr>
+          <td>柔顺连接或力反馈</td>
+          <td>降低碰撞枝叶时的损伤风险。</td>
+          <td>本文不做力控，但可以在系统方案中说明需要机械冗余保护。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong>自动水果套袋机器人和梨幼果套袋末端执行器研究均说明套袋需要专用开袋、送袋和固定结构；主动感知综述指出果园机器人常通过换视角和视觉伺服处理遮挡；安全拨叶研究证明，机械主动移动遮挡叶片可以提升被遮挡果实的形状和位姿估计。参考：<a href="https://iroboticsjournal.org/index.php/irobotics/article/view/170">Automatic Agricultural Fruit Bagging Robot</a>、<a href="https://www.mdpi.com/2227-9717/12/2/259">Young-Pear-Bagging End Effector</a>、<a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">Active Perception Fruit Harvesting Robots</a>、<a href="https://arxiv.org/html/2409.17389v2">Safe Leaf Manipulation</a>。</p>
+
+    <h4>问题 5：袋子套上了，但果子被遮挡住了，怎么处理</h4>
+    <p><strong>结论：</strong>如果生产袋不透明，RGB 相机不能直接看见袋内果实，所以不能承诺“视觉直接确认果实在袋内”。应改为“套袋后状态验证”，用外部视觉线索和机械信号共同判断。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>验证对象</th>
+          <th>可用信号</th>
+          <th>论文中怎么写</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>袋子是否覆盖目标区域</td>
+          <td>套袋前果实中心、套袋后袋体中心、袋口位置、目标 ID 跟踪。</td>
+          <td>比较套袋前后目标位置和袋体位置的一致性。</td>
+        </tr>
+        <tr>
+          <td>袋口是否到达果梗附近</td>
+          <td>袋口边缘、连接点预测位置、收口机构位置。</td>
+          <td>验证袋口是否位于果梗连接点邻域。</td>
+        </tr>
+        <tr>
+          <td>袋内是否可能有果</td>
+          <td>袋体鼓包形状、袋体面积变化、末端夹爪闭合行程、轻微力反馈。</td>
+          <td>写成“外观一致性验证”，不要写成“直接观测袋内果实”。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>实验建议：</strong>实验室阶段可使用半透明袋、彩色袋或带标记袋验证算法；正式生产纸袋不透明时，应增加简单机械传感器或用套袋前后跟踪验证。这样写更诚实，也更容易被老师接受。
+    </div>
+
+    <h4>问题 6：怎样确保全部果子都套上，套完的果子还会遮挡其他果子</h4>
+    <p><strong>结论：</strong>不要承诺单张图一次性保证全部果子完成套袋。应采用“多轮扫描、逐个执行、动态更新目标列表”的策略。已套袋果实应被识别为新的遮挡物，重新参与下一轮排序。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>步骤</th>
+          <th>具体操作</th>
+          <th>对应论文指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>预扫描</td>
+          <td>检测所有可见果实，生成候选目标列表。</td>
+          <td>检测召回率、漏检率。</td>
+        </tr>
+        <tr>
+          <td>优先级排序</td>
+          <td>优先选择外露程度高、连接点可见、入口方向稳定、周围障碍少的目标。</td>
+          <td>Top-1/Top-3 可套袋率、排序一致性。</td>
+        </tr>
+        <tr>
+          <td>执行后更新</td>
+          <td>套完一个目标后复拍，把袋体作为新类别或新遮挡区域加入图像。</td>
+          <td>多轮后剩余可见目标数、复拍后新增可套目标数。</td>
+        </tr>
+        <tr>
+          <td>人工补套或二次作业</td>
+          <td>对始终不可见、不可达或连接点无法确认的目标，标记为人工补套。</td>
+          <td>自动可处理率、需人工补套率。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong>蜜桃幼果套袋跟踪研究指出，套袋场景中目标密集且检测框会抖动，使用 DeepSORT 类跟踪可以保持目标连续性；套袋机器人覆盖路径规划研究说明套袋任务需要考虑多目标覆盖顺序，而不是只做单目标识别。参考：<a href="https://www.sciencedirect.com/science/article/abs/pii/S0168169923009717">Multiple object tracking for honey peach young fruits in bagging scene</a>、<a href="https://www.sciencedirect.com/science/article/abs/pii/S016816992501405X">Coverage path planning for a bagging robot</a>。</p>
+
+    <h4>问题 7：人工会先把果子扯出来“游离开”，机械结构怎么做</h4>
+    <p><strong>结论：</strong>这是套袋区别于采摘的关键痛点，也是你课题最应该强调的地方。不要只讲“检测果梗点”，要讲“视觉判断是否需要游离，机械先游离，复拍后再定位连接点”。</p>
+    <div class="callout">
+      <strong>推荐两阶段动作：</strong>远景判断目标和遮挡风险 → 软拨果/拨叶机构轻轻把果实从叶片或果簇中游离出来 → 眼在手相机近景复拍 → 重新定位果实、果梗连接点和入口方向 → 套袋。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>机械模块</th>
+          <th>可能形式</th>
+          <th>视觉需要提供什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>拨叶模块</td>
+          <td>软硅胶拨片、柔性杆、低刚度拨爪。</td>
+          <td>叶片遮挡区域、建议拨动方向、拨动后是否需要复拍。</td>
+        </tr>
+        <tr>
+          <td>拨果模块</td>
+          <td>软钩、弧形托指、吸附辅助定位。</td>
+          <td>果实中心、果实外轮廓、相邻果实碰撞风险。</td>
+        </tr>
+        <tr>
+          <td>复拍确认</td>
+          <td>眼在手 RGB 相机靠近后重新拍摄。</td>
+          <td>连接点是否从遮挡变为可见，入口方向是否稳定。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong><a href="https://arxiv.org/html/2409.17389v2">Safe Leaf Manipulation</a> 证明“先移动遮挡物，再估计果实形状和位姿”是合理路线；<a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">主动感知综述</a> 也把换视角和主动操作作为处理果园遮挡的重要方向。你的论文可以不制造完整机构，但必须把“视觉为游离动作提供判断”讲清楚。</p>
+
+    <h4>问题 8：部署时用一个摄像头还是两个摄像头，手眼还是固定，如何考虑成本</h4>
+    <p><strong>结论：</strong>为了快速毕业和控制成本，论文主方案建议采用“一个眼在手 RGB 相机”。工程完整方案可以写成“固定相机 + 眼在手相机”，但不要把双相机作为第一篇小论文的必要条件。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>优点</th>
+          <th>缺点</th>
+          <th>推荐程度</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>单固定 RGB 相机</td>
+          <td>便宜，适合全局预扫描和数据采集。</td>
+          <td>近景连接点容易看不清，遮挡后无法主动换视角，机械执行误差难修正。</td>
+          <td>适合作为数据采集或实验对照，不推荐作为最终主方案。</td>
+        </tr>
+        <tr>
+          <td>单眼在手 RGB 相机</td>
+          <td>成本仍低，可以接近目标复拍，适合拨果后重新确认连接点和入口方向。</td>
+          <td>需要简单手眼标定，视野小，全局找果能力弱。</td>
+          <td><strong>最适合作为当前小论文主方案。</strong></td>
+        </tr>
+        <tr>
+          <td>固定 RGB + 眼在手 RGB</td>
+          <td>固定相机负责全局候选和顺序，眼在手负责局部确认和套袋验证。</td>
+          <td>标定和系统集成工作量增加。</td>
+          <td>适合作为后续完整系统方案。</td>
+        </tr>
+        <tr>
+          <td>RGB-D 或点云方案</td>
+          <td>可以提供距离和三维位姿，更适合完整避障和机械臂控制。</td>
+          <td>户外深度噪声、阳光干扰、成本和标定工作量更高。</td>
+          <td>作为对照和未来工作，不建议当前强行加入。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献支撑：</strong>农业机器人手眼协调综述系统比较了 eye-in-hand、eye-to-hand 和多相机配置；密集植被中的 eye-in-hand 视觉伺服研究指出，收获机器人需要多视角和在线轨迹调整以减少漏检并修正果实运动；视觉伺服水果采摘系统也把 eye-in-hand 和 eye-to-hand 作为两类基本配置。参考：<a href="https://www.sciencedirect.com/science/article/pii/S2095809925001559">Advance on Agricultural Robot Hand-Eye Coordination</a>、<a href="https://www.sciencedirect.com/science/article/pii/S1537511015001816">Eye-in-hand sensing and servo control in dense vegetation</a>、<a href="https://www.mdpi.com/2624-7402/3/4/53">Visual Servo System for Robotic Fruit Harvesting</a>。</p>
+
+    <h4>把 8 个问题合并成论文中的系统方案</h4>
+    <div class="blue callout">
+      <strong>最终可写方案：</strong>本文提出面向柑橘自动套袋的 RGB 视觉可供性评估方法。首先通过实例分割获得果实可见区域和候选目标；其次在果实扩展 ROI 内进行果梗连接点定位，并通过可见性分支判断连接点是否可靠；随后根据果实中心、连接点和可见边界估计二维袋口入口方向；对于轻中度遮挡目标，通过轮廓补全和可见度评分判断是否可套，对于重度遮挡目标输出复拍、拨果或跳过决策；最后根据可见度、连接点置信度、遮挡风险和入口通道清晰度生成套袋优先级队列。机械执行层可采用软拨叶/拨果机构和眼在手 RGB 相机进行二次确认，完整三维避障和整机经济性作为后续系统集成问题。
+    </div>
+
+    <h3>11.5 果梗点定位的真实作用：单点不够，要升级为朝向状态判断</h3>
+    <div class="warning callout">
+      <strong>关键修正：</strong>师兄如果问“你定位到果梗点有什么用”，这个质疑是成立的。单独一个果梗连接点确实不足以指导套袋，因为它没有深度、没有果梗轴线、没有袋口包络关系，也不能处理“果脐正对相机、果梗在背面”的情况。论文中应把“果梗点检测”改成“果梗连接区可见性与果实朝向状态估计”。
+    </div>
+
+    <h4>为什么单个果梗点不够</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>问题</th>
+          <th>单个果梗点的不足</th>
+          <th>应该增加的输出</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>套袋入口方向</td>
+          <td>只有点 <code>K</code> 时，只能得到果心 <code>C</code> 到连接点的二维方向 <code>C→K</code>，无法判断真实空间中袋口该从前方、侧方还是斜下方进入。</td>
+          <td>二维入口方向、方向置信度、动作模式：侧向套入/轴向套入/复拍。</td>
+        </tr>
+        <tr>
+          <td>收口位置</td>
+          <td>套袋最后要在果梗附近收口，单点误差大时会导致收口偏离或压伤果梗。</td>
+          <td>果梗连接区，而不是一个像素点；可用小圆区或 heatmap 表示。</td>
+        </tr>
+        <tr>
+          <td>遮挡处理</td>
+          <td>果梗点不可见时，强行回归会产生看似有结果但实际不可用的假点。</td>
+          <td>visible / occluded / uncertain 可见性标签；不可见时输出 skip、re-shoot 或 pull-out。</td>
+        </tr>
+        <tr>
+          <td>果实朝向</td>
+          <td>如果只标果梗点，无法区分“果梗在侧面可见”和“果梗在背面被果体挡住”。</td>
+          <td>增加果脐/萼端点或果脐可见性，用于判断果实是否屁股朝向相机。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>建议把关键点从 1 个改成 2 类 + 1 个状态</h4>
+    <p>为了让任务更像“套袋视觉”而不是普通关键点检测，建议标注不再只标一个果梗点，而是采用最低成本的三类标签：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>标签</th>
+          <th>含义</th>
+          <th>标注方式</th>
+          <th>用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果梗连接区 <code>K_stem</code></td>
+          <td>果梗与果实相连的区域。</td>
+          <td>可见时标点或小圆区；不可见时不标坐标，只标可见性。</td>
+          <td>确定收口区域和侧向入口方向。</td>
+        </tr>
+        <tr>
+          <td>果脐/萼端 <code>K_calyx</code></td>
+          <td>果实“屁股”或萼端区域，通常与果梗端相对。</td>
+          <td>可见时标点；看不清时标 uncertain。</td>
+          <td>判断果实轴向朝向，识别“果脐正对相机”的情况。</td>
+        </tr>
+        <tr>
+          <td>朝向状态 <code>view_state</code></td>
+          <td>当前视角下果实适合哪种动作。</td>
+          <td>分类标签：stem-visible、calyx-front、side-view、unknown。</td>
+          <td>决定侧向套入、轴向套入、复拍或拨果。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>文献依据：</strong>苹果遮挡朝向估计研究将关键点检测与圆形/轮廓检测结合，用于估计果实朝向，并指出果园遮挡和果实缺少明显纹理会使朝向识别困难；草莓关键点朝向估计研究说明，水果姿态不是只靠果心，而要利用关键点推断朝向；火龙果单目位姿研究也使用果脐和果梗关键点预测果实方向。这些工作都说明：果梗点有用，但必须和果脐、果心、轮廓和可见性状态结合。参考：<a href="https://www.sciencedirect.com/science/article/pii/S0168169924001728">Occluded apples orientation estimator</a>、<a href="https://arxiv.org/abs/2310.11333">Key Point-based Orientation Estimation of Strawberries</a>、<a href="https://www.mdpi.com/2311-7524/12/4/505">Dragon fruit pose estimation using navel and stem keypoints</a>。</p>
+
+    <h4>如果果子的“屁股”对着相机怎么办</h4>
+    <p><strong>结论：</strong>这时不能再用 <code>果心 C → 果梗点 K</code> 计算二维侧向入口方向，因为果梗大概率在果体背面，连接点不可见。这个视角应单独定义为 <strong>calyx-front / 果脐正对相机</strong> 状态。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>视觉现象</th>
+          <th>判断</th>
+          <th>动作决策</th>
+          <th>论文里怎么写</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果脐清楚可见，果梗连接点不可见</td>
+          <td>果实轴线大致朝向相机，果梗在背面或被果体遮挡。</td>
+          <td>不输出侧向入口角；输出“轴向套入候选”或“侧向复拍”。</td>
+          <td>该类样本不计算连接点坐标损失，只计算朝向分类和可见性损失。</td>
+        </tr>
+        <tr>
+          <td>果脐可见且周围无遮挡</td>
+          <td>可能适合袋口从相机方向居中套入，即袋口先包住果体，再推向果梗方向。</td>
+          <td>若有眼在手近景和柔顺机构，可采用轴向套入；若只有单张 RGB，建议复拍确认。</td>
+          <td>写成“轴向入口模式”，但不声称获得真实三维深度。</td>
+        </tr>
+        <tr>
+          <td>果脐可见但叶片/邻果遮挡严重</td>
+          <td>虽然果体正面可见，但袋口可能被周围障碍干涉。</td>
+          <td>后置、拨叶/拨果后复拍。</td>
+          <td>输出遮挡风险和 skip 决策。</td>
+        </tr>
+        <tr>
+          <td>果脐和果梗都不可见</td>
+          <td>朝向不可判断。</td>
+          <td>不套，换视角或人工补套。</td>
+          <td>作为 unknown 类，体现拒识机制。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>这反而可以变成你的创新点</h4>
+    <p>你可以把原来的“果梗点识别”改成下面这个更完整、更好答辩的任务：</p>
+    <div class="callout">
+      <strong>面向套袋动作的果实端部可见性与入口模式判定：</strong>模型同时预测果实 mask、果梗连接区、果脐/萼端、端部可见性、二维入口方向和动作模式。若果梗侧可见，则使用果心到果梗连接区的方向估计侧向入口；若果脐正对相机且果梗不可见，则不盲猜果梗点，而输出轴向套入或复拍决策；若两端均不可见，则拒识并后置。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>视角类别</th>
+          <th>模型输出</th>
+          <th>套袋含义</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>stem-visible</td>
+          <td>果梗连接区 + 侧向入口方向</td>
+          <td>适合按二维方向从果梗相反侧套入。</td>
+        </tr>
+        <tr>
+          <td>calyx-front</td>
+          <td>果脐点 + 轴向入口候选 + 复拍建议</td>
+          <td>果梗点不可见，不强行预测；可由眼在手相机近景或侧移复拍确认。</td>
+        </tr>
+        <tr>
+          <td>side-view</td>
+          <td>果实轮廓长轴/短轴 + 端部可见性</td>
+          <td>适合估计袋口从侧下方进入的二维方向。</td>
+        </tr>
+        <tr>
+          <td>unknown</td>
+          <td>低置信度 + skip</td>
+          <td>不进入自动套袋队列。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>与三维问题的关系：</strong><a href="https://www.mdpi.com/2077-0472/15/22/2330">柑橘果柄姿态估计</a> 使用 RGB-D、点云、OBB 和 PCA 输出果柄姿态，说明完整机械执行确实需要比单点更丰富的姿态信息；但你的论文可以退一步，只做 RGB 条件下的“端部可见性、入口模式和复拍决策”。这比硬说一个果梗点就能套袋更合理，也更符合低成本二维视觉前端定位。</p>
+
+    <h3>11.6 到底如何套袋：从视觉状态到动作决策</h3>
+    <div class="blue callout">
+      <strong>总原则：</strong>自动套袋不是“检测到一个果子就直接套”。正确逻辑应是：先判断目标是否可套，再决定从哪里进袋、是否需要拨果/复拍、是否应该跳过。你的视觉论文不需要完成完整机械臂控制，但必须把视觉输出和套袋动作对应起来。
+    </div>
+
+    <h4>机械套袋的基本动作链</h4>
+    <ol>
+      <li><strong>候选果实识别：</strong>实例分割得到每个柑橘的可见 mask、中心、尺寸和遮挡程度。</li>
+      <li><strong>可套性判断：</strong>根据果梗连接区、果脐/萼端、周围障碍和袋口空间，判断该果是否适合当前视角套袋。</li>
+      <li><strong>必要时游离果实：</strong>如果叶片或邻果遮挡入口，先用柔性拨片/拨指轻推叶片或把果实拨出，再复拍确认。</li>
+      <li><strong>打开袋口并对准：</strong>袋口中心对准果实中心或入口方向，袋口平面尽量与预测入口方向垂直。</li>
+      <li><strong>包络果实：</strong>袋口从外露侧或相机方向推进，先包住果体最大截面，再向果梗连接区推进。</li>
+      <li><strong>果梗附近收口：</strong>收口位置不是果心，而是果梗连接区附近；这就是 <code>K_stem</code> 的主要用途。</li>
+      <li><strong>视觉复核：</strong>套完后再拍一张，确认目标已被袋子覆盖，并从待套队列中删除。</li>
+    </ol>
+    <p><strong>文献支撑：</strong>梨幼果套袋末端执行器和自动水果套袋机器人都把套袋分成目标识别、开袋、包络和固定几个动作；遮挡果实主动感知和安全拨叶研究说明，遮挡目标通常需要多视角或先操作环境再识别。参考：<a href="https://www.mdpi.com/2227-9717/12/2/259">young pear bagging end effector</a>、<a href="https://iroboticsjournal.org/index.php/irobotics/article/view/170">automatic agricultural fruit bagging robot</a>、<a href="https://arxiv.org/html/2409.17389v2">Safe Leaf Manipulation</a>、<a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">Active Perception Fruit Harvesting Robots</a>。</p>
+
+    <h4>遇到不同情况应该怎么做</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>视觉情况</th>
+          <th>判断</th>
+          <th>应该怎么套</th>
+          <th>论文中的输出标签</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果实清楚，果梗连接区可见，周围空间足够</td>
+          <td>最理想目标。</td>
+          <td>从果梗相反侧或外露侧套入，袋口包住果体后向 <code>K_stem</code> 推进并收口。</td>
+          <td><code>baggable-side</code>，输出二维入口方向和高优先级。</td>
+        </tr>
+        <tr>
+          <td>果实清楚，但果脐/屁股正对相机，果梗不可见</td>
+          <td>果梗可能在背面，单张 RGB 不能可靠给出收口点。</td>
+          <td>若有眼在手近景和足够袋口空间，可作为轴向套入候选；否则侧移复拍或先拨果。</td>
+          <td><code>calyx-front</code>，输出轴向候选或 <code>re-shoot</code>。</td>
+        </tr>
+        <tr>
+          <td>果梗可见，但叶片挡住袋口入口</td>
+          <td>目标本身可定位，但路径不干净。</td>
+          <td>先用柔性拨片拨叶，再复拍；复拍后仍被挡则后置或人工补套。</td>
+          <td><code>manipulate-then-confirm</code>。</td>
+        </tr>
+        <tr>
+          <td>果实被轻中度遮挡，轮廓可补全</td>
+          <td>可以估计安全包络，但不应过度自信。</td>
+          <td>只在袋口空间足够且连接区/入口方向可靠时套；否则降低优先级。</td>
+          <td><code>low-confidence-baggable</code> 或 <code>defer</code>。</td>
+        </tr>
+        <tr>
+          <td>果实密集重叠，多个果子挤在一起</td>
+          <td>袋口可能碰到邻果，套完一个还会遮挡另一个。</td>
+          <td>先套外层、无遮挡、入口通道清楚的果；每套完一个就复拍更新队列。</td>
+          <td>任务显著性排序：foreground / outer / high-visibility first。</td>
+        </tr>
+        <tr>
+          <td>果实两端都不可见，果梗和果脐都看不清</td>
+          <td>朝向不可判断。</td>
+          <td>当前视角不自动套；换视角、拨果后复拍或交给人工。</td>
+          <td><code>unknown</code> / <code>skip</code>。</td>
+        </tr>
+        <tr>
+          <td>枝条、主干或硬障碍处在袋口路径上</td>
+          <td>机械碰撞风险高。</td>
+          <td>不从当前方向套；移动相机或末端到侧方观察，仍无安全路径则跳过。</td>
+          <td><code>obstacle-risk</code>。</td>
+        </tr>
+        <tr>
+          <td>一个果已经套袋，袋子挡住其他果</td>
+          <td>场景状态发生变化，旧检测结果不能继续用。</td>
+          <td>套完立即复拍，把已套果标记为 <code>bagged</code>，重新检测剩余目标并排序。</td>
+          <td><code>bagged</code> + 队列更新。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>这套逻辑如何变成你的论文问题</h4>
+    <p>论文中可以把套袋动作抽象成一个视觉决策问题：模型不是直接输出机械臂轨迹，而是输出每个果实的 <strong>可套性、入口模式、入口方向、遮挡风险和优先级</strong>。这样可以避开“二维 RGB 无法完整解决三维套袋”的硬伤，同时又能清楚说明视觉结果对实际套袋有用。</p>
+    <div class="callout">
+      <strong>一句话版本：</strong>实例分割解决“哪个果、果有多大”；端部关键点解决“从哪边套、在哪收口”；遮挡/可见性判断解决“现在能不能套”；任务显著性排序解决“先套哪个、后套哪个”；复拍和拨果机制解决“看不清或被挡住时怎么办”。
+    </div>
+
+    <h3>11.7 机械结构如何处理遮挡：不要只靠算法，必须有拨障与复拍闭环</h3>
+    <div class="warning callout">
+      <strong>落地判断：</strong>如果真正做机器人套袋，遮挡不能只靠视觉补全。叶片、枝条、邻果挡住袋口时，机械上需要“先清障/游离，再观察，再套袋”。但这不等于所有遮挡都能自动处理：软遮挡可以拨开，硬枝条要绕开，果簇过密要后置或人工补套。
+    </div>
+
+    <h4>推荐的低成本末端结构</h4>
+    <p>对你这个课题，最合理的机械方案不是复杂双臂，而是 <strong>单机械臂 + 眼在手 RGB 相机 + 套袋末端 + 柔性拨障模块</strong>。可以把末端设计成从前到后的四层结构：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>结构模块</th>
+          <th>具体形式</th>
+          <th>解决的问题</th>
+          <th>注意事项</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>眼在手相机与补光</td>
+          <td>RGB 小相机固定在末端上方或侧上方，配环形补光。</td>
+          <td>靠近目标后复拍，确认果梗、果脐、入口空间和袋口是否对准。</td>
+          <td>如果只用固定相机，套袋过程中场景变化后很难确认。</td>
+        </tr>
+        <tr>
+          <td>柔性拨叶/拨枝片</td>
+          <td>2 个窄长 TPU/硅胶拨片，装在袋口前方，可由舵机左右张开或轻扫。</td>
+          <td>处理叶片、细软枝条遮挡，让果实和果梗连接区露出来。</td>
+          <td>只做小位移、低力拨动；遇到粗枝条不硬推。</td>
+        </tr>
+        <tr>
+          <td>果实游离导向罩</td>
+          <td>喇叭口/锥形柔性导向圈，内侧光滑，外沿软质。</td>
+          <td>把果实从叶片中“导入”袋口，防止袋口边缘直接刮果。</td>
+          <td>导向圈直径要大于果实最大可见直径，并留安全余量。</td>
+        </tr>
+        <tr>
+          <td>开袋与撑袋机构</td>
+          <td>真空吸盘、撑袋板、偏置曲柄滑块或两侧夹片。</td>
+          <td>保持袋口打开，使果体能被完整包络。</td>
+          <td>梨幼果套袋末端执行器已验证类似开袋、集袋、封袋流程。</td>
+        </tr>
+        <tr>
+          <td>C 形收口/夹扣机构</td>
+          <td>C 形夹爪、扎丝、卡扣或旋扭机构。</td>
+          <td>袋子包住果体后，在果梗附近收口固定。</td>
+          <td>收口目标应是果梗连接区附近，不是果心。</td>
+        </tr>
+        <tr>
+          <td>力/位移保护</td>
+          <td>弹簧柔顺、舵机电流限幅、末端软包胶、触碰开关。</td>
+          <td>避免拨叶、拨果或套袋时压伤果实、折断果梗。</td>
+          <td>没有力保护就不要做大幅度拨枝动作。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>机械处理遮挡的动作流程</h4>
+    <ol>
+      <li><strong>远景识别：</strong>固定视角或手眼相机发现候选果，视觉模型输出遮挡类型和优先级。</li>
+      <li><strong>低速靠近：</strong>末端停在果实前方安全距离，眼在手相机复拍。</li>
+      <li><strong>判断遮挡性质：</strong>叶片/软枝是可拨遮挡，粗枝/主干是不可拨障碍，邻果密集是空间约束。</li>
+      <li><strong>轻量拨障：</strong>柔性拨片按左扫、右扫、上抬或下压的小动作清出袋口路径。</li>
+      <li><strong>复拍确认：</strong>拨障后必须再拍一次，确认果实、连接区和入口空间是否变好。</li>
+      <li><strong>套袋执行：</strong>若可套，导向罩居中，袋口包络果体，C 形机构在果梗附近收口。</li>
+      <li><strong>失败退出：</strong>若拨障后仍不可见或阻力异常，退回并标记为后置/人工补套。</li>
+    </ol>
+
+    <h4>不同遮挡对象对应的机械策略</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>遮挡类型</th>
+          <th>机械动作</th>
+          <th>是否建议自动处理</th>
+          <th>论文里怎么说最稳</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>叶片遮挡果面或果梗</td>
+          <td>柔性拨片轻扫/上抬，清出视线和袋口通道。</td>
+          <td>可以处理。</td>
+          <td>作为“可操作软遮挡”，触发拨叶后复拍。</td>
+        </tr>
+        <tr>
+          <td>细软枝条遮挡入口</td>
+          <td>低力推开或改变套入方向。</td>
+          <td>谨慎处理。</td>
+          <td>只在视觉判断为细小可让位障碍时执行。</td>
+        </tr>
+        <tr>
+          <td>粗枝、主干、硬障碍</td>
+          <td>不推，重新规划视角或跳过。</td>
+          <td>不建议自动硬推。</td>
+          <td>标记为 <code>obstacle-risk</code>，防止损伤树体。</td>
+        </tr>
+        <tr>
+          <td>邻果遮挡或果簇过密</td>
+          <td>优先套外层果；必要时用柔性导向罩分隔，不能强行挤开。</td>
+          <td>轻度可处理，重度跳过。</td>
+          <td>用显著性排序解决“先套外层、后套内层”。</td>
+        </tr>
+        <tr>
+          <td>果实被袋子或已套果遮挡</td>
+          <td>复拍，识别已套袋区域，更新待套列表。</td>
+          <td>必须处理。</td>
+          <td>强调“套完一个目标后场景状态改变，需要闭环更新”。</td>
+        </tr>
+        <tr>
+          <td>果梗在果实背面，屁股对着相机</td>
+          <td>不盲目找果梗；可轴向套入候选，或侧移相机/拨果后复拍。</td>
+          <td>当前 RGB 条件下谨慎处理。</td>
+          <td>判为 <code>calyx-front</code>，不是关键点失败，而是动作模式变化。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>高配方案与低配方案</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>结构</th>
+          <th>优点</th>
+          <th>缺点</th>
+          <th>对你是否合适</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>双臂清障 + 套袋</td>
+          <td>一只机械臂拨叶/拨枝/扶果，另一只机械臂套袋。</td>
+          <td>最接近人工动作，遮挡处理能力强。</td>
+          <td>成本、控制、标定和安全难度明显增加。</td>
+          <td>适合写未来工作，不建议作为毕业主线。</td>
+        </tr>
+        <tr>
+          <td>单臂主动拨障</td>
+          <td>同一末端先拨障复拍，再套袋。</td>
+          <td>成本低，能讲清楚闭环，适合样机设计。</td>
+          <td>一次只能做一个动作，效率低于双臂。</td>
+          <td>最适合你当前课题。</td>
+        </tr>
+        <tr>
+          <td>被动导向罩</td>
+          <td>用柔性喇叭口/圆环在推进时自然推开叶片。</td>
+          <td>结构简单，不需要复杂控制。</td>
+          <td>只能处理轻微叶片遮挡，不能处理硬枝和密集果簇。</td>
+          <td>很适合作为低成本工程补充。</td>
+        </tr>
+        <tr>
+          <td>仅视觉避让</td>
+          <td>不接触遮挡物，只选择无遮挡果实。</td>
+          <td>最简单，安全。</td>
+          <td>漏套率可能高，无法回答落地问题。</td>
+          <td>可作为 baseline，不够完整。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>文献依据：</strong><a href="https://www.mdpi.com/2227-9717/12/2/259">梨幼果套袋末端执行器</a> 给出了开袋、集袋、封袋一体化结构；<a href="https://iroboticsjournal.org/index.php/irobotics/article/view/170">自动水果套袋机器人</a> 使用 C 形夹爪、扎丝和旋扭机构完成套袋固定；<a href="https://arxiv.org/html/2409.17389v2">Safe Leaf Manipulation</a> 和 <a href="https://ieeexplore.ieee.org/document/10802174">Occlusion Handling by Pushing</a> 说明通过物理推叶/推枝可以提高被遮挡果实的可见性；<a href="https://ieeexplore.ieee.org/iel8/6287639/10820123/11135451.pdf">双臂农业机器人综述</a> 也把一臂清障、一臂作业作为处理遮挡的典型思路。</p>
+
+    <div class="blue callout">
+      <strong>对论文最稳的说法：</strong>本文的视觉系统不直接解决所有机械遮挡，而是为套袋末端提供“是否可套、是否需要拨障、从哪侧进入、是否复拍/跳过”的决策信息。机械端可采用单臂柔性拨障与导向罩结构处理软遮挡，对硬枝条和严重果簇遮挡则执行避让或人工补套。
+    </div>
+
+    <h3>11.8 师兄追问时的逐条回答：机械落地版</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>师兄可能追问</th>
+          <th>不能怎么答</th>
+          <th>建议怎么答</th>
+          <th>对应技术方案</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>果实被叶片挡住，机械上怎么办？</td>
+          <td>不能只说“算法补全”。算法看不见时，机械仍然无法安全套。</td>
+          <td>把遮挡分成软遮挡和硬遮挡。叶片属于软遮挡，可用柔性拨片轻扫后复拍；粗枝条属于硬障碍，不硬推。</td>
+          <td>柔性拨叶片 + 眼在手复拍 + <code>manipulate-then-confirm</code> 标签。</td>
+        </tr>
+        <tr>
+          <td>人工套袋会先把果子扯出来，机器人怎么做？</td>
+          <td>不能设计成刚性夹爪直接拉果梗，容易伤果或折枝。</td>
+          <td>机器人只能做“小位移游离”：用软拨指或喇叭形导向罩把叶片拨开、把果体轻轻导入袋口，而不是大力拉扯果实。</td>
+          <td>两片硅胶/TPU 拨指 + 柔性导向罩 + 低速短行程动作。</td>
+        </tr>
+        <tr>
+          <td>套完一个果，袋子挡住另一个果怎么办？</td>
+          <td>不能一次性用初始图像规划所有果。</td>
+          <td>套完一个必须复拍，把已套果识别为 <code>bagged</code>，从队列中删除，再重新排序剩余果。</td>
+          <td>scan-act-update 闭环；袋子可作为新类别或用颜色/纹理规则识别。</td>
+        </tr>
+        <tr>
+          <td>怎样确保全部果子都套上？</td>
+          <td>不能承诺单次扫描 100% 全自动套完。</td>
+          <td>工程上应采用多轮扫描：第一轮套高可见外层果，第二轮复拍后套新暴露果，最后对 skip/unknown 目标人工补套。</td>
+          <td>覆盖率指标：已套数量 / 可见候选数量；记录 skip 原因。</td>
+        </tr>
+        <tr>
+          <td>果簇很密，袋口进不去怎么办？</td>
+          <td>不能让末端强行挤入果簇。</td>
+          <td>优先处理外层、间距大的果；邻果间距小于袋口安全宽度时后置。严重密集果簇是机械不可达问题，不是单纯视觉问题。</td>
+          <td>显著性排序加入“邻果距离、入口通道宽度、遮挡比例”。</td>
+        </tr>
+        <tr>
+          <td>果梗在背面，屁股对着相机，怎么收口？</td>
+          <td>不能假装 RGB 能精确看到背面果梗。</td>
+          <td>判为 <code>calyx-front</code>。如果袋口可从正面包络，先作为轴向套入候选；否则侧移复拍，获得果梗侧视角后再套。</td>
+          <td>果脐点 + 朝向状态分类 + 复拍策略。</td>
+        </tr>
+        <tr>
+          <td>三维是不是绕不开？</td>
+          <td>不能说完整机械臂避障完全不需要三维。</td>
+          <td>完整机器人执行确实需要距离和避障信息；但小论文可以限定为低成本 RGB 视觉前端，输出二维入口方向和可套性，不声称完成全局 3D 轨迹规划。</td>
+          <td>论文边界：RGB 感知决策；工程扩展：眼在手相机、短距离视觉伺服、可选低成本深度传感器。</td>
+        </tr>
+        <tr>
+          <td>相机到底一个还是两个？</td>
+          <td>不能只说“一个相机就够所有情况”。</td>
+          <td>毕业论文主线建议一个眼在手 RGB 相机，成本低、能复拍；完整系统可扩展为固定相机负责全局搜索，眼在手相机负责局部确认。</td>
+          <td>低配：单眼在手；高配：固定全局相机 + 眼在手局部相机。</td>
+        </tr>
+        <tr>
+          <td>你的工作量会不会只是分割 + 关键点？</td>
+          <td>不能把论文写成普通检测任务。</td>
+          <td>把输出改成套袋任务决策：实例分割、端部可见性、入口模式、遮挡风险、拨障/复拍/跳过、作业优先级。</td>
+          <td>任务定义创新比单纯提高 mAP 更重要。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>答辩时的总回答：</strong>我的课题不是承诺用二维 RGB 直接完成所有三维机械避障，而是建立一个面向自动套袋的视觉决策前端。它告诉机械端：哪个果先套、当前视角能不能套、从哪侧进入、是否需要柔性拨障、是否需要复拍、是否应该跳过。真正落地时，末端执行器用柔性拨片、导向罩、开袋撑袋和收口机构处理软遮挡；对硬枝条、严重密集果簇和不可见连接区，系统必须拒识或人工补套。
+    </div>
+  </section>
+
+  <section>
+    <h2>12. 推荐实施路线</h2>
+    <ol>
+      <li><strong>第 1 阶段：</strong>采集或委托采集 RGB 图像，先筛出 250-350 张可用图，标注 150-200 张 mask 跑通 YOLO-seg baseline。</li>
+      <li><strong>第 2 阶段：</strong>用 baseline 预标注剩余图像并人工修正，形成 300 张左右 mask 数据。</li>
+      <li><strong>第 3 阶段：</strong>补充果梗连接区、果脐/萼端、端部可见性和 <code>view_state</code> 标签，避免论文退化成单点关键点检测。</li>
+      <li><strong>第 4 阶段：</strong>完成论文一模型：实例分割、ROI 关键点、方向角估计、遮挡分组实验和小规模外部泛化。</li>
+      <li><strong>第 5 阶段：</strong>如果第一篇已基本成型，再在同一批数据上增加前 3 优先级和 skip 标签，启动论文二。</li>
+    </ol>
+    <div class="blue callout">
+      <strong>最小可发表闭环：</strong>如果时间紧，先保证论文一完整。论文二可以从轻量版开始，只做“规则评分 + 学习排序 + Top-3 优先目标评价”，不必一开始训练复杂显著性图网络。
+    </div>
+  </section>
+
+  <section>
+    <h2>13. 可以直接写进开题或论文的核心表述</h2>
+    <div class="callout">
+      现有柑橘视觉研究多集中于果实检测、计数、采摘点定位和三维采摘位姿估计，而柑橘套袋作业与采摘不同：果实在作业后仍连接于树体，袋口需要从合适方向进入并完整包络果实，随后在果梗附近完成固定。因此，套袋视觉不仅需要识别果实位置，还需要获得果实安全包络、果梗连接关系、端部可见性、袋口二维进入方向、遮挡不确定性以及多目标条件下的作业优先顺序。针对自然果园中果叶颜色相近、果实密集重叠、果梗连接点易遮挡、单 RGB 缺少深度信息等问题，本文拟开展面向柑橘自动套袋的 RGB 视觉感知研究，构建由实例分割、果梗/果脐端部识别、朝向状态判断、入口模式决策、风险拒识和显著性优先级排序组成的低成本视觉前端方法。
+    </div>
+  </section>
+
+  <section>
+    <h2>14. 文档想法的论文支撑审计</h2>
+    <div class="blue callout">
+      <strong>审计结论：</strong>“柑橘套袋视觉”同名论文较少，但文档中的主要想法可以由三类文献支撑：第一类是柑橘检测、分割、果梗/采摘点定位和采摘顺序规划；第二类是苹果、梨、桃等水果套袋机器人、套袋末端执行器和套袋路径规划；第三类是通用视觉中的关键点可见性、显著目标排序、<a href="https://arxiv.org/abs/2304.02643">SAM</a> 辅助标注和学习排序。需要谨慎表述的是“柑橘套袋安全包络”和“套袋任务显著性排序”：它们目前更像由多类文献组合推出的新任务，不能写成已有成熟标准方法。
+    </div>
+    <p><strong>证据等级说明：</strong>“直接支撑”表示已有论文处理同类对象或同类任务；“迁移支撑”表示采摘、苹果/梨/桃套袋或通用视觉中已有方法，可合理迁移到柑橘套袋；“创新组合”表示没有完全同名论文，但可由套袋动作需求和已有视觉模块共同推出。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>文档中的方法/想法</th>
+          <th>支撑强度</th>
+          <th>可引用的论文或资料</th>
+          <th>写作建议</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>套袋具有农艺和经济意义</td>
+          <td>直接支撑</td>
+          <td>葡萄柚套袋品质研究、<a href="https://journals.ashs.org/view/journals/horttech/31/1/article-p4.xml">Preharvest bagging</a> 综述、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7918571/">Influence of Bagging on Fruit Development and Quality</a> 综述、Kinnow 柑橘套袋病虫害研究。</td>
+          <td>写“保护果实、改善外观、降低病虫/环境伤害”，不要夸大为所有内在品质都显著提高。</td>
+        </tr>
+        <tr>
+          <td>人工成本高、设备经济性需要测算</td>
+          <td>同类果园直接支撑，柑橘需谨慎迁移</td>
+          <td>中国果袋生产使用与回收研究给出苹果套袋人工和纸袋成本参考；苹果病害管理综述给出黄土高原双层纸袋成本参考；NVIDIA 和机械臂公开报价可用于估算视觉端/整机端成本。</td>
+          <td>只能写“同类套袋果园参考”，不能把苹果成本直接写成柑橘全国成本。</td>
+        </tr>
+        <tr>
+          <td>课题社会意义：缓解季节性用工压力</td>
+          <td>直接背景支撑</td>
+          <td>中国果袋产业研究提到农村劳动力老龄化、用工难和用工贵；果园机械化研究普遍把劳动力短缺作为自动化背景。</td>
+          <td>写成“减少重复高强度劳动、提高标准化”，不要写成宏大口号。</td>
+        </tr>
+        <tr>
+          <td>套袋不同于采摘</td>
+          <td>直接支撑于套袋机器人</td>
+          <td>自动水果套袋机器人使用 RGB-D 识别幼果并计算相对位置；梨幼果套袋末端执行器强调开袋、包络和固定；果实套袋综述把套袋定义为包裹幼果并在果柄附近固定。</td>
+          <td>可写成任务差异：采摘是分离，套袋是包络和固定。</td>
+        </tr>
+        <tr>
+          <td>柑橘实例分割作为基础模块</td>
+          <td>直接支撑</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025 improved YOLOv8n-seg</a>；<a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2022.946154/full">Lu et al. 2022 improved Mask R-CNN</a>；果园 YOLOv8/<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 实例分割对比。</td>
+          <td>不能只把实例分割当唯一创新，应作为套袋方向估计的前置模块。</td>
+        </tr>
+        <tr>
+          <td>论文一 baseline 选择 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a>、YOLO11-seg、<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a></td>
+          <td>直接支撑</td>
+          <td>YOLOv8/YOLOv11 果实分割论文、柑橘 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">improved YOLOv8n-seg</a>、<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 原始论文和柑橘 <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 应用论文。</td>
+          <td>主 baseline 选 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> 最稳；YOLO11-seg 可作为强对比，<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 作为经典两阶段对照。</td>
+        </tr>
+        <tr>
+          <td>论文一网络改进：小目标层、<a href="https://arxiv.org/abs/1911.09070">BiFPN</a>、注意力、连接点 head</td>
+          <td>直接支撑于通用视觉，农业场景迁移</td>
+          <td><a href="https://arxiv.org/abs/1911.09070">EfficientDet/BiFPN</a>、<a href="https://arxiv.org/abs/1807.06521">CBAM</a>、<a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a>、<a href="https://arxiv.org/abs/1902.09212">HRNet/RTMPose</a>、<a href="https://arxiv.org/abs/2202.06934">SAHI</a>、柑橘采摘点定位论文。</td>
+          <td>不要堆模块。建议只保留 2-3 个能解释套袋痛点的模块，并做消融。</td>
+        </tr>
+        <tr>
+          <td>果梗连接点/操作点定位</td>
+          <td>直接支撑于柑橘采摘，迁移支撑于套袋</td>
+          <td><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 柑橘果实和果梗分割及采摘点定位；<a href="https://www.mdpi.com/2077-0472/15/3/237">MDPI citrus picking-point localization</a>；猕猴桃果梗采摘点识别。</td>
+          <td>你可以把“采摘点”迁移为“套袋连接区/入口方向参考区”，但不要只输出一个点。</td>
+        </tr>
+        <tr>
+          <td>果脐正对相机时的处理</td>
+          <td>迁移支撑 + 创新组合</td>
+          <td><a href="https://www.sciencedirect.com/science/article/pii/S0168169924001728">Occluded apples orientation estimator</a> 使用关键点和轮廓估计遮挡苹果朝向；<a href="https://arxiv.org/abs/2310.11333">Key Point-based Orientation Estimation of Strawberries</a> 说明可由 2D 关键点估计水果方向；<a href="https://www.mdpi.com/2311-7524/12/4/505">dragon fruit pose estimation</a> 使用果脐和果梗关键点进行单目姿态估计。</td>
+          <td>写成“端部可见性与入口模式判定”：果梗可见则侧向套入，果脐正对相机则轴向候选或复拍，双端不可见则拒识。</td>
+        </tr>
+        <tr>
+          <td>果柄连接点被遮挡时的处理</td>
+          <td>直接支撑于柑橘/番茄/草莓果柄定位，方法支撑于关键点可见性和主动视觉</td>
+          <td><a href="https://www.mdpi.com/2077-0472/15/22/2330">YOLO-OBB</a> 柑橘果柄姿态估计、<a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al. 2025</a> 果梗分割、番茄 peduncle node pose、草莓/辣椒果柄关键点、<a href="https://arxiv.org/abs/1405.0312">COCO keypoint visibility</a>、<a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">active perception/next-best-view harvesting</a>。</td>
+          <td>写成“可见则定位，不可见则判不确定并触发跳过或二次观察”。不要把遮挡点坐标回归写成万能方案。</td>
+        </tr>
+        <tr>
+          <td>连接点可见性 visible/occluded/uncertain</td>
+          <td>间接支撑</td>
+          <td><a href="https://arxiv.org/abs/1405.0312">COCO</a>/YOLO pose 使用可见性标志；WACV 2024 Rethinking Visibility 讨论遮挡关键点对姿态估计的影响。</td>
+          <td>写成借鉴关键点检测领域的可见性标注思想，不要说农业里已有完全相同标签。</td>
+        </tr>
+        <tr>
+          <td>先分割 ROI，再做关键点</td>
+          <td>间接支撑</td>
+          <td><a href="https://arxiv.org/abs/2303.07399">RTMPose</a>/MMPose 等 top-down 姿态估计框架；YOLO-Pose 证明检测与关键点可联合建模。</td>
+          <td>作为工程实现合理，但农业套袋要用实验验证。</td>
+        </tr>
+        <tr>
+          <td>二维方向估计，而非完整 3D 位姿</td>
+          <td>直接 + 谨慎支撑</td>
+          <td>单目 RGB 柑橘采摘位姿估计说明 RGB 可估计操作相关方向；自动套袋机器人和苹果套袋姿态研究常使用 RGB-D/深度辅助，说明完整 3D 套袋位姿更依赖深度。</td>
+          <td>你只有 RGB，因此最稳写法是“二维图像平面方向”和“低成本视觉前端”。</td>
+        </tr>
+        <tr>
+          <td>安全包络/扩张 mask 判断袋口风险</td>
+          <td>间接支撑，属于创新组合</td>
+          <td>水果 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a> 用于遮挡下完整形状估计；套袋末端执行器研究强调开袋包络和避免损伤。</td>
+          <td>这是可写创新点，但要承认目前缺少柑橘套袋同名标准方法。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2202.06934">SAHI</a> 切片推理处理小目标/远景果实</td>
+          <td>直接支撑</td>
+          <td><a href="https://arxiv.org/abs/2202.06934">SAHI: Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection</a>。</td>
+          <td>可作为增强策略或对比实验，不一定作为主创新。</td>
+        </tr>
+        <tr>
+          <td>密集果簇和严重遮挡处理</td>
+          <td>直接支撑于柑橘检测/分割，方法支撑于小目标检测、边界细化和 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">amodal segmentation</a></td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a>、<a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO</a>、<a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Dense-TRU-YOLO</a>、<a href="https://www.sciencedirect.com/science/article/pii/S2772375525008214">YOLO-FCAP</a>、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11039839/">YCCB-YOLO</a>、<a href="https://ijabe.org/index.php/ijabe/article/view/8935">ELD-YOLO</a>、<a href="https://arxiv.org/abs/1912.08193">PointRend</a>、<a href="https://arxiv.org/abs/2104.05239">Boundary Patch Refinement</a>、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">fruit amodal segmentation</a>。</td>
+          <td>写成“提升可见实例分割和优先选择可靠目标”，不要写成“所有遮挡果实都能完整恢复”。</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2304.02643">SAM</a> 辅助标注，提高数据集制作速度</td>
+          <td>直接支撑</td>
+          <td><a href="https://arxiv.org/abs/2304.02643">Segment Anything</a> 论文提出可提示分割和数据引擎；农业图像研究已把 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12872900/">SAM/SAM2</a> 用作预标注工具；梨果自动标注研究用 <a href="https://arxiv.org/abs/2304.02643">SAM</a> 过滤并生成实例标注。</td>
+          <td>可写入数据集构建流程：模型预标注 + 人工校正。</td>
+        </tr>
+        <tr>
+          <td>显著性排序：从无序实例到有序目标</td>
+          <td>直接支撑于通用视觉，间接支撑于套袋</td>
+          <td>ICCV 2021 <a href="https://arxiv.org/abs/2106.05047">Salient Object Ranking</a>；CVPR 2018 multiple salient object ranking；SeqRank 等后续 <a href="https://arxiv.org/abs/2106.05047">SOR</a> 工作。</td>
+          <td>要强调你的不是人眼显著性，而是“套袋任务显著性”。</td>
+        </tr>
+        <tr>
+          <td>论文二 baseline 与网络创新：TaskSal-Rank</td>
+          <td>迁移支撑 + 创新组合</td>
+          <td><a href="https://arxiv.org/abs/2106.05047">SOR</a> 论文支撑实例级排序；<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>/<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> 支撑学习排序；Graph Attention 和 <a href="https://arxiv.org/abs/1706.03762">Transformer</a> 支撑实例关系建模；农业采摘/套袋路径规划支撑作业顺序需求。</td>
+          <td>可以写成“任务显著性排序网络”，但要说明它是面向套袋任务重新定义的排序，不是传统人眼显著性。</td>
+        </tr>
+        <tr>
+          <td>先套哪个、后套哪个的作业顺序</td>
+          <td>直接支撑于农业机器人，迁移支撑于套袋视觉</td>
+          <td>柑橘采摘顺序规划将识别结果转为 TSP 类作业序列；2026 年桃幼果套袋覆盖路径规划说明“套袋目标如何组织成作业路径”是真实机器人问题。</td>
+          <td>可以把采摘/套袋路径规划迁移为视觉前端的优先级队列，但不要声称已经完成机械臂全局最优路径。</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>/<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> ranker/pairwise ranking loss</td>
+          <td>直接支撑于排序学习，农业场景间接支撑</td>
+          <td><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>-<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">LambdaRank</a>-<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">LambdaMART</a> 综述；<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> LGBMRanker 文档；学习排序文献。</td>
+          <td>适合作为轻量快速实现，不要把它包装成农业视觉新网络。</td>
+        </tr>
+        <tr>
+          <td>NDCG、Spearman、Kendall Tau、Top-K</td>
+          <td>直接支撑</td>
+          <td><a href="https://arxiv.org/abs/2106.05047">SOR</a> 论文使用 Spearman/<a href="https://arxiv.org/abs/2106.05047">SOR</a> 等排序指标；信息检索和 learning-to-rank 使用 NDCG。</td>
+          <td>第二篇如果做排序，这些指标比单纯准确率更合适。</td>
+        </tr>
+        <tr>
+          <td>泛化实验：外部分割/检测 + 小样本关键点补标</td>
+          <td>直接 + 工程合理</td>
+          <td><a href="https://arxiv.org/html/2309.05645v3">CitDet</a>、Campaneta-Orange-Fruit、Mendeley citrus dataset 提供外部柑橘图像；农业数据集和果园分割论文普遍指出品种、光照、遮挡和采集平台会造成跨域差异。</td>
+          <td>公开数据无关键点，因此只补标 50-100 张关键点是合理低成本方案。</td>
+        </tr>
+        <tr>
+          <td>数据采集与快速标注路线</td>
+          <td>直接工具支撑 + 工程合理</td>
+          <td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12872900/">SAM/SAM2</a> 农业标注论文支撑预标注；<a href="https://arxiv.org/abs/1405.0312">COCO</a>/实例分割数据集支撑 mask 与关键点标注格式；<a href="https://arxiv.org/html/2309.05645v3">CitDet</a> 和公开柑橘数据说明外部图像可用于泛化测试。</td>
+          <td>“少量高质量自建数据 + <a href="https://arxiv.org/abs/2304.02643">SAM</a> 预标注 + 人工修正 + 外部小样本补标”是速度优先的可行路线。</td>
+        </tr>
+        <tr>
+          <td>最终目标：低成本 RGB 套袋视觉前端</td>
+          <td>创新组合</td>
+          <td>自动套袋机器人证明完整套袋系统需要视觉输入；单目柑橘采摘证明 RGB 能估计操作相关信息；RGB-D 套袋/苹果姿态论文说明完整 3D 位姿更难。</td>
+          <td>目标应限定为视觉前端，不要写成已经实现完整自动套袋机器人。</td>
+        </tr>
+        <tr>
+          <td>购买/委托采集数据必须如实说明来源</td>
+          <td>权威规范支撑，不是算法论文</td>
+          <td><a href="https://ori.hhs.gov/definition-misconduct">ORI</a> 对 fabrication/falsification 的定义；AIP/Wiley/<a href="https://publicationethics.org/resources/guidelines">COPE</a> 等出版伦理指南；研究数据管理要求记录采集协议和数据来源。</td>
+          <td>不能把购买或委托采集写成“本人亲自拍摄”；可以写“按统一协议委托采集”。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>投稿时最稳的表述：</strong>“本文方法受到果实实例分割、果梗/采摘点定位、关键点可见性建模和显著目标排序研究启发，但针对柑橘套袋任务重新定义了安全包络、连接点可见性、二维入口方向和候选目标优先级。” 这样既有文献依据，也保留了你的创新空间。
+    </div>
+    <div class="callout">
+      <strong>审计后的取舍建议：</strong>第一篇小论文最稳，支撑链为“柑橘实例分割已有基础 → 柑橘果梗/采摘点已有基础 → 套袋机器人需要包络和固定 → 因此提出面向套袋的连接点、方向和风险拒识”。第二篇可以做，但应写成“显著性/排序启发的套袋优先级”，不要一开始承诺复杂机械臂路径规划。真正没有强直接论文支撑的部分，反而应作为你的创新点，但表述必须克制。
+    </div>
+  </section>
+
+  <section>
+    <h2>15. 最终总结：课题是什么、怎么做、目标是什么</h2>
+    <div class="blue callout">
+      <strong>一句话定义课题：</strong>本课题不是普通“柑橘识别”或“柑橘实例分割”，而是面向自动套袋作业的 RGB 视觉前端研究：从自然果园图像中识别可套袋柑橘，定位果梗-果实连接点，估计二维袋口进入方向，并在多果密集场景中给出优先套袋顺序。
+    </div>
+    <h3>15.1 整体大纲：用什么算法解决什么问题</h3>
+    <p>整篇课题可以按“看见果实 → 判断边界 → 找连接点 → 判断方向 → 识别风险 → 排列顺序”的链条组织。这样讲比“我用了实例分割和关键点检测”更完整，因为每个算法模块都对应套袋动作中的一个具体问题。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>套袋视觉问题</th>
+          <th>使用的算法/模块</th>
+          <th>解决什么</th>
+          <th>输出结果</th>
+          <th>评价指标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>柑橘在哪里</td>
+          <td>实例分割，baseline 可选 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> / YOLO11-seg / <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a></td>
+          <td>从复杂果园背景中分离每一个柑橘实例，获得单果位置和可见区域。</td>
+          <td>每个柑橘的 mask、bbox、置信度。</td>
+          <td>mAP50、mAP50-95、Recall、FPS。</td>
+        </tr>
+        <tr>
+          <td>果实边界是否足够完整</td>
+          <td>边界辅助分支、P2 小目标层、<a href="https://arxiv.org/abs/1911.09070">BiFPN</a>/注意力模块、<a href="https://arxiv.org/abs/2202.06934">SAHI</a> 切片推理</td>
+          <td>处理密集果簇、小目标、果实粘连和边界不清，判断袋口能否安全包络。</td>
+          <td>更精细的 mask、边界完整度、遮挡等级。</td>
+          <td>AP75、重遮挡 AP、粘连错误率、边界 IoU。</td>
+        </tr>
+        <tr>
+          <td>果梗连接点在哪里</td>
+          <td>实例分割后的 ROI 关键点 heatmap head</td>
+          <td>在单果局部区域内定位果梗-果实连接点，减少密集多果造成的关键点错配。</td>
+          <td>连接点坐标 <code>(x, y)</code>。</td>
+          <td>PCK、OKS-mAP、平均像素误差。</td>
+        </tr>
+        <tr>
+          <td>连接点被遮挡怎么办</td>
+          <td>可见性分类分支，标签为 <code>visible / occluded / uncertain</code></td>
+          <td>不对不可见连接点强行回归坐标，而是判断该目标是否可靠，必要时跳过或复拍。</td>
+          <td>连接点可见性、可靠性分数、skip 建议。</td>
+          <td>Visibility Accuracy、F1、uncertain 召回率、拒识收益。</td>
+        </tr>
+        <tr>
+          <td>袋口应该从哪个方向进入</td>
+          <td>二维方向向量分支，或由果心到连接点计算方向</td>
+          <td>把分割和连接点转化为套袋动作需要的二维入口方向。</td>
+          <td>方向向量 <code>(cosθ, sinθ)</code> 或角度 <code>θ</code>。</td>
+          <td>平均角度误差、误差 &lt;15° 比例、方向成功率。</td>
+        </tr>
+        <tr>
+          <td>这个果现在适不适合套袋</td>
+          <td>可套袋性评分：mask 完整度、遮挡等级、连接点置信度、邻果距离、方向稳定性</td>
+          <td>把视觉结果转为作业判断，避免对严重遮挡或方向不可靠目标强行套袋。</td>
+          <td>可套袋分数、风险等级、可套/后置/跳过。</td>
+          <td>Top-K 可套袋率、错误方向率、skip F1。</td>
+        </tr>
+        <tr>
+          <td>多个柑橘先套哪个</td>
+          <td>任务显著性排序，轻量版用规则评分/<a href="https://arxiv.org/abs/1711.06160">LightGBM Ranker</a>，增强版用 <a href="https://arxiv.org/abs/1710.10903">GAT</a>/<a href="https://arxiv.org/abs/1706.03762">Transformer</a> 建模邻果关系</td>
+          <td>在密集多果场景中优先选择遮挡少、连接点可靠、邻果干涉小的目标。</td>
+          <td>Top-1/Top-3 优先套袋目标、排序列表。</td>
+          <td>NDCG@K、Spearman、Kendall Tau、Top-K 风险下降。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>最清晰的总路线：</strong>实例分割解决“柑橘位置和可见边界”；连接点检测解决“袋口方向参考点”；可见性分支解决“连接点被遮挡不能盲猜”；二维方向估计解决“袋口从哪里进入”；可套袋性评分解决“当前目标能不能套”；显著性排序解决“密集多果先套哪个”。这就是课题的整体架构。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>问题</th>
+          <th>最终建议</th>
+          <th>依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>第一篇小论文做什么</td>
+          <td>做“面向柑橘套袋的实例分割 + 果梗连接点定位 + 二维入口方向估计”。主模型可命名为 Bagging-YOLO 或 BSJ-YOLO。</td>
+          <td>柑橘 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">improved YOLOv8n-seg</a>、柑橘采摘点定位、单目柑橘采摘位姿和套袋机器人文献共同支撑。</td>
+        </tr>
+        <tr>
+          <td>第一篇如何快速发</td>
+          <td>先采集或委托采集 500-1000 张 RGB 图像；标注 visible mask、连接点和可见性；以 <a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">YOLOv8n-seg</a> 为 baseline，增加小目标/注意力模块、连接点 head、可见性分支和方向损失。</td>
+          <td>YOLO/<a href="https://arxiv.org/abs/1703.06870">Mask R-CNN</a> 实例分割、<a href="https://arxiv.org/abs/1405.0312">COCO keypoint visibility</a>、<a href="https://arxiv.org/abs/1902.09212">HRNet/RTMPose</a>、<a href="https://arxiv.org/abs/1807.06521">CBAM</a>/<a href="https://arxiv.org/abs/2103.02907">Coordinate Attention</a>、<a href="https://arxiv.org/abs/2202.06934">SAHI</a> 和 <a href="https://arxiv.org/abs/2304.02643">SAM</a> 辅助标注文献支撑。</td>
+        </tr>
+        <tr>
+          <td>第二篇做什么</td>
+          <td>做“显著性引导的套袋目标优先级排序”。输入论文一输出的实例、连接点、方向、遮挡和置信度，输出 Top-K 优先套袋目标、skip 目标和排序分数。</td>
+          <td><a href="https://arxiv.org/abs/2106.05047">SOR</a> 显著目标排序、<a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">RankNet</a>/<a href="https://arxiv.org/abs/1711.06160">LightGBM</a> 学习排序、柑橘采摘顺序规划和桃幼果套袋路径规划支撑。</td>
+        </tr>
+        <tr>
+          <td>最重要的创新点</td>
+          <td>不是发明一个全新网络，而是把“分割、关键点、可见性、方向、风险和排序”组合成套袋任务所需的视觉闭环，并用任务指标验证。</td>
+          <td>直接支撑来自果实分割和采摘点定位；创新空间来自套袋动作对包络、方向和顺序的特殊需求。</td>
+        </tr>
+        <tr>
+          <td>最终达到什么目标</td>
+          <td>在 RGB 图像条件下，输出每个候选果实的 mask、连接点、连接点可见性、二维入口方向、风险等级和优先级序列；在遮挡和密集场景中仍能给出“先套、后套、跳过”的可解释建议。</td>
+          <td>该目标比完整 3D 自动套袋机器人低，但对你当前设备和毕业目标更现实。</td>
+        </tr>
+      </tbody>
+    </table>
+    <h3>15.2 开题或组会汇报的最终顺序</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>汇报顺序</th>
+          <th>建议说法</th>
+          <th>目的</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. 先讲意义</td>
+          <td>柑橘套袋具有保护果实、提高商品性和降低重复劳动压力的价值，自动套袋装备需要可靠视觉前端。</td>
+          <td>说明课题不是凭空造题。</td>
+        </tr>
+        <tr>
+          <td>2. 再讲任务差异</td>
+          <td>套袋不同于采摘，采摘关注分离果实，套袋关注袋口进入、果实包络和果梗附近固定。</td>
+          <td>把课题从普通采摘视觉中区分出来。</td>
+        </tr>
+        <tr>
+          <td>3. 接着讲已有工作不足</td>
+          <td>柑橘分割和采摘点定位已有较高精度，仅做实例分割创新不足；mAP50 高不代表套袋方向、连接点可见性和遮挡风险可靠。</td>
+          <td>回应“别人已经做到 94%”的问题。</td>
+        </tr>
+        <tr>
+          <td>4. 然后讲两大痛点</td>
+          <td>第一，果柄连接点容易被遮挡；第二，柑橘密集成簇导致边界粘连、小目标和邻果干涉。</td>
+          <td>把算法改进和真实困难挂钩。</td>
+        </tr>
+        <tr>
+          <td>5. 再讲解决方案</td>
+          <td>用实例分割确定单果位置和边界，用 ROI 关键点定位连接点，用可见性分支处理遮挡，用二维方向分支估计袋口入口，用显著性排序处理多果顺序。</td>
+          <td>说明每个算法模块都有明确用途。</td>
+        </tr>
+        <tr>
+          <td>6. 最后讲论文落点</td>
+          <td>第一篇做遮挡感知实例分割、连接点定位和二维入口方向；第二篇在此基础上做套袋任务显著性排序和优先级决策。</td>
+          <td>形成可执行、可投稿的毕业路线。</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warning callout">
+      <strong>最稳执行顺序：</strong>先把第一篇做完整，不要一开始同时追求两篇。第一篇的最低闭环是“分割可用、连接点可见性可判、可见连接点定位可评价、二维方向误差可统计”。第二篇在第一篇结果稳定后再做排序，不要让排序标注拖慢第一篇投稿。
+    </div>
+    <div class="callout">
+      <strong>最终论文目标表述：</strong>“本文构建了面向柑橘自动套袋的低成本 RGB 视觉感知框架，实现果实实例分割、果梗连接点定位、二维入口方向估计和遮挡风险判断，并进一步探索多果密集场景下的套袋目标优先级排序，为后续自动套袋装备提供可解释、可验证的视觉输入。”
+    </div>
+  </section>
+
+  <section>
+    <h2>16. 参考文献与相关工作</h2>
+    <ol>
+      <li><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2025.1655093/full">Li et al., 2025, Precision citrus segmentation and stem picking point localization using improved YOLOv8n-seg algorithm.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12460429/">Li et al., 2025, PMC full text: citrus fruit and stem segmentation with picking point localization.</a></li>
+      <li><a href="https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2022.946154/full">Lu et al., 2022, Citrus green fruit detection via improved feature network extraction.</a></li>
+      <li><a href="https://arxiv.org/html/2309.05645v3">CitDet: A benchmark dataset for citrus fruit detection.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11208628/">Application of amodal segmentation for fruit shape reconstruction and size estimation under occlusion.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S0168169923002429">Gené-Mola et al., 2023, Looking behind occlusions: amodal segmentation for robust on-tree apple fruit size estimation.</a></li>
+      <li><a href="https://arxiv.org/html/2410.19869v3">Comparing YOLOv11 and YOLOv8 for instance segmentation of occluded and non-occluded immature green fruits.</a></li>
+      <li><a href="https://www.mdpi.com/2077-0472/15/3/237">Picking-Point Localization Algorithm for Citrus Fruits Based on Improved YOLOv8 Model.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11276354/">Xiao et al., 2024, Monocular pose estimation method for automatic citrus harvesting.</a></li>
+      <li><a href="https://www.mdpi.com/2077-0472/15/22/2330">The YOLO-OBB-Based Approach for Citrus Fruit Stem Pose Estimation and Robot Picking.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S0168169924001728">Kok &amp; Chen, 2024, Occluded apples orientation estimator based on deep learning model for robotic harvesting.</a></li>
+      <li><a href="https://arxiv.org/abs/2310.11333">Le Louëdec &amp; Cielniak, 2023, Key Point-based Orientation Estimation of Strawberries for Robotic Fruit Picking.</a></li>
+      <li><a href="https://www.mdpi.com/2311-7524/12/4/505">Yang et al., 2026, A Monocular Pose Estimation Framework for Automatic Dragon Fruit Harvesting Using Navel and Stem Keypoints.</a></li>
+      <li><a href="https://www.mdpi.com/2077-0472/14/1/114">AG-YOLO: A Rapid Citrus Fruit Detection Algorithm with Global Context Fusion.</a></li>
+      <li><a href="https://www.sciopen.com/article/10.25165/j.ijabe.20251801.8866">Detection of citrus in the natural environment using Dense-TRU-YOLO.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S2772375525008214">YOLO-FCAP: An improved lightweight object detection model based on YOLOv8n for citrus yield prediction in complex environments.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11039839/">Fruits hidden by green: YCCB-YOLO for young citrus detection in lush citrus trees.</a></li>
+      <li><a href="https://ijabe.org/index.php/ijabe/article/view/8935">Citrus fruit detection based on an improved YOLOv5 under natural orchard conditions.</a></li>
+      <li><a href="https://arxiv.org/abs/2106.05047">Fang et al., 2021, Salient Object Ranking with Position-Preserved Attention.</a></li>
+      <li><a href="https://link.springer.com/article/10.1007/s11760-023-02676-y">Li et al., 2023, Recognition of citrus fruit and planning the robotic picking sequence in orchards.</a></li>
+      <li><a href="https://arxiv.org/abs/2008.06146">Sirvi et al., 2020, Multi-Salient-Object Detection as a Distance Map Regression Problem.</a></li>
+      <li><a href="https://iroboticsjournal.org/index.php/irobotics/article/view/170">Development of an Automatic Agricultural Fruit Bagging Robot, 2023.</a></li>
+      <li><a href="https://link.springer.com/article/10.1007/s11694-026-04505-5">Feng &amp; Mhamed, 2026, Lightweight keypoint detection and pose estimation for immature apples using improved YOLOv8n-pose.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0168169923009717">Zhang et al., 2024, Multiple object tracking for honey peach young fruits in bagging scene based on improved DeepSORT.</a></li>
+      <li><a href="https://www.mdpi.com/2227-9717/12/2/259">Design and Simulation of End Effector for Young-Pear-Bagging Robot, 2024.</a></li>
+      <li><a href="https://github.com/robotic-vision-lab/CitDet-A-Benchmark-Dataset-For-Citrus-Fruit-Detection">CitDet GitHub dataset repository.</a></li>
+      <li><a href="https://zenodo.org/records/17866344">Campaneta-Orange-Fruit dataset, Zenodo, 2026.</a></li>
+      <li><a href="https://data.mendeley.com/datasets/bxfgvsn9kw">A Dataset of Citrus Fruit Images, Mendeley Data.</a></li>
+      <li><a href="https://academic.oup.com/fqs/article/doi/10.1093/fqsafe/fyac049/6652345">Jiang et al., 2022, Effects of bagging on fruit quality of grapefruit.</a></li>
+      <li><a href="https://journals.ashs.org/view/journals/horttech/31/1/article-p4.xml">Preharvest Bagging as an Alternative Technique for Enhancing Fruit Quality, HortTechnology, 2021.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7918571/">Influence of Bagging on the Development and Quality of Fruits, Plants, 2021.</a></li>
+      <li><a href="https://jaragri.com/jar/index.php/jar/article/download/191/133">Pre-harvest fruit bagging in citrus against diseases and physiochemical parameters, Kinnow mandarin, 2021.</a></li>
+      <li><a href="https://arxiv.org/abs/2202.06934">Akyon et al., 2022, Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection.</a></li>
+      <li><a href="https://arxiv.org/abs/2304.02643">Kirillov et al., 2023, Segment Anything.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12872900/">Orchestrating segment anything models to accelerate agricultural instance segmentation annotation.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S277237552600050X">Automatic annotation and performance evaluation of orchard pear instance segmentation datasets using SAM variants.</a></li>
+      <li><a href="https://arxiv.org/abs/1405.0312">Lin et al., 2014, Microsoft COCO: Common Objects in Context.</a></li>
+      <li><a href="https://openaccess.thecvf.com/content/WACV2024/papers/Sun_Rethinking_Visibility_in_Human_Pose_Estimation_Occluded_Pose_Reasoning_via_WACV_2024_paper.pdf">Sun et al., 2024, Rethinking Visibility in Human Pose Estimation.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S1537511024000989">3D pose estimation of tomato peduncle nodes using deep keypoint detection and point cloud.</a></li>
+      <li><a href="https://www.mdpi.com/2073-4395/14/12/3027">TomatoPoseNet: An Efficient Keypoint-Based 6D Pose Estimation Model for Non-Destructive Tomato Harvesting.</a></li>
+      <li><a href="https://www.sciopen.com/article/10.11975/j.issn.1002-6819.202405044">Recognizing strawberry to detect the key points for peduncle picking using improved YOLOv8 and Pose.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0168169925004867">Robust keypoint-based method for peduncle pose estimation in unstructured pepper environments.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0168169925010804">Five-degree-of-freedom strawberry pose estimation using key points and oriented bounding box detection.</a></li>
+      <li><a href="https://arxiv.org/abs/1912.08193">Kirillov et al., 2020, PointRend: Image Segmentation as Rendering.</a></li>
+      <li><a href="https://arxiv.org/abs/2104.05239">Tang et al., 2021, Look Closer to Segment Better: Boundary Patch Refinement for Instance Segmentation.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9399748/">Accurate segmentation of green fruit based on optimized Mask R-CNN with Boundary Patch Refinement.</a></li>
+      <li><a href="https://arxiv.org/abs/2602.23953">GDA-YOLO11: Amodal Instance Segmentation for Occlusion-Robust Robotic Fruit Harvesting.</a></li>
+      <li><a href="https://link.springer.com/article/10.1007/s10846-022-01595-3">Active Perception Fruit Harvesting Robots: A Systematic Review.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S1537511024002204">Semantics-aware next-best-view planning for efficient search and detection of task-relevant plant parts.</a></li>
+      <li><a href="https://arxiv.org/html/2409.17389v2">Safe Leaf Manipulation for Accurate Shape and Pose Estimation of Occluded Fruits.</a></li>
+      <li><a href="https://ieeexplore.ieee.org/document/10802174">Occlusion Handling by Pushing for Enhanced Fruit Detection in Agricultural Robotics.</a></li>
+      <li><a href="https://ieeexplore.ieee.org/iel8/6287639/10820123/11135451.pdf">A Review on Dual-Arm Manipulation in Agriculture.</a></li>
+      <li><a href="https://www.microsoft.com/en-us/research/publication/learning-to-rank-using-gradient-descent/">Burges et al., 2005, Learning to Rank using Gradient Descent.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S016816992501405X">Zhang et al., 2026, Coverage path planning for a bagging robot via spatial coordinate projection clustering of young peaches.</a></li>
+      <li><a href="https://arxiv.org/abs/1703.06870">He et al., 2017, Mask R-CNN.</a></li>
+      <li><a href="https://arxiv.org/abs/1911.09070">Tan et al., 2019, EfficientDet: Scalable and Efficient Object Detection with BiFPN.</a></li>
+      <li><a href="https://arxiv.org/abs/1807.06521">Woo et al., 2018, CBAM: Convolutional Block Attention Module.</a></li>
+      <li><a href="https://arxiv.org/abs/2103.02907">Hou et al., 2021, Coordinate Attention for Efficient Mobile Network Design.</a></li>
+      <li><a href="https://arxiv.org/abs/1902.09212">Sun et al., 2019, Deep High-Resolution Representation Learning for Human Pose Estimation.</a></li>
+      <li><a href="https://arxiv.org/abs/2303.07399">Jiang et al., 2023, RTMPose: Real-Time Multi-Person Pose Estimation based on MMPose.</a></li>
+      <li><a href="https://arxiv.org/abs/2112.01527">Cheng et al., 2021, Mask2Former for universal image segmentation.</a></li>
+      <li><a href="https://arxiv.org/abs/1904.02689">Bolya et al., 2019, YOLACT: Real-time Instance Segmentation.</a></li>
+      <li><a href="https://arxiv.org/abs/1710.10903">Velickovic et al., 2018, Graph Attention Networks.</a></li>
+      <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al., 2017, Attention Is All You Need.</a></li>
+      <li><a href="https://arxiv.org/abs/1711.06160">Ke et al., 2017, LightGBM: A Highly Efficient Gradient Boosting Decision Tree.</a></li>
+      <li><a href="https://www.mdpi.com/2071-1050/12/3/1106">Production, Use and Recycling of Fruit Cultivating Bags in China.</a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9696287/">Sustainable Apple Disease Management in China.</a></li>
+      <li><a href="https://s3.wp.wsu.edu/uploads/sites/908/2026/01/JAAEA-2025-Robot-Charlton-Economic-viability-of-robotic-fruit-harvesters-to-reduce-large-seasonal-labor.pdf">Economic viability of robotic fruit harvesters to reduce large seasonal labor forces.</a></li>
+      <li><a href="https://www.cambridge.org/core/journals/robotica/article/robotic-picking-of-citrus/C84664DD820503C31CE4158C1FD03E44">Robotic picking of citrus, Robotica.</a></li>
+      <li><a href="https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/">NVIDIA Jetson Orin Nano Super Developer Kit official page.</a></li>
+      <li><a href="https://www.ufactory.cc/product-page/ufactory-xarm-lite-6">UFactory xArm Lite 6 official product page.</a></li>
+      <li><a href="https://www.dobot-robots.com/products/education/magician-lite.html">Dobot Magician Lite official product page.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S2095809925001559">Advance on Agricultural Robot Hand-Eye Coordination: A review of key technology.</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S1537511015001816">Development and evaluation of a new image-based user interface for a semi-autonomous agricultural robot sprayer in dense vegetation.</a></li>
+      <li><a href="https://www.mdpi.com/2624-7402/3/4/53">Visual Servo System for Robotic Fruit Harvesting.</a></li>
+      <li><a href="https://ori.hhs.gov/definition-misconduct">U.S. ORI, Definition of Research Misconduct.</a></li>
+      <li><a href="https://publicationethics.org/resources/guidelines">COPE publication ethics guidelines.</a></li>
+    </ol>
+  </section>
+
+  <footer>
+    更新日期：2026-07-08。本文档用于课题规划、开题论证和小论文选题设计；正式投稿前应继续补充中文核心、农业工程、Computers and Electronics in Agriculture、Biosystems Engineering、Frontiers in Plant Science 等来源的近三年文献。
+  </footer>
+</main>
+</body>
+</html>

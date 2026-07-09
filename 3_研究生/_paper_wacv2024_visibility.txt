@@ -1,0 +1,581 @@
+                        This WACV paper is the Open Access version, provided by the Computer Vision Foundation.
+                                     Except for this watermark, it is identical to the accepted version;
+                               the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+                         Rethinking Visibility in Human Pose Estimation:
+                           Occluded Pose Reasoning via Transformers
+
+                   Pengzhan Sun1 , Kerui Gu1 , Yunsong Wang1 , Linlin Yang2 , Angela Yao1
+                                      1
+                                        National University of Singapore
+                                    2
+                                      Communication University of China
+                {pengzhan, keruigu, yunsong, ayao}@comp.nus.edu.sg, lyang@cuc.edu.cn
+
+
+
+                        Abstract                                   Our approach
+                                                                                                             ......
+                                                                                     Visibility                           Transformer
+                                                                                     MLP                                   Blocks
+   Occlusion is a common challenge in human pose estima-                                          keypoint feature
+
+tion. Curiously, learning from occluded keypoints hinders a
+                                                                   2D pose estimation pipeline
+model to detect visible keypoints. We speculate that the im-
+pairment is likely due to a forced correlation between key-
+                                                                                                             ......
+points and visual features of the occluders. As such, we pro-                        Encoder                          Decoder
+                                                                                                  keypoint feature
+pose a novel visibility-aware attention mechanism to elim-
+inate unreliable occluding features. The explicit occlusion            Input image                                          Output pose
+handling encourages the model to reason about occluded
+keypoints using evidence and contextual information from          Figure 1. Our proposed module performs visibility-aware atten-
+the visible keypoints. It also mitigates the damage of unre-      tion modeling on the keypoint representations to make them ro-
+liable correlations of the occluded keypoints. Our method,        bust to occlusions. The module can be integrated into any pose es-
+when added to the strong baseline SimCC, improves by 1.3          timation method with individual keypoint representations, such as
+AP and 0.7 AP with ResNet and HRNet respectively. It              heatmap-based methods [28,33] and CoordCls-based method [17].
+also surpasses the state-of-the-art I 2 R-Net on CrowdPose
+by 0.3 AP and 0.6 APhard . The improvements highlight that
+rethinking visibility information is critical for developing      mentation [1, 23, 27]. The training data are augmented
+effective human pose estimation systems.                          with simulated occlusions to encourages learned models
+                                                                  to be more robust to the occlusions. However, this often
+                                                                  requires specially designed training strategies and longer
+1. Introduction                                                   convergence times for training. For example, [11] dou-
+                                                                  bles training epochs with only a 0.5 AP improvement on
+    Human pose estimation detects body keypoints in im-           MSCOCO. Additionally, the gained robustness is rather
+ages and video. Deep learning methods [15, 18, 28, 34]            limited. In fact, [24] demonstrates that existing data aug-
+are highly accurate at estimating pose, though occlusion re-      mentation methods do not significantly improve the perfor-
+mains an ongoing challenge. There are multiple sources of         mance of top-down pose estimators and may even reduce
+occlusion from objects, other people, and parts of the body       performance for bottom-up approaches.
+itself. Under occlusions, there is no direct visual evidence          A second line of work explicitly learns how to infer the
+for predicting keypoints, making the problem ambiguous.           invisible keypoints from image context. One common way
+    The default in human pose estimation is to simply ig-         is to use tailored architectures such as graph convolutional
+nore the occlusions. Models are trained as if occluded key-       networks [25] and Siamese networks [37]. However, none
+points were visible, based on speculated ground truth lo-         of the existing works have explored the feasibility of di-
+cations marked by annotators. Doing so forces models to           rectly using visibility labels as part of the training process.
+correlate the visual evidence of the occlusion itself and the     While such labels are not readily available for all datasets,
+underlying keypoint. As we later show in Section 4.1, this        they are provided in the commonly used MSCOCO [19].
+type of correlation is spurious; in turn, these correlations          To fill this gap, we first conduct observational studies
+harm models’ ability to accurately predict visible keypoints.     that differentiate between visible and invisible keypoints for
+    A common approach to addressing occlusion is data aug-        training. We compare the default mixed training with a vari-
+
+
+
+                                                                5903
+                                                  Default Attention Map                           Visibility-aware Attention Map
+
+
+
+
+Figure 2. Human Keypoint Attention Map Comparison. x-axis represents keys and y-axis represents queries. Keypoints are grouped
+into visible keypoints and occluded keypoints. In the middle, the attention map is derived from a transformer with default mixed (visible
+and occluded) training, while the map on the right is produced by our visibility-aware transformer model. Note how our visibility-aware
+transformer suppresses the interference of occluded keypoints to other keypoints while enhancing the influence of visible keypoints.
+
+
+ant where we train only with visible keypoints. Unsurpris-                keypoints pay more attention to visible keypoints, which
+ingly, the default performs better on the occluded keypoints.             benefits the overall keypoint accuracy.
+Less expected was that the mixed default is less accurate                    Our proposed approach is highly effective on human
+than the visible-only variant, i.e., training with only visi-             pose datasets with both moderate [19] and extensive [16]
+ble keypoints is more accurate. This phenomenon is espe-                  occlusions. Summarizing our contributions:
+cially pronounced on smaller datasets such as the MSCOCO
+                                                                             1. We demonstrate that the default approach of including
+minitrain [26] split (see Table 1 of Section 4.1).
+                                                                                occluded keypoints on the same basis as visible key-
+   Based on these observations, we propose a simple and                         points for training negatively impacts model accuracy.
+effective module using avisibility-guided masking strategy.                  2. From this observation, we propose a novel plug-and-
+The module is plug-and-play (see Figure 1) and can be in-                       play module for occlusion handling. Our module uses
+tegrated into any pose estimation method which uses indi-                       visibility prediction and feature masking to guide mod-
+vidual keypoint representations. Examples include the pop-                      els to rely only on cues from the visible keypoints.
+ular SimpleBaseline [33] and HRNet [28], which use ex-
+plicit heatmap representations and SimCC [17], which use                     3. Adding our module to state-of-the-art methods im-
+latent keypoint representations. After extracting keypoint                      proves the accuracy of both visible and occluded key-
+features, we add a prediction network, called VisNet, to de-                    points. On SimCC [17] we improve on MSCOCO [19]
+termine each keypoint’s visibility. We then mask out oc-                        by 1.3 AP; added to I 2 R-Net [3] we improve by 0.6
+cluded keypoint features and direct the resulting keypoint                      APhard on the challenging CrowdPose dataset [16].
+features, visible and occluded, into a transformer block be-
+fore rerouting back to the main pose estimation pipeline.                 2. Related Work
+Masking features from the occluded keypoints, while sim-
+                                                                          2.1. 2D Human Pose Estimation
+ple, has the effect of forcing keypoints to be inferred from
+visual cues of only visible keypoints. It effectively guards                 Human pose estimation is dominated by a top-down
+against disturbances and interruptions from occluded key-                 paradigm in which people are first localized in a scene
+point features during attention calculations. For instance,               with an external person detector before detecting the indi-
+Figure 2 shows how, in the attention map from the default                 vidual keypoints within the person bounding box. CNN-
+method, the woman’s visible left shoulder is affected by                  [17, 28, 30, 33] and transformer- [18, 20, 34, 35] based meth-
+the occlusion on other keypoints, e.g., her left elbow. To                ods have steadily improved the overall pose accuracy. Dif-
+infer the woman’s occluded right shoulder, the pose esti-                 ferent kinds of supervision signals and corresponding anal-
+mation model focuses mainly on unreliable occluded key-                   ysis for human pose estimation tasks have been explored.
+points, e.g., her left ankle and right ankle. After applying              Previous works [10,15,17,21,29,36] study different ways in
+our explicit visibility masking, both visible and occluded                which keypoint representations can be accurately decoded
+
+
+
+                                                                      5904
+  Keypoint Feature                                               Visibility Prediction and                       Keypoint Reasoning
+     Extraction                                                     Keypoint Masking                 Visible      with Transformers
+                                                                                                     Invisible
+                                                                       Visibility State Prediction
+
+
+
+                        Convolution
+                         Backbone                            Flatten                                               ❌
+
+
+                                                                                                                        Tranformer Block
+                                                                                                                                           Output Keypoint
+  Cropped Input Image                 Keypoint Feature Map                Visibility-Guided Keypoint Masking                                  Feature
+
+
+
+Figure 3. Model Architecture Overview. Our proposed framework comprises three integral components: Keypoint Feature Extraction,
+Masking, and Reasoning. The Visibility Prediction and Keypoint Masking module can apply current coordcls-based and heatmap-based
+pose estimation methods flexibly. The VisNet, employing an MLP, serves as a discriminative tool for binary visibility classification.
+The outcome of the Keypoint Reasoning with Transformers module can be seamlessly directed either to a linear coordinate classifier or,
+alternatively, transformed into heatmap features, thereby facilitating keypoint localization through an argmax function.
+
+
+into keypoint locations. Others [5–7, 9, 13] have shown that                             into the pose estimation system. However, these explicit oc-
+predicting visible and occluded keypoints relies on differ-                              clusion handling methods only contribute to occluded key-
+ent sources of information. Attribution maps [9] show that                               points’ reasoning and do not actively mitigate the interfer-
+visible keypoints draw on localized visual cues while oc-                                ence of learning from occluded keypoints themselves. In
+cluded keypoints source more global and dispersed cues. In                               this work, we revisit the visibility information and propose
+this work, we take a step further to observe the impact of                               utilizing the visibility flag as guidance to erase unreliable
+visibility and occlusion on human pose estimation. To our                                occluded keypoint features. This approach helps with both
+knowledge, we are the first to quantify the negative effect                              visible keypoint detection and occluded keypoint reason-
+of occluded keypoint learning on visible keypoint accuracy.                              ing.
+Specifically, we find that learning with occluded and visible
+keypoints indiscriminately reduces the accuracy of predict-                              3. Preliminaries
+ing visible keypoints.
+                                                                                         3.1. A Primer on Human Pose Estimation
+2.2. Occlusion Handling
+                                                                                            2D human pose estimation, also known as human key-
+   Methods for occlusion handling in human pose estima-                                  point detection, targets at detecting the locations of K hu-
+tion can be divided into implicit and explicit methods. Im-                              man keypoints, e.g., ankles, wrists, given an image input.
+plicit methods try to enhance robustness against occlusion                                  Keypoint Feature Encoding. State-of-the-art methods
+using data augmentation. In [22], different frame crops                                  employ a top-down pipeline and extract individual key-
+were used to augment the number of partially observed sam-                               point features x from the given input image. Initially, a
+ples. In [11,12], different geometric patches overlaid on the                            human-centric region I is cropped from the input image
+keypoints in the image as augmentation for object occlu-                                 through a bounding box and subsequently resized to dimen-
+sion. Augmentations against occlusion can also be applied                                sions (H, W, 3). An encoder E, e.g., a convolutional neural
+at a feature level; for example, [23] uses an adversarial                                network (CNN), is subsequently deployed to extract key-
+method to add occlusion patches on the feature map. The ef-                              point features denoted as x, characterized by dimensions
+fectiveness of data augmentation methods depends on when                                 (K, Hf , Wf , C). Here, K represents the count of keypoints
+they are introduced to training [11]. If not used properly,                              within each human pose, while Hf , Wf and C pertain to the
+these methods suffer from an intrinsic drawback, which can                               height, width and channel number of the feature map corre-
+have a detrimental effect on the model’s performance [24].                               sponding to each keypoint.
+   Another line of work focuses on explicitly learning oc-                                  Heatmap-based Decoding. A common and popular
+cluded keypoints. For instance, [2] uses attention modules                               way to estimate human pose is through heatmaps. Heatmap-
+to identify plausible clues from visible keypoints and esti-                             based methods transform this problem to estimating K
+mate occluded keypoints. In [25], an image-guided graph                                  heatmaps of size W ′ × H ′ , {H1 , H2 , . . . , HK }, where
+convolutional network module was proposed to estimate in-                                each heatmap Hk indicates the location confidence of
+visible keypoints. [37] used knowledge distillation to trans-                            the kth keypoint. Given the extracted keypoint features
+fer occlusion handling from one model branch to another of                               x, heatmap-based methods firstly estimate K heatmaps
+a Siamese network. Recent work [4] encodes human prior                                   {H1 , H2 , . . . , HK } and then utilize the argmax function
+
+
+
+                                                                                     5905
+Table 1. Observation study on the effect of including occluded keypoints in the training. We additionally distinguish the PCK on visible
+(PCK-Visible, 89%) and occluded keypoints (PCK-Occluded, 11%).
+
+                    Training Split                                              Training Strategy                    AP      AR     PCK-All     PCK-Occluded      PCK-Visible
+                minitrain [26]                                                     all keypoints                     57.5    61.7     77.7           47.2             81.9
+                minitrain [26]                                                   visible keypoints                   60.6    64.2     79.0           44.7             83.4
+                         train2017                                                 all keypoints                     69.3    72.6     84.0           55.2             88.0
+                         train2017                                               visible keypoints                   68.8    72.1     83.9           52.6             88.3
+
+
+to decode heatmaps into keypoint locations, i.e. the human                                                                      4.1. Observational Study on Occlusion
+pose. Formally, we have
+                                                                                                                                    Accurately predicting visible keypoints depends on lo-
+                                                                                                                                cal information surrounding the keypoints. However, the
+                       \mathcal {L}_{pose} := \sum _{k=1}^K\left \|\hat {\mathbf {H}}_k-\mathbf {H}_k\right \|^2,      (1)      available visual cues may not provide enough evidence for
+                                                                                                                                accurate prediction of occluded keypoints. Therefore, pre-
+                                                                                                                                dicting occluded keypoints requires global visual context,
+where Ĥk is the predicted kth keypoint heatmap, and Hk is                                                                      such as information from nearby visible keypoints [9]. Ex-
+the kth keypoint ground truth heatmap, which is generated                                                                       isting studies have not analyzed the roles of keypoints with
+by applying 2D Gaussian with a standard deviation of one                                                                        different visibility statuses. To address this gap, we con-
+pixel centered on the ground truth location.                                                                                    ducted an experiment examining the impacts of visible and
+   CoordCls-based Decoding. Another recently proposed                                                                           occluded keypoints on learning.
+method is coordinate classification [17], which applies in-                                                                         We compare two models trained and evaluated on the
+dividual classifiers to estimate the x-axis and y-axis coor-                                                                    MSCOCO [19] dataset. The first predicts visible keypoints
+dinates. The continuous coordinate values are quantized                                                                         and ignores losses resulting from occluded keypoints dur-
+into discrete integers as classification labels, i.e., the co-                                                                  ing the training process. As a comparison, the second
+ordinate of x-axis cx ∈ [1, Nx ], the coordinate of y-axis                                                                      model uses both visible and occluded keypoints for train-
+cy ∈ [1, Ny ], where Nx and Ny are the number of bins                                                                           ing. Similarly, we use a smaller MSCOCO [19] dataset
+for horizontal and vertical axes, respectively. Given the es-                                                                   split, minitrain [26], to train our two models. We use
+timated coordinates classification softmax probability Ox                                                                       the SimpleBaseline [33] architecture with ResNet50 [8] for
+and Oy , and the corresponding ground truth coordinates                                                                         this observational study.
+classes Yx and Yy , the loss function for coordinate classi-                                                                        Table 1 shows the results for models trained on the
+fication is based on the KL-Divergence loss [14] DKL :                                                                          train2017 split. The model that focuses on visible key-
+                                                                                                                                points achieves 88.3% accuracy in predicting correct visible
+           \mathcal {L}_{pose} := \mathcal {D}_{KL}(O_x, Y_x) + \mathcal {D}_{KL}(O_y, Y_y).                           (2)      keypoints, surpassing the PCK-visible score of the model
+                                                                                                                                trained on all keypoints (including both visible and oc-
+                                                                                                                                cluded keypoints) by 0.3%. Remarkably, when using only
+4. Method                                                                                                                       visible keypoints, models trained on the minitrain split
+   Mainstream methods for human pose estimation [17,                                                                            exhibit not only a higher PCK-visible (83.4% compared to
+18, 28, 35] can accurately estimate common visible human                                                                        81.9%), but also an improved PCK-All (79.0% compared
+poses, but suffer from occlusion. We first conducted an ob-                                                                     to 77.7%) compared with the model incorporating all key-
+servation study to quantitatively explore the impact of oc-                                                                     points.
+clusion on human pose estimation (see Sec.4.1). Based on                                                                            From our investigation, we derive the following inter-
+the findings, we propose a module to predict the visibility                                                                     esting observations: 1) Incorporating occluded keypoints
+of each keypoint and mask the occluded nodes in subse-                                                                          into the learning process detrimentally impacts the accu-
+quent attention blocks (see Figure. 3). Such an approach has                                                                    racy of predicting visible keypoints; 2) This adverse im-
+two aims. First, it prevents the visual cues from occluded                                                                      pact on accuracy becomes more pronounced when working
+keypoints from interfering with the estimation of visible                                                                       with smaller datasets, subsequently degrading overall per-
+keypoints. Secondly, it encourages the occluded keypoints                                                                       formance.
+to be estimated with the help of visual cues of the visible
+                                                                                                                                4.2. Visibility Prediction and Keypoint Masking
+keypoints. Our method can be integrated into any method
+leveraging individual keypoint features, like heatmap-based                                                                        We utilize a Multilayer Perception (MLP) termed VisNet
+methods [28, 33, 35] and CoordCls-based methods [17].                                                                           V, to capture the visibility status of individual keypoints
+
+
+
+                                                                                                                             5906
+while introducing a minimal number of parameters (less                                                                                                                               where dh is set to d/h, WP ∈ R(h·dh )×d is linear projec-
+than 1MB) and low additional computational costs. Given                                                                                                                              tion layer. We utilize the residual learning strategy in our
+the flattened keypoint features as input, VisNet V predicts                                                                                                                          transformer block implementation, and layer normalization
+a logit score ŷ for keypoint visibility given the input x. By                                                                                                                       is used before every module.
+employing a sigmoid function, we transform this score into
+a probability, where values nearing 0 indicate an invisible                                                                                                                          4.4. Loss Function
+keypoint, while values nearing 1 signify a visible keypoint.                                                                                                                            To supervise the binary classification of visible and invis-
+Following the obtained logit score of each keypoint, we ap-                                                                                                                          ible keypoints, we compute Lvis using the standard cross-
+ply a classification threshold of 0.5 to obtain the visibility                                                                                                                       entropy loss between the predicted Ŷ and true labels Y :
+mask, which we denote as Mi (yˆi ). The visibility mask is
+an 1D vector with the length of K, where i represents the                                                                                                                                                            \mathcal {L}_{vis} := \operatorname {CE}(\hat {Y}, Y).    (7)
+index number of the ith keypoint. Specifically, the visibility
+mask has a value of either 0.01 or 1:                                                                                                                                                   The overall loss for the multi-task learning framework is
+                                                                                                                                                                                     denoted as
+                   M_i(\hat {y}_i) = \begin {cases} 1, & \text {sigmoid}(\mathcal {V}(x)) < 0.5, \\ 0.01, & \text {sigmoid}(\mathcal {V}(x)) \geq 0.5 \end {cases}.          (3)                           \mathcal {L} = \mathcal {L}_{pose} + \lambda \mathcal {L}_{vis},  (8)
+                                                                                                                                                                                     where λ is the loss weight for the visibility loss function and
+    Subsequently, we mask out the corresponding features                                                                                                                             modulates the proportion of these two tasks.
+of invisible keypoints by applying the visibility mask to the
+keypoint features. We denote the resulting masked features
+                                                                                                                                                                                     5. Experiment
+as x̃, which we obtain by element-wise multiplication of the
+visibility mask M and keypoint features x:                                                                                                                                           5.1. Implementation Details
+                                                                         \Tilde {x}=M \odot x.                                                                               (4)        In our observational study, we adapt training strate-
+                                                                                                                                                                                     gies based on dataset scales. For the MSCOCO [19] full
+   The rationale behind such visibility-based masking is                                                                                                                             split, both models start from a common 90th-epoch check-
+that we leverage the predicted keypoint visibility to soft-                                                                                                                          point and train for 50 epochs, with one model using vis-
+mask the keypoint features, which provides additional clues                                                                                                                          ible keypoints and the other using all keypoints. On the
+in the subsequent Transformer module and empowers the                                                                                                                                minitrain [26] split, both models share a 50th-epoch
+model to refine the invisible keypoints with cross-keypoint                                                                                                                          checkpoint and continue training for 50 epochs using visi-
+attention.                                                                                                                                                                           ble keypoints and all keypoints. For human pose estimation
+4.3. Keypoint Reasoning with Transformers                                                                                                                                            on MSCOCO, we train ResNet50 [8] for 140 epochs with
+                                                                                                                                                                                     learning rate reductions at the 90th and 120th epochs, and
+   After masking out the occluded keypoint feature, we                                                                                                                               HRNet-W32 [28] for 210 epochs with rate reductions at the
+employ a transformer network [31] to infer occluded key-                                                                                                                             170th and 200th epochs. In CrowdPose [16] Multi-Person
+points and refine visible keypoints based on the output of                                                                                                                           Pose Estimation, we train TransPose-H [35] for 240 epochs,
+the visibility prediction and keypoint masking module. Our                                                                                                                           with a multistep optimization and learning rate decline ev-
+keypoint reasoning algorithm takes the visibility-guided                                                                                                                             ery 50 epochs. We detach the gradient from the VisNet
+masked feature x̃ as input, and outputs enhanced keypoint                                                                                                                            branch so that it does not affect the training of the feature
+features by visibility-aware attention.                                                                                                                                              extractor, and set λ to 1.
+   Without bells and whistles, we utilize naive transformer
+blocks in our model framework. Each block contains a                                                                                                                                 5.2. MSCOCO Keypoint Detection
+multi-head self-attention module and a multi-layer percep-
+                                                                                                                                                                                         Dataset. The MSCOCO dataset is a large and chal-
+tion module. The self-attention head can be formulated as:
+                                                                                                                                                                                     lenging 2D human pose estimation dataset, containing over
+                                                                                                                                                                                     200,000 images and 250,000 person instances labeled with
+                                                                                                                                                                                     17 keypoints, which includes both location and visibil-
+       SA\left (\Tilde {x}\right )=\operatorname {softmax}\left (\frac {\Tilde {x} W_Q\left (\Tilde {x} W_K\right )^T}{\sqrt {d_h}}\right )\left (\Tilde {x} W_V\right ),    (5)     ity annotations. We trained our models on the MSCOCO
+                                                                                                                                                                                     train2017 set, which consists of 57,000 images and 150,000
+where WQ , WK , WV ∈ Rd×d are linear projection layers,                                                                                                                              person instances, and evaluated them on the val2017 set,
+d is the dimension of each keypoint token, and dh is set to                                                                                                                          which includes 5,000 images. The minitrain split used
+d. The multi-head self-attention module combines h self-                                                                                                                             in our observational study shares the same object instance
+attention heads, and can be formulated as:                                                                                                                                           statistics as the full training set. It contains 15,000 images
+                                                                                                                                                                                     and 34,916 person instances, which is around 1/4 of the hu-
+     M S A(\Tilde {x})=\left [S A_1(\Tilde {x}) ; S A_2(\Tilde {x}) ; \ldots ; S A_h(\Tilde {x})\right ] W_P,                                                                (6)     man instances in the train2017 set.
+
+
+
+                                                                                                                                                                                   5907
+                                        Table 2. Performance comparisons on the MSCOCO validation set.
+
+                              Method          Scheme         Backbone          AP AP50 AP75 APM APL AR
+                           SimCC [17] CoordCls               ResNet50          72.3 91.4       79.2      69.5     76.5 75.5
+                              Ours    CoordCls               ResNet50          73.6 92.5       80.4      70.9     78.4 76.9
+                           SimCC [17] CoordCls HRNet-W32 77.2 93.5                             83.5      74.3     82.0 80.1
+                              Ours    CoordCls HRNet-W32 77.9 93.5                             84.6      75.2     82.4 80.7
+
+                    Table 3. Performance comparisons of visible and occluded keypoints on the MSCOCO validation set.
+
+                                 Method        Keypoints Evaluation AP AP50 AP75 APM APL AR
+                             SimCC [17]          Visible Keypoints            77.0 93.4      84.3      74.9     80.7 80.3
+                                Ours             Visible Keypoints            78.7 93.7      86.7      76.6     81.9 81.8
+                             SimCC [17] Occluded Keypoints 65.0 78.9                         65.8      64.7     70.4 72.4
+                                Ours    Occluded Keypoints 65.5 79.2                         67.2      65.9     70.5 73.0
+                             SimCC [17]          Overall Keypoints            72.3 91.4      79.2      69.5     76.5 75.5
+                                Ours             Overall Keypoints            73.6 92.5      80.4      70.9     78.4 76.9
+
+
+   Evaluation metric. We followed the standard evalua-                           points at the stage of attention modeling and therefore im-
+tion metrics of average precision and recall scores used in                      proves the overall performance by a large margin.
+previous papers [17, 28, 33] based on the Object Keypoint                           We extend our experiments to distinguish the perfor-
+Similarity (OKS):                                                                mance gain for both visible and occluded keypoints within
+                                                                                the MSCOCO dataset [19]. Table 3 showcases that our ap-
+                                 −d2i /2s2 ki2 δ (vi > 0)
+                      P
+                         i exp                                                   proach yields a noteworthy improvement of 1.7 AP for visi-
+          OKS =                                           ,
+                                                                                 ble keypoints and 0.5 AP for occluded keypoints, facilitated
+                                 P
+                                   i δ (vi > 0)
+                                                                                 by the precise prediction of visibility information, which at-
+where di is the Euclidean distance between the estimated                         tains an accuracy rate of 89%1 .
+keypoint and the ground truth keypoint, s is the scale of
+the cropped person instance, ki is a constant that controls                      5.3. CrowdPose Keypoint Detection
+falloff, vi is the visibility identity, and δ is an indicator
+                                                                                     Dataset. The CrowdPose dataset contains 20K images
+function. The visibility identity v can take on three values:
+                                                                                 and 80K persons labeled with 14 keypoints. We trained the
+v = 0 indicates that the keypoint is unavailable, typically
+                                                                                 model on the 10K images in the train split and evaluated
+because it is located outside the image; v = 1 indicates
+                                                                                 its performance on the 2K images in the validation split.
+that the keypoint is occluded, but its specific position can
+                                                                                 This dataset is even more challenging than MSCOCO, as
+be inferred; v = 2 indicates that the keypoint is clearly vis-
+                                                                                 the proportion of occluded keypoints is much higher.
+ible. To discern the performance enhancements specifically
+                                                                                     Evaluation metric. We follow the definition of Crowd
+achieved on visible and occluded keypoints, we adapt the
+                                                                                 Index and difficulty levels in CrowdPose [16]. In the ith
+indicator function as follows: For evaluating visible key-
+                                                                                 person’s bounding box, the Crowd Index is defined as
+points, we employ \delta \left (v_i=2\right ), while for assessing occluded
+keypoints, we use \delta \left (v_i=1\right ).                                                                                   n
+                                                                                                                            1 X Nib
+    Results. We evaluated our method on the MSCOCO                                                    Crowd Index =                   ,
+                                                                                                                            n i=1 Nia
+validation set and compared it with the baseline method
+SimCC [17]. Table 2 shows that our method achieves a con-                        where Nia represents the number of keypoints belonging to
+siderable improvement over the strong SimCC model across                         the ith person, while Nib represents keypoints number be-
+both ResNet50 and HRNet-W32 backbones for 1.3 AP and                             longing to other persons. Nib /Nia is the crowd ratio of the
+0.7 AP, respectively. Our method achieved a significant
+                                                                                     1 In contrast to keypoint detection evaluation, which excludes unavail-
+improvement over previous strong baselines on MSCOCO,
+                                                                                 able keypoints (those with a visibility flag of v = 0), visibility classifica-
+a dataset with a low occlusion proportion (occluded key-                         tion categorizes unavailable human keypoints as occluded. Consequently,
+points versus visible keypoints is 11.3% versus 88.7%). Our                      in this scenario, the data distribution on MSCOCO for training visibility
+method explicitly mitigates the detriments of occluded key-                      prediction comprises 57.2% visible and 42.8% occluded keypoints.
+
+
+
+
+                                                                              5908
+                             Table 4. Comparison with previous SOTA methods on CrowdPose dataset.
+
+                                   Strategy          AP         AP50    AP75      APE     APM      APH
+                                  SBL [33]           60.8       81.4      65.7    71.4    61.2     51.2
+                                HRNet [28]           71.3       91.1      77.5    80.5    71.4     62.5
+                               JC-SPPE [16]          66.0       84.2      71.5    75.5    66.3     57.4
+                               OPEC-Net [25]         70.6       86.8      75.6     -       -        -
+                                  CID [32]           72.3       90.8      77.9    78.7    73.0     64.8
+                                I 2 R-Net [3]        76.3       93.5      82.2    83.2    77.0     67.4
+                             I 2 R-Net [3] + Ours    76.6       93.6      82.3    83.4    77.3     68.0
+
+            Table 5. Ablation study of Keypoint Reasoning module and Keypoint Masking strategy utilized in our method.
+
+           Backbone     Keypoint Reasoning       Keypoint Masking           AP     AP50     AP75     APM      APL      AR
+           ResNet50                                                        72.2    91.4     79.2     69.6     76.5    75.6
+           ResNet50               ✓                                        72.3    91.4     79.2     69.5     76.5    75.5
+           ResNet50               ✓                         ✓              73.6    92.5     80.4     70.9     78.4    76.9
+
+
+ith human instance. n is the total number of people in the             visibility-guided masking strategy brings a noticeable 1.3
+image. Crowd Index is divided into three levels: easy (0-              AP improvement.
+0.1), medium (0.1-0.8), and hard (0.81-1). Besides stan-                  Influence of the visibility accuracy. We also investi-
+dard evaluation metrics of AP and AR scores, we also report            gated how the accuracy of our predicted visibility flag af-
+APeasy , APmedium , and APhard .                                       fects model performance, as shown in Table 6. As expected,
+   Results. We evaluate our method on a more crowded                   our method’s performance is lower compared to the one us-
+and challenging scene, as shown in Table 4. The current                ing the ground truth visibility flag for training and inference.
+state-of-the-art method, I 2 R-Net, builds connections for             However, we can see that there is only a small gap on the AP
+each body part of the human from both inter-human and                  metric, showing that our method does not rely on ground
+intra-human levels. After integrating our method into I 2 R-           truth visibility identity during inference. The accuracy of
+Net with TransPose-H backbone, we enhanced inter-human                 our predicted visibility identity is around 89%, which also
+modeling by empowering visibility awareness, explicitly                supports this as a feasible and promising way of utilizing
+guiding occluded keypoint learning from visible contextual             visibility information for handling human pose estimation.
+information, and avoiding the detrimental effect of unreli-
+able occluder appearance information on visible keypoint
+                                                                       5.5. Qualitative Results
+features. This leads to a 0.3 AP improvement. Furthermore,                 In the study, we compare the qualitative results of
+our method can significantly improve the metric APhard by              SimCC method with and without our visibility-guided
+0.6 with the help of our explicit visibility-awareness reason-         masking strategy. The findings are presented in Figure 4.
+ing transformer block. This shows that under severe occlu-             Our strategy performs better in situations where the scene
+sion levels, visibility information can be of great help and           is crowded and there is significant occlusion. For instance,
+points to a promising way to further explore how to solve              in the picture present in the second column, the knee and an-
+the occlusion problem.                                                 kle nodes of the two players overlap. The baseline method
+                                                                       fails to detect the occluded human body keypoint correctly,
+5.4. Ablation Study                                                    while our visibility-guided method can correct this error.
+   Effectiveness of visibility-guided masking strategy.                6. Limitation and Future Work
+We conducted an ablation study to demonstrate the contri-
+bution of the visibility-guided masking strategy to the fi-               Failure cases. We show failure cases with severe oc-
+nal result. Table 5 shows that solely leveraging the trans-            clusion and rare pose in Figure 5. As shown in the right
+former block to model mutual-keypoint dependency brings                picture, the pose of a person lying down is rarely seen in the
+only trivial improvement. The main performance gain                    dataset. Additionally, many keypoints, e.g., knees, hips, are
+comes from our proposed visibility-guided masking strat-               occluded by the ankle keypoints. In such scenarios, visible
+egy. Compared to solely using the transformer block, our               keypoints are often insufficient for our model to effectively
+
+
+
+                                                                   5909
+                                           Table 6. Ablation study of different masking strategies.
+
+                         Strategy             Visibility Accuracy       AP     AP50      AP75     APM        APL    AR
+                      Ground Truth                    100%             73.7     92.6     80.4         71.2   77.9   76.6
+                   Visibility Prediction               89%             73.6     92.5     80.4         70.9   78.4   76.9
+
+
+
+
+Figure 4. Qualitative results of naive transformer (first row) and our visibility-aware transformer (second row) for keypoints reasoning. We
+use red squares to highlight our improved prediction qualities when faced with strong occlusion.
+
+
+                                                                          ally, we intend to extend our method to the hand pose esti-
+                                                                          mation task that also suffers occlusion problems.
+
+
+                                                                          7. Conclusion
+                                                                             In this paper, we quantitatively observe for the first time
+                                                                          that occluded keypoint points interfere with the prediction
+                                                                          of visible keypoint points. Inspired by this observation, we
+                                                                          propose a visibility-aware framework that explicitly models
+                                                                          the keypoint visibility information that was previously over-
+                                                                          looked by mainstream methods. We empower the model to
+Figure 5. Failure cases with severe occlusion scenario and rare           learn the visibility attributes of keypoints, and consequently
+poses.                                                                    devise a Transformer block to mine the cross-keypoint at-
+                                                                          tention. Our method can be easily plugged into existing
+                                                                          state-of-the-art human pose estimators and lead to clear per-
+reason about the occluded ones.                                           formance improvements on both MSCOCO and CrowdPose
+    Future work. Visibility information is a promising so-                datasets, verifying the effectiveness of our method for fur-
+lution for handling occlusion problems. However, not all                  ther enhancing the keypoint detection.
+2D pose estimation datasets provide a ground truth visibil-
+ity flag for training. For future work, we will explore the               Acknowledgements This research / project is supported
+semi-supervised learning setting of visibility information.               by the Ministry of Education, Singapore, under its MOE
+We believe that the transferability of VisNet will help the               Academic Research Fund Tier 2 (STEM RIE2025 MOE-
+community better utilize visibility information. Addition-                T2EP20220-0015).
+
+
+
+                                                                      5910
+References                                                                   residual log-likelihood estimation. In CVPR, pages 11025–
+                                                                             11034, 2021. 1, 2
+ [1] Yu Chen, Chunhua Shen, Xiu-Shen Wei, Lingqiao Liu, and
+                                                                        [16] Jiefeng Li, Can Wang, Hao Zhu, Yihuan Mao, Hao-Shu
+     Jian Yang. Adversarial posenet: A structure-aware convolu-
+                                                                             Fang, and Cewu Lu. Crowdpose: Efficient crowded scenes
+     tional network for human pose estimation. In ICCV, pages
+                                                                             pose estimation and a new benchmark. In Proceedings of
+     1212–1221, 2017. 1
+                                                                             the IEEE/CVF conference on computer vision and pattern
+ [2] Xiao Chu, Wei Yang, Wanli Ouyang, Cheng Ma, Alan L                      recognition, pages 10863–10872, 2019. 2, 5, 6, 7
+     Yuille, and Xiaogang Wang. Multi-context attention for hu-
+                                                                        [17] Yanjie Li, Sen Yang, Peidong Liu, Shoukui Zhang, Yunx-
+     man pose estimation. In CVPR, pages 1831–1840, 2017. 3
+                                                                             iao Wang, Zhicheng Wang, Wankou Yang, and Shu-Tao Xia.
+ [3] Yiwei Ding, Wenjin Deng, Yinglin Zheng, Pengfei Liu,
+                                                                             Simcc: A simple coordinate classification perspective for hu-
+     Meihong Wang, Xuan Cheng, Jianmin Bao, Dong Chen,
+                                                                             man pose estimation. In ECCV, 2022. 1, 2, 4, 6
+     and Ming Zeng. Iˆ 2r-net: intra-and inter-human relation
+     network for multi-person pose estimation. arXiv preprint           [18] Yanjie Li, Shoukui Zhang, Zhicheng Wang, Sen Yang,
+     arXiv:2206.10892, 2022. 2, 7                                            Wankou Yang, Shu-Tao Xia, and Erjin Zhou. Tokenpose:
+                                                                             Learning keypoint tokens for human pose estimation. In
+ [4] Zigang Geng, Chunyu Wang, Yixuan Wei, Ze Liu, Houqiang
+                                                                             CVPR, pages 11313–11322, 2021. 1, 2, 4
+     Li, and Han Hu. Human pose as compositional tokens. In
+     Proceedings of the IEEE/CVF Conference on Computer Vi-             [19] Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays,
+     sion and Pattern Recognition, pages 660–671, 2023. 3                    Pietro Perona, Deva Ramanan, Piotr Dollár, and C Lawrence
+                                                                             Zitnick. Microsoft coco: Common objects in context. In
+ [5] Kerui Gu, Linlin Yang, Michael Bi Mi, and Angela Yao.
+                                                                             ECCV, 2014. 1, 2, 4, 5, 6
+     Bias-compensated integral regression for human pose esti-
+     mation. IEEE Transactions on Pattern Analysis and Machine          [20] Weian Mao, Yongtao Ge, Chunhua Shen, Zhi Tian, Xinlong
+     Intelligence, 2023. 3                                                   Wang, and Zhibin Wang. Tfpose: Direct human pose esti-
+                                                                             mation with transformers. arXiv preprint arXiv:2103.15320,
+ [6] Kerui Gu, Linlin Yang, and Angela Yao. Removing the bias
+                                                                             2021. 2
+     of integral pose regression. In CVPR, pages 11067–11076,
+     2021. 3                                                            [21] Alejandro Newell, Kaiyu Yang, and Jia Deng. Stacked hour-
+ [7] Kerui Gu, Linlin Yang, and Angela Yao. Dive deeper into                 glass networks for human pose estimation. In ECCV, 2016.
+     integral pose regression. In International Conference on                2
+     Learning Representations, 2022. 3                                  [22] Soonchan Park and Jinah Park. Localizing human keypoints
+ [8] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.                  beyond the bounding box. In CVPR, pages 1602–1611, 2021.
+     Deep residual learning for image recognition. In CVPR,                  3
+     pages 770–778, 2016. 4, 5                                          [23] Xi Peng, Zhiqiang Tang, Fei Yang, Rogerio S Feris, and
+ [9] Qiyuan He, Linlin Yang, Kerui Gu, Qiuxia Lin, and An-                   Dimitris Metaxas. Jointly optimize data augmentation and
+     gela Yao. Analyzing and diagnosing pose estimation with                 network training: Adversarial data augmentation in human
+     attributions. In Proceedings of the IEEE/CVF Conference                 pose estimation. In CVPR, pages 2226–2234, 2018. 1, 3
+     on Computer Vision and Pattern Recognition, pages 4821–            [24] Rafal Pytel, Osman Semih Kayhan, and Jan C van Gemert.
+     4830, 2023. 3, 4                                                        Tilting at windmills: Data augmentation for deep pose esti-
+[10] Junjie Huang, Zheng Zhu, Feng Guo, and Guan Huang.                      mation does not help with occlusions. In 2020 25th Inter-
+     The devil is in the details: Delving into unbiased data                 national Conference on Pattern Recognition (ICPR), pages
+     processing for human pose estimation. In Proceedings of                 10568–10575. IEEE, 2021. 1, 3
+     the IEEE/CVF conference on computer vision and pattern             [25] Lingteng Qiu, Xuanye Zhang, Yanran Li, Guanbin Li, Xiao-
+     recognition, pages 5700–5709, 2020. 2                                   jun Wu, Zixiang Xiong, Xiaoguang Han, and Shuguang Cui.
+[11] Junjie Huang, Zheng Zhu, Guan Huang, and Dalong Du.                     Peeking into occluded joints: A novel framework for crowd
+     Aid: Pushing the performance boundary of human pose es-                 pose estimation. In ECCV, 2020. 1, 3, 7
+     timation with information dropping augmentation. arXiv             [26] Nermin Samet, Samet Hicsonmez, and Emre Akbas. Hough-
+     preprint arXiv:2008.07139, 2020. 1, 3                                   net: Integrating near and long-range evidence for bottom-up
+[12] Lipeng Ke, Ming-Ching Chang, Honggang Qi, and Siwei                     object detection. In ECCV, 2020. 2, 4, 5
+     Lyu. Multi-scale structure-aware network for human pose            [27] István Sárándi, Timm Linder, Kai O Arras, and Bastian
+     estimation. In ECCV, pages 713–728, 2018. 3                             Leibe. How robust is 3d human pose estimation to occlu-
+[13] Muhammed Kocabas, Chun-Hao P Huang, Otmar Hilliges,                     sion? arXiv preprint arXiv:1808.09316, 2018. 1
+     and Michael J Black. Pare: Part attention regressor for 3d hu-     [28] Ke Sun, Bin Xiao, Dong Liu, and Jingdong Wang. Deep
+     man body estimation. In CVPR, pages 11127–11137, 2021.                  high-resolution representation learning for human pose es-
+     3                                                                       timation. In Proceedings of the IEEE/CVF conference on
+[14] Solomon Kullback and Richard A Leibler. On informa-                     computer vision and pattern recognition, pages 5693–5703,
+     tion and sufficiency. The annals of mathematical statistics,            2019. 1, 2, 4, 5, 6, 7
+     22(1):79–86, 1951. 4                                               [29] Xiao Sun, Bin Xiao, Fangyin Wei, Shuang Liang, and Yichen
+[15] Jiefeng Li, Siyuan Bian, Ailing Zeng, Can Wang, Bo Pang,                Wei. Integral human pose regression. In ECCV, pages 529–
+     Wentao Liu, and Cewu Lu. Human pose regression with                     545, 2018. 2
+
+
+
+
+                                                                      5911
+[30] Alexander Toshev and Christian Szegedy. Deeppose: Human
+     pose estimation via deep neural networks. In CVPR, pages
+     1653–1660, 2014. 2
+[31] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-
+     reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia
+     Polosukhin. Attention is all you need. Advances in neural
+     information processing systems, 30, 2017. 5
+[32] Dongkai Wang and Shiliang Zhang. Contextual instance de-
+     coupling for robust multi-person pose estimation. In Pro-
+     ceedings of the IEEE/CVF Conference on Computer Vision
+     and Pattern Recognition, pages 11060–11068, 2022. 7
+[33] Bin Xiao, Haiping Wu, and Yichen Wei. Simple baselines
+     for human pose estimation and tracking. In ECCV, pages
+     466–481, 2018. 1, 2, 4, 6, 7
+[34] Yufei Xu, Jing Zhang, Qiming Zhang, and Dacheng Tao. Vit-
+     pose: Simple vision transformer baselines for human pose
+     estimation. Advances in Neural Information Processing Sys-
+     tems, 35:38571–38584, 2022. 1, 2
+[35] Sen Yang, Zhibin Quan, Mu Nie, and Wankou Yang. Trans-
+     pose: Keypoint localization via transformer. In CVPR, pages
+     11802–11812, 2021. 2, 4, 5
+[36] Feng Zhang, Xiatian Zhu, Hanbin Dai, Mao Ye, and Ce Zhu.
+     Distribution-aware coordinate representation for human pose
+     estimation. In Proceedings of the IEEE/CVF conference on
+     computer vision and pattern recognition, pages 7093–7102,
+     2020. 2
+[37] Lu Zhou, Yingying Chen, Yunze Gao, Jinqiao Wang, and
+     Hanqing Lu. Occlusion-aware siamese network for human
+     pose estimation. In ECCV, 2020. 1, 3
+
+
+
+
+                                                                   5912
+
