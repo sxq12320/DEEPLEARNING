@@ -1,13 +1,19 @@
 """Convert LabelMe-style citrus annotations to a YOLO segmentation dataset.
 
 Default input:
-    E:/mastercode/data/orange_wuxi
+    E:/mastercode/data/orange_wuxi   (reads BOTH batches: annotions_x/img and annotion_x_2/img_2)
 
 Default output:
     E:/mastercode/data/test
 
 Run:
     python convert_orange_wuxi_to_yolo.py --overwrite
+
+Notes:
+- Reads every (annotation, image) batch listed in BATCHES; missing batches are skipped.
+- An image with NO matching JSON (or a JSON with no kept shapes) is written as a
+  background/negative sample: the image is copied and an EMPTY label .txt is emitted.
+- Video files or other non-image extensions in the image dirs are ignored.
 """
 
 from __future__ import annotations
@@ -17,6 +23,10 @@ import json
 import random
 import shutil
 from pathlib import Path
+
+# (annotation_dir, image_dir) pairs, relative to --src. Add future batches here.
+BATCHES = [("annotions_x", "img"), ("annotion_x_2", "img_2")]
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -72,13 +82,16 @@ def main() -> None:
     args = parse_args()
     src_root = Path(args.src)
     out_root = Path(args.out)
-    ann_dir = src_root / "annotions_x"
-    img_dir = src_root / "img"
 
-    if not ann_dir.exists():
-        raise FileNotFoundError(f"Annotation directory not found: {ann_dir}")
-    if not img_dir.exists():
-        raise FileNotFoundError(f"Image directory not found: {img_dir}")
+    present_batches: list[tuple[Path, Path]] = []
+    for ann_name, img_name in BATCHES:
+        ann_dir, img_dir = src_root / ann_name, src_root / img_name
+        if ann_dir.exists() and img_dir.exists():
+            present_batches.append((ann_dir, img_dir))
+        elif ann_dir.exists() or img_dir.exists():
+            print(f"[warn] incomplete batch skipped: {ann_name} / {img_name}")
+    if not present_batches:
+        raise FileNotFoundError(f"No (annotation, image) batch found under {src_root}")
 
     out_root.mkdir(parents=True, exist_ok=True)
     if args.overwrite:
@@ -87,11 +100,23 @@ def main() -> None:
         raise SystemExit(f"{out_root} is not empty. Use --overwrite if you want to rebuild generated files.")
 
     class_to_id = {args.class_name: 0}
-    items: list[tuple[Path, Path]] = []
-    for ann_path in sorted(ann_dir.glob("*.json")):
-        data = json.loads(ann_path.read_text(encoding="utf-8"))
-        image = find_image(ann_dir, img_dir, ann_path, data.get("imagePath"))
-        items.append((ann_path, image))
+
+    # item = (ann_path | None, image_path). ann_path is None => background/negative image
+    # (no JSON) -> copied with an empty label file.
+    items: list[tuple[Path | None, Path]] = []
+    n_negatives = 0
+    for ann_dir, img_dir in present_batches:
+        annotated_stems: set[str] = set()
+        for ann_path in sorted(ann_dir.glob("*.json")):
+            data = json.loads(ann_path.read_text(encoding="utf-8"))
+            image = find_image(ann_dir, img_dir, ann_path, data.get("imagePath"))
+            items.append((ann_path, image))
+            annotated_stems.add(image.stem)
+        # images with no JSON at all -> user-confirmed negatives (no orange_immature)
+        for img_path in sorted(img_dir.iterdir()):
+            if img_path.suffix.lower() in IMAGE_EXTS and img_path.stem not in annotated_stems:
+                items.append((None, img_path))
+                n_negatives += 1
 
     random.Random(args.seed).shuffle(items)
     n_total = len(items)
@@ -111,24 +136,23 @@ def main() -> None:
 
     for split, split_items in assignments.items():
         for ann_path, image_path in split_items:
-            data = json.loads(ann_path.read_text(encoding="utf-8"))
-            width = int(data["imageWidth"])
-            height = int(data["imageHeight"])
+            label_lines: list[str] = []
+            if ann_path is not None:
+                data = json.loads(ann_path.read_text(encoding="utf-8"))
+                width = int(data["imageWidth"])
+                height = int(data["imageHeight"])
+                for shape in data.get("shapes") or []:
+                    label = shape.get("label")
+                    if label not in class_to_id:
+                        stats[split]["skipped_shapes"] += 1
+                        continue
+                    values = polygon_to_yolo(shape.get("points") or [], width, height)
+                    if len(values) < 6:
+                        stats[split]["skipped_shapes"] += 1
+                        continue
+                    label_lines.append(f"{class_to_id[label]} " + " ".join(f"{v:.6f}" for v in values))
 
             shutil.copy2(image_path, out_root / "images" / split / image_path.name)
-
-            label_lines: list[str] = []
-            for shape in data.get("shapes") or []:
-                label = shape.get("label")
-                if label not in class_to_id:
-                    stats[split]["skipped_shapes"] += 1
-                    continue
-                values = polygon_to_yolo(shape.get("points") or [], width, height)
-                if len(values) < 6:
-                    stats[split]["skipped_shapes"] += 1
-                    continue
-                label_lines.append(f"{class_to_id[label]} " + " ".join(f"{v:.6f}" for v in values))
-
             label_path = out_root / "labels" / split / f"{image_path.stem}.txt"
             label_path.write_text("\n".join(label_lines) + ("\n" if label_lines else ""), encoding="utf-8")
 
@@ -153,7 +177,9 @@ def main() -> None:
         "output": str(out_root),
         "seed": args.seed,
         "class_name": args.class_name,
-        "total_json": n_total,
+        "batches": [ann_dir.name for ann_dir, _ in present_batches],
+        "total_images": n_total,
+        "negative_images": n_negatives,
         "split_counts": {split: len(split_items) for split, split_items in assignments.items()},
         "stats": stats,
         "yaml": str(yaml_path),

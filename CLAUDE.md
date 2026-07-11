@@ -75,7 +75,7 @@ The RGB-D research targets **`channels: 4`**, but only `206_Apple_Amodal.yaml` a
 
 ### Running training — two distinct lines
 
-**1. RGB-D apple/watermelon research (the custom architecture).** The historical driver scripts followed a `NNN_name.py` pattern at the fork root (`006_Apple_Amodal_test.py`, `008_shr_watermelon_seg.py`, `013_train_improved_v2.py`, `015_train_distill_v2.py`, `016_train_watermelon_seg_p2.py`, `98_visualize_compare.py`, `99_compare_models.py`, …), each calling `YOLO(<yaml or .pt>).train(...)` with paths baked in. **These are currently deleted from the working tree** — still in git history, so `git checkout -- <file>` restores them (the deletions are uncommitted). The model YAMLs (`mine_yaml*`), data YAMLs (`205_*`–`208_*`), custom modules, and optimizers they drove all still exist, so the CLI form still works:
+**1. RGB-D apple/watermelon research (the custom architecture).** The historical driver scripts followed a `NNN_name.py` pattern at the fork root (`006_Apple_Amodal_test.py`, `008_shr_watermelon_seg.py`, `013_train_improved_v2.py`, `015_train_distill_v2.py`, `016_train_watermelon_seg_p2.py`, `98_visualize_compare.py`, `99_compare_models.py`, …), each calling `YOLO(<yaml or .pt>).train(...)` with paths baked in. **These were intentionally removed from the working tree** (recoverable from git history if ever needed — the removal was a deliberate cleanup, not an accident). The model YAMLs (`mine_yaml*`), data YAMLs (`205_*`–`208_*`), custom modules, and optimizers they drove all still exist, so the CLI form still works:
 
 ```bash
 yolo segment train model=mine_yaml/11_ours_final_complete.yaml data=206_Apple_Amodal.yaml \

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -viE '\\\\.\\(jpg|jpeg|png|bmp\\)$')",
+      "Bash(python _fix_f_labels.py)",
+      "Bash(python convert_orange_wuxi_to_yolo.py --overwrite)",
+      "Bash(python -c \"import albumentations, cv2, numpy; print\\('albumentations', albumentations.__version__\\); print\\('cv2', cv2.__version__\\); print\\('numpy', numpy.__version__\\)\")",
+      "Bash(python augment_orange_offline.py --limit 4 --n-aug 2 --debug-overlay 3)",
+      "Bash(python -c ' *)",
+      "Bash(python augment_orange_offline.py --clean --n-aug 3)",
+      "Bash(xargs -n1 basename)"
+    ]
+  }
+}
