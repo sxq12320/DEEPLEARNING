@@ -1,3 +1,4 @@
+最基本的yolo11nano-segment的基本架构，没有做任何的更改，使用300轮，同时使用AdamW进行优化器，其他的全部默认
 300 epochs completed in 2.452 hours.
 Optimizer stripped from E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\last.pt, 6.0MB
 Optimizer stripped from E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\best.pt, 6.0MB
