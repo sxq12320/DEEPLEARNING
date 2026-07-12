@@ -8,7 +8,9 @@
       "Bash(python augment_orange_offline.py --limit 4 --n-aug 2 --debug-overlay 3)",
       "Bash(python -c ' *)",
       "Bash(python augment_orange_offline.py --clean --n-aug 3)",
-      "Bash(xargs -n1 basename)"
+      "Bash(xargs -n1 basename)",
+      "Bash(python train_citrus_seg.py --help)",
+      "Bash(python eval_citrus_seg.py --help)"
     ]
   }
 }
