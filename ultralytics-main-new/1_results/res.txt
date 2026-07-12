@@ -1,0 +1,11 @@
+300 epochs completed in 2.452 hours.
+Optimizer stripped from E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\last.pt, 6.0MB
+Optimizer stripped from E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\best.pt, 6.0MB
+
+Validating E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\best.pt...
+Ultralytics 8.4.60  Python-3.11.14 torch-2.5.0+cu118 CUDA:0 (NVIDIA GeForce RTX 3050 Laptop GPU, 4096MiB)
+001_YOLO11-seg summary (fused): 114 layers, 2,834,763 parameters, 0 gradients, 10.2 GFLOPs
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95)     Mask(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 24/24 6.4it/s 3.7s
+                   all        188        898      0.916      0.728      0.823      0.676      0.929      0.716      0.814      0.642
+Speed: 0.6ms preprocess, 6.6ms inference, 0.0ms loss, 2.8ms postprocess per image
+Results saved to E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW
