@@ -15,8 +15,7 @@ torch.backends.cudnn.benchmark = False
 
 
 if __name__ == "__main__":
-    # Orange_wuxi baseline after expanding annotations to 597 images.
-    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\yolo11n-seg.pt")
+    yolo = YOLO(r"E:\mastercode\ultralytics-main-new\0_orange_yaml\001_yolo11-seg.yaml")
     yolo.train(
         data=r"E:\mastercode\ultralytics-main-new\200orange_wuxi_seg.yaml",
         project=r"E:\mastercode\ultralytics-main-new\1_results",
