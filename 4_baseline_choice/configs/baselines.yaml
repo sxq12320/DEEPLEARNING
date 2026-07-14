@@ -1,0 +1,124 @@
+project:
+  name: citrus_instance_segmentation_baselines
+  class_names:
+    - orange_immature
+  seed: 42
+  default_epochs: 300
+  default_imgsz: 640
+  output_root: runs
+
+protocol:
+  primary_metric: mask_ap_50_95
+  screening_seeds: [42]
+  final_seeds: [42, 3407, 2026]
+  instance_metrics:
+    - mask_ap_50_95
+    - mask_ap_50
+    - mask_ap_75
+    - mask_ap_small
+    - mask_ap_medium
+    - mask_ap_large
+  efficiency_metrics:
+    - params_m
+    - gflops
+    - latency_ms_batch1
+    - peak_vram_mb
+  semantic_metrics:
+    - dice
+    - miou
+    - boundary_f1
+
+baselines:
+  yolov8n_seg:
+    display_name: YOLOv8n-Seg
+    family: yolo
+    tier: core
+    model: yolov8n-seg.pt
+    imgsz: 640
+
+  yolo11n_seg:
+    display_name: YOLO11n-Seg
+    family: yolo
+    tier: primary
+    model: yolo11n-seg.pt
+    imgsz: 640
+
+  yolo26n_seg:
+    display_name: YOLO26n-Seg
+    family: yolo
+    tier: core
+    model: yolo26n-seg.pt
+    imgsz: 640
+
+  yolo11s_seg:
+    display_name: YOLO11s-Seg
+    family: yolo
+    tier: optional_accuracy_reference
+    model: yolo11s-seg.pt
+    imgsz: 640
+
+  rtmdet_ins_tiny:
+    display_name: RTMDet-Ins-tiny
+    family: mmdetection
+    tier: core
+    config: configs/rtmdet/rtmdet-ins_tiny_8xb32-300e_coco.py
+    checkpoint_glob: checkpoints/**/rtmdet-ins_tiny*.pth
+    imgsz: 640
+
+  mask_rcnn_r50:
+    display_name: Mask R-CNN R50-FPN
+    family: mmdetection
+    tier: core
+    config: configs/mask_rcnn/mask-rcnn_r50_fpn_1x_coco.py
+    checkpoint_glob: checkpoints/**/mask-rcnn_r50_fpn_1x_coco*.pth
+    imgsz: 640
+
+  mask_rcnn_r50_torchvision:
+    display_name: Mask R-CNN R50-FPN (Torchvision)
+    family: torchvision
+    tier: core
+    model: torchvision.models.detection.maskrcnn_resnet50_fpn
+    initialization: coco
+    imgsz: 640
+
+  solov2_light:
+    display_name: SOLOv2-Light R18-FPN
+    family: mmdetection
+    tier: journal
+    config: configs/solov2/solov2-light_r18_fpn_ms-3x_coco.py
+    checkpoint_glob: checkpoints/**/solov2-light_r18_fpn_ms-3x_coco*.pth
+    imgsz: 640
+
+  rfdetr_seg_nano:
+    display_name: RF-DETR Seg Preview @312
+    family: rfdetr
+    tier: core
+    model_class: RFDETRSegPreview
+    imgsz: 312
+    positional_encoding_size: 26
+    package_version: 1.3.0
+    note: The official package does not expose RFDETRSegNano; use the published segmentation preview at 312.
+
+  unet:
+    display_name: U-Net + Watershed
+    family: semantic
+    tier: auxiliary
+    architecture: Unet
+    encoder: resnet18
+    imgsz: 640
+
+  deeplabv3plus:
+    display_name: DeepLabV3+ + Watershed
+    family: semantic
+    tier: optional
+    architecture: DeepLabV3Plus
+    encoder: resnet50
+    imgsz: 640
+
+  segformer_b0:
+    display_name: SegFormer-B0 + Watershed
+    family: semantic
+    tier: optional
+    architecture: Segformer
+    encoder: mit_b0
+    imgsz: 640

@@ -1,63 +1,64 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+## Current Research Priority
 
-This repository is a monorepo of independent computer-vision research projects. There is no top-level Python package or shared build step. The main codebase is `ultralytics-main-new/`, a customized Ultralytics YOLO11 fork for RGB-D detection and segmentation experiments. Tests for that fork live in `ultralytics-main-new/tests/`, model configs in `ultralytics-main-new/mine_yaml*/`, and dataset YAMLs at the fork root.
+This repository supports a master's thesis on vision for citrus bagging. The immediate goal is to publish two connected papers:
 
-Other subprojects are standalone: `1.coding/0_segment/` contains a registry-based PyTorch segmentation/detection framework, `1.coding/1_study_module/` contains classic network reproductions, `1.coding/2_Unet/` contains a U-Net training script, and `2_catoon/` contains Manim animation scenes. Local datasets are under `data/` and are not expected to be reproducible from Git alone.
+1. Lightweight, high-accuracy instance segmentation of immature citrus fruit.
+2. Precise citrus peduncle-point localization using the fruit instances/ROIs produced by paper 1.
 
-## Build, Test, and Development Commands
+Keep paper 1 focused on RGB immature-fruit instance segmentation. Do not mix in RGB-D, amodal segmentation, OBB, robotic control, or multi-task pose heads unless a later task explicitly requires them. The current research source of truth is `3_研究生/柑橘套袋视觉_完整研究执行计划.md`.
 
-Always `cd` into the relevant subproject before running commands.
+The current visual-problem framing is not generic "occlusion and small objects." Focus on strip-like leaf/branch occlusion that creates deeply concave visible masks, the topology conflict between preserving one occluded fruit and separating adjacent touching fruits, and extreme within-image scale span. Quantify these with solidity/convex-hull deficits, neighboring-instance gaps, split/merge errors, and per-image scale ratios before claiming a method solves them.
 
-```bash
-cd ultralytics-main-new && pip install -e .
+## Project Structure
+
+`ultralytics-main-new/` is the active codebase, a customized Ultralytics fork. Citrus model YAMLs are in `ultralytics-main-new/0_orange_yaml/`, training/evaluation drivers are `train_citrus_seg.py` and `eval_citrus_seg.py`, and experiment artifacts are under `ultralytics-main-new/1_results/`.
+
+The current dataset is `data/test/`: 941 RGB images and 4,576 labeled instances. Treat the existing train/val/test split as preliminary because frames from the same burst sequence cross split boundaries. Formal paper experiments must use a group-aware split.
+
+Other directories are independent legacy or side projects. Do not refactor them while working on citrus experiments.
+
+## Baselines and Experiment Discipline
+
+Use YOLO11n-seg as the current primary ablation baseline because it is nano-scale, already trained locally, and directly comparable with recent citrus literature. Do not limit comparison experiments to YOLO. The minimum cross-family set is YOLOv8n-seg, YOLO11n-seg, YOLO26n-seg, RTMDet-Ins-tiny, Mask R-CNN R50-FPN, and RF-DETR Seg Nano. For the journal-strength comparison, add SOLOv2-Light R18-FPN as a box-free, location-based baseline; it is not the primary ablation model, and its inclusion replaces the optional CondInst/SparseInst slot. Run a 50-epoch YOLO11n versus RTMDet-Ins-tiny screening before considering any primary-baseline switch.
+
+Include `U-Net + marker-controlled watershed` as a semantic-to-instance auxiliary baseline. U-Net alone is not an instance segmentation model: merge instance masks into binary foreground for training, split predictions with a validation-tuned distance-transform watershed, and report both semantic Dice/mIoU and instance Mask AP. DeepLabV3+ or SegFormer-B0 plus the same watershed may be added as one optional semantic comparison. Use a mature `segmentation_models_pytorch` or MMSegmentation implementation; `1.coding/2_Unet/` is legacy learning code and is not paper-ready.
+
+Existing runs `001`-`003` are preliminary. Their results are not interchangeable with new runs unless the data split, initialization, optimizer, learning rate, dropout, image size, seed, and evaluation split are identical. The current scripts contain conflicting protocols; resolve this before formal experiments.
+
+For final tables, report mask mAP50-95, mask mAP50, precision, recall, AP by object scale, Params, GFLOPs, measured latency, and challenge-subset performance. For semantic models also report Dice, mIoU, and Boundary F1. Run screening experiments once, then repeat the primary baseline and final method with three seeds and report mean plus standard deviation.
+
+## Development Commands
+
+Run commands inside the YOLO fork:
+
+```powershell
+cd E:\mastercode\ultralytics-main-new
+pip install -e .
+python train_citrus_seg.py --model yolo11n-seg.pt --name E0_baseline
+python eval_citrus_seg.py --weights 1_results\ORANGE_WUXI_SEG\E0_baseline\weights\best.pt
 pytest tests
-yolo segment train model=mine_yaml/11_ours_final_complete.yaml data=206_Apple_Amodal.yaml epochs=300 imgsz=640
 ```
 
-Use editable install for the YOLO fork so `from ultralytics import YOLO` resolves to this repository. The numbered scripts at fork root (`006_Apple_Amodal_test.py`, `013_train_improved_v2.py`, etc.) are the real training entry points — they call `YOLO(<yaml>).train(...)` with paths baked in. Equivalent CLI form shown above.
+Use focused tests and a short 1-3 epoch smoke run before any 300-epoch experiment.
 
-For the custom framework:
+## Coding and Model Integration
 
-```bash
-cd 1.coding/0_segment
-pip install -r requirements.txt
-python train.py --model-type fpnseg --image-dir <imgs> --mask-dir <masks> --label-type mask
-```
+Use Python with 4-space indentation and the repository's 120-column limit. Follow Ruff/isort/YAPF and Google-style docstrings.
 
-**Gotcha:** if `--image-dir`/`--mask-dir` don't exist, the 0_segment framework silently falls back to synthetic random tensors instead of erroring — check paths if metrics look meaningless.
+When adding a YOLO module:
 
-For animations, run `manim -pql <file>.py <SceneClass>` inside `2_catoon/`.
+1. Implement it under `ultralytics/nn/modules/`.
+2. Export it from `ultralytics/nn/modules/__init__.py`.
+3. Import it in `ultralytics/nn/tasks.py`.
+4. Register its channel/repeat behavior in `parse_model()`.
+5. Add a minimal YAML and test model build, forward, backward, and FLOPs.
 
-## Coding Style & Naming Conventions
+Prefer one coherent, task-specific method over stacking published attention, convolution, and upsampling blocks.
 
-Use Python with 4-space indentation and keep lines near the configured 120-column limit. The YOLO fork uses settings from `pyproject.toml`: Ruff, isort, YAPF, Google-style docstrings, and pytest. Keep experiment scripts and YAMLs descriptively named, following existing numeric prefixes such as `013_train_improved_v2.py` and `V4-06_final_complete.yaml`.
+## Data, Results, and Git
 
-When adding YOLO custom modules, wire them across 4 files:
-1. Implement `nn.Module` in `ultralytics/nn/modules/custom_blocks.py` (or a sibling file)
-2. Export it in `ultralytics/nn/modules/__init__.py` (import + `__all__`)
-3. Import it in `ultralytics/nn/tasks.py` (top-of-file imports)
-4. Register it in `parse_model()` in `ultralytics/nn/tasks.py` (add to `base_modules` frozenset, or add a dedicated `elif` branch for non-standard channel math)
+Do not commit datasets, weights, `runs/`, large result images, archives, or videos. Keep numbered experiment names and never overwrite a completed run. Record the exact command, Git state, dataset split version, hardware, and final metrics for every paper experiment.
 
-Forgetting step 3 or 4 produces a YAML-parse error rather than a clear "unknown module" message.
-
-## Testing Guidelines
-
-Run focused pytest targets when possible, for example `pytest tests/test_cli.py`. For training changes, add a small smoke run or document the exact command, dataset YAML, image size, epoch count, and device used. Check hardcoded Windows paths before trusting metrics.
-
-## RGB-D Data Convention
-
-Dataset YAMLs (`206_Apple_Amodal.yaml`, etc.) set `channels: 4`. The dataloader reads images with `cv2.IMREAD_UNCHANGED` to preserve the 4th (Depth) channel. Channel order is `[B, G, R, Depth]`. For `.npy` sources, arrays load directly without re-caching.
-
-## Commit & Pull Request Guidelines
-
-Recent commits use short, informal messages. Prefer concise imperative messages with a scope, such as `ultralytics: fix RGB-D dataloader caching`. Pull requests should identify the affected subproject, summarize model/config changes, include commands run, and attach metrics or screenshots for visual outputs.
-
-## Security & Configuration Tips
-
-Do not commit datasets, pretrained weights, `runs/`, `results/`, archives, or videos. Many scripts and YAML files contain local `E:\mastercode\...` paths; update them carefully when moving environments and avoid overwriting local dataset configs without checking the current user setup.
-
-## CI Workflow
-
-`.github/workflows/main.yml` triggers `scripts/update_readme.py` when an Issue labeled `blog` is created/edited, appending its title+link to `README.md` and auto-committing. Don't hand-edit the auto-generated blog-list section of `README.md`.
+Do not revert unrelated user changes. Use concise scoped commits such as `citrus: add cross-family baseline configs`.
