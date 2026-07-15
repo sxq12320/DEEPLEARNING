@@ -1,0 +1,77 @@
+{
+  "config": {
+    "model": "segmentation_models_pytorch.Unet",
+    "encoder": "resnet18",
+    "encoder_weights": "none",
+    "dataset_root": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared",
+    "epochs": 1,
+    "batch_size": 1,
+    "workers": 0,
+    "image_size": 64,
+    "resize_protocol": "aspect-ratio-preserving square letterbox",
+    "loss": "BCEWithLogits + 1 * DiceLoss",
+    "optimizer": "AdamW",
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "scheduler": "CosineAnnealingLR",
+    "probability_threshold": 0.5,
+    "watershed_min_distance": 4,
+    "watershed_min_area": 4,
+    "max_instances": 10,
+    "validation_interval": 1,
+    "seed": 42,
+    "amp": true,
+    "parameters": 14328209,
+    "parameters_m": 14.328209,
+    "trainable_parameters": 14328209
+  },
+  "dataset": {
+    "train": {
+      "images": 1,
+      "instances": 0,
+      "image_dir": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\semantic\\images\\train",
+      "mask_dir": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\semantic\\masks\\train",
+      "annotation": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\coco\\annotations\\instances_train.json"
+    },
+    "val": {
+      "images": 1,
+      "instances": 1,
+      "image_dir": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\semantic\\images\\val",
+      "mask_dir": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\semantic\\masks\\val",
+      "annotation": "E:\\mastercode\\4_baseline_choice\\dataset_checks\\unet_tiny_prepared\\coco\\annotations\\instances_val.json"
+    }
+  },
+  "resume": null,
+  "environment": {
+    "timestamp_utc": "2026-07-14T06:50:04.195102+00:00",
+    "command": "scripts\\train_unet.py --dataset dataset_checks\\unet_tiny_prepared --output-root dataset_checks\\unet_tiny_runs --name gpu_e2e --encoder resnet18 --encoder-weights none --epochs 1 --batch 1 --workers 0 --lr 0.0003 --imgsz 64 --prob-threshold 0.5 --watershed-min-distance 4 --watershed-min-area 4 --max-instances 10 --val-interval 1 --save-interval 1 --seed 42 --device cuda:0",
+    "cwd": "E:\\mastercode\\4_baseline_choice",
+    "python": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+    "executable": "E:\\AppInstallion\\0_4_annaconda\\envs\\yolo\\python.exe",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hostname": "sxq",
+    "conda_env": "base",
+    "git": {
+      "root": "E:/mastercode",
+      "revision": "6d614feddbb31e81ccd8a4a6cf1a46a4d7416f8f",
+      "dirty": true
+    }
+  },
+  "framework": {
+    "torch": "2.5.0+cu118",
+    "cuda_runtime": "11.8",
+    "cudnn": 90100,
+    "cuda_available": true,
+    "devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+        "total_memory_mb": 4095.5,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  }
+}

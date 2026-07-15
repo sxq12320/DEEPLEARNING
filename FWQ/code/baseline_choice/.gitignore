@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.runtime/
+checkpoints/
+datasets/
+runs/
+third_party/
+*.pth
+*.pt
+*.onnx
+*.engine
+
