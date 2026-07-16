@@ -15,7 +15,11 @@
       "Bash(python vis_pred_vs_gt.py --weights 1_results/001_yolo11n_seg_AdamW/weights/best.pt --split val --num 12 --conf 0.25 --device cpu)",
       "Bash(python _re_split.py)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'total: {d[\\\\\"total_images\\\\\"]}  split: {d[\\\\\"split_counts\\\\\"]}  negatives: {d[\\\\\"negative_images\\\\\"]}'\\)\")",
-      "Bash(python _re_split_v2.py)"
+      "Bash(python _re_split_v2.py)",
+      "Bash(ls \"Z:/001_1_yolov8nano-seg_adamw_yes/weights/\" 2>&1; echo \"---\"; ls \"E:/mastercode/ultralytics-main-new/1_results/ORANGE_WUXI_SEG/\" 2>&1)",
+      "Read(//z/001_1_yolov8nano-seg_adamw_yes/weights/**)",
+      "Bash(python audit_yolo_seg_labels.py)",
+      "Bash(python audit_yolo_seg_labels.py --device cpu)"
     ]
   }
 }

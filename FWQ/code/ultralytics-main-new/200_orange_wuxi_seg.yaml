@@ -1,7 +1,0 @@
-path: /data/sxq/datasets/orange_yolo
-train: train/images
-val: val/images
-test: test/images
-nc: 1
-names:
-  0: orange_immature

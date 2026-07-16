@@ -8,6 +8,7 @@ possibly missing labels.
 from __future__ import annotations
 
 import csv
+import argparse
 import random
 import shutil
 from pathlib import Path
@@ -24,10 +25,12 @@ from ultralytics import YOLO
 # USER SETTINGS: edit this block only
 # =============================================================================
 
-WEIGHTS = Path(r"E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\weights\best.pt")
-DATA_YAML = Path(r"E:\mastercode\ultralytics-main-new\200orange_wuxi_seg.yaml")
+WEIGHTS = Path(r"Z:\001_1_yolov8nano-seg_adamw_yes\weights\best.pt")
+DATA_YAML = Path(r"E:\mastercode\data\test\orange_wuxi_seg.yaml")
 SPLIT = "all"  # train, val, test, or all
-OUTPUT_DIR = Path(r"E:\mastercode\ultralytics-main-new\1_results\001_yolo11n_seg_AdamW\label_audit_all")
+OUTPUT_DIR = Path(
+    r"E:\mastercode\ultralytics-main-new\1_results\001_1_yolov8nano-seg_adamw_yes\label_audit_all"
+)
 
 IMAGE_SIZE = 640
 CONFIDENCE = 0.25
@@ -52,12 +55,31 @@ RANDOM_SEED = 42
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
 
+def parse_args() -> argparse.Namespace:
+    """Parse optional command-line overrides for one-click reuse across runs."""
+    parser = argparse.ArgumentParser(description="Visual audit for YOLO segmentation labels and predictions.")
+    parser.add_argument("--weights", type=Path, default=WEIGHTS)
+    parser.add_argument("--data-yaml", type=Path, default=DATA_YAML)
+    parser.add_argument("--split", default=SPLIT, choices=["train", "val", "test", "all"])
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument("--imgsz", type=int, default=IMAGE_SIZE)
+    parser.add_argument("--conf", type=float, default=CONFIDENCE)
+    parser.add_argument("--iou", type=float, default=IOU)
+    parser.add_argument("--max-det", type=int, default=MAX_DET)
+    parser.add_argument("--device", default=DEVICE)
+    parser.add_argument("--retina-masks", action="store_true", default=RETINA_MASKS)
+    parser.add_argument("--chunk-size", type=int, default=INFERENCE_CHUNK_SIZE)
+    return parser.parse_args()
+
+
 def resolve_split_paths(data_yaml: Path, split: str) -> tuple[Path, Path]:
     """Resolve image and label directories from an Ultralytics data YAML."""
     data = yaml.safe_load(data_yaml.read_text(encoding="utf-8"))
     if split not in data:
         raise KeyError(f"Split '{split}' is not defined in {data_yaml}.")
     root = Path(data.get("path", data_yaml.parent))
+    if not root.is_absolute():
+        root = data_yaml.parent / root
     image_dir = Path(data[split])
     if not image_dir.is_absolute():
         image_dir = root / image_dir
@@ -205,46 +227,47 @@ def make_comparison(
 
 def main() -> None:
     """Run inference and write ranked visual label-audit comparisons."""
-    samples = collect_samples(DATA_YAML, SPLIT)
-    if not WEIGHTS.is_file():
-        raise FileNotFoundError(f"Missing weights: {WEIGHTS}")
+    args = parse_args()
+    samples = collect_samples(args.data_yaml, args.split)
+    if not args.weights.is_file():
+        raise FileNotFoundError(f"Missing weights: {args.weights}")
     if not samples:
-        raise FileNotFoundError(f"No images found for split setting: {SPLIT}")
+        raise FileNotFoundError(f"No images found for split setting: {args.split}")
 
     print("Label-audit settings")
     print("-" * 80)
     for key, value in {
-        "weights": WEIGHTS,
-        "data_yaml": DATA_YAML,
-        "split": SPLIT,
-        "output_dir": OUTPUT_DIR,
+        "weights": args.weights,
+        "data_yaml": args.data_yaml,
+        "split": args.split,
+        "output_dir": args.output_dir,
         "images": len(samples),
-        "imgsz": IMAGE_SIZE,
-        "conf": CONFIDENCE,
-        "iou": IOU,
-        "device": DEVICE,
-        "retina_masks": RETINA_MASKS,
-        "chunk_size": INFERENCE_CHUNK_SIZE,
+        "imgsz": args.imgsz,
+        "conf": args.conf,
+        "iou": args.iou,
+        "device": args.device,
+        "retina_masks": args.retina_masks,
+        "chunk_size": args.chunk_size,
         "save_all_images": SAVE_ALL_IMAGES,
         "save_count_mismatch_dir": SAVE_COUNT_MISMATCH_DIR,
     }.items():
         print(f"{key:14s}: {value}")
 
-    model = YOLO(str(WEIGHTS))
+    model = YOLO(str(args.weights))
     records = []
     with tqdm(total=len(samples), desc="Forward + rank", unit="image", dynamic_ncols=True) as progress:
-        for start in range(0, len(samples), INFERENCE_CHUNK_SIZE):
-            batch_samples = samples[start : start + INFERENCE_CHUNK_SIZE]
+        for start in range(0, len(samples), args.chunk_size):
+            batch_samples = samples[start : start + args.chunk_size]
             predictions = model.predict(
                 source=[str(sample["image_path"]) for sample in batch_samples],
-                imgsz=IMAGE_SIZE,
-                conf=CONFIDENCE,
-                iou=IOU,
-                max_det=MAX_DET,
-                device=DEVICE,
+                imgsz=args.imgsz,
+                conf=args.conf,
+                iou=args.iou,
+                max_det=args.max_det,
+                device=args.device,
                 stream=True,
                 verbose=False,
-                retina_masks=RETINA_MASKS,
+                retina_masks=args.retina_masks,
             )
             for batch_index, result in enumerate(predictions):
                 sample = batch_samples[batch_index]
@@ -282,7 +305,7 @@ def main() -> None:
         remaining = [item for item in records if item not in selected]
         selected.extend(random.sample(remaining, min(SAVE_RANDOM_N, len(remaining))))
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     summary_rows = []
     for rank, item in enumerate(tqdm(selected, desc="Save comparisons", unit="image", dynamic_ncols=True), start=1):
         image_path = item["image_path"]
@@ -297,7 +320,7 @@ def main() -> None:
             item["label_dir"],
             item["pred_polygons"],
             item["scores"],
-            OUTPUT_DIR / subdir / filename,
+            args.output_dir / subdir / filename,
         )
         summary_rows.append({"split": item["split"], "order": item["order"], **row})
 
@@ -314,7 +337,7 @@ def main() -> None:
         "max_conf",
         "mean_conf",
     ]
-    with (OUTPUT_DIR / "summary.csv").open("w", newline="", encoding="utf-8-sig") as handle:
+    with (args.output_dir / "summary.csv").open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(summary_rows)
@@ -323,12 +346,12 @@ def main() -> None:
         key=lambda row: (int(row["extra_predictions"]), int(row["abs_count_diff"]), float(row["max_conf"])),
         reverse=True,
     )
-    with (OUTPUT_DIR / "summary_ranked.csv").open("w", newline="", encoding="utf-8-sig") as handle:
+    with (args.output_dir / "summary_ranked.csv").open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(ranked_rows)
     if SAVE_COUNT_MISMATCH_DIR:
-        mismatch_dir = OUTPUT_DIR / "count_mismatch"
+        mismatch_dir = args.output_dir / "count_mismatch"
         mismatch_dir.mkdir(parents=True, exist_ok=True)
         mismatch_rows = sorted(
             (row for row in summary_rows if int(row["gt_count"]) != int(row["pred_count"])),
@@ -348,11 +371,11 @@ def main() -> None:
             writer = csv.DictWriter(handle, fieldnames=["mismatch_order", *fieldnames, "mismatch_output"])
             writer.writeheader()
             writer.writerows(copied_rows)
-    print(f"Saved {len(summary_rows)} comparisons: {OUTPUT_DIR}")
-    print(f"Summary CSV: {OUTPUT_DIR / 'summary.csv'}")
-    print(f"Ranked CSV : {OUTPUT_DIR / 'summary_ranked.csv'}")
+    print(f"Saved {len(summary_rows)} comparisons: {args.output_dir}")
+    print(f"Summary CSV: {args.output_dir / 'summary.csv'}")
+    print(f"Ranked CSV : {args.output_dir / 'summary_ranked.csv'}")
     if SAVE_COUNT_MISMATCH_DIR:
-        print(f"Count mismatch: {OUTPUT_DIR / 'count_mismatch'}")
+        print(f"Count mismatch: {args.output_dir / 'count_mismatch'}")
 
 
 if __name__ == "__main__":

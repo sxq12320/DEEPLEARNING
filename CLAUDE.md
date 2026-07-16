@@ -23,7 +23,7 @@ Two cross-cutting facts that will bite you:
 | `2_catoon/` | Manim NN-teaching animations (`0_Learning/`, `1_LeNet/`) | `manim -pql <file>.py <SceneClass>` |
 | `3_研究生/` | Master's-thesis research archive — citrus-bagging robot, mushroom cutting-point, watermelon pollination, tomato picking, bolt/nut recycling. Mostly markdown/HTML reports + flowchart & video-frame assets, plus some Python (`sam_amodal_pear.py`, `sd_diffusers/`) | — |
 | `data/` | Datasets + `json2yolo_pose.py`, `hebing.py` format converters | — |
-| `test.ipynb` | Notebook: YOLO-TXT → COCO-JSON conversion for the watermelon dataset | — |
+| `9_archive/legacy_notebooks/test_yolo_to_coco.ipynb` | Legacy notebook: YOLO-TXT → COCO-JSON conversion for the watermelon dataset | — |
 
 Root `.pt` files (`yolo11n-pose.pt`, `yolo11n-seg.pt`, `yolo11s-pose.pt`, `yolo26n.pt`) are pretrained weights used by `ultralytics-main-new/` scripts for transfer learning / baselines. The fork root (`ultralytics-main-new/`) additionally keeps its own base weights — `yolo11n-seg.pt`, `yolo26n.pt`, and `yolo26n-seg.pt` (the last is **fork-only**, not at repo root) — used by the orange/citrus training scripts.
 

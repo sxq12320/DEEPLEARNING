@@ -198,13 +198,13 @@ def main() -> None:
         "worker_init_fn": seed_worker,
     }
     train_loader = DataLoader(
-        train_dataset,
+        train_dataset, # type: ignore
         batch_size=args.batch,
         shuffle=True,
         generator=generator,
         **loader_common,
     )
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, **loader_common)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, **loader_common) # type: ignore
 
     initialization = "none" if resume_path else args.initialization
     model = build_maskrcnn_model(
@@ -233,7 +233,7 @@ def main() -> None:
         optimizer, milestones=milestones, gamma=0.1
     )
     try:
-        scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled)
+        scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled) # type: ignore
     except TypeError:
         scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled)
 
