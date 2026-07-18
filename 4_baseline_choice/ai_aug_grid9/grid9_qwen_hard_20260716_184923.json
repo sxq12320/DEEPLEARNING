@@ -1,0 +1,28 @@
+{
+  "source_images": [
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095454.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095458.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095525.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095525_1.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095609.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095647.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095659.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095713.jpg",
+    "E:\\mastercode\\data\\orange_wuxi\\img\\IMG_20260706_095734.jpg"
+  ],
+  "reference_images": [
+    "E:\\mastercode\\4_baseline_choice\\ai_aug_grid9\\_grid_refs\\grid9_group_0001.jpg"
+  ],
+  "grid_image": "E:\\mastercode\\4_baseline_choice\\ai_aug_grid9\\_grid_refs\\grid9_group_0001.jpg",
+  "output_image": "E:\\mastercode\\4_baseline_choice\\ai_aug_grid9\\grid9_qwen_hard_20260716_184923.png",
+  "model": "qwen-image-2.0",
+  "size": "2048*2048",
+  "prompt": "输入图片是一张 3x3 九宫格参考图，里面包含 9 张真实柑橘果园图片。请把这 9 张图只作为风格、场景、果实形态、叶片密度和遮挡关系的参考，不要输出九宫格、拼贴图、边框或分屏画面。\n\n请生成一张单张完整的真实柑橘果园近景图片，用于未成熟柑橘幼果实例分割训练。\n\n生成目标：比参考图更困难，但仍然真实自然。柑橘必须是绿色或青绿色未成熟幼果，果皮纹理、表面颗粒感、颜色分布和自然反光要接近参考图，不要变成熟橙色果实，不要变成商业摄影风格。\n\n请综合 9 张参考图的视觉特点，适当增加未成熟柑橘幼果数量，尤其增加远处小目标、边缘小目标、叶片缝隙中的小目标和半遮挡小目标。果实应自然分布在枝叶之间，不要整齐排列。\n\n请增加真实叶片和细枝条遮挡，遮挡应自然，部分呈细长条带状穿过果实表面，使果实可见区域出现凹陷边界、不完整轮廓和实例分离困难。不要完全遮住所有果实。\n\n请增加相邻果实靠近、局部重叠、边界接近、果叶颜色相近、背景叶片复杂、局部阴影和斑驳光照。图像应明显比普通样本更难，但仍然清晰可人工重新标注实例分割 mask。\n\n输出要求：单张竖屏 9:16，真实农业机器人果园拍摄风格，照片级真实感，无文字，无水印，无九宫格边框。",
+  "negative_prompt": "mature orange fruit, ripe citrus, yellow orange fruit, apple, pear, tomato, non-citrus fruit, changed fruit texture, smooth plastic fruit skin, artificial fruit, deformed citrus, oversized fruit, fused fruits, unrealistic fruit cluster, cartoon, illustration, painting, CGI, 3D render, indoor scene, studio lighting, human hand, basket, text, watermark, logo, severe blur, unusable image, extreme occlusion, fully hidden fruit, unnatural branch, broken leaf artifacts, over-saturated color, unrealistic shadow, collage, grid, nine panels, split screen, border, frame, contact sheet, photo montage",
+  "request_id": "dfc0c98a-72c4-9931-a467-0ec124e8bb84",
+  "usage": {
+    "image_count": 1,
+    "height": 2048,
+    "width": 2048
+  }
+}

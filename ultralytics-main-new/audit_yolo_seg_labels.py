@@ -28,12 +28,10 @@ from ultralytics import YOLO
 WEIGHTS = Path(r"Z:\001_1_yolov8nano-seg_adamw_yes\weights\best.pt")
 DATA_YAML = Path(r"E:\mastercode\data\test\orange_wuxi_seg.yaml")
 SPLIT = "all"  # train, val, test, or all
-OUTPUT_DIR = Path(
-    r"E:\mastercode\ultralytics-main-new\1_results\001_1_yolov8nano-seg_adamw_yes\label_audit_all"
-)
+OUTPUT_DIR = Path(r"E:\mastercode\9_archive\low_confidence")
 
 IMAGE_SIZE = 640
-CONFIDENCE = 0.25
+CONFIDENCE = 0.01
 IOU = 0.70
 MAX_DET = 300
 DEVICE = "0"
