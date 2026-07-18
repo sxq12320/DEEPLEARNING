@@ -176,6 +176,11 @@ from .scale_aware_fusion import (
     ScaleAwareFusion_Naive,
     ScaleAwareFusion_RGBLed,
 )
+from .mano import (
+    C2MANO,
+    MANOBlock,
+    MultipoleAttention,
+)
 
 __all__ = (
     "AIFI",
@@ -318,4 +323,8 @@ __all__ = (
     "ScaleAwareFusion_Depth2RGB",
     "ScaleAwareFusion_Naive",
     "ScaleAwareFusion_RGBLed",
+    # MANO multipole attention
+    "C2MANO",
+    "MANOBlock",
+    "MultipoleAttention",
 )

@@ -30,7 +30,11 @@
       "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=immature%20citrus%20fruit%20detection%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
       "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=green%20citrus%20detection%20orchard%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
       "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=occluded%20fruit%20segmentation%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
-      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=unripe%20fruit%20instance%20segmentation%20canopy&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")"
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=unripe%20fruit%20instance%20segmentation%20canopy&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(python e:/mastercode/ultralytics-main-new/_smoke_mano.py)",
+      "Bash(python e:/mastercode/_smoke_1sever.py)",
+      "Bash(echo \"---exit=$?---\")",
+      "Bash(python -c \"import webbrowser; webbrowser.open\\(r'file:///e:/mastercode/yolo11_architecture.html'\\)\")"
     ]
   }
 }

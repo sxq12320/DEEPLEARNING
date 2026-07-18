@@ -126,6 +126,8 @@ from ultralytics.nn.modules import (
     ScaleAwareFusion_Depth2RGB,
     ScaleAwareFusion_Naive,
     ScaleAwareFusion_RGBLed,
+    # MANO multipole attention
+    C2MANO,
 )
 from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1765,6 +1767,7 @@ def parse_model(d, ch, verbose=True):
             A2C2f,
             SFM,
             DGFFN,
+            C2MANO,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1785,6 +1788,7 @@ def parse_model(d, ch, verbose=True):
             C2PSA,
             A2C2f,
             SFM,
+            C2MANO,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args

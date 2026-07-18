@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOLO11-seg 架构图（细致分模块版）</title>
+<style>
+  :root{
+    --bg:#eef1f6; --panel:#ffffff; --ink:#1e293b; --muted:#64748b; --line:#cbd5e1;
+    --conv:#2563eb; --c3k2:#059669; --sppf:#d97706; --psa:#7c3aed;
+    --concat:#475569; --ups:#0891b2; --head:#dc2626; --mano:#db2777; --input:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.5;padding:28px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:36px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:10px}
+  h2 .tag{font-size:12px;font-weight:600;color:#fff;padding:2px 10px;border-radius:20px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+  .wrap{max-width:1240px;margin:0 auto}
+
+  /* 图例 */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;margin-bottom:10px}
+  .legend .item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+  .swatch{width:16px;height:16px;border-radius:4px}
+
+  /* 总览三块 */
+  .overview{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:6px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin:14px 0 8px}
+  .ovbox{border-radius:10px;padding:14px 12px;text-align:center;color:#fff}
+  .ovbox b{display:block;font-size:16px}
+  .ovbox span{font-size:12px;opacity:.9}
+  .ovarrow{font-size:24px;color:var(--muted);text-align:center}
+
+  /* 主数据流 */
+  .flow{display:flex;flex-direction:column;gap:0;align-items:center}
+  .stage-label{align-self:stretch;font-weight:700;color:var(--muted);font-size:13px;letter-spacing:.5px;
+    text-transform:uppercase;margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+  .stage-label::before{content:"";flex:0 0 4px;height:18px;border-radius:2px;background:var(--muted)}
+  .node{width:min(760px,100%);background:var(--panel);border:1px solid var(--line);border-left-width:5px;
+    border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center}
+  .idx{font-weight:700;color:var(--muted);font-size:13px;text-align:center;
+    background:#f1f5f9;border-radius:6px;padding:4px 0}
+  .nmain{display:flex;flex-direction:column}
+  .nmod{font-weight:700;font-size:15px}
+  .nargs{font-size:12px;color:var(--muted);font-family:"Consolas",monospace}
+  .nmeta{text-align:right;font-size:12px;color:var(--muted);white-space:nowrap}
+  .nmeta .ch{font-weight:700;color:var(--ink)}
+  .arrow{color:var(--line);font-size:20px;height:20px;line-height:20px}
+  .tap{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:12px;padding:1px 8px;margin-left:6px}
+  .from{font-family:"Consolas",monospace;font-size:11px;color:var(--muted)}
+
+  /* 颜色映射 */
+  .c-conv{border-left-color:var(--conv)} .c-conv .nmod{color:var(--conv)}
+  .c-c3k2{border-left-color:var(--c3k2)} .c-c3k2 .nmod{color:var(--c3k2)}
+  .c-sppf{border-left-color:var(--sppf)} .c-sppf .nmod{color:var(--sppf)}
+  .c-psa{border-left-color:var(--psa)} .c-psa .nmod{color:var(--psa)}
+  .c-concat{border-left-color:var(--concat)} .c-concat .nmod{color:var(--concat)}
+  .c-ups{border-left-color:var(--ups)} .c-ups .nmod{color:var(--ups)}
+  .c-head{border-left-color:var(--head)} .c-head .nmod{color:var(--head)}
+  .c-mano{border-left-color:var(--mano);background:#fdf2f8} .c-mano .nmod{color:var(--mano)}
+  .c-input{border-left-color:var(--input)} .c-input .nmod{color:var(--input)}
+  .bg-conv{background:var(--conv)} .bg-c3k2{background:var(--c3k2)} .bg-sppf{background:var(--sppf)}
+  .bg-psa{background:var(--psa)} .bg-concat{background:var(--concat)} .bg-ups{background:var(--ups)}
+  .bg-head{background:var(--head)} .bg-mano{background:var(--mano)} .bg-input{background:var(--input)}
+
+  /* 重要模块内部 */
+  .modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .mod{background:var(--panel);border:1px solid var(--line);border-top-width:4px;border-radius:12px;padding:16px 18px}
+  .mod h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .mod .desc{font-size:12px;color:var(--muted);margin:0 0 14px}
+  .chain{display:flex;flex-direction:column;align-items:center;gap:0}
+  .blk{background:#f8fafc;border:1.5px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;
+    text-align:center;min-width:150px;font-weight:600}
+  .blk small{display:block;font-weight:400;color:var(--muted);font-size:11px;font-family:"Consolas",monospace}
+  .dn{color:var(--line);font-size:16px;line-height:18px}
+  .row{display:flex;gap:10px;align-items:stretch;justify-content:center;flex-wrap:wrap}
+  .note{font-size:11px;color:var(--muted);text-align:center;margin-top:4px;font-style:italic}
+  .resid{border-style:dashed;border-color:var(--muted);background:#fff}
+  .split{font-size:11px;color:var(--muted);font-weight:700;margin:2px 0}
+
+  footer{margin:40px 0 10px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  code{background:#e2e8f0;border-radius:4px;padding:1px 5px;font-size:12px}
+  @media print{body{background:#fff}.mod,.node,.overview,.legend{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>YOLO11-seg 架构图</h1>
+  <p class="sub">基于 <code>yolo11-seg.yaml</code>（n 尺度：depth 0.50 / width 0.25 / max_ch 1024）。输入 640×640×3；通道/尺寸按 n 尺度标注。本项目在 backbone 第 10 层用 <b style="color:var(--mano)">C2MANO</b> 替换 C2PSA。</p>
+
+  <div class="legend">
+    <div class="item"><span class="swatch bg-input"></span>Input</div>
+    <div class="item"><span class="swatch bg-conv"></span>Conv (Conv-BN-SiLU)</div>
+    <div class="item"><span class="swatch bg-c3k2"></span>C3k2 (CSP 特征块)</div>
+    <div class="item"><span class="swatch bg-sppf"></span>SPPF (空间金字塔池化)</div>
+    <div class="item"><span class="swatch bg-psa"></span>C2PSA (位置敏感注意力)</div>
+    <div class="item"><span class="swatch bg-ups"></span>Upsample</div>
+    <div class="item"><span class="swatch bg-concat"></span>Concat</div>
+    <div class="item"><span class="swatch bg-head"></span>Segment Head</div>
+    <div class="item"><span class="swatch bg-mano"></span>C2MANO（本项目）</div>
+  </div>
+
+  <!-- ============ 总览 ============ -->
+  <div class="overview">
+    <div class="ovbox bg-conv"><b>Backbone</b><span>层 0–10 · 特征提取<br>Conv / C3k2 / SPPF / C2PSA</span></div>
+    <div class="ovarrow">▶</div>
+    <div class="ovbox bg-c3k2"><b>Neck (PAN-FPN)</b><span>层 11–22 · 多尺度融合<br>自顶向下 + 自底向上</span></div>
+    <div class="ovarrow">▶</div>
+    <div class="ovbox bg-head"><b>Head</b><span>层 23 · 实例分割<br>Detect + Mask Proto</span></div>
+  </div>
+
+  <!-- ============ 主数据流 ============ -->
+  <h2>一、逐层数据流 <span class="tag bg-conv">Backbone → Neck → Head</span></h2>
+  <div class="flow">
+
+    <div class="stage-label">Backbone · 主干特征提取</div>
+    <div class="node c-input"><div class="idx">in</div><div class="nmain"><span class="nmod">Input Image</span><span class="nargs">RGB 图像</span></div><div class="nmeta"><span class="ch">640×640×3</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">0</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[64, k3, s2]</span></div><div class="nmeta">P1/2 · <span class="ch">320²×16</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">1</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[128, k3, s2]</span></div><div class="nmeta">P2/4 · <span class="ch">160²×32</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">2</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[256, c3k=False, e0.25]</span></div><div class="nmeta">160² · <span class="ch">×64</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">3</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[256, k3, s2]</span></div><div class="nmeta">P3/8 · <span class="ch">80²×64</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">4</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[512, c3k=False, e0.25]</span></div><div class="nmeta">80² · <span class="ch">×128</span> <span class="tap bg-c3k2">⬤ P3 → 层15</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">5</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[512, k3, s2]</span></div><div class="nmeta">P4/16 · <span class="ch">40²×128</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">6</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[512, c3k=True]</span></div><div class="nmeta">40² · <span class="ch">×128</span> <span class="tap bg-c3k2">⬤ P4 → 层12</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">7</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[1024, k3, s2]</span></div><div class="nmeta">P5/32 · <span class="ch">20²×256</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">8</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[1024, c3k=True]</span></div><div class="nmeta">20² · <span class="ch">×256</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-sppf"><div class="idx">9</div><div class="nmain"><span class="nmod">SPPF</span><span class="nargs">[1024, k5]</span></div><div class="nmeta">20² · <span class="ch">×256</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-mano"><div class="idx">10</div><div class="nmain"><span class="nmod">C2MANO</span><span class="nargs">[1024]　←　baseline: C2PSA</span></div><div class="nmeta">20² · <span class="ch">×256</span> <span class="tap bg-mano">⬤ P5 → 层21</span></div></div>
+
+    <div class="stage-label">Neck · 自顶向下 FPN（融合语义）</div>
+    <div class="arrow">↓</div>
+    <div class="node c-ups"><div class="idx">11</div><div class="nmain"><span class="nmod">Upsample</span><span class="nargs">×2 nearest</span></div><div class="nmeta"><span class="from">from 10</span> · 40²×256</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-concat"><div class="idx">12</div><div class="nmain"><span class="nmod">Concat</span><span class="nargs">[11, 6] 拼接 P4</span></div><div class="nmeta"><span class="from">from -1, 6</span> · 40²×384</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">13</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[512, c3k=False]</span></div><div class="nmeta">40² · <span class="ch">×128</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-ups"><div class="idx">14</div><div class="nmain"><span class="nmod">Upsample</span><span class="nargs">×2 nearest</span></div><div class="nmeta"><span class="from">from 13</span> · 80²×128</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-concat"><div class="idx">15</div><div class="nmain"><span class="nmod">Concat</span><span class="nargs">[14, 4] 拼接 P3</span></div><div class="nmeta"><span class="from">from -1, 4</span> · 80²×192</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">16</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[256, c3k=False]</span></div><div class="nmeta">80² · <span class="ch">×64</span> <span class="tap bg-head">▲ P3/small → Head</span></div></div>
+
+    <div class="stage-label">Neck · 自底向上 PAN（融合定位）</div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">17</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[256, k3, s2]</span></div><div class="nmeta"><span class="from">from 16</span> · 40²×64</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-concat"><div class="idx">18</div><div class="nmain"><span class="nmod">Concat</span><span class="nargs">[17, 13] 拼接 head-P4</span></div><div class="nmeta"><span class="from">from -1, 13</span> · 40²×192</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">19</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[512, c3k=False]</span></div><div class="nmeta">40² · <span class="ch">×128</span> <span class="tap bg-head">▲ P4/medium → Head</span></div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-conv"><div class="idx">20</div><div class="nmain"><span class="nmod">Conv</span><span class="nargs">[512, k3, s2]</span></div><div class="nmeta"><span class="from">from 19</span> · 20²×128</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-concat"><div class="idx">21</div><div class="nmain"><span class="nmod">Concat</span><span class="nargs">[20, 10] 拼接 P5</span></div><div class="nmeta"><span class="from">from -1, 10</span> · 20²×384</div></div>
+    <div class="arrow">↓</div>
+    <div class="node c-c3k2"><div class="idx">22</div><div class="nmain"><span class="nmod">C3k2</span><span class="nargs">[1024, c3k=True]</span></div><div class="nmeta">20² · <span class="ch">×256</span> <span class="tap bg-head">▲ P5/large → Head</span></div></div>
+
+    <div class="stage-label">Head · 实例分割输出</div>
+    <div class="arrow">↓</div>
+    <div class="node c-head"><div class="idx">23</div><div class="nmain"><span class="nmod">Segment</span><span class="nargs">[nc, nm=32, npr=256]　输入 [16, 19, 22]</span></div><div class="nmeta"><span class="ch">box + cls + mask</span></div></div>
+  </div>
+
+  <!-- ============ 重要模块内部 ============ -->
+  <h2>二、重要模块内部结构 <span class="tag bg-psa">逐一展开</span></h2>
+  <div class="modules">
+
+    <!-- Conv -->
+    <div class="mod" style="border-top-color:var(--conv)">
+      <h3><span style="color:var(--conv)">Conv</span></h3>
+      <p class="desc">最基本单元。所有卷积均为「卷积 + 批归一化 + SiLU 激活」三件套。</p>
+      <div class="chain">
+        <div class="blk">Conv2d<small>k×k, stride s, pad k//2</small></div>
+        <div class="dn">↓</div>
+        <div class="blk">BatchNorm2d</div>
+        <div class="dn">↓</div>
+        <div class="blk">SiLU<small>x · sigmoid(x)</small></div>
+      </div>
+    </div>
+
+    <!-- Bottleneck -->
+    <div class="mod" style="border-top-color:var(--c3k2)">
+      <h3><span style="color:var(--c3k2)">Bottleneck</span></h3>
+      <p class="desc">C3k2/C3k 的基本残差单元。两次卷积，可选 shortcut 相加。</p>
+      <div class="chain">
+        <div class="blk">Conv<small>1×1 或 3×3, →c_</small></div>
+        <div class="dn">↓</div>
+        <div class="blk">Conv<small>3×3, c_→c</small></div>
+        <div class="dn">↓ + shortcut（当 c_in=c_out）</div>
+        <div class="blk resid">⊕ Add</div>
+      </div>
+    </div>
+
+    <!-- C3k2 -->
+    <div class="mod" style="border-top-color:var(--c3k2)">
+      <h3><span style="color:var(--c3k2)">C3k2</span></h3>
+      <p class="desc">YOLO11 主特征块（C2f 变体）。cv1 分成两路，一路串接 n 个子块并保留每级输出，全部 concat 后 cv2 融合。<b>c3k=False→子块用 Bottleneck；c3k=True→子块用 C3k。</b></p>
+      <div class="chain">
+        <div class="blk">cv1 · Conv 1×1<small>c → 2c_</small></div>
+        <div class="dn">↓</div>
+        <div class="split">split 成 2 路</div>
+        <div class="row">
+          <div class="blk">保留支<small>c_</small></div>
+          <div class="blk">n × {Bottleneck | C3k}<small>逐级输出全保留</small></div>
+        </div>
+        <div class="dn">↓</div>
+        <div class="blk">Concat<small>(2 + n) × c_</small></div>
+        <div class="dn">↓</div>
+        <div class="blk">cv2 · Conv 1×1<small>→ c_out</small></div>
+      </div>
+    </div>
+
+    <!-- C3k -->
+    <div class="mod" style="border-top-color:var(--c3k2)">
+      <h3><span style="color:var(--c3k2)">C3k</span></h3>
+      <p class="desc">深层 C3k2 内部使用的子块（类 C3，可调 kernel）。三个 1×1 卷积包裹 n 个串联 Bottleneck。</p>
+      <div class="chain">
+        <div class="row">
+          <div class="blk">cv1 1×1 → n×Bottleneck</div>
+          <div class="blk">cv2 1×1（旁路）</div>
+        </div>
+        <div class="dn">↓ concat</div>
+        <div class="blk">cv3 · Conv 1×1<small>融合</small></div>
+      </div>
+    </div>
+
+    <!-- SPPF -->
+    <div class="mod" style="border-top-color:var(--sppf)">
+      <h3><span style="color:var(--sppf)">SPPF</span></h3>
+      <p class="desc">快速空间金字塔池化。3 个 5×5 最大池化「串联」等效多尺度感受野，拼接后融合。</p>
+      <div class="chain">
+        <div class="blk">cv1 · Conv 1×1</div>
+        <div class="dn">↓ x</div>
+        <div class="row">
+          <div class="blk">x</div>
+          <div class="blk">MaxPool 5×5<small>m1</small></div>
+          <div class="blk">MaxPool 5×5<small>m2</small></div>
+          <div class="blk">MaxPool 5×5<small>m3</small></div>
+        </div>
+        <div class="note">m1/m2/m3 串联（各在前者上池化）</div>
+        <div class="dn">↓ Concat(x,m1,m2,m3)</div>
+        <div class="blk">cv2 · Conv 1×1</div>
+      </div>
+    </div>
+
+    <!-- C2PSA -->
+    <div class="mod" style="border-top-color:var(--psa)">
+      <h3><span style="color:var(--psa)">C2PSA</span></h3>
+      <p class="desc">backbone 末端注意力块。cv1 分两路，其中一路经 n 个 PSABlock，再 concat→cv2。<b>本项目用 C2MANO 替换此块。</b></p>
+      <div class="chain">
+        <div class="blk">cv1 · Conv 1×1<small>c → 2×(0.5c)</small></div>
+        <div class="dn">↓ split (a, b)</div>
+        <div class="row">
+          <div class="blk">a（旁路）</div>
+          <div class="blk">n × PSABlock<small>作用于 b</small></div>
+        </div>
+        <div class="dn">↓ Concat(a, b)</div>
+        <div class="blk">cv2 · Conv 1×1</div>
+      </div>
+    </div>
+
+    <!-- PSABlock -->
+    <div class="mod" style="border-top-color:var(--psa)">
+      <h3><span style="color:var(--psa)">PSABlock</span></h3>
+      <p class="desc">C2PSA 的内部单元：注意力 + 前馈，各带残差。</p>
+      <div class="chain">
+        <div class="blk">x</div>
+        <div class="dn">↓ + Attention(x)</div>
+        <div class="blk resid">⊕ x + Attention</div>
+        <div class="dn">↓ + FFN(x)</div>
+        <div class="blk resid">⊕ + FFN<small>Conv1×1→2c→Conv1×1</small></div>
+      </div>
+    </div>
+
+    <!-- Attention -->
+    <div class="mod" style="border-top-color:var(--psa)">
+      <h3><span style="color:var(--psa)">Attention</span></h3>
+      <p class="desc">位置敏感多头自注意力。qkv 由 1×1 卷积生成，注意力输出叠加深度卷积位置编码（PE）。</p>
+      <div class="chain">
+        <div class="blk">qkv · Conv 1×1<small>→ q, k, v（多头）</small></div>
+        <div class="dn">↓</div>
+        <div class="blk">Attn = softmax(qᵀk · scale)</div>
+        <div class="dn">↓</div>
+        <div class="row">
+          <div class="blk">v · Attn</div>
+          <div class="blk">PE(v)<small>深度卷积 3×3</small></div>
+        </div>
+        <div class="dn">↓ Add</div>
+        <div class="blk">proj · Conv 1×1</div>
+      </div>
+    </div>
+
+    <!-- Segment Head -->
+    <div class="mod" style="border-top-color:var(--head)">
+      <h3><span style="color:var(--head)">Segment Head</span></h3>
+      <p class="desc">在 P3/P4/P5 三尺度上：检测分支（框+类别）+ mask 系数分支；Proto 生成原型掩膜，最终 mask = 系数 × 原型。</p>
+      <div class="chain">
+        <div class="split">每个尺度 (P3,P4,P5)：</div>
+        <div class="row">
+          <div class="blk">cv2 · box<small>4×reg_max (DFL)</small></div>
+          <div class="blk">cv3 · cls<small>nc 类</small></div>
+          <div class="blk">cv4 · mask coef<small>nm=32</small></div>
+        </div>
+        <div class="dn">↓</div>
+        <div class="blk">Proto（从 P3）<small>Conv→Upsample→Conv→Conv, 出 32 原型</small></div>
+        <div class="dn">↓</div>
+        <div class="blk resid">Mask = sigmoid(coef @ protos)</div>
+      </div>
+    </div>
+
+    <!-- C2MANO -->
+    <div class="mod" style="border-top-color:var(--mano);background:#fdf2f8">
+      <h3><span style="color:var(--mano)">C2MANO</span> <span class="tag bg-mano" style="font-size:11px">本项目</span></h3>
+      <p class="desc">MANO 多极注意力封装（替换 C2PSA，同通道契约）。cv1 分两路，一路经 n 个 MANOBlock，concat→cv2。</p>
+      <div class="chain">
+        <div class="blk">cv1 · Conv 1×1<small>c → 2×(0.5c)</small></div>
+        <div class="dn">↓ split (a, b)</div>
+        <div class="blk">n × MANOBlock<small>x + MultipoleAttn ; x + FFN</small></div>
+        <div class="dn">↓ Concat(a, b)</div>
+        <div class="blk">cv2 · Conv 1×1</div>
+        <div class="note">MultipoleAttention：多尺度金字塔(下采样×L) → 共享窗口注意力 → V-cycle 上采样聚合，线性复杂度 + 全局感受野</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <b>说明：</b>通道数按 n 尺度（width 0.25）计算：Conv[64]→16、[128]→32、[256]→64、[512]→128、[1024]→256（make_divisible 到 8）。空间尺寸按 640 输入：P1/2=320²、P2/4=160²、P3/8=80²、P4/16=40²、P5/32=20²。
+    <code>c3k=True</code> 时 C3k2 内部子块用 C3k，否则用 Bottleneck。Neck 为 PAN-FPN：先自顶向下（层 11–16）融合语义，再自底向上（层 17–22）融合定位，三尺度 P3/P4/P5 送入 Segment Head。<br>
+    本项目改动：backbone 层 10 <code>C2PSA → C2MANO</code>（对应 <code>004_yolo11-seg-mano.yaml</code>），其余与 <code>yolo11n-seg</code> baseline 完全一致，用于单变量消融。
+  </footer>
+
+</div>
+</body>
+</html>
