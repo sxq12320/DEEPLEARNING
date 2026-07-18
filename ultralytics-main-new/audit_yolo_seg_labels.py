@@ -25,13 +25,13 @@ from ultralytics import YOLO
 # USER SETTINGS: edit this block only
 # =============================================================================
 
-WEIGHTS = Path(r"Z:\001_1_yolov8nano-seg_adamw_yes\weights\best.pt")
+WEIGHTS = Path(r"Z:\results\001_1_yolov8nano-seg_adamw_yes\weights\best.pt")
 DATA_YAML = Path(r"E:\mastercode\data\test\orange_wuxi_seg.yaml")
 SPLIT = "all"  # train, val, test, or all
-OUTPUT_DIR = Path(r"E:\mastercode\9_archive\low_confidence")
+OUTPUT_DIR = Path(r"E:\mastercode\9_archive\2026-07-18_label_audit_data_test")
 
 IMAGE_SIZE = 640
-CONFIDENCE = 0.01
+CONFIDENCE = 0.25
 IOU = 0.70
 MAX_DET = 300
 DEVICE = "0"

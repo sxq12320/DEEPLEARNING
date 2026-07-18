@@ -10,6 +10,7 @@ but are disabled by default.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import random
@@ -78,11 +79,16 @@ def polygon_area_pixels(points: Sequence[Tuple[float, float]]) -> float:
 
 
 def find_records(source_root: Path) -> List[SourceRecord]:
-    """Collect images from both current LabelMe subsets."""
-    pairs = (
-        ("img", source_root / "img", source_root / "annotions_x"),
-        ("img_2", source_root / "img_2", source_root / "annotion_x_2"),
-    )
+    """Collect images from the standardized or legacy LabelMe layout."""
+    standard_image_dir = source_root / "img"
+    standard_label_dir = source_root / "labels"
+    if standard_image_dir.is_dir() and standard_label_dir.is_dir():
+        pairs = (("standard", standard_image_dir, standard_label_dir),)
+    else:
+        pairs = (
+            ("img", source_root / "img", source_root / "annotions_x"),
+            ("img_2", source_root / "img_2", source_root / "annotion_x_2"),
+        )
     raw_records: List[Tuple[str, Path, Path]] = []
     for subset, image_dir, json_dir in pairs:
         if not image_dir.is_dir():
@@ -427,6 +433,7 @@ def convert_dataset(
         "unsupported_shapes": defaultdict(int),
         "degenerate_polygons": 0,
     }
+    split_manifest_rows: List[Dict[str, str]] = []
 
     for split, items in split_records.items():
         split_instances = 0
@@ -446,6 +453,15 @@ def convert_dataset(
             output_label = output_root / split / "labels" / f"{Path(record.output_name).stem}.txt"
             split_instances += write_sample(image, polygons, output_image, output_label)
             final_images += 1
+            split_manifest_rows.append(
+                {
+                    "split": split,
+                    "image": record.output_name,
+                    "source_image": str(record.image_path),
+                    "source_json": str(record.json_path),
+                    "instances": str(len(polygons)),
+                }
+            )
 
             if split in augment_splits:
                 for augmentation in augmentations:
@@ -472,6 +488,13 @@ def convert_dataset(
 
     report["ignored_labels"] = dict(report["ignored_labels"])
     report["unsupported_shapes"] = dict(report["unsupported_shapes"])
+    with (output_root / "split_manifest.csv").open("w", encoding="utf-8-sig", newline="") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=["split", "image", "source_image", "source_json", "instances"],
+        )
+        writer.writeheader()
+        writer.writerows(split_manifest_rows)
     report_path = output_root / "conversion_report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return report

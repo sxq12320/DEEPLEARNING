@@ -55,6 +55,8 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Train an immature-citrus YOLO-seg experiment (fixed protocol).")
     p.add_argument("--model", required=True, help=".pt weights or a model .yaml (architecture under test).")
     p.add_argument("--name", required=True, help="Run name, e.g. E0_yolo11n_seg_baseline_941.")
+    p.add_argument("--data", default=DATA, help="Dataset YAML. Defaults to the current single-split dataset.")
+    p.add_argument("--project", default=PROJECT, help="Experiment output directory.")
     p.add_argument("--pretrained", default=None,
                    help="Optional .pt to transfer matching weights into a .yaml model (recommended for E1..E4).")
     # only knobs allowed to vary: epochs/batch/imgsz/device — everything else is FIXED above.
@@ -78,8 +80,8 @@ def main() -> None:
 
     model = build_model(args.model, args.pretrained)
     model.train(
-        data=DATA,
-        project=PROJECT,
+        data=args.data,
+        project=args.project,
         name=args.name,
         epochs=args.epochs,
         batch=args.batch,

@@ -19,7 +19,18 @@
       "Bash(ls \"Z:/001_1_yolov8nano-seg_adamw_yes/weights/\" 2>&1; echo \"---\"; ls \"E:/mastercode/ultralytics-main-new/1_results/ORANGE_WUXI_SEG/\" 2>&1)",
       "Read(//z/001_1_yolov8nano-seg_adamw_yes/weights/**)",
       "Bash(python audit_yolo_seg_labels.py)",
-      "Bash(python audit_yolo_seg_labels.py --device cpu)"
+      "Bash(python audit_yolo_seg_labels.py --device cpu)",
+      "Bash(ls \"E:/mastercode/data/orange_wuxi/\" 2>/dev/null; echo \"---weights check---\"; ls \"Z:/results/001_1_yolov8nano-seg_adamw_yes/weights/best.pt\" 2>/dev/null && echo \"WEIGHTS OK\")",
+      "Read(//z/results/001_1_yolov8nano-seg_adamw_yes/weights/**)",
+      "Bash(echo \"===test/images count===\"; ls \"E:/mastercode/data/test/images/val/\" 2>/dev/null | wc -l; echo \"===test/labels val===\"; ls \"E:/mastercode/data/test/labels/val/\" 2>/dev/null | head -3; echo \"===conversion report mtime===\"; stat -c '%y' \"E:/mastercode/data/test/conversion_report.json\" 2>/dev/null)",
+      "Read(//e/mastercode/**)",
+      "Bash(python make_orange_mask_compare.py)",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=BiFPN%20efficient%20feature%20pyramid%20network&limit=10&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=ASF-YOLO%20feature%20fusion%20segmentation&limit=10&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=immature%20citrus%20fruit%20detection%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=green%20citrus%20detection%20orchard%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=occluded%20fruit%20segmentation%20deep%20learning&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")",
+      "Bash(curl -s \"https://api.semanticscholar.org/graph/v1/paper/search?query=unripe%20fruit%20instance%20segmentation%20canopy&limit=15&fields=title,authors,year,venue,externalIds,abstract,citationCount,url,openAccessPdf\" -H \"x-api-key: s2k-mMUmGmVGTGFsILLZitJOlX57ybOT3Yutbmb9R36O\")"
     ]
   }
 }
