@@ -181,6 +181,11 @@ from .mano import (
     MANOBlock,
     MultipoleAttention,
 )
+from .hvi_enhance import (
+    HVIEnhance,
+    IELBlock,
+    RGBHVI,
+)
 
 __all__ = (
     "AIFI",
@@ -327,4 +332,8 @@ __all__ = (
     "C2MANO",
     "MANOBlock",
     "MultipoleAttention",
+    # HVI low-light enhancement front-end
+    "HVIEnhance",
+    "IELBlock",
+    "RGBHVI",
 )

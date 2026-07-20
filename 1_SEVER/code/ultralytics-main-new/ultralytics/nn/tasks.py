@@ -128,6 +128,8 @@ from ultralytics.nn.modules import (
     ScaleAwareFusion_RGBLed,
     # MANO multipole attention
     C2MANO,
+    # HVI low-light enhancement front-end
+    HVIEnhance,
 )
 from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1863,6 +1865,12 @@ def parse_model(d, ch, verbose=True):
             else:
                 c2 = ch[f]
                 args = [c2, c2]
+        elif m is HVIEnhance:
+            # HVI low-light enhancement front-end: 3-ch image in, 3-ch enhanced image out.
+            # NOT width-scaled — must preserve exactly 3 channels for the backbone stem.
+            c1 = ch[f]
+            c2 = c1
+            args = [c1, c2, *args]
         elif m is ShuffleV2Stem_Depth:
             # ShuffleNetV2 Stem: 不受 width_multiple 缩放，固定输出 24 通道
             c1 = ch[f]

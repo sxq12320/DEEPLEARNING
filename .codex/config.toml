@@ -1,0 +1,7 @@
+model = "gpt-5-codex"
+preferred_auth_method = "apikey"
+
+[model_provider.anyrouter]
+name = "Any Router"
+base_url = "https://anyrouter.top/v1"
+wire_api = "responses"
