@@ -1,0 +1,48 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+#
+# F52: CitrusFar-Edge-V2（部署主推升级版）= F44 + LCE（治暗）+ TDAM（治伪装）。
+#   全部组件仍为 conv/pool/concat/slice 算子——ONNX→NCNN/RKNN/TFLite-INT8 直转；
+#   数据体检显示暗与伪装在小果上最严重，而小果正是端侧采摘最远视距的目标。
+# 消融角色: N 组部署组合（vs F44 的 LOO：去 LCE / 去 TDAM）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F52_yolo11-seg-citrusfar-edge-v2.yaml --pretrained yolo11n-seg.pt --name F52_edge_v2
+
+# Parameters
+nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, LCE, [4, 16]] # 0: LCE 暗区曲线增强（端侧友好）
+  - [-1, 1, Conv, [64, 3, 2]] # 1-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 2-P2/4
+  - [-1, 3, C3k2_Faster, [256, False, 0.25]] # 3-P2/4（PConv 加深）
+  - [-1, 1, TDAM, []] # 4-P2 TDAM 纹理放大（pool/conv 端侧友好）
+  - [-1, 1, HWDown, [256]] # 5-P3/8（Haar 小波下采样）
+  - [-1, 3, C3k2_Faster, [512, False, 0.25]] # 6-P3/8
+  - [-1, 1, HWDown, [512]] # 7-P4/16
+  - [-1, 2, C3k2_Faster, [512, True]] # 8-P4/16
+  - [-1, 1, HWDown, [768]] # 9-P5/32（削窄）
+  - [-1, 2, C3k2_Faster, [768, True]] # 10-P5/32
+  - [-1, 1, SPPF_LSKA, [768, 5]] # 11
+  - [-1, 2, C2PSA, [768]] # 12
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 13
+  - [[-1, 8], 1, BiFPNConcat, []] # 14: cat backbone P4
+  - [-1, 2, C3k2_Faster, [512, False]] # 15-P4/16
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 16
+  - [[-1, 6], 1, BiFPNConcat, []] # 17: cat backbone P3
+  - [-1, 2, C3k2_Faster, [256, False]] # 18-P3/8
+  - [[4, 18], 1, CSFG, []] # 19: P2(TDAM 后) 细节门控注入（原创）
+  - [-1, 1, Conv, [256, 3, 2]] # 20
+  - [[-1, 15], 1, BiFPNConcat, []] # 21: cat head P4
+  - [-1, 2, C3k2_Faster, [512, False]] # 22-P4/16
+  - [-1, 1, Conv, [512, 3, 2]] # 23
+  - [[-1, 12], 1, BiFPNConcat, []] # 24: cat head P5
+  - [-1, 2, C3k2_Faster, [768, True]] # 25-P5/32
+  - [[19, 22, 25], 1, Segment, [nc, 32, 256]] # 26-Segment(P3, P4, P5)

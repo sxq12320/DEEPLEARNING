@@ -1,0 +1,47 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+#
+# F45: CitrusFar-Edge-Nano（极限压缩版）——P4/P5 通道 384/512、颈部单 repeat、
+#   去 C2PSA（注意力 MatMul 对 INT8 量化不友好），其余同 F44。
+#   目标 <1.5M 参数；配合 INT8 PTQ 后权重 <1.5MB，可进高端 MCU（如 RV1106/K230）。
+#   精度换算力的兜底方案：若 F44 在端侧仍超预算则退到本配置 + CWD 蒸馏补精度。
+# 消融角色: K 组极限版（vs F44 权衡）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F45_yolo11-seg-citrusfar-edge-nano.yaml --pretrained yolo11n-seg.pt --name F45_edge_nano
+
+# Parameters
+nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2_Faster, [256, False, 0.25]] # 2-P2/4
+  - [-1, 1, HWDown, [256]] # 3-P3/8（Haar 小波下采样）
+  - [-1, 2, C3k2_Faster, [384, False, 0.25]] # 4-P3/8（384 削窄）
+  - [-1, 1, HWDown, [384]] # 5-P4/16
+  - [-1, 1, C3k2_Faster, [384, True]] # 6-P4/16（384 削窄）
+  - [-1, 1, HWDown, [512]] # 7-P5/32（512 极限削窄）
+  - [-1, 1, C3k2_Faster, [512, True]] # 8-P5/32
+  - [-1, 1, SPPF_LSKA, [512, 5]] # 9
+  - [-1, 1, C3k2_Faster, [512, True]] # 10（去 C2PSA——注意力 MatMul 不利于 INT8 量化）
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 11
+  - [[-1, 6], 1, BiFPNConcat, []] # 12: cat backbone P4
+  - [-1, 1, C3k2_Faster, [384, False]] # 13-P4/16
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 14
+  - [[-1, 4], 1, BiFPNConcat, []] # 15: cat backbone P3
+  - [-1, 1, C3k2_Faster, [256, False]] # 16-P3/8
+  - [[2, 16], 1, CSFG, []] # 17: P2 细节门控注入（原创）
+  - [-1, 1, Conv, [256, 3, 2]] # 18
+  - [[-1, 13], 1, BiFPNConcat, []] # 19: cat head P4
+  - [-1, 1, C3k2_Faster, [384, False]] # 20-P4/16
+  - [-1, 1, Conv, [384, 3, 2]] # 21
+  - [[-1, 10], 1, BiFPNConcat, []] # 22: cat head P5
+  - [-1, 1, C3k2_Faster, [512, True]] # 23-P5/32
+  - [[17, 20, 23], 1, Segment, [nc, 32, 256]] # 24-Segment(P3, P4, P5)

@@ -87,6 +87,7 @@ from .head import (
     Pose26,
     RTDETRDecoder,
     Segment,
+    SegmentP2CFS,
     Segment26,
     SemanticSegment,
     WorldDetect,
@@ -186,6 +187,7 @@ from .hvi_enhance import (
     IELBlock,
     RGBHVI,
 )
+from .p2_cfs_attention import P2CFSAttention
 
 __all__ = (
     "AIFI",
@@ -248,6 +250,7 @@ __all__ = (
     "MaxSigmoidAttnBlock",
     "Pose",
     "Pose26",
+    "P2CFSAttention",
     "Proto",
     "RTDETRDecoder",
     "RepC3",
@@ -257,6 +260,7 @@ __all__ = (
     "ResNetLayer",
     "SCDown",
     "Segment",
+    "SegmentP2CFS",
     "Segment26",
     "SemanticSegment",
     "SpatialAttention",

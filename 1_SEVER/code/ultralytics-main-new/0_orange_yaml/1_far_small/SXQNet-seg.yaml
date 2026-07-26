@@ -1,0 +1,75 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+#
+# ============================== SXQNet-seg（集大成旗舰）==============================
+# 注: 颈部块为自研 C3k2_SXQ（部分卷积x大核DWx卷积门控三合一，参数=标准Bottleneck的49%，
+#     融合 FasterNet CVPR2023 + ConvNeXt CVPR2022 + TransNeXt CVPR2024，组合原创，消融行 F63）。
+# 全新轻量实例分割网络：SXQ-Backbone + SXQ-Neck + 训练侧全套（NWDWise + GA-TAL + FFL）。
+# 设计纪律：每个组件都对应一条数据体检证据，且在 F 系列中有独立消融行（非堆料）：
+#
+#   SXQ-Backbone（更轻更好的全新骨干）:
+#   - TGP 纹理先验前端（证据④颜色不可分；F60；~20 参数）+ LCE 暗区曲线前端（证据②小果暗；F50）
+#   - Shallow-Heavy 计算重分配：P2/P3 深度 x2、P5 通道 768（证据①47.9%<32px；F42）
+#   - C3k2_LS "看大聚小"动态卷积块（LSNet CVPR 2025；F59，比 C3k2 更轻）
+#   - HWDown 小波无损下采样（证据①③；F04，参数只有步长卷积的 4/9）
+#   - TDAM@P2 纹理差分放大（证据④伪装；F49）+ MWCA@P3 跨频带注意力（证据③模糊差20倍；F55）
+#   - SPPF_LSKA 大核全局上下文（F14）+ HyperACE@P5 超图群体关联（错检根因；F58）
+#
+#   SXQ-Neck（更完美的融合层）:
+#   - 自顶向下：HSF 高层筛选融合（漏检根因"低层噪声稀释小果"；F62，通道不翻倍→参数下降）
+#   - CSFG P2 细节门控注入（P2 头的轻量替代；F22）+ LumiFormer@P3（证据②；F47，mask 原型来源）
+#   - 自底向上：BiFPNConcat 可学习加权融合（F16）
+#
+#   Head（更棒的头，训练侧强化、推理零开销）:
+#   - 标准 Segment(P3,P4,P5) 保部署兼容；配 --iou-type NWDWise --tal-metric NWD --tal-min-pos
+#     --freq-loss 0.1（GA-TAL 治正样本饥饿 / NWDWise 治估计标注 / FFL 治小果边界）
+#
+# 训练命令:
+#   python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-seg.yaml \
+#       --pretrained yolo11n-seg.pt --name SXQNet_full \
+#       --iou-type NWDWise --tal-metric NWD --tal-min-pos --freq-loss 0.1
+# 消融: 各组件的独立行=F60/F50/F42/F59/F04/F49/F55/F14/F58/F62/F22/F47；
+#       leave-one-out 可按 F32-F37 的同拓扑占位法（nn.Identity）逐个关断。
+
+# Parameters
+nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, TGP, []] # 0: 纹理先验前端（去颜色+多尺度LCN+可靠性门控, 3->3, ~20参数）
+  - [-1, 1, LCE, [4, 16]] # 1: 暗区门控曲线增强前端 (3->3)
+  - [-1, 1, Conv, [64, 3, 2]] # 2-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 3-P2/4
+  - [-1, 4, C3k2_LS, [256, False, 0.25]] # 4-P2/4（LS 动态卷积 + Shallow-Heavy 加深）
+  - [-1, 1, TDAM, []] # 5-P2 纹理差分放大（原创）
+  - [-1, 1, HWDown, [256]] # 6-P3/8（Haar 小波无损下采样）
+  - [-1, 4, C3k2_LS, [512, False, 0.25]] # 7-P3/8（加深）
+  - [-1, 1, MWCA, []] # 8-P3 多级小波跨频带注意力（原创）
+  - [-1, 1, HWDown, [512]] # 9-P4/16
+  - [-1, 2, C3k2_LS, [512, True]] # 10-P4/16
+  - [-1, 1, HWDown, [768]] # 11-P5/32（削窄 1024→768）
+  - [-1, 2, C3k2_LS, [768, True]] # 12-P5/32
+  - [-1, 1, SPPF_LSKA, [768, 5]] # 13: 大核全局上下文
+  - [-1, 1, HyperACE, [8]] # 14: 超图群体关联（8 条自适应软超边）
+  - [-1, 1, HyperRes, [2]] # 15: 双流超连接残差 x2（HC ICLR2025→Kimi AttnRes 谱系，企业技巧融合）
+
+head:
+  - [[10, 15], 1, HSF, []] # 16: P4 = 高层筛选融合(低层P4@10, 高层P5@15)——通道不翻倍
+  - [-1, 2, C3k2_SXQ, [512, False]] # 17-P4/16
+  - [[8, 17], 1, HSF, []] # 18: P3 = 高层筛选融合(低层P3@8, 高层P4@17)
+  - [-1, 2, C3k2_SXQ, [256, False]] # 19-P3/8
+  - [[5, 19], 1, CSFG, []] # 20: P2(TDAM后@5) 细节门控注入 P3（原创，P2 头轻量替代）
+  - [-1, 1, LumiFormer, [1]] # 21-P3 亮度感知 Former（原创，mask 原型来源）
+  - [-1, 1, Conv, [256, 3, 2]] # 22
+  - [[-1, 17], 1, BiFPNConcat, []] # 23: 自底向上加权融合 P4
+  - [-1, 2, C3k2_SXQ, [512, False]] # 24-P4/16
+  - [-1, 1, Conv, [512, 3, 2]] # 25
+  - [[-1, 15], 1, BiFPNConcat, []] # 26: 自底向上加权融合 P5
+  - [-1, 2, C3k2_SXQ, [768, True]] # 27-P5/32
+  - [[21, 24, 27], 1, Segment, [nc, 32, 256]] # 28-Segment(P3, P4, P5)

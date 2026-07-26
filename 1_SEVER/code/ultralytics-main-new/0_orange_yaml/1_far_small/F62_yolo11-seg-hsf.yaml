@@ -1,0 +1,45 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+#
+# F62: 颈部自顶向下融合 Concat → HSF 高层筛选融合（漏检专项 + 轻量化双赢）。
+# 漏检根因: 低层特征背景噪声大，Concat 拼接稀释远处小果微弱信号；HSF 用高层语义生成
+#   通道筛选权重过滤低层，只保留语义相关响应再相加——且输出通道不翻倍，后续 C3k2 参数下降。
+# 文献: HS-FPN (Chen et al., Comput. Biol. Med. 2024, doi:10.1016/j.compbiomed.2024.107917，
+#   微小目标专用轻量筛选式 FPN)。
+# 消融角色: R 组融合范式横评（Concat 基线 vs F16 BiFPN vs F62 HSF）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F62_yolo11-seg-hsf.yaml --pretrained yolo11n-seg.pt --name F62_hsf
+
+# Parameters
+nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2, [256, False, 0.25]] # 2-P2/4
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]] # 4-P3/8
+  - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
+  - [-1, 2, C3k2, [512, True]] # 6-P4/16
+  - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
+  - [-1, 2, C3k2, [1024, True]] # 8-P5/32
+  - [-1, 1, SPPF, [1024, 5]] # 9
+  - [-1, 2, C2PSA, [1024]] # 10
+
+head:
+  - [[6, 10], 1, HSF, []] # 11: P4 = 高层筛选融合(低层bb-P4, 高层C2PSA-P5)——替代上采样+Concat
+  - [-1, 2, C3k2, [512, False]] # 12-P4/16（输入通道减半，参数下降）
+  - [[4, 12], 1, HSF, []] # 13: P3 = 高层筛选融合(低层bb-P3, 高层neck-P4)
+  - [-1, 2, C3k2, [256, False]] # 14-P3/8
+  - [-1, 1, Conv, [256, 3, 2]] # 15
+  - [[-1, 12], 1, Concat, [1]] # 16: cat head P4（自底向上保持标准）
+  - [-1, 2, C3k2, [512, False]] # 17-P4/16
+  - [-1, 1, Conv, [512, 3, 2]] # 18
+  - [[-1, 10], 1, Concat, [1]] # 19: cat head P5
+  - [-1, 2, C3k2, [1024, True]] # 20-P5/32
+  - [[14, 17, 20], 1, Segment, [nc, 32, 256]] # 21-Segment(P3, P4, P5)

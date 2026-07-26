@@ -34,7 +34,15 @@
       "Bash(python e:/mastercode/ultralytics-main-new/_smoke_mano.py)",
       "Bash(python e:/mastercode/_smoke_1sever.py)",
       "Bash(echo \"---exit=$?---\")",
-      "Bash(python -c \"import webbrowser; webbrowser.open\\(r'file:///e:/mastercode/yolo11_architecture.html'\\)\")"
+      "Bash(python -c \"import webbrowser; webbrowser.open\\(r'file:///e:/mastercode/yolo11_architecture.html'\\)\")",
+      "Bash(where hermes *)",
+      "Bash(where hermes.exe)",
+      "Read(//c/Users/33836/**)",
+      "Read(//c/Users/33836/AppData/Local/hermes/**)",
+      "Read(//c/Users/33836/AppData/Roaming/**)",
+      "Bash(ls -la ~/AppData/Roaming/hermes/bin/)",
+      "Read(//c/Users/33836/AppData/Roaming/hermes/**)",
+      "Bash(dir \"C:\\\\Users\\\\33836\\\\AppData\\\\Roaming\\\\hermes\\\\bin\")"
     ]
   }
 }

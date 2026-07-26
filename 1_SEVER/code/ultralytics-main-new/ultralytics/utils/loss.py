@@ -15,6 +15,7 @@ from ultralytics.utils.ops import crop_mask, xywh2xyxy, xyxy2xywh
 from ultralytics.utils.tal import RotatedTaskAlignedAssigner, TaskAlignedAssigner, dist2bbox, dist2rbox, make_anchors
 from ultralytics.utils.torch_utils import autocast
 
+from .iou_ext import bbox_iou_ext, focaler_remap, nwd, wiou_terms
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist, rbox2dist
 
@@ -108,12 +109,57 @@ class DFLoss(nn.Module):
 
 
 class BboxLoss(nn.Module):
-    """Criterion class for computing training losses for bounding boxes."""
+    """Criterion class for computing training losses for bounding boxes.
 
-    def __init__(self, reg_max: int = 16):
+    柑橘实验扩展：通过 hyp 中的 iou_type / inner_ratio / nwd_ratio 切换回归损失（见 iou_ext.py）。
+    默认 (iou_type=CIoU, nwd_ratio=0) 走原始代码路径，与 stock Ultralytics 数值完全一致。
+    """
+
+    def __init__(self, reg_max: int = 16, hyp=None):
         """Initialize the BboxLoss module with regularization maximum and DFL settings."""
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
+        self.iou_type = str(getattr(hyp, "iou_type", "CIoU") or "CIoU").lower()
+        self.inner_ratio = float(getattr(hyp, "inner_ratio", 1.0) or 1.0)
+        self.nwd_ratio = float(getattr(hyp, "nwd_ratio", 0.0) or 0.0)
+        # WIoU v3 动态非单调聚焦的滑动均值状态（Tong et al. 2023, arXiv:2301.10051）
+        self._wiou_loss_mean = 1.0
+        self._wiou_momentum = 0.01
+
+    def _iou_loss_elem(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Per-anchor IoU-family regression loss, shape (N,1). pred/target 为 xyxy（stride 归一化）."""
+        t = self.iou_type
+        focaler = t.startswith("focaler")
+        if focaler:
+            t = t[len("focaler"):]
+
+        if t in {"wiou", "nwdwise"}:
+            iou, r_wiou = wiou_terms(pred, target)
+            if focaler:
+                iou = focaler_remap(iou)
+            liou = 1.0 - iou
+            # WIoU v3: β = L*/L̄（离群度），r = β/(δ·α^(β−δ))，α=1.9, δ=3
+            with torch.no_grad():
+                beta = liou.detach() / max(self._wiou_loss_mean, 1e-3)
+                r_focus = beta / (3.0 * torch.pow(torch.tensor(1.9, device=pred.device), beta - 3.0))
+                self._wiou_loss_mean = (
+                    1.0 - self._wiou_momentum
+                ) * self._wiou_loss_mean + self._wiou_momentum * float(liou.mean())
+            wiou_loss = r_focus * r_wiou * liou
+            if t == "wiou":
+                return wiou_loss
+            # NWD-Wise（原创）：按目标尺度自适应混合 —— 极小目标（<~4 个特征格）以 NWD 为主
+            # （对像素级标注偏移不敏感），中大目标以 WIoU 为主（对低质量标注鲁棒）。
+            nwd_loss = 1.0 - nwd(pred, target)
+            w = (target[..., 2:3] - target[..., 0:1]).clamp(min=1e-7)
+            h = (target[..., 3:4] - target[..., 1:2]).clamp(min=1e-7)
+            small_w = torch.sigmoid(4.0 - (w * h).sqrt())  # 目标 ~4 个特征格时权重 0.5
+            return small_w * nwd_loss + (1.0 - small_w) * wiou_loss
+
+        iou = bbox_iou_ext(pred, target, iou_type=t, inner_ratio=self.inner_ratio)
+        if focaler:
+            iou = focaler_remap(iou)
+        return 1.0 - iou
 
     def forward(
         self,
@@ -129,8 +175,18 @@ class BboxLoss(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute IoU and DFL losses for bounding boxes."""
         weight = target_scores.sum(-1)[fg_mask].unsqueeze(-1)
-        iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
-        loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
+        if self.iou_type == "ciou" and self.nwd_ratio == 0.0 and self.inner_ratio == 1.0:
+            # stock path — 与原版 Ultralytics 数值完全一致
+            iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
+            loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
+        else:
+            liou = self._iou_loss_elem(pred_bboxes[fg_mask], target_bboxes[fg_mask])
+            if self.nwd_ratio > 0.0 and self.iou_type != "nwdwise":
+                # NWD 线性混合（Wang et al. 2021, arXiv:2110.13389）
+                liou = (1.0 - self.nwd_ratio) * liou + self.nwd_ratio * (
+                    1.0 - nwd(pred_bboxes[fg_mask], target_bboxes[fg_mask])
+                )
+            loss_iou = (liou * weight).sum() / target_scores_sum
 
         # DFL loss
         if self.dfl_loss:
@@ -364,8 +420,11 @@ class v8DetectionLoss:
             beta=6.0,
             stride=self.stride.tolist(),
             topk2=tal_topk2,
+            # GA-TAL（柑橘微小目标扩展，默认关闭=原版行为）：见 tal.py
+            metric=str(getattr(h, "tal_metric", "CIoU")),
+            min_pos=bool(getattr(h, "tal_min_pos", False)),
         )
-        self.bbox_loss = BboxLoss(m.reg_max).to(device)
+        self.bbox_loss = BboxLoss(m.reg_max, hyp=h).to(device)
         self.proj = torch.arange(m.reg_max, dtype=torch.float, device=device)
 
     def preprocess(self, targets: torch.Tensor, batch_size: int, scale_tensor: torch.Tensor) -> torch.Tensor:
@@ -434,6 +493,22 @@ class v8DetectionLoss:
         bce_loss = self.bce(pred_scores, target_scores.to(dtype))  # (bs, num_anchors, nc)
         if self.class_weights is not None:
             bce_loss *= self.class_weights
+        if bool(getattr(self.hyp, "use_slide", False)) and fg_mask.sum():
+            # Slide Loss（Yu et al., YOLO-FaceV2, arXiv:2208.02019）：以 batch 平均 IoU 为界，
+            # 对边界附近的难正样本（远处模糊小果常年 IoU 偏低）指数加权，缓解易样本主导。
+            with torch.no_grad():
+                iou_fg = bbox_iou(
+                    pred_bboxes[fg_mask], (target_bboxes / stride_tensor)[fg_mask], xywh=False
+                ).squeeze(-1)
+                mu = iou_fg.mean()
+                slide_w = torch.where(
+                    iou_fg < mu - 0.1,
+                    torch.ones_like(iou_fg),
+                    torch.where(iou_fg < mu, torch.exp(1.0 - mu).expand_as(iou_fg), torch.exp(1.0 - iou_fg)),
+                )
+                w_map = torch.ones_like(bce_loss)
+                w_map[fg_mask] = slide_w.unsqueeze(-1)
+            bce_loss = bce_loss * w_map
         loss[1] = bce_loss.sum() / target_scores_sum  # BCE
 
         # Bbox loss
@@ -490,6 +565,8 @@ class v8SegmentationLoss(v8DetectionLoss):
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
+        # FFL 频域掩码对齐损失比重（柑橘小果边界，默认 0 = 原版行为）
+        self.freq_ratio = float(getattr(model.args, "freq_loss", 0.0) or 0.0)
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate and return the combined loss for detection and segmentation."""
@@ -551,9 +628,8 @@ class v8SegmentationLoss(v8DetectionLoss):
         loss[1] *= self.hyp.box  # seg gain
         return loss * batch_size, loss.detach()  # loss(box, seg, cls, dfl, semantic)
 
-    @staticmethod
     def single_mask_loss(
-        gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
+        self, gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
         """Compute the instance segmentation loss for a single image.
 
@@ -573,7 +649,18 @@ class v8SegmentationLoss(v8DetectionLoss):
         """
         pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
         loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
-        return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
+        total = (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
+        if getattr(self, "freq_ratio", 0.0) > 0:
+            # FFL 频域掩码对齐（柑橘扩展）：|FFT(pred)-FFT(gt)|² 以谱误差自聚焦加权——高频差异
+            # （= 小果边界的模糊/缺失）权重最大。迁移自 Focal Frequency Loss
+            # (Jiang et al., ICCV 2021, arXiv:2012.12821)，用于实例分割 proto-mask 为本课题原创。
+            pf = torch.fft.rfft2(pred_mask.sigmoid().float(), norm="ortho")
+            gf = torch.fft.rfft2(gt_mask.float(), norm="ortho")
+            d = (pf - gf).abs()
+            w = (d / (d.amax(dim=(-2, -1), keepdim=True) + 1e-8)).detach()  # 谱聚焦权重 (α=1)
+            ffl = ((w * d.pow(2)).mean(dim=(1, 2)) / area).sum()
+            total = total + self.freq_ratio * ffl.to(total.dtype)
+        return total
 
     def calculate_segmentation_loss(
         self,

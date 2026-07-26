@@ -17,6 +17,7 @@ from ultralytics.utils.torch_utils import TORCH_1_11, fuse_conv_and_bn, smart_in
 
 from .block import DFL, SAVPE, BNContrastiveHead, ContrastiveHead, Proto, Proto26, RealNVP, Residual, SwiGLUFFN
 from .conv import Conv, DWConv
+from .p2_cfs_attention import P2CFSAttention
 from .transformer import MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer
 from .utils import bias_init_with_prob, linear_init
 
@@ -27,6 +28,7 @@ __all__ = (
     "Pose",
     "RTDETRDecoder",
     "Segment",
+    "SegmentP2CFS",
     "SemanticSegment",
     "YOLOEDetect",
     "YOLOESegment",
@@ -364,6 +366,56 @@ class Segment(Detect):
     def fuse(self) -> None:
         """Remove the one2many head for inference optimization."""
         self.cv2 = self.cv3 = self.cv4 = None
+
+
+class SegmentP2CFS(Segment):
+    """YOLO11 segment head with a P2-only detail path for mask prototypes.
+
+    The first input is an enhanced P2/4 feature used only to refine the P3/8
+    prototype input. The remaining P3/P4/P5 features keep the standard box,
+    class, and mask-coefficient heads. This isolates high-resolution background
+    noise from detection while exposing small-fruit and boundary detail to the
+    mask prototypes.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentP2CFS expects channels for P2/P3/P4/P5, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+        p3_channels = detect_channels[0]
+        self.p2_attention = P2CFSAttention(p2_channels, p2_channels)
+        self.p2_project = nn.Sequential(
+            nn.Conv2d(p2_channels, p2_channels, 3, stride=2, padding=1, groups=p2_channels, bias=False),
+            nn.BatchNorm2d(p2_channels),
+            nn.SiLU(inplace=True),
+            nn.Conv2d(p2_channels, p3_channels, 1, bias=False),
+            nn.BatchNorm2d(p3_channels),
+        )
+        # Keep the pretrained prototype path unchanged at initialization.
+        nn.init.zeros_(self.p2_project[-1].weight)
+        nn.init.zeros_(self.p2_project[-1].bias)
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run standard P3-P5 detection and generate prototypes from P3 plus P2 detail."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+
+        detail = self.p2_project(self.p2_attention(p2))
+        if detail.shape[-2:] != detect_features[0].shape[-2:]:
+            detail = F.interpolate(detail, size=detect_features[0].shape[-2:], mode="nearest")
+        proto = self.proto(detect_features[0] + detail)
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
 
 class Segment26(Segment):

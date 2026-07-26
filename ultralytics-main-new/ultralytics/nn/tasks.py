@@ -65,6 +65,7 @@ from ultralytics.nn.modules import (
     RTDETRDecoder,
     SCDown,
     Segment,
+    SegmentP2CFS,
     Segment26,
     SemanticSegment,
     TorchVision,
@@ -130,6 +131,8 @@ from ultralytics.nn.modules import (
     C2MANO,
     # HVI low-light enhancement front-end
     HVIEnhance,
+    # P2 channel-frequency-spatial attention
+    P2CFSAttention,
 )
 from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1770,6 +1773,7 @@ def parse_model(d, ch, verbose=True):
             SFM,
             DGFFN,
             C2MANO,
+            P2CFSAttention,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1935,6 +1939,7 @@ def parse_model(d, ch, verbose=True):
                 WorldDetect,
                 YOLOEDetect,
                 Segment,
+                SegmentP2CFS,
                 Segment26,
                 YOLOESegment,
                 YOLOESegment26,
@@ -1945,9 +1950,12 @@ def parse_model(d, ch, verbose=True):
             }
         ):
             args.extend([reg_max, end2end, [ch[x] for x in f]])
-            if m is Segment or m is YOLOESegment or m is Segment26 or m is YOLOESegment26:
+            if m in {Segment, SegmentP2CFS, YOLOESegment, Segment26, YOLOESegment26}:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
-            if m in {Detect, YOLOEDetect, Segment, Segment26, YOLOESegment, YOLOESegment26, Pose, Pose26, OBB, OBB26}:
+            if m in {
+                Detect, YOLOEDetect, Segment, SegmentP2CFS, Segment26, YOLOESegment, YOLOESegment26,
+                Pose, Pose26, OBB, OBB26
+            }:
                 m.legacy = legacy
         elif m is SemanticSegment:
             args.append([ch[x] for x in f])  # nc, ch tuple

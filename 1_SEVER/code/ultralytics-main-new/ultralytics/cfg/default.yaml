@@ -154,6 +154,15 @@ copy_paste_mode: flip # (str) copy-paste strategy for segmentation: flip or mixu
 auto_augment: randaugment # (str) classification auto augmentation policy: randaugment, autoaugment, augmix
 erasing: 0.4 # (float) random erasing probability for classification (0.0–1.0)
 
+# Citrus far-field loss extensions (柑橘远距离小目标实验, 见 ultralytics/utils/iou_ext.py) --------------------------------
+iou_type: CIoU # (str) box regression loss: CIoU/DIoU/GIoU/EIoU/SIoU/MPDIoU/ShapeIoU/WIoU/NWDWise/FocalerCIoU/FocalerWIoU
+inner_ratio: 1.0 # (float) Inner-IoU auxiliary box ratio (arXiv:2311.02877), 1.0 = off; try 0.7-0.8 for small objects
+nwd_ratio: 0.0 # (float) blend ratio of NWD loss (arXiv:2110.13389), 0.0 = off; try 0.3-0.5 for tiny objects
+use_slide: False # (bool) Slide Loss hard-sample weighting on cls BCE (arXiv:2208.02019)
+tal_metric: CIoU # (str) GA-TAL assigner metric: CIoU (stock) / NWD / Mix — NWD rescues <16px positives (arXiv:2110.13389)
+tal_min_pos: False # (bool) GA-TAL: guarantee >=1 positive anchor per GT (RFLA-style compensation, arXiv:2208.08738)
+freq_loss: 0.0 # (float) FFL frequency-domain mask alignment ratio (arXiv:2012.12821), 0.0 = off; try 0.05-0.2
+
 # Custom config.yaml ---------------------------------------------------------------------------------------------------
 cfg: # (str, optional) path to a config.yaml that overrides defaults
 

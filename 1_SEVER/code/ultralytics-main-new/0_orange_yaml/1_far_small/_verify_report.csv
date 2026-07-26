@@ -1,0 +1,74 @@
+yaml,status,params_M,GFLOPs_640
+F01_yolo11-seg-p2.yaml,OK,2.921,24.4
+F02_yolo11-seg-p2-spd.yaml,OK,4.358,27.9
+F03_yolo11-seg-spdconv.yaml,OK,4.28,13.9
+F04_yolo11-seg-hwd.yaml,OK,2.577,9.7
+F05_yolo11-seg-c3k2faster.yaml,OK,2.706,10.1
+F06_yolo11-seg-c3k2wt.yaml,OK,2.729,10.2
+F07_yolo11-seg-c3k2dwr.yaml,OK,2.836,10.4
+F08_yolo11-seg-ema.yaml,OK,2.843,10.4
+F09_yolo11-seg-simam.yaml,OK,2.843,10.4
+F10_yolo11-seg-cbam.yaml,OK,2.847,10.4
+F11_yolo11-seg-coordatt.yaml,OK,2.844,10.4
+F12_yolo11-seg-ela.yaml,OK,2.843,10.4
+F13_yolo11-seg-caa.yaml,OK,2.853,10.5
+F14_yolo11-seg-sppf-lska.yaml,OK,3.12,10.6
+F15_yolo11-seg-rfb.yaml,OK,3.032,10.5
+F16_yolo11-seg-bifpn.yaml,OK,2.843,10.4
+F17_yolo11-seg-carafe.yaml,OK,2.983,10.6
+F18_yolo11-seg-dysample.yaml,OK,2.868,10.4
+F19_yolo11-seg-dfem.yaml,OK (backward: 90/302 params got grad),2.87,10.6
+F20_yolo11-seg-dfem-p2p3.yaml,OK,2.877,10.9
+F21_yolo11-seg-liam.yaml,OK,2.843,10.4
+F22_yolo11-seg-csfg.yaml,OK (backward: 91/302 params got grad),3.028,12.7
+F23_yolo11-seg-hvi-dfem.yaml,OK (backward: 90/329 params got grad),2.874,12.0
+F24_yolo11-seg-spd-dysample.yaml,OK,4.305,13.9
+F25_yolo11-seg-spd-ema.yaml,OK,4.281,14.0
+F26_yolo11-seg-dfem-liam.yaml,OK,2.87,10.6
+F27_yolo11-seg-bifpn-dysample.yaml,OK,2.868,10.4
+F28_yolo11-seg-dfem-spd.yaml,OK,4.307,14.1
+F30_yolo11-seg-ours-lite.yaml,OK,4.306,14.0
+F31_yolo11-seg-ours-full.yaml,OK (backward: 91/327 params got grad),4.609,14.4
+F32_yolo11-seg-ours-no-dfem.yaml,OK,4.582,14.2
+F33_yolo11-seg-ours-no-spd.yaml,OK,3.172,10.9
+F34_yolo11-seg-ours-no-lska.yaml,OK,4.332,14.2
+F35_yolo11-seg-ours-no-bifpn.yaml,OK,4.609,14.4
+F36_yolo11-seg-ours-no-dysample.yaml,OK,4.585,14.4
+F37_yolo11-seg-ours-no-liam.yaml,OK,4.609,14.4
+F38_yolo11-seg-ours-full-p2.yaml,OK (backward: 103/387 params got grad),4.691,28.4
+F40_yolo11-seg-hrstream.yaml,OK (backward: 95/307 params got grad),2.927,11.7
+F41_yolo11-seg-freqdetail-pan.yaml,OK (backward: 93/324 params got grad),3.02,12.8
+F42_yolo11-seg-shallowheavy.yaml,OK (backward: 90/303 params got grad),2.227,10.2
+F43_yolo11-seg-citrusfar-v2.yaml,OK (backward: 92/336 params got grad),2.404,12.6
+F44_yolo11-seg-citrusfar-edge.yaml,OK,2.149,11.5
+F45_yolo11-seg-citrusfar-edge-nano.yaml,OK,1.419,10.2
+F46_yolo11-seg-farformer.yaml,OK (backward: 232/304 params got grad),3.701,10.7
+F47_yolo11-seg-lumiformer.yaml,OK (backward: 184/316 params got grad),2.864,10.6
+F48_yolo11-seg-citrusformer-net.yaml,OK (backward: 260/345 params got grad),2.741,10.6
+F49_yolo11-seg-tdam.yaml,OK (backward: 90/309 params got grad),2.91,11.8
+F50_yolo11-seg-lce.yaml,OK (backward: 90/303 params got grad),2.846,13.2
+F51_yolo11-seg-lce-tdam.yaml,OK (backward: 90/321 params got grad),2.914,14.6
+F52_yolo11-seg-citrusfar-edge-v2.yaml,OK (backward: 86/294 params got grad),2.166,15.1
+F53_yolo11-seg-citrusformer-plus.yaml,OK (backward: 260/366 params got grad),2.758,14.1
+F54_yolo11-seg-farformer-fla.yaml,OK (backward: 236/306 params got grad),3.705,11.0
+F55_yolo11-seg-mwca.yaml,OK (backward: 90/305 params got grad),2.936,10.6
+F56_yolo11-seg-freqsuite.yaml,OK (backward: 89/291 params got grad),2.556,9.7
+F57_yolo11-seg-hco.yaml,OK (backward: 103/304 params got grad),3.424,10.8
+F58_yolo11-seg-hyperace.yaml,OK (backward: 207/278 params got grad),2.727,10.2
+F59_yolo11-seg-c3k2ls.yaml,OK,2.642,10.0
+F60_yolo11-seg-tgp.yaml,OK (backward: 90/296 params got grad),2.843,10.4
+F61_yolo11-seg-tgp-tdam.yaml,OK (backward: 90/314 params got grad),2.91,11.8
+F62_yolo11-seg-hsf.yaml,OK,2.901,10.2
+F63_yolo11-seg-c3k2sxq.yaml,OK,2.695,10.1
+F64_yolo11-seg-c3k2moce.yaml,OK (backward: 93/270 params got grad),2.674,10.0
+F65_yolo11-seg-hyperres.yaml,OK (backward: 93/313 params got grad),3.582,10.9
+SXQNet-V10-max.yaml,OK (backward: 127/471 params got grad),2.318,26.9
+SXQNet-V2-nano.yaml,OK (backward: 79/270 params got grad),1.422,13.0
+SXQNet-V3-freq.yaml,OK (backward: 105/314 params got grad),2.25,9.3
+SXQNet-V4-former.yaml,OK (backward: 294/379 params got grad),2.716,10.6
+SXQNet-V5-hyper.yaml,OK (backward: 237/292 params got grad),2.678,12.0
+SXQNet-V6-p2.yaml,OK (backward: 103/384 params got grad),2.03,23.1
+SXQNet-V7-fast.yaml,OK (backward: 79/238 params got grad),2.607,9.7
+SXQNet-V8-texture.yaml,OK (backward: 90/315 params got grad),2.791,13.7
+SXQNet-V9-dark.yaml,OK (backward: 176/326 params got grad),2.589,13.2
+SXQNet-seg.yaml,OK (backward: 205/448 params got grad),2.5,15.5

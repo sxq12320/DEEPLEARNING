@@ -1,0 +1,52 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+#
+# F41: FreqDetail-PAN 细节-语义双路颈部（架构级原创，整个 neck 重设计）：
+#   语义路径 = 标准自顶向下；细节路径 = P2 → DFEM 频域增强 → SPD 无损对齐；
+#   两路在 P3 用 BiFPN 加权融合，再过 C3k2_WT 小波融合块；自底向上全部换 BiFPN。
+# 动机: PAN 颈部的 P3 输出被深层语义主导，模糊/发黑小果的高频细节在融合前就已丢失；
+#   本设计让细节以独立通路直达融合点，且频域增强发生在最高分辨率处。
+# 文献基础: DFEM 见 F19；WTConv (ECCV 2024, arXiv:2407.05848)；加权融合 (EfficientDet)。
+# 消融角色: J 组架构创新（vs F19/F22 单点版）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F41_yolo11-seg-freqdetail-pan.yaml --pretrained yolo11n-seg.pt --name F41_freqdetail
+
+# Parameters
+nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 1024]
+  s: [0.50, 0.50, 1024]
+  m: [0.50, 1.00, 512]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.50, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2, [256, False, 0.25]] # 2-P2/4
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]] # 4-P3/8
+  - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
+  - [-1, 2, C3k2, [512, True]] # 6-P4/16
+  - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
+  - [-1, 2, C3k2, [1024, True]] # 8-P5/32
+  - [-1, 1, SPPF, [1024, 5]] # 9
+  - [-1, 2, C2PSA, [1024]] # 10
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 11: 语义路径自顶向下
+  - [[-1, 6], 1, Concat, [1]] # 12: cat backbone P4
+  - [-1, 2, C3k2, [512, False]] # 13-P4/16 语义
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 14
+  - [[-1, 4], 1, Concat, [1]] # 15: cat backbone P3
+  - [-1, 2, C3k2, [256, False]] # 16-P3/8 语义
+  - [2, 1, DFEM, []] # 17: 细节路径——骨干 P2 双域频率增强（原创模块）
+  - [-1, 1, SPDConv, [256, 3]] # 18: 细节无损对齐 P3 尺度
+  - [[16, 18], 1, BiFPNConcat, []] # 19: 细节-语义加权融合
+  - [-1, 2, C3k2_WT, [256, False]] # 20-P3/8 输出（小波卷积融合块，抗模糊）
+  - [-1, 1, Conv, [256, 3, 2]] # 21
+  - [[-1, 13], 1, BiFPNConcat, []] # 22: cat head P4
+  - [-1, 2, C3k2, [512, False]] # 23-P4/16 输出
+  - [-1, 1, Conv, [512, 3, 2]] # 24
+  - [[-1, 10], 1, BiFPNConcat, []] # 25: cat head P5
+  - [-1, 2, C3k2, [1024, True]] # 26-P5/32 输出
+  - [[20, 23, 26], 1, Segment, [nc, 32, 256]] # 27-Segment(P3, P4, P5)
