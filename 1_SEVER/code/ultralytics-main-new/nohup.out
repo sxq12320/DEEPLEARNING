@@ -1,0 +1,10 @@
+usage: run_far_batch.py [-h] [--epochs EPOCHS] [--batch BATCH]
+                        [--device DEVICE] [--data DATA] [--only ONLY]
+                        [--skip SKIP] [--priority-only] [--limit LIMIT]
+                        [--retry-failed] [--dry-run] [--status]
+run_far_batch.py: error: unrecognized arguments:  
+usage: run_far_batch.py [-h] [--epochs EPOCHS] [--batch BATCH]
+                        [--device DEVICE] [--data DATA] [--only ONLY]
+                        [--skip SKIP] [--priority-only] [--limit LIMIT]
+                        [--retry-failed] [--dry-run] [--status]
+run_far_batch.py: error: unrecognized arguments:  --batch 16  --device 0  --retry-failed > 1_batch/batch.out

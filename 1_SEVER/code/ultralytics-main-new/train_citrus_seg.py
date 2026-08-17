@@ -27,19 +27,20 @@ from ultralytics import YOLO
 
 # ---- fixed experiment protocol (do NOT change between experiments) ----
 SEED = 42
-DATA = r"E:/mastercode/data/test/orange_wuxi_seg.yaml"
-PROJECT = r"E:/mastercode/ultralytics-main-new/1_results/ORANGE_WUXI_SEG"
+DATA = r"/data/sxq/datasets/orange_yolo/data.yaml"
+PROJECT = r"/data/sxq/results/000_anyothers"
 FIXED = dict(
     optimizer="AdamW",
     patience=100,
-    lr0=0.01,
+    lr0=0.001,
     workers=4,
-    cache=False,
-    amp=0,          # AMP off — matches the existing orange runs, avoids fp16 mask noise
-    dropout=0.0,
+    cache=True,
+    amp=0,
+    dropout=0.1,
     seed=SEED,
     deterministic=True,
 )
+
 
 
 def set_seed(seed: int) -> None:

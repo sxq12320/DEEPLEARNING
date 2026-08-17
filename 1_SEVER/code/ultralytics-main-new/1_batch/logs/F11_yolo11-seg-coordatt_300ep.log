@@ -1,0 +1,10 @@
+CMD: /home/amax/sxq/bin/python /data/sxq/code/ultralytics-main-new/train_citrus_seg.py --model 0_orange_yaml/1_far_small/F11_yolo11-seg-coordatt.yaml --pretrained yolo11n-seg.pt --name F11_yolo11-seg-coordatt_300ep --epochs 300 --batch 4 --device 0
+================================================================
+WARNING ⚠️ no model scale passed. Assuming scale='n'.
+Transferred 288/572 items from pretrained weights
+Traceback (most recent call last):
+  File "/data/sxq/code/ultralytics-main-new/train_citrus_seg.py", line 135, in <module>
+    main()
+  File "/data/sxq/code/ultralytics-main-new/train_citrus_seg.py", line 122, in main
+    model.train(
+TypeError: train() got multiple values for keyword argument 'batch'
