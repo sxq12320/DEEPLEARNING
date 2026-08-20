@@ -565,8 +565,11 @@ class v8SegmentationLoss(v8DetectionLoss):
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
-        # FFL 频域掩码对齐损失比重（柑橘小果边界，默认 0 = 原版行为）
+        # Optional citrus mask losses. All default to zero to preserve stock behavior.
         self.freq_ratio = float(getattr(model.args, "freq_loss", 0.0) or 0.0)
+        self.mask_dice_ratio = float(getattr(model.args, "mask_dice", 0.0) or 0.0)
+        self.boundary_ratio = float(getattr(model.args, "boundary_loss", 0.0) or 0.0)
+        self.freq_roi_size = int(getattr(model.args, "freq_roi_size", 32) or 32)
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate and return the combined loss for detection and segmentation."""
@@ -601,6 +604,11 @@ class v8SegmentationLoss(v8DetectionLoss):
                 pred_masks,
                 imgsz,
             )
+            boundary_logits = preds.get("boundary")
+            if boundary_logits is not None and self.boundary_ratio > 0:
+                loss[1] += self.boundary_ratio * self.calculate_boundary_loss(
+                    boundary_logits, masks, batch["batch_idx"].view(-1), batch_size
+                )
             if pred_semantic is not None:
                 sem_masks = batch["sem_masks"].to(self.device)  # NxHxW
                 sem_masks = F.one_hot(sem_masks.long(), num_classes=self.nc).permute(0, 3, 1, 2).float()  # NxCxHxW
@@ -622,6 +630,8 @@ class v8SegmentationLoss(v8DetectionLoss):
         # WARNING: lines below prevent Multi-GPU DDP 'unused gradient' PyTorch errors, do not remove
         else:
             loss[1] += (proto * 0).sum() + (pred_masks * 0).sum()  # inf sums may lead to nan loss
+            if preds.get("boundary") is not None:
+                loss[1] += (preds["boundary"] * 0).sum()
             if pred_semantic is not None:
                 loss[4] += (pred_semantic * 0).sum()
 
@@ -650,17 +660,74 @@ class v8SegmentationLoss(v8DetectionLoss):
         pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
         loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
         total = (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
+        if self.mask_dice_ratio > 0:
+            pred_roi = crop_mask(pred_mask.sigmoid(), xyxy)
+            gt_roi = crop_mask(gt_mask, xyxy)
+            intersection = (pred_roi * gt_roi).sum(dim=(1, 2))
+            denominator = pred_roi.sum(dim=(1, 2)) + gt_roi.sum(dim=(1, 2))
+            dice = 1.0 - (2.0 * intersection + 1.0) / (denominator + 1.0)
+            total = total + self.mask_dice_ratio * dice.sum()
         if getattr(self, "freq_ratio", 0.0) > 0:
-            # FFL 频域掩码对齐（柑橘扩展）：|FFT(pred)-FFT(gt)|² 以谱误差自聚焦加权——高频差异
-            # （= 小果边界的模糊/缺失）权重最大。迁移自 Focal Frequency Loss
-            # (Jiang et al., ICCV 2021, arXiv:2012.12821)，用于实例分割 proto-mask 为本课题原创。
-            pf = torch.fft.rfft2(pred_mask.sigmoid().float(), norm="ortho")
-            gf = torch.fft.rfft2(gt_mask.float(), norm="ortho")
+            # Apply FFL inside fixed-size instance ROIs. The previous full-map FFT was dominated by background and
+            # divided again by tiny box area, which could create unstable gradients for distant fruit.
+            pred_roi = self._crop_and_resize_masks(pred_mask.sigmoid(), xyxy, self.freq_roi_size)
+            gt_roi = self._crop_and_resize_masks(gt_mask, xyxy, self.freq_roi_size)
+            pf = torch.fft.rfft2(pred_roi.float(), norm="ortho")
+            gf = torch.fft.rfft2(gt_roi.float(), norm="ortho")
             d = (pf - gf).abs()
             w = (d / (d.amax(dim=(-2, -1), keepdim=True) + 1e-8)).detach()  # 谱聚焦权重 (α=1)
-            ffl = ((w * d.pow(2)).mean(dim=(1, 2)) / area).sum()
+            ffl = (w * d.pow(2)).mean(dim=(1, 2)).sum()
             total = total + self.freq_ratio * ffl.to(total.dtype)
         return total
+
+    @staticmethod
+    def _crop_and_resize_masks(masks: torch.Tensor, boxes: torch.Tensor, output_size: int) -> torch.Tensor:
+        """Differentiably crop per-instance masks to normalized square ROIs for local frequency comparison."""
+        n, height, width = masks.shape
+        if n == 0:
+            return masks.new_zeros((0, output_size, output_size))
+        boxes = boxes.float()
+        x1 = boxes[:, 0].clamp(0, max(width - 1, 0))
+        y1 = boxes[:, 1].clamp(0, max(height - 1, 0))
+        x2 = torch.maximum(boxes[:, 2], x1 + 1.0).clamp(0, max(width - 1, 0))
+        y2 = torch.maximum(boxes[:, 3], y1 + 1.0).clamp(0, max(height - 1, 0))
+        steps = torch.linspace(0, 1, output_size, device=masks.device, dtype=torch.float32)
+        grid_x = x1[:, None, None] + (x2 - x1)[:, None, None] * steps[None, None, :]
+        grid_y = y1[:, None, None] + (y2 - y1)[:, None, None] * steps[None, :, None]
+        grid_x = grid_x.expand(n, output_size, output_size)
+        grid_y = grid_y.expand(n, output_size, output_size)
+        grid_x = 2.0 * grid_x / max(width - 1, 1) - 1.0
+        grid_y = 2.0 * grid_y / max(height - 1, 1) - 1.0
+        grid = torch.stack((grid_x, grid_y), dim=-1)
+        return F.grid_sample(masks[:, None].float(), grid, mode="bilinear", align_corners=True)[:, 0]
+
+    def calculate_boundary_loss(
+        self, boundary_logits: torch.Tensor, masks: torch.Tensor, batch_idx: torch.Tensor, batch_size: int
+    ) -> torch.Tensor:
+        """Supervise a union-mask morphological boundary with balanced BCE and soft Dice."""
+        if self.overlap:
+            foreground = (masks > 0).float()
+        else:
+            foreground = masks.new_zeros((batch_size, *masks.shape[-2:]))
+            for image_idx in range(batch_size):
+                image_masks = masks[batch_idx == image_idx]
+                if len(image_masks):
+                    foreground[image_idx] = image_masks.amax(dim=0)
+        if foreground.shape[-2:] != boundary_logits.shape[-2:]:
+            foreground = F.interpolate(foreground[:, None], boundary_logits.shape[-2:], mode="nearest")[:, 0]
+
+        dilated = F.max_pool2d(foreground[:, None], kernel_size=3, stride=1, padding=1)[:, 0]
+        eroded = 1.0 - F.max_pool2d(1.0 - foreground[:, None], kernel_size=3, stride=1, padding=1)[:, 0]
+        target = (dilated - eroded).clamp_(0, 1)
+        logits = boundary_logits[:, 0]
+        positives = target.sum()
+        pos_weight = ((target.numel() - positives) / (positives + 1.0)).clamp(1.0, 10.0)
+        bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight)
+        probability = logits.sigmoid()
+        intersection = (probability * target).sum(dim=(1, 2))
+        denominator = probability.sum(dim=(1, 2)) + target.sum(dim=(1, 2))
+        dice = 1.0 - (2.0 * intersection + 1.0) / (denominator + 1.0)
+        return bce + dice.mean()
 
     def calculate_segmentation_loss(
         self,

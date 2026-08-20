@@ -28,6 +28,7 @@ __all__ = (
     "Pose",
     "RTDETRDecoder",
     "Segment",
+    "SegmentP2Boundary",
     "SegmentP2CFS",
     "SemanticSegment",
     "YOLOEDetect",
@@ -413,6 +414,62 @@ class SegmentP2CFS(Segment):
                 preds["one2one"]["proto"] = proto.detach()
             else:
                 preds["proto"] = proto
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentP2Boundary(Segment):
+    """Boundary-aware P2 detail head for high-resolution instance-mask prototypes.
+
+    The P2 feature is deliberately excluded from the box/classification pyramid. It only supplies a lightweight
+    residual to the standard P3 prototype branch and predicts a training-time boundary map. This follows the
+    high-resolution mask-refinement principle of PointRend/RefineMask and the joint mask-boundary supervision of
+    BMask R-CNN without the memory cost of adding a full P2 detection level.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        """Initialize the P2 detail stem, boundary predictor, and standard P3-P5 segmentation head."""
+        if len(ch) != 4:
+            raise ValueError(f"SegmentP2Boundary expects channels for P2/P3/P4/P5, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+
+        detail_channels = max(32, min(128, p2_channels))
+        self.p2_detail = nn.Sequential(Conv(p2_channels, detail_channels, 3), Conv(detail_channels, detail_channels, 3))
+        self.p2_to_proto = nn.Conv2d(detail_channels, nm, 1, bias=True)
+        self.boundary_head = nn.Conv2d(detail_channels, 1, 1, bias=True)
+
+        # The pretrained P3 prototype path is exactly preserved at initialization.
+        nn.init.zeros_(self.p2_to_proto.weight)
+        nn.init.zeros_(self.p2_to_proto.bias)
+        nn.init.zeros_(self.boundary_head.weight)
+        nn.init.constant_(self.boundary_head.bias, -2.0)
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run P3-P5 detection and refine P3 prototypes with boundary-gated P2 detail."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+
+        detail = self.p2_detail(p2)
+        boundary = self.boundary_head(detail)
+        proto_detail = self.p2_to_proto(detail)
+        proto = self.proto(detect_features[0])
+        if proto_detail.shape[-2:] != proto.shape[-2:]:
+            proto_detail = F.interpolate(proto_detail, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+            boundary = F.interpolate(boundary, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+        proto = proto + proto_detail * (1.0 + boundary.sigmoid())
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2many"]["boundary"] = boundary
+                preds["one2one"]["proto"] = proto.detach()
+                preds["one2one"]["boundary"] = boundary.detach()
+            else:
+                preds["proto"] = proto
+                preds["boundary"] = boundary
         if self.training:
             return preds
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)

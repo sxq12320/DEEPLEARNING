@@ -162,6 +162,9 @@ use_slide: False # (bool) Slide Loss hard-sample weighting on cls BCE (arXiv:220
 tal_metric: CIoU # (str) GA-TAL assigner metric: CIoU (stock) / NWD / Mix — NWD rescues <16px positives (arXiv:2110.13389)
 tal_min_pos: False # (bool) GA-TAL: guarantee >=1 positive anchor per GT (RFLA-style compensation, arXiv:2208.08738)
 freq_loss: 0.0 # (float) FFL frequency-domain mask alignment ratio (arXiv:2012.12821), 0.0 = off; try 0.05-0.2
+mask_dice: 0.0 # (float) ROI soft-Dice ratio for instance masks, 0.0 = off; try 0.25-0.5
+boundary_loss: 0.0 # (float) P2 boundary auxiliary-loss ratio, requires SegmentP2Boundary; try 0.1-0.25
+freq_roi_size: 32 # (int) square ROI size used by frequency mask loss to exclude full-image background
 
 # Custom config.yaml ---------------------------------------------------------------------------------------------------
 cfg: # (str, optional) path to a config.yaml that overrides defaults

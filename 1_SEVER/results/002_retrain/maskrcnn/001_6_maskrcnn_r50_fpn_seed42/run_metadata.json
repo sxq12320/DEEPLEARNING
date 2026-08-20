@@ -1,0 +1,89 @@
+{
+  "config": {
+    "model": "torchvision.models.detection.maskrcnn_resnet50_fpn",
+    "class_names": [
+      "orange_immature"
+    ],
+    "num_classes_including_background": 2,
+    "dataset_root": "/data/sxq/datasets/citrus_prepared",
+    "epochs": 300,
+    "batch": 16,
+    "workers": 4,
+    "lr": 0.005,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "imgsz": 640,
+    "detections_per_image": 50,
+    "resize_protocol": "aspect ratio preserved; longer side capped at imgsz",
+    "initialization": "coco",
+    "seed": 42,
+    "amp": true,
+    "lr_milestones": [
+      240,
+      270
+    ],
+    "val_interval": 5
+  },
+  "dataset": {
+    "train": {
+      "annotation": "/data/sxq/datasets/citrus_prepared/coco/annotations/instances_train.json",
+      "image_dir": "/data/sxq/datasets/citrus_prepared/coco/images/train",
+      "images": 659,
+      "instances": 3439,
+      "categories": [
+        "orange_immature"
+      ]
+    },
+    "val": {
+      "annotation": "/data/sxq/datasets/citrus_prepared/coco/annotations/instances_val.json",
+      "image_dir": "/data/sxq/datasets/citrus_prepared/coco/images/val",
+      "images": 188,
+      "instances": 968,
+      "categories": [
+        "orange_immature"
+      ]
+    }
+  },
+  "resume": null,
+  "environment": {
+    "timestamp_utc": "2026-07-16T11:58:07.152420+00:00",
+    "command": "/data/sxq/code/baseline_choice/scripts/train_torchvision_maskrcnn.py --dataset /data/sxq/datasets/citrus_prepared --output-root /data/sxq/results/002_retrain/maskrcnn --name 001_6_maskrcnn_r50_fpn_seed42 --epochs 300 --batch 16 --workers 4 --lr 0.005 --imgsz 640 --detections-per-image 50 --seed 42 --val-interval 5 --save-interval 25 --device cuda:0",
+    "cwd": "/data/sxq/code/baseline_choice",
+    "python": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+    "executable": "/home/amax/sxq/bin/python",
+    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.29",
+    "hostname": "amax",
+    "conda_env": "base",
+    "git": {
+      "root": null,
+      "revision": null,
+      "dirty": null
+    }
+  },
+  "framework": {
+    "torch": "1.13.1+cu117",
+    "cuda_runtime": "11.7",
+    "cudnn": 8500,
+    "cuda_available": true,
+    "devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3090",
+        "total_memory_mb": 24259.7,
+        "capability": [
+          8,
+          6
+        ]
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA GeForce RTX 3090",
+        "total_memory_mb": 24259.7,
+        "capability": [
+          8,
+          6
+        ]
+      }
+    ]
+  }
+}

@@ -207,6 +207,9 @@ CFG_FRACTION_KEYS = frozenset(
         "mixup",
         "cutmix",
         "copy_paste",
+        "freq_loss",
+        "mask_dice",
+        "boundary_loss",
         "conf",
         "iou",
         "fraction",
@@ -226,6 +229,7 @@ CFG_INT_KEYS = frozenset(
         "line_width",
         "nbs",
         "save_period",
+        "freq_roi_size",
     }
 )
 CFG_BOOL_KEYS = frozenset(
