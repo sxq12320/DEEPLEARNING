@@ -22,8 +22,9 @@ try:  # stable ultralytics utils for size/compute
 except Exception:  # pragma: no cover - fork API drift fallback
     get_num_params = get_flops = None
 
-DATA = r"/data/sxq/datasets/orange_yolo/data.yaml"
-SUMMARY = r"/data/sxq/results/000_anyothers/results_summary.csv"
+ROOT = Path(__file__).resolve().parent
+DATA = r"E:/mastercode/data/orange_yolo_grouped_dedup_20260820/data.yaml"
+SUMMARY = ROOT / "1_results" / "ORANGE_GROUPED_DEDUP" / "results_summary.csv"
 COLUMNS = [
     "name", "split", "mask_mAP50", "mask_mAP50_95", "box_mAP50", "box_mAP50_95",
     "precision", "recall", "params_M", "GFLOPs", "FPS", "infer_ms",

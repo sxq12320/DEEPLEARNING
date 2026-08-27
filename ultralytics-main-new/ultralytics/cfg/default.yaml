@@ -130,6 +130,12 @@ box: 7.5 # (float) box loss gain
 cls: 0.5 # (float) classification loss gain
 cls_pw: 0.0 # (float) class weights power for handling class imbalance (0.0=disable, 1.0=full inverse frequency)
 dfl: 1.5 # (float) distribution focal loss gain
+citrus_boundary: 0.0 # (float) effective auxiliary per-instance boundary BCE+Dice gain
+citrus_concavity: 0.0 # (float) effective concave-notch boundary focus gain
+citrus_query: 0.0 # (float) effective P2 sparse small-object query focal gain
+citrus_contrast: 0.0 # (float) fruit-interior vs immediate leaf/branch context-ring gain
+citrus_exclusive: 0.0 # (float) effective adjacent-instance leakage suppression gain
+nwd_ratio: 0.0 # (float) small-object NWD/CIoU blend; 0.0 preserves stock CIoU exactly
 pose: 12.0 # (float) pose loss gain (pose tasks)
 kobj: 1.0 # (float) keypoint objectness loss gain (pose tasks)
 rle: 1.0 # (float) rle loss gain (pose tasks)

@@ -130,6 +130,14 @@ box: 7.5 # (float) box loss gain
 cls: 0.5 # (float) classification loss gain
 cls_pw: 0.0 # (float) class weights power for handling class imbalance (0.0=disable, 1.0=full inverse frequency)
 dfl: 1.5 # (float) distribution focal loss gain
+citrus_boundary: 0.0 # (float) effective auxiliary per-instance boundary BCE+Dice gain
+citrus_concavity: 0.0 # (float) effective concave-notch boundary focus gain
+citrus_query: 0.0 # (float) effective P2 sparse small-object query focal gain
+citrus_contrast: 0.0 # (float) fruit-interior vs immediate leaf/branch context-ring gain
+citrus_exclusive: 0.0 # (float) effective adjacent-instance leakage suppression gain
+citrus_quality: 0.0 # (float) Mask Scoring-style per-anchor mask-IoU regression gain
+citrus_vfl: 0.0 # (float) blend from stock BCE (0) to Varifocal IoU-aware classification (1)
+nwd_ratio: 0.0 # (float) small-object NWD/CIoU blend; 0.0 preserves stock CIoU exactly
 pose: 12.0 # (float) pose loss gain (pose tasks)
 kobj: 1.0 # (float) keypoint objectness loss gain (pose tasks)
 rle: 1.0 # (float) rle loss gain (pose tasks)
@@ -153,18 +161,6 @@ copy_paste: 0.0 # (float) segmentation copy-paste probability
 copy_paste_mode: flip # (str) copy-paste strategy for segmentation: flip or mixup
 auto_augment: randaugment # (str) classification auto augmentation policy: randaugment, autoaugment, augmix
 erasing: 0.4 # (float) random erasing probability for classification (0.0–1.0)
-
-# Citrus far-field loss extensions (柑橘远距离小目标实验, 见 ultralytics/utils/iou_ext.py) --------------------------------
-iou_type: CIoU # (str) box regression loss: CIoU/DIoU/GIoU/EIoU/SIoU/MPDIoU/ShapeIoU/WIoU/NWDWise/FocalerCIoU/FocalerWIoU
-inner_ratio: 1.0 # (float) Inner-IoU auxiliary box ratio (arXiv:2311.02877), 1.0 = off; try 0.7-0.8 for small objects
-nwd_ratio: 0.0 # (float) blend ratio of NWD loss (arXiv:2110.13389), 0.0 = off; try 0.3-0.5 for tiny objects
-use_slide: False # (bool) Slide Loss hard-sample weighting on cls BCE (arXiv:2208.02019)
-tal_metric: CIoU # (str) GA-TAL assigner metric: CIoU (stock) / NWD / Mix — NWD rescues <16px positives (arXiv:2110.13389)
-tal_min_pos: False # (bool) GA-TAL: guarantee >=1 positive anchor per GT (RFLA-style compensation, arXiv:2208.08738)
-freq_loss: 0.0 # (float) FFL frequency-domain mask alignment ratio (arXiv:2012.12821), 0.0 = off; try 0.05-0.2
-mask_dice: 0.0 # (float) ROI soft-Dice ratio for instance masks, 0.0 = off; try 0.25-0.5
-boundary_loss: 0.0 # (float) P2 boundary auxiliary-loss ratio, requires SegmentP2Boundary; try 0.1-0.25
-freq_roi_size: 32 # (int) square ROI size used by frequency mask loss to exclude full-image background
 
 # Custom config.yaml ---------------------------------------------------------------------------------------------------
 cfg: # (str, optional) path to a config.yaml that overrides defaults

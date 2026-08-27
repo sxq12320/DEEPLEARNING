@@ -1,0 +1,15 @@
+name: citrus-topo
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch>=2.1
+  - torchvision
+  - pytorch-cuda=12.1
+  - pip:
+      - -e .
+      - pytest
+# No mamba-ssm, causal-conv1d, selective-scan CUDA extension, Detectron2, or MMDetection is required.

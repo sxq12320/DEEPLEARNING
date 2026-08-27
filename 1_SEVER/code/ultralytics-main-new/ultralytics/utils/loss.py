@@ -15,7 +15,6 @@ from ultralytics.utils.ops import crop_mask, xywh2xyxy, xyxy2xywh
 from ultralytics.utils.tal import RotatedTaskAlignedAssigner, TaskAlignedAssigner, dist2bbox, dist2rbox, make_anchors
 from ultralytics.utils.torch_utils import autocast
 
-from .iou_ext import bbox_iou_ext, focaler_remap, nwd, wiou_terms
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist, rbox2dist
 
@@ -109,57 +108,13 @@ class DFLoss(nn.Module):
 
 
 class BboxLoss(nn.Module):
-    """Criterion class for computing training losses for bounding boxes.
-
-    柑橘实验扩展：通过 hyp 中的 iou_type / inner_ratio / nwd_ratio 切换回归损失（见 iou_ext.py）。
-    默认 (iou_type=CIoU, nwd_ratio=0) 走原始代码路径，与 stock Ultralytics 数值完全一致。
-    """
+    """Criterion class for computing training losses for bounding boxes."""
 
     def __init__(self, reg_max: int = 16, hyp=None):
         """Initialize the BboxLoss module with regularization maximum and DFL settings."""
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
-        self.iou_type = str(getattr(hyp, "iou_type", "CIoU") or "CIoU").lower()
-        self.inner_ratio = float(getattr(hyp, "inner_ratio", 1.0) or 1.0)
-        self.nwd_ratio = float(getattr(hyp, "nwd_ratio", 0.0) or 0.0)
-        # WIoU v3 动态非单调聚焦的滑动均值状态（Tong et al. 2023, arXiv:2301.10051）
-        self._wiou_loss_mean = 1.0
-        self._wiou_momentum = 0.01
-
-    def _iou_loss_elem(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """Per-anchor IoU-family regression loss, shape (N,1). pred/target 为 xyxy（stride 归一化）."""
-        t = self.iou_type
-        focaler = t.startswith("focaler")
-        if focaler:
-            t = t[len("focaler"):]
-
-        if t in {"wiou", "nwdwise"}:
-            iou, r_wiou = wiou_terms(pred, target)
-            if focaler:
-                iou = focaler_remap(iou)
-            liou = 1.0 - iou
-            # WIoU v3: β = L*/L̄（离群度），r = β/(δ·α^(β−δ))，α=1.9, δ=3
-            with torch.no_grad():
-                beta = liou.detach() / max(self._wiou_loss_mean, 1e-3)
-                r_focus = beta / (3.0 * torch.pow(torch.tensor(1.9, device=pred.device), beta - 3.0))
-                self._wiou_loss_mean = (
-                    1.0 - self._wiou_momentum
-                ) * self._wiou_loss_mean + self._wiou_momentum * float(liou.mean())
-            wiou_loss = r_focus * r_wiou * liou
-            if t == "wiou":
-                return wiou_loss
-            # NWD-Wise（原创）：按目标尺度自适应混合 —— 极小目标（<~4 个特征格）以 NWD 为主
-            # （对像素级标注偏移不敏感），中大目标以 WIoU 为主（对低质量标注鲁棒）。
-            nwd_loss = 1.0 - nwd(pred, target)
-            w = (target[..., 2:3] - target[..., 0:1]).clamp(min=1e-7)
-            h = (target[..., 3:4] - target[..., 1:2]).clamp(min=1e-7)
-            small_w = torch.sigmoid(4.0 - (w * h).sqrt())  # 目标 ~4 个特征格时权重 0.5
-            return small_w * nwd_loss + (1.0 - small_w) * wiou_loss
-
-        iou = bbox_iou_ext(pred, target, iou_type=t, inner_ratio=self.inner_ratio)
-        if focaler:
-            iou = focaler_remap(iou)
-        return 1.0 - iou
+        self.nwd_ratio = float(getattr(hyp, "nwd_ratio", 0.0)) if hyp is not None else 0.0
 
     def forward(
         self,
@@ -175,18 +130,28 @@ class BboxLoss(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute IoU and DFL losses for bounding boxes."""
         weight = target_scores.sum(-1)[fg_mask].unsqueeze(-1)
-        if self.iou_type == "ciou" and self.nwd_ratio == 0.0 and self.inner_ratio == 1.0:
-            # stock path — 与原版 Ultralytics 数值完全一致
-            iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
-            loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
-        else:
-            liou = self._iou_loss_elem(pred_bboxes[fg_mask], target_bboxes[fg_mask])
-            if self.nwd_ratio > 0.0 and self.iou_type != "nwdwise":
-                # NWD 线性混合（Wang et al. 2021, arXiv:2110.13389）
-                liou = (1.0 - self.nwd_ratio) * liou + self.nwd_ratio * (
-                    1.0 - nwd(pred_bboxes[fg_mask], target_bboxes[fg_mask])
-                )
-            loss_iou = (liou * weight).sum() / target_scores_sum
+        positive_pred = pred_bboxes[fg_mask]
+        positive_target = target_bboxes[fg_mask]
+        iou = bbox_iou(positive_pred, positive_target, xywh=False, CIoU=True)
+        regression_loss = 1.0 - iou
+        if self.nwd_ratio > 0:
+            # NWD is defined in image-pixel coordinates. It is blended only for
+            # small targets, where a one-pixel shift makes IoU discontinuous.
+            positive_stride = stride.view(1, -1, 1).expand(pred_bboxes.shape[0], -1, -1)[fg_mask]
+            pred_pixels = positive_pred * positive_stride
+            target_pixels = positive_target * positive_stride
+            pred_center = (pred_pixels[:, :2] + pred_pixels[:, 2:]) * 0.5
+            target_center = (target_pixels[:, :2] + target_pixels[:, 2:]) * 0.5
+            pred_size = pred_pixels[:, 2:] - pred_pixels[:, :2]
+            target_size = target_pixels[:, 2:] - target_pixels[:, :2]
+            wasserstein = (pred_center - target_center).square().sum(-1, keepdim=True)
+            wasserstein += (pred_size - target_size).square().sum(-1, keepdim=True) * 0.25
+            nwd_loss = 1.0 - torch.exp(-wasserstein.clamp_min(0).sqrt() / 12.8)
+            target_scale = target_size.clamp_min(0).prod(-1, keepdim=True).sqrt()
+            small_gate = torch.sigmoid((32.0 - target_scale) / 4.0)
+            blend = (self.nwd_ratio * small_gate).clamp(0.0, 1.0)
+            regression_loss = regression_loss * (1.0 - blend) + nwd_loss * blend
+        loss_iou = (regression_loss * weight).sum() / target_scores_sum
 
         # DFL loss
         if self.dfl_loss:
@@ -400,6 +365,7 @@ class v8DetectionLoss:
         m = model.model[-1]  # Detect() module
         self.bce = nn.BCEWithLogitsLoss(reduction="none")
         self.hyp = h
+        self.citrus_vfl = float(getattr(h, "citrus_vfl", 0.0))
         self.stride = m.stride  # model strides
         self.nc = m.nc  # number of classes
         self.no = m.nc + m.reg_max * 4
@@ -420,11 +386,8 @@ class v8DetectionLoss:
             beta=6.0,
             stride=self.stride.tolist(),
             topk2=tal_topk2,
-            # GA-TAL（柑橘微小目标扩展，默认关闭=原版行为）：见 tal.py
-            metric=str(getattr(h, "tal_metric", "CIoU")),
-            min_pos=bool(getattr(h, "tal_min_pos", False)),
         )
-        self.bbox_loss = BboxLoss(m.reg_max, hyp=h).to(device)
+        self.bbox_loss = BboxLoss(m.reg_max, self.hyp).to(device)
         self.proj = torch.arange(m.reg_max, dtype=torch.float, device=device)
 
     def preprocess(self, targets: torch.Tensor, batch_size: int, scale_tensor: torch.Tensor) -> torch.Tensor:
@@ -493,23 +456,18 @@ class v8DetectionLoss:
         bce_loss = self.bce(pred_scores, target_scores.to(dtype))  # (bs, num_anchors, nc)
         if self.class_weights is not None:
             bce_loss *= self.class_weights
-        if bool(getattr(self.hyp, "use_slide", False)) and fg_mask.sum():
-            # Slide Loss（Yu et al., YOLO-FaceV2, arXiv:2208.02019）：以 batch 平均 IoU 为界，
-            # 对边界附近的难正样本（远处模糊小果常年 IoU 偏低）指数加权，缓解易样本主导。
-            with torch.no_grad():
-                iou_fg = bbox_iou(
-                    pred_bboxes[fg_mask], (target_bboxes / stride_tensor)[fg_mask], xywh=False
-                ).squeeze(-1)
-                mu = iou_fg.mean()
-                slide_w = torch.where(
-                    iou_fg < mu - 0.1,
-                    torch.ones_like(iou_fg),
-                    torch.where(iou_fg < mu, torch.exp(1.0 - mu).expand_as(iou_fg), torch.exp(1.0 - iou_fg)),
-                )
-                w_map = torch.ones_like(bce_loss)
-                w_map[fg_mask] = slide_w.unsqueeze(-1)
-            bce_loss = bce_loss * w_map
-        loss[1] = bce_loss.sum() / target_scores_sum  # BCE
+        standard_cls_loss = bce_loss.sum() / target_scores_sum
+        if self.citrus_vfl > 0:
+            # VarifocalNet learns an IoU-aware classification score. TAL already
+            # supplies localization-aware soft targets, so only the published
+            # asymmetric weighting is needed here; 0 preserves stock BCE.
+            labels = (target_scores > 0).to(dtype)
+            vfl_weight = 0.75 * pred_scores.sigmoid().pow(2.0) * (1.0 - labels) + target_scores * labels
+            quality_cls_loss = (bce_loss * vfl_weight).sum() / target_scores_sum
+            blend = min(max(self.citrus_vfl, 0.0), 1.0)
+            loss[1] = standard_cls_loss * (1.0 - blend) + quality_cls_loss * blend
+        else:
+            loss[1] = standard_cls_loss  # stock BCE
 
         # Bbox loss
         if fg_mask.sum():
@@ -565,11 +523,12 @@ class v8SegmentationLoss(v8DetectionLoss):
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
-        # Optional citrus mask losses. All default to zero to preserve stock behavior.
-        self.freq_ratio = float(getattr(model.args, "freq_loss", 0.0) or 0.0)
-        self.mask_dice_ratio = float(getattr(model.args, "mask_dice", 0.0) or 0.0)
-        self.boundary_ratio = float(getattr(model.args, "boundary_loss", 0.0) or 0.0)
-        self.freq_roi_size = int(getattr(model.args, "freq_roi_size", 32) or 32)
+        self.citrus_boundary_gain = float(getattr(model.args, "citrus_boundary", 0.0))
+        self.citrus_concavity_gain = float(getattr(model.args, "citrus_concavity", 0.0))
+        self.citrus_query_gain = float(getattr(model.args, "citrus_query", 0.0))
+        self.citrus_contrast_gain = float(getattr(model.args, "citrus_contrast", 0.0))
+        self.citrus_exclusive_gain = float(getattr(model.args, "citrus_exclusive", 0.0))
+        self.citrus_quality_gain = float(getattr(model.args, "citrus_quality", 0.0))
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate and return the combined loss for detection and segmentation."""
@@ -582,11 +541,11 @@ class v8SegmentationLoss(v8DetectionLoss):
         (fg_mask, target_gt_idx, target_bboxes, _, _), det_loss, _ = self.get_assigned_targets_and_loss(preds, batch)
         # NOTE: re-assign index for consistency for now. Need to be removed in the future.
         loss[0], loss[2], loss[3] = det_loss[0], det_loss[1], det_loss[2]
+        masks = batch["masks"].to(self.device).float()
 
         batch_size, _, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
         if fg_mask.sum():
             # Masks loss
-            masks = batch["masks"].to(self.device).float()
             if tuple(masks.shape[-2:]) != (mask_h, mask_w):  # downsample
                 # masks = F.interpolate(masks[None], (mask_h, mask_w), mode="nearest")[0]
                 proto = F.interpolate(proto, masks.shape[-2:], mode="bilinear", align_corners=False)
@@ -604,11 +563,6 @@ class v8SegmentationLoss(v8DetectionLoss):
                 pred_masks,
                 imgsz,
             )
-            boundary_logits = preds.get("boundary")
-            if boundary_logits is not None and self.boundary_ratio > 0:
-                loss[1] += self.boundary_ratio * self.calculate_boundary_loss(
-                    boundary_logits, masks, batch["batch_idx"].view(-1), batch_size
-                )
             if pred_semantic is not None:
                 sem_masks = batch["sem_masks"].to(self.device)  # NxHxW
                 sem_masks = F.one_hot(sem_masks.long(), num_classes=self.nc).permute(0, 3, 1, 2).float()  # NxCxHxW
@@ -630,16 +584,310 @@ class v8SegmentationLoss(v8DetectionLoss):
         # WARNING: lines below prevent Multi-GPU DDP 'unused gradient' PyTorch errors, do not remove
         else:
             loss[1] += (proto * 0).sum() + (pred_masks * 0).sum()  # inf sums may lead to nan loss
-            if preds.get("boundary") is not None:
-                loss[1] += (preds["boundary"] * 0).sum()
             if pred_semantic is not None:
                 loss[4] += (pred_semantic * 0).sum()
 
-        loss[1] *= self.hyp.box  # seg gain
+        loss[1] *= self.hyp.box  # standard mask gain
+
+        # Task-specific auxiliary terms are added after the standard mask gain so the configured
+        # coefficients are their true effective weights (they are not silently multiplied by box=7.5).
+        if self.citrus_boundary_gain > 0 or self.citrus_concavity_gain > 0:
+            boundary_logits = preds.get("citrus_boundary")
+            if boundary_logits is not None:
+                boundary_target, concavity_band = self.build_boundary_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, boundary_logits.shape[-2:]
+                )
+                if self.citrus_boundary_gain > 0:
+                    loss[1] += self.citrus_boundary_gain * self.boundary_bce_dice(boundary_logits, boundary_target)
+                if self.citrus_concavity_gain > 0:
+                    loss[1] += self.citrus_concavity_gain * self.focused_boundary_loss(
+                        boundary_logits, boundary_target, concavity_band
+                    )
+
+        if self.citrus_query_gain > 0:
+            query_logits = preds.get("citrus_query")
+            if query_logits is not None:
+                query_target = self.build_small_query_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, query_logits.shape[-2:]
+                )
+                loss[1] += self.citrus_query_gain * self.query_focal_loss(query_logits, query_target)
+
+        if self.citrus_contrast_gain > 0:
+            contrast_logits = preds.get("citrus_contrast")
+            if contrast_logits is not None:
+                contrast_target, contrast_active = self.build_contrast_ring_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, contrast_logits.shape[-2:]
+                )
+                loss[1] += self.citrus_contrast_gain * self.contrast_ring_loss(
+                    contrast_logits, contrast_target, contrast_active
+                )
+
+        if self.citrus_exclusive_gain > 0 and fg_mask.any():
+            loss[1] += self.citrus_exclusive_gain * self.adjacent_exclusivity_loss(
+                masks,
+                batch["batch_idx"].view(-1),
+                fg_mask,
+                target_gt_idx,
+                pred_masks,
+                proto,
+            )
+
+        if self.citrus_quality_gain > 0 and fg_mask.any():
+            quality_logits = preds.get("mask_quality")
+            if quality_logits is not None:
+                loss[1] += self.citrus_quality_gain * self.mask_quality_loss(
+                    masks,
+                    batch["batch_idx"].view(-1),
+                    fg_mask,
+                    target_gt_idx,
+                    target_bboxes,
+                    pred_masks,
+                    proto,
+                    quality_logits,
+                    imgsz,
+                )
+
+        # Keep optional auxiliary parameters DDP-safe even when one of their
+        # gains is zero. The zero terms have no numerical effect.
+        for auxiliary_name in ("citrus_boundary", "citrus_query", "citrus_contrast", "mask_quality"):
+            auxiliary = preds.get(auxiliary_name)
+            if auxiliary is not None:
+                loss[1] += auxiliary.sum() * 0.0
         return loss * batch_size, loss.detach()  # loss(box, seg, cls, dfl, semantic)
 
+    def image_instance_masks(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        image_index: int,
+        size: tuple[int, int],
+    ) -> torch.Tensor:
+        """Recover separate binary GT masks for one image at a requested resolution."""
+        if self.overlap:
+            mask_map = masks[image_index]
+            if mask_map.ndim == 3:
+                mask_map = mask_map.squeeze(0)
+            instance_ids = torch.unique(mask_map)
+            instance_ids = instance_ids[instance_ids > 0]
+            if not len(instance_ids):
+                return masks.new_zeros((0, *size))
+            instances = torch.stack([mask_map == instance_id for instance_id in instance_ids]).float()
+        else:
+            instances = masks[batch_idx == image_index]
+            if instances.ndim == 4 and instances.shape[1] == 1:
+                instances = instances[:, 0]
+        if not len(instances):
+            return masks.new_zeros((0, *size))
+        if tuple(instances.shape[-2:]) != tuple(size):
+            instances = F.interpolate(instances[:, None], size=size, mode="nearest")[:, 0]
+        return (instances > 0.5).float()
+
+    def build_boundary_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build per-instance boundary union and morphology-derived concave-notch bands."""
+        boundary_targets = masks.new_zeros((batch_size, 1, *size))
+        concavity_bands = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if not len(instances):
+                continue
+            instances = instances[:, None]
+            dilated = F.max_pool2d(instances, 3, stride=1, padding=1)
+            eroded = 1.0 - F.max_pool2d(1.0 - instances, 3, stride=1, padding=1)
+            boundaries = (dilated - eroded).clamp_(0, 1)
+            boundary_targets[image_index] = boundaries.amax(dim=0)
+
+            # Closing fills narrow inward notches while leaving convex outer boundaries mostly unchanged.
+            closed = F.max_pool2d(instances, 7, stride=1, padding=3)
+            closed = 1.0 - F.max_pool2d(1.0 - closed, 7, stride=1, padding=3)
+            notches = (closed - instances).clamp_(0, 1)
+            notch_band = F.max_pool2d(notches, 5, stride=1, padding=2)
+            concavity_bands[image_index] = notch_band.amax(dim=0)
+        return boundary_targets, concavity_bands
+
+    @staticmethod
+    def boundary_bce_dice(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """BMask-style balanced BCE plus soft Dice for sparse boundary pixels."""
+        positive = target.sum()
+        negative = target.numel() - positive
+        pos_weight = (negative / positive.clamp_min(1.0)).clamp(1.0, 10.0)
+        bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight)
+        probability = logits.sigmoid()
+        intersection = (probability * target).sum(dim=(1, 2, 3))
+        dice = 1.0 - ((2.0 * intersection + 1.0) / (probability.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) + 1.0))
+        return 0.5 * bce + 0.5 * dice.mean()
+
+    @staticmethod
+    def focused_boundary_loss(logits: torch.Tensor, target: torch.Tensor, band: torch.Tensor) -> torch.Tensor:
+        """Focus boundary classification on GT-derived concave occlusion bands."""
+        active = (band > 0).float()
+        if not active.any():
+            return logits.sum() * 0.0
+        pixel_loss = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+        return (pixel_loss * active).sum() / active.sum().clamp_min(1.0)
+
+    def build_small_query_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> torch.Tensor:
+        """Build sparse center queries for objects smaller than 32x32 pixels at input scale."""
+        targets = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            for instance in instances:
+                # The query branch is P2/4; 32x32 input pixels correspond to 64 query pixels.
+                if instance.sum() >= 64:
+                    continue
+                coordinates = torch.nonzero(instance > 0, as_tuple=False)
+                if not len(coordinates):
+                    continue
+                center_y, center_x = coordinates.float().mean(dim=0).round().long()
+                y0, y1 = max(int(center_y) - 1, 0), min(int(center_y) + 2, size[0])
+                x0, x1 = max(int(center_x) - 1, 0), min(int(center_x) + 2, size[1])
+                targets[image_index, 0, y0:y1, x0:x1] = 1.0
+        return targets
+
+    def build_contrast_ring_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build fruit-interior positives and immediate context-ring negatives."""
+        targets = masks.new_zeros((batch_size, 1, *size))
+        active = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if not len(instances):
+                continue
+            instances = instances[:, None]
+            eroded = 1.0 - F.max_pool2d(1.0 - instances, 3, stride=1, padding=1)
+            empty = eroded.flatten(1).sum(1) == 0
+            eroded[empty] = instances[empty]
+            outer = F.max_pool2d(instances, 7, stride=1, padding=3)
+            rings = (outer - instances).clamp_(0, 1)
+            targets[image_index] = eroded.amax(dim=0)
+            active[image_index] = torch.maximum(eroded, rings).amax(dim=0)
+        return targets, active
+
+    @staticmethod
+    def contrast_ring_loss(logits: torch.Tensor, target: torch.Tensor, active: torch.Tensor) -> torch.Tensor:
+        """Separate fruit interiors from their local leaf/branch context rings."""
+        if not active.any():
+            return logits.sum() * 0.0
+        positive = (target * active).sum()
+        negative = ((1.0 - target) * active).sum()
+        pos_weight = (negative / positive.clamp_min(1.0)).clamp(1.0, 8.0)
+        pixel_loss = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight, reduction="none")
+        return (pixel_loss * active).sum() / active.sum().clamp_min(1.0)
+
+    @staticmethod
+    def query_focal_loss(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Focal loss normalized by the number of sparse small-object query pixels."""
+        probability = logits.sigmoid()
+        bce = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+        focal_weight = target * (1.0 - probability).pow(2) + (1.0 - target) * probability.pow(2) * 0.25
+        return (bce * focal_weight).sum() / target.sum().clamp_min(1.0)
+
+    def adjacent_exclusivity_loss(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        fg_mask: torch.Tensor,
+        target_gt_idx: torch.Tensor,
+        pred_masks: torch.Tensor,
+        proto: torch.Tensor,
+    ) -> torch.Tensor:
+        """Penalize one instance mask leaking into a neighboring GT instance corridor."""
+        losses = []
+        size = tuple(proto.shape[-2:])
+        for image_index, (fg_i, gt_idx_i, coefficients_i, proto_i) in enumerate(
+            zip(fg_mask, target_gt_idx, pred_masks, proto)
+        ):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if len(instances) < 2 or not fg_i.any():
+                continue
+            assigned = gt_idx_i[fg_i]
+            coefficients = coefficients_i[fg_i]
+            union = instances.amax(dim=0)
+            for instance_index in torch.unique(assigned):
+                index = int(instance_index)
+                if index >= len(instances):
+                    continue
+                mean_coefficient = coefficients[assigned == instance_index].mean(dim=0)
+                predicted = torch.einsum("c,chw->hw", mean_coefficient, proto_i)
+                own = instances[index : index + 1, None]
+                other = (union - instances[index]).clamp_min(0)
+                corridor = (F.max_pool2d(own, 5, stride=1, padding=2)[0, 0] > 0) & (other > 0)
+                if corridor.any():
+                    losses.append(
+                        F.binary_cross_entropy_with_logits(
+                            predicted[corridor], torch.zeros_like(predicted[corridor])
+                        )
+                    )
+        return torch.stack(losses).mean() if losses else proto.sum() * 0.0
+
+    def mask_quality_loss(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        fg_mask: torch.Tensor,
+        target_gt_idx: torch.Tensor,
+        target_bboxes: torch.Tensor,
+        pred_masks: torch.Tensor,
+        proto: torch.Tensor,
+        quality_logits: torch.Tensor,
+        imgsz: torch.Tensor,
+    ) -> torch.Tensor:
+        """Regress per-anchor mask IoU following Mask Scoring R-CNN.
+
+        The target is detached exactly as in the official implementation. The
+        predicted mask is cropped to its assigned target box to match Ultralytics
+        inference semantics, then binarized only for constructing the quality
+        target; gradients update the quality branch through an L2 objective.
+        """
+        losses = []
+        mask_h, mask_w = proto.shape[-2:]
+        scale = proto.new_tensor([mask_w, mask_h, mask_w, mask_h])
+        image_scale = proto.new_tensor([imgsz[1], imgsz[0], imgsz[1], imgsz[0]])
+        for image_index, (foreground, assigned, coefficients, prototype, boxes, quality) in enumerate(
+            zip(fg_mask, target_gt_idx, pred_masks, proto, target_bboxes, quality_logits[:, 0])
+        ):
+            if not foreground.any():
+                continue
+            instances = self.image_instance_masks(masks, batch_idx, image_index, (mask_h, mask_w))
+            assigned = assigned[foreground]
+            valid = assigned < len(instances)
+            if not valid.any():
+                continue
+            assigned = assigned[valid]
+            coefficients = coefficients[foreground][valid]
+            predicted = torch.einsum("in,nhw->ihw", coefficients, prototype).sigmoid()
+            crop_boxes = boxes[foreground][valid] / image_scale * scale
+            predicted = crop_mask(predicted, crop_boxes)
+            ground_truth = instances[assigned]
+            with torch.no_grad():
+                binary = predicted.detach() > 0.5
+                positive = ground_truth > 0.5
+                intersection = (binary & positive).sum(dim=(1, 2)).float()
+                union = (binary | positive).sum(dim=(1, 2)).float().clamp_min(1.0)
+                target_quality = intersection / union
+            predicted_quality = quality[foreground][valid].sigmoid()
+            losses.append(F.mse_loss(predicted_quality, target_quality))
+        return torch.stack(losses).mean() if losses else quality_logits.sum() * 0.0
+
+    @staticmethod
     def single_mask_loss(
-        self, gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
+        gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
         """Compute the instance segmentation loss for a single image.
 
@@ -659,75 +907,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         """
         pred_mask = torch.einsum("in,nhw->ihw", pred, proto)  # (n, 32) @ (32, 80, 80) -> (n, 80, 80)
         loss = F.binary_cross_entropy_with_logits(pred_mask, gt_mask, reduction="none")
-        total = (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
-        if self.mask_dice_ratio > 0:
-            pred_roi = crop_mask(pred_mask.sigmoid(), xyxy)
-            gt_roi = crop_mask(gt_mask, xyxy)
-            intersection = (pred_roi * gt_roi).sum(dim=(1, 2))
-            denominator = pred_roi.sum(dim=(1, 2)) + gt_roi.sum(dim=(1, 2))
-            dice = 1.0 - (2.0 * intersection + 1.0) / (denominator + 1.0)
-            total = total + self.mask_dice_ratio * dice.sum()
-        if getattr(self, "freq_ratio", 0.0) > 0:
-            # Apply FFL inside fixed-size instance ROIs. The previous full-map FFT was dominated by background and
-            # divided again by tiny box area, which could create unstable gradients for distant fruit.
-            pred_roi = self._crop_and_resize_masks(pred_mask.sigmoid(), xyxy, self.freq_roi_size)
-            gt_roi = self._crop_and_resize_masks(gt_mask, xyxy, self.freq_roi_size)
-            pf = torch.fft.rfft2(pred_roi.float(), norm="ortho")
-            gf = torch.fft.rfft2(gt_roi.float(), norm="ortho")
-            d = (pf - gf).abs()
-            w = (d / (d.amax(dim=(-2, -1), keepdim=True) + 1e-8)).detach()  # 谱聚焦权重 (α=1)
-            ffl = (w * d.pow(2)).mean(dim=(1, 2)).sum()
-            total = total + self.freq_ratio * ffl.to(total.dtype)
-        return total
-
-    @staticmethod
-    def _crop_and_resize_masks(masks: torch.Tensor, boxes: torch.Tensor, output_size: int) -> torch.Tensor:
-        """Differentiably crop per-instance masks to normalized square ROIs for local frequency comparison."""
-        n, height, width = masks.shape
-        if n == 0:
-            return masks.new_zeros((0, output_size, output_size))
-        boxes = boxes.float()
-        x1 = boxes[:, 0].clamp(0, max(width - 1, 0))
-        y1 = boxes[:, 1].clamp(0, max(height - 1, 0))
-        x2 = torch.maximum(boxes[:, 2], x1 + 1.0).clamp(0, max(width - 1, 0))
-        y2 = torch.maximum(boxes[:, 3], y1 + 1.0).clamp(0, max(height - 1, 0))
-        steps = torch.linspace(0, 1, output_size, device=masks.device, dtype=torch.float32)
-        grid_x = x1[:, None, None] + (x2 - x1)[:, None, None] * steps[None, None, :]
-        grid_y = y1[:, None, None] + (y2 - y1)[:, None, None] * steps[None, :, None]
-        grid_x = grid_x.expand(n, output_size, output_size)
-        grid_y = grid_y.expand(n, output_size, output_size)
-        grid_x = 2.0 * grid_x / max(width - 1, 1) - 1.0
-        grid_y = 2.0 * grid_y / max(height - 1, 1) - 1.0
-        grid = torch.stack((grid_x, grid_y), dim=-1)
-        return F.grid_sample(masks[:, None].float(), grid, mode="bilinear", align_corners=True)[:, 0]
-
-    def calculate_boundary_loss(
-        self, boundary_logits: torch.Tensor, masks: torch.Tensor, batch_idx: torch.Tensor, batch_size: int
-    ) -> torch.Tensor:
-        """Supervise a union-mask morphological boundary with balanced BCE and soft Dice."""
-        if self.overlap:
-            foreground = (masks > 0).float()
-        else:
-            foreground = masks.new_zeros((batch_size, *masks.shape[-2:]))
-            for image_idx in range(batch_size):
-                image_masks = masks[batch_idx == image_idx]
-                if len(image_masks):
-                    foreground[image_idx] = image_masks.amax(dim=0)
-        if foreground.shape[-2:] != boundary_logits.shape[-2:]:
-            foreground = F.interpolate(foreground[:, None], boundary_logits.shape[-2:], mode="nearest")[:, 0]
-
-        dilated = F.max_pool2d(foreground[:, None], kernel_size=3, stride=1, padding=1)[:, 0]
-        eroded = 1.0 - F.max_pool2d(1.0 - foreground[:, None], kernel_size=3, stride=1, padding=1)[:, 0]
-        target = (dilated - eroded).clamp_(0, 1)
-        logits = boundary_logits[:, 0]
-        positives = target.sum()
-        pos_weight = ((target.numel() - positives) / (positives + 1.0)).clamp(1.0, 10.0)
-        bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight)
-        probability = logits.sigmoid()
-        intersection = (probability * target).sum(dim=(1, 2))
-        denominator = probability.sum(dim=(1, 2)) + target.sum(dim=(1, 2))
-        dice = 1.0 - (2.0 * intersection + 1.0) / (denominator + 1.0)
-        return bce + dice.mean()
+        return (crop_mask(loss, xyxy).mean(dim=(1, 2)) / area).sum()
 
     def calculate_segmentation_loss(
         self,

@@ -6,20 +6,16 @@ every downstream layer by +1, so a plain ``YOLO(...).load(pt)`` would match ~0
 tensors by key name (``model.<i>.*``). We remap pretrained ``model.<i>.*`` ->
 ``model.<i+1>.*`` before loading, so the whole backbone/neck/head transfers from
 COCO and only the new front-end (layer 0) is randomly initialised — keeping the
-ablation vs the baseline fair.
-
-On the SERVER: pass --data / --project explicitly to your /data/sxq/... paths
-(the imported DATA/PROJECT defaults come from train_citrus_seg.py and may point
-elsewhere). This driver itself hardcodes no paths.
+ablation vs the 001 baseline fair.
 
 Examples:
     # smoke test (random init, no transfer) — just proves the pipeline runs
     python train_citrus_seg_hvi.py --model 0_orange_yaml/010_yolo11-seg-hvi.yaml \
-        --name E_hvi_smoke --epochs 3 --data 200orange_wuxi_seg.yaml
+        --name E_hvi_smoke --epochs 3
 
     # real run with fair COCO transfer into the shifted layers
     python train_citrus_seg_hvi.py --model 0_orange_yaml/010_yolo11-seg-hvi.yaml \
-        --pretrained yolo11n-seg.pt --name E_hvi --data <your data.yaml> --project <your out dir>
+        --pretrained yolo11n-seg.pt --name E_hvi
 """
 
 from __future__ import annotations

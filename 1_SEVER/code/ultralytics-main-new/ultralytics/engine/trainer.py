@@ -1206,13 +1206,10 @@ class BaseTrainer:
         if not use_muon:
             g = [x.values() for x in g[:3]]  # convert to list of params
 
-        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC", "SMCAO", "Lion"}
+        optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp", "SGD", "MuSGD", "auto", "PIDAO", "SMC", "SMCAO"}
         name = {x.lower(): x for x in optimizers}.get(name.lower())
         if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "SMC", "SMCAO"}:
             optim_args = dict(lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
-        elif name == "Lion":
-            # Lion (Chen et al. 2023, arXiv:2302.06675): sign 更新，建议 lr 为 AdamW 的 1/3~1/10
-            optim_args = dict(lr=lr, betas=(momentum, 0.99), weight_decay=0.0)
         elif name == "RMSProp":
             optim_args = dict(lr=lr, momentum=momentum)
         elif name == "SGD" or name == "MuSGD":
@@ -1258,10 +1255,6 @@ class BaseTrainer:
         elif name in {"SMC", "SMCAO"}:
             # SMC / SMCAO 模式：底层使用 AdamW，由对应 Scheduler 在训练循环中动态调节
             optimizer = optim.AdamW(params=g, lr=lr, betas=(momentum, 0.999), weight_decay=0.0)
-        elif name == "Lion":
-            from ultralytics.optim import Lion
-
-            optimizer = Lion(params=g, lr=lr, betas=(momentum, 0.99), weight_decay=0.0)
         else:
             optimizer = getattr(optim, name, partial(MuSGD, muon=muon, sgd=sgd))(params=g)
 

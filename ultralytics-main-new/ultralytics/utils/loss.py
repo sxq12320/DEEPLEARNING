@@ -110,10 +110,11 @@ class DFLoss(nn.Module):
 class BboxLoss(nn.Module):
     """Criterion class for computing training losses for bounding boxes."""
 
-    def __init__(self, reg_max: int = 16):
+    def __init__(self, reg_max: int = 16, hyp=None):
         """Initialize the BboxLoss module with regularization maximum and DFL settings."""
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
+        self.nwd_ratio = float(getattr(hyp, "nwd_ratio", 0.0)) if hyp is not None else 0.0
 
     def forward(
         self,
@@ -129,8 +130,28 @@ class BboxLoss(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute IoU and DFL losses for bounding boxes."""
         weight = target_scores.sum(-1)[fg_mask].unsqueeze(-1)
-        iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
-        loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
+        positive_pred = pred_bboxes[fg_mask]
+        positive_target = target_bboxes[fg_mask]
+        iou = bbox_iou(positive_pred, positive_target, xywh=False, CIoU=True)
+        regression_loss = 1.0 - iou
+        if self.nwd_ratio > 0:
+            # NWD is defined in image-pixel coordinates. It is blended only for
+            # small targets, where a one-pixel shift makes IoU discontinuous.
+            positive_stride = stride.view(1, -1, 1).expand(pred_bboxes.shape[0], -1, -1)[fg_mask]
+            pred_pixels = positive_pred * positive_stride
+            target_pixels = positive_target * positive_stride
+            pred_center = (pred_pixels[:, :2] + pred_pixels[:, 2:]) * 0.5
+            target_center = (target_pixels[:, :2] + target_pixels[:, 2:]) * 0.5
+            pred_size = pred_pixels[:, 2:] - pred_pixels[:, :2]
+            target_size = target_pixels[:, 2:] - target_pixels[:, :2]
+            wasserstein = (pred_center - target_center).square().sum(-1, keepdim=True)
+            wasserstein += (pred_size - target_size).square().sum(-1, keepdim=True) * 0.25
+            nwd_loss = 1.0 - torch.exp(-wasserstein.clamp_min(0).sqrt() / 12.8)
+            target_scale = target_size.clamp_min(0).prod(-1, keepdim=True).sqrt()
+            small_gate = torch.sigmoid((32.0 - target_scale) / 4.0)
+            blend = (self.nwd_ratio * small_gate).clamp(0.0, 1.0)
+            regression_loss = regression_loss * (1.0 - blend) + nwd_loss * blend
+        loss_iou = (regression_loss * weight).sum() / target_scores_sum
 
         # DFL loss
         if self.dfl_loss:
@@ -365,7 +386,7 @@ class v8DetectionLoss:
             stride=self.stride.tolist(),
             topk2=tal_topk2,
         )
-        self.bbox_loss = BboxLoss(m.reg_max).to(device)
+        self.bbox_loss = BboxLoss(m.reg_max, self.hyp).to(device)
         self.proj = torch.arange(m.reg_max, dtype=torch.float, device=device)
 
     def preprocess(self, targets: torch.Tensor, batch_size: int, scale_tensor: torch.Tensor) -> torch.Tensor:
@@ -490,6 +511,11 @@ class v8SegmentationLoss(v8DetectionLoss):
         super().__init__(model, tal_topk, tal_topk2)
         self.overlap = model.args.overlap_mask
         self.bcedice_loss = BCEDiceLoss(weight_bce=0.5, weight_dice=0.5)
+        self.citrus_boundary_gain = float(getattr(model.args, "citrus_boundary", 0.0))
+        self.citrus_concavity_gain = float(getattr(model.args, "citrus_concavity", 0.0))
+        self.citrus_query_gain = float(getattr(model.args, "citrus_query", 0.0))
+        self.citrus_contrast_gain = float(getattr(model.args, "citrus_contrast", 0.0))
+        self.citrus_exclusive_gain = float(getattr(model.args, "citrus_exclusive", 0.0))
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate and return the combined loss for detection and segmentation."""
@@ -502,11 +528,11 @@ class v8SegmentationLoss(v8DetectionLoss):
         (fg_mask, target_gt_idx, target_bboxes, _, _), det_loss, _ = self.get_assigned_targets_and_loss(preds, batch)
         # NOTE: re-assign index for consistency for now. Need to be removed in the future.
         loss[0], loss[2], loss[3] = det_loss[0], det_loss[1], det_loss[2]
+        masks = batch["masks"].to(self.device).float()
 
         batch_size, _, mask_h, mask_w = proto.shape  # batch size, number of masks, mask height, mask width
         if fg_mask.sum():
             # Masks loss
-            masks = batch["masks"].to(self.device).float()
             if tuple(masks.shape[-2:]) != (mask_h, mask_w):  # downsample
                 # masks = F.interpolate(masks[None], (mask_h, mask_w), mode="nearest")[0]
                 proto = F.interpolate(proto, masks.shape[-2:], mode="bilinear", align_corners=False)
@@ -548,8 +574,239 @@ class v8SegmentationLoss(v8DetectionLoss):
             if pred_semantic is not None:
                 loss[4] += (pred_semantic * 0).sum()
 
-        loss[1] *= self.hyp.box  # seg gain
+        loss[1] *= self.hyp.box  # standard mask gain
+
+        # Task-specific auxiliary terms are added after the standard mask gain so the configured
+        # coefficients are their true effective weights (they are not silently multiplied by box=7.5).
+        if self.citrus_boundary_gain > 0 or self.citrus_concavity_gain > 0:
+            boundary_logits = preds.get("citrus_boundary")
+            if boundary_logits is not None:
+                boundary_target, concavity_band = self.build_boundary_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, boundary_logits.shape[-2:]
+                )
+                if self.citrus_boundary_gain > 0:
+                    loss[1] += self.citrus_boundary_gain * self.boundary_bce_dice(boundary_logits, boundary_target)
+                if self.citrus_concavity_gain > 0:
+                    loss[1] += self.citrus_concavity_gain * self.focused_boundary_loss(
+                        boundary_logits, boundary_target, concavity_band
+                    )
+
+        if self.citrus_query_gain > 0:
+            query_logits = preds.get("citrus_query")
+            if query_logits is not None:
+                query_target = self.build_small_query_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, query_logits.shape[-2:]
+                )
+                loss[1] += self.citrus_query_gain * self.query_focal_loss(query_logits, query_target)
+
+        if self.citrus_contrast_gain > 0:
+            contrast_logits = preds.get("citrus_contrast")
+            if contrast_logits is not None:
+                contrast_target, contrast_active = self.build_contrast_ring_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, contrast_logits.shape[-2:]
+                )
+                loss[1] += self.citrus_contrast_gain * self.contrast_ring_loss(
+                    contrast_logits, contrast_target, contrast_active
+                )
+
+        if self.citrus_exclusive_gain > 0 and fg_mask.any():
+            loss[1] += self.citrus_exclusive_gain * self.adjacent_exclusivity_loss(
+                masks,
+                batch["batch_idx"].view(-1),
+                fg_mask,
+                target_gt_idx,
+                pred_masks,
+                proto,
+            )
+
+        # Keep optional auxiliary parameters DDP-safe even when one of their
+        # gains is zero. The zero terms have no numerical effect.
+        for auxiliary_name in ("citrus_boundary", "citrus_query", "citrus_contrast"):
+            auxiliary = preds.get(auxiliary_name)
+            if auxiliary is not None:
+                loss[1] += auxiliary.sum() * 0.0
         return loss * batch_size, loss.detach()  # loss(box, seg, cls, dfl, semantic)
+
+    def image_instance_masks(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        image_index: int,
+        size: tuple[int, int],
+    ) -> torch.Tensor:
+        """Recover separate binary GT masks for one image at a requested resolution."""
+        if self.overlap:
+            mask_map = masks[image_index]
+            if mask_map.ndim == 3:
+                mask_map = mask_map.squeeze(0)
+            instance_ids = torch.unique(mask_map)
+            instance_ids = instance_ids[instance_ids > 0]
+            if not len(instance_ids):
+                return masks.new_zeros((0, *size))
+            instances = torch.stack([mask_map == instance_id for instance_id in instance_ids]).float()
+        else:
+            instances = masks[batch_idx == image_index]
+            if instances.ndim == 4 and instances.shape[1] == 1:
+                instances = instances[:, 0]
+        if not len(instances):
+            return masks.new_zeros((0, *size))
+        if tuple(instances.shape[-2:]) != tuple(size):
+            instances = F.interpolate(instances[:, None], size=size, mode="nearest")[:, 0]
+        return (instances > 0.5).float()
+
+    def build_boundary_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build per-instance boundary union and morphology-derived concave-notch bands."""
+        boundary_targets = masks.new_zeros((batch_size, 1, *size))
+        concavity_bands = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if not len(instances):
+                continue
+            instances = instances[:, None]
+            dilated = F.max_pool2d(instances, 3, stride=1, padding=1)
+            eroded = 1.0 - F.max_pool2d(1.0 - instances, 3, stride=1, padding=1)
+            boundaries = (dilated - eroded).clamp_(0, 1)
+            boundary_targets[image_index] = boundaries.amax(dim=0)
+
+            # Closing fills narrow inward notches while leaving convex outer boundaries mostly unchanged.
+            closed = F.max_pool2d(instances, 7, stride=1, padding=3)
+            closed = 1.0 - F.max_pool2d(1.0 - closed, 7, stride=1, padding=3)
+            notches = (closed - instances).clamp_(0, 1)
+            notch_band = F.max_pool2d(notches, 5, stride=1, padding=2)
+            concavity_bands[image_index] = notch_band.amax(dim=0)
+        return boundary_targets, concavity_bands
+
+    @staticmethod
+    def boundary_bce_dice(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """BMask-style balanced BCE plus soft Dice for sparse boundary pixels."""
+        positive = target.sum()
+        negative = target.numel() - positive
+        pos_weight = (negative / positive.clamp_min(1.0)).clamp(1.0, 10.0)
+        bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight)
+        probability = logits.sigmoid()
+        intersection = (probability * target).sum(dim=(1, 2, 3))
+        dice = 1.0 - ((2.0 * intersection + 1.0) / (probability.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) + 1.0))
+        return 0.5 * bce + 0.5 * dice.mean()
+
+    @staticmethod
+    def focused_boundary_loss(logits: torch.Tensor, target: torch.Tensor, band: torch.Tensor) -> torch.Tensor:
+        """Focus boundary classification on GT-derived concave occlusion bands."""
+        active = (band > 0).float()
+        if not active.any():
+            return logits.sum() * 0.0
+        pixel_loss = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+        return (pixel_loss * active).sum() / active.sum().clamp_min(1.0)
+
+    def build_small_query_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> torch.Tensor:
+        """Build sparse center queries for objects smaller than 32x32 pixels at input scale."""
+        targets = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            for instance in instances:
+                # The query branch is P2/4; 32x32 input pixels correspond to 64 query pixels.
+                if instance.sum() >= 64:
+                    continue
+                coordinates = torch.nonzero(instance > 0, as_tuple=False)
+                if not len(coordinates):
+                    continue
+                center_y, center_x = coordinates.float().mean(dim=0).round().long()
+                y0, y1 = max(int(center_y) - 1, 0), min(int(center_y) + 2, size[0])
+                x0, x1 = max(int(center_x) - 1, 0), min(int(center_x) + 2, size[1])
+                targets[image_index, 0, y0:y1, x0:x1] = 1.0
+        return targets
+
+    def build_contrast_ring_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build fruit-interior positives and immediate context-ring negatives."""
+        targets = masks.new_zeros((batch_size, 1, *size))
+        active = masks.new_zeros((batch_size, 1, *size))
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if not len(instances):
+                continue
+            instances = instances[:, None]
+            eroded = 1.0 - F.max_pool2d(1.0 - instances, 3, stride=1, padding=1)
+            empty = eroded.flatten(1).sum(1) == 0
+            eroded[empty] = instances[empty]
+            outer = F.max_pool2d(instances, 7, stride=1, padding=3)
+            rings = (outer - instances).clamp_(0, 1)
+            targets[image_index] = eroded.amax(dim=0)
+            active[image_index] = torch.maximum(eroded, rings).amax(dim=0)
+        return targets, active
+
+    @staticmethod
+    def contrast_ring_loss(logits: torch.Tensor, target: torch.Tensor, active: torch.Tensor) -> torch.Tensor:
+        """Separate fruit interiors from their local leaf/branch context rings."""
+        if not active.any():
+            return logits.sum() * 0.0
+        positive = (target * active).sum()
+        negative = ((1.0 - target) * active).sum()
+        pos_weight = (negative / positive.clamp_min(1.0)).clamp(1.0, 8.0)
+        pixel_loss = F.binary_cross_entropy_with_logits(logits, target, pos_weight=pos_weight, reduction="none")
+        return (pixel_loss * active).sum() / active.sum().clamp_min(1.0)
+
+    @staticmethod
+    def query_focal_loss(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Focal loss normalized by the number of sparse small-object query pixels."""
+        probability = logits.sigmoid()
+        bce = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+        focal_weight = target * (1.0 - probability).pow(2) + (1.0 - target) * probability.pow(2) * 0.25
+        return (bce * focal_weight).sum() / target.sum().clamp_min(1.0)
+
+    def adjacent_exclusivity_loss(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        fg_mask: torch.Tensor,
+        target_gt_idx: torch.Tensor,
+        pred_masks: torch.Tensor,
+        proto: torch.Tensor,
+    ) -> torch.Tensor:
+        """Penalize one instance mask leaking into a neighboring GT instance corridor."""
+        losses = []
+        size = tuple(proto.shape[-2:])
+        for image_index, (fg_i, gt_idx_i, coefficients_i, proto_i) in enumerate(
+            zip(fg_mask, target_gt_idx, pred_masks, proto)
+        ):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if len(instances) < 2 or not fg_i.any():
+                continue
+            assigned = gt_idx_i[fg_i]
+            coefficients = coefficients_i[fg_i]
+            union = instances.amax(dim=0)
+            for instance_index in torch.unique(assigned):
+                index = int(instance_index)
+                if index >= len(instances):
+                    continue
+                mean_coefficient = coefficients[assigned == instance_index].mean(dim=0)
+                predicted = torch.einsum("c,chw->hw", mean_coefficient, proto_i)
+                own = instances[index : index + 1, None]
+                other = (union - instances[index]).clamp_min(0)
+                corridor = (F.max_pool2d(own, 5, stride=1, padding=2)[0, 0] > 0) & (other > 0)
+                if corridor.any():
+                    losses.append(
+                        F.binary_cross_entropy_with_logits(
+                            predicted[corridor], torch.zeros_like(predicted[corridor])
+                        )
+                    )
+        return torch.stack(losses).mean() if losses else proto.sum() * 0.0
 
     @staticmethod
     def single_mask_loss(

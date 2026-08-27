@@ -1,42 +1,140 @@
-# Byte-compiled
-__pycache__/
-*.py[cod]
-*$py.class
+# ==============================================================================
+# Git Ignore Configuration for Citrus Vision Research Repository
+# ==============================================================================
 
-# Word & Documents
-*.docx
-*.docm
-*.dotx
+# ------------------------------------------------------------------------------
+# 1. Experiment Results & Training Artifacts (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+# All experiment runs, results, and evaluation outputs
+runs/
+**/runs/
+**/results/
+1_results/
+**/1_results/
+1_SEVER/results/
+1_SEVER/archive/
+**/1_batch/logs/
+**/_analysis/
+**/_analysis_*/
+*.log
+*.tfevents.*
+experiment_ledger.jsonl
 
-# Archives
-*.zip
-*.rar
-*.7z
+# Batch images generated during training
+**/train_batch*.jpg
+**/train_batch*.png
+**/val_batch*.jpg
+**/val_batch*.png
+**/confusion_matrix*.png
+**/BoxF1_curve.png
+**/BoxPR_curve.png
+**/BoxP_curve.png
+**/BoxR_curve.png
+**/MaskF1_curve.png
+**/MaskPR_curve.png
+**/MaskP_curve.png
+**/MaskR_curve.png
+**/results.png
+**/labels.jpg
+**/labels_correlogram.jpg
 
-# Media
+# ------------------------------------------------------------------------------
+# 2. Model Weights & Checkpoints (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+*.pt
+*.pth
+*.pkl
+*.onnx
+*.engine
+*.torchscript
+*.bin
+*.safetensors
+weights/
+**/weights/
+
+# ------------------------------------------------------------------------------
+# 3. Datasets & Raw Media (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+/data/
+**/data/
+/datasets/
+**/datasets/
+**/dataset/
+4_class_ZhuQIBing/5 FinalExam/dataset/
+AFCLIP/
+
+# Media files
 *.mp4
 *.avi
 *.mov
-...
+*.mkv
+*.flv
+*.wmv
 
-# Model weights & logs
-*.pth
-*.pt
-*.pkl
-*.onnx
-...
-weights/
-runs/
+# Archives & server deployment zip packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
 
-# Datasets
-/data/
-/datasets/
-4_class_ZhuQIBing/5 FinalExam/dataset/
+# ------------------------------------------------------------------------------
+# 4. Python Bytecode, Caches & Environments
+# ------------------------------------------------------------------------------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+.eggs/
 
-# Environments & IDE
+# Virtual environments
 .venv/
+venv/
+env/
+.conda/
+
+# ------------------------------------------------------------------------------
+# 5. IDE, Editors & OS Files
+# ------------------------------------------------------------------------------
 .idea/
+**/.idea/
 .vscode/
-...
-# Project data and images
-AFCLIP/
+**/.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*.swp
+*~
+
+# ------------------------------------------------------------------------------
+# 6. Local Credentials, Auth & Databases
+# ------------------------------------------------------------------------------
+.env
+.env.*
+/.codex/
+**/.codex/
+**/.codex-switcher/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ------------------------------------------------------------------------------
+# 7. Exceptions (Explicitly keep documentation figures & icons)
+# ------------------------------------------------------------------------------
+!**/figures/*.png
+!**/figures/*.jpg
+!**/figures/*.svg
+!**/figures/*.pdf
+!docs/assets/

@@ -1,0 +1,37 @@
+# 16: final task-focused candidate — same structure as 15, but P2 truly detects ultra-small citrus.
+# The head follows conventional P2/P3/P4/P5 stride order; P2 uses a lightweight depthwise prediction branch.
+nc: 80
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]                 # 2 P2/4
+  - [-1, 1, FrequencyAwareDown, [256]]
+  - [-1, 2, C3k2, [512, False, 0.25]]                 # 4 P3/8
+  - [-1, 1, FrequencyAwareDown, [512]]
+  - [-1, 2, C3k2, [512, True]]                        # 6 P4/16
+  - [-1, 1, CitrusSAVSS, [512, 8, 1.0, 2]]            # 7 P4 local-global camouflage discrimination
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2, [1024, True]]
+  - [-1, 1, SPPF_LSKA, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]                            # 11 P5/32
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 7], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, False]]                       # 14 P4
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, False]]                       # 17 P3
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 2], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, False, 0.25]]                 # 20 P2
+  - [17, 1, Conv, [256, 3, 2]]
+  - [[-1, 14], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, False]]                       # 23 P4
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]
+  - [-1, 2, C3k2, [1024, True]]                       # 26 P5
+  - [[20, 17, 23, 26], 1, SegmentP2DetectBoundary, [nc, 32, 256]]  # detect P2/P3/P4/P5

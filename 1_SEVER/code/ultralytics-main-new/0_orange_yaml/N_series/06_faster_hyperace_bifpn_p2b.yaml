@@ -1,0 +1,31 @@
+# N06: HyperACE P5 + BiFPN neck + C3k2-Faster backbone + P2 boundary head.
+# Evidence: F58 0.67082, F16 0.66821, F05 0.66906.
+nc: 80
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2_Faster, [512, False, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2_Faster, [512, True]]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2_Faster, [1024, True]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 1, HyperACE, [8]]
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 6], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [256, False]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 13], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 10], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [1024, True]]
+  - [[2, 16, 19, 22], 1, SegmentP2Boundary, [nc, 32, 256]]

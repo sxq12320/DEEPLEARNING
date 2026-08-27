@@ -38,6 +38,7 @@ from .lsnet import LSConv
 __all__ = (
     "SPDConv",
     "HWDown",
+    "AAFM",
     "CARAFE",
     "DySample",
     "EMA",
@@ -157,6 +158,44 @@ class HWDown(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         ll, lh, hl, hh = _haar_dwt(x)
         return self.conv(torch.cat([ll, lh, hl, hh], 1))
+
+
+class AAFM(nn.Module):
+    """Anti-Aliasing Frequency Modulation downsampler (AAFM): 面向极小柑橘的抗混叠下采样.
+
+    动机（SFM, TPAMI 2025 的混叠理论 + 本课题数据体检）：stride-2 卷积对高于 Nyquist 的高频
+    （小果边缘/纹理）欠采样 → 混叠，小果信息在前向传播里被毁掉。SFM 的解法是下采样前把高频
+    "调制"保留、上采样时"解调"恢复；但其 ARS 依赖坐标重采样/grid_sample，不利端侧，且其注意力
+    是通用高频、不区分"果"与"叶"。
+
+    本模块的改进（原创组合，非照抄）：
+    1) 用 Haar 小波正交分带替代坐标重采样——LL 作抗混叠主路，LH/HL/HH 显式携带高频，
+       全程 conv/pool/slice，无 FFT/grid_sample，可端侧部署（继承 HWDown/WTConv 路线）；
+    2) 高频残差由"极小果显著性"门控注入：门控同时看暗区（1-亮度）与高频能量，只在"暗且高频"
+       （=远处小果）处保留高频，抑制叶片纹理等无关高频（SFM 所没有的任务感知调制，
+       继承 DFEM 暗区门 + COD 纹理立论 Zhai et al. 2024）；
+    3) LayerScale 残差（init 0.01）→ 起步≈纯 LL 抗混叠下采样，安全迁移 COCO 预训练
+       （继承 CaiT LayerScale 与本库恒等初始化纪律）。
+
+    融合来源: SFM/ARS/MSAU (TPAMI 2025, arXiv:2507.11893) + Haar 下采样 (HWDown, PR 2023;
+    WTConv, ECCV 2024) + 暗区/纹理显著门控 (DFEM; Zhai et al. 2024) + LayerScale (CaiT, 2021).
+    """
+
+    def __init__(self, c1: int, c2: int):
+        super().__init__()
+        self.cv_ll = Conv(c1, c2, 1, 1)  # 低频主路（抗混叠基）
+        self.cv_h = Conv(c1 * 3, c2, 1, 1)  # 高频携带支路
+        self.gate = nn.Sequential(nn.Conv2d(2, 1, 1), nn.Sigmoid())  # 极小果显著性门（暗+高频）
+        self.gamma = nn.Parameter(0.01 * torch.ones(c2, 1, 1))  # LayerScale, 恒等起步
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        ll, lh, hl, hh = _haar_dwt(x)
+        main = self.cv_ll(ll)  # c2, half-res
+        h = self.cv_h(torch.cat([lh, hl, hh], 1))  # c2, half-res
+        lum = torch.sigmoid(main.mean(1, keepdim=True))  # 响应亮度
+        tex = (h - F.avg_pool2d(h, 3, 1, 1)).abs().mean(1, keepdim=True)  # 高频能量
+        g = self.gate(torch.cat([1.0 - lum, tex], 1))  # 暗且高频 → 小果
+        return main + self.gamma * (h * g)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

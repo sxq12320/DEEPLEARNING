@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10-hybrid 架构图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAFBFC; --panel:#FFFFFF; --ink:#1A2430; --sub:#5A6B7C; --line:#D7E0E8;
+  --base:#EDF1F5; --base-line:#C3D0DB;
+  --c1:#31708E; --c1-bg:#E7F0F5;   /* 分层骨干 */
+  --c2:#6E5AA0; --c2-bg:#EFEBF7;   /* LSKA */
+  --c3:#2E8B74; --c3-bg:#E6F4F0;   /* CARAFE */
+  --c4:#B07A2A; --c4-bg:#F8F0E2;   /* BiFPN */
+  --c5:#B0483F; --c5-bg:#F8EAE8;   /* P2 head */
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12181F; --panel:#1A222B; --ink:#E8EEF3; --sub:#9AAAB9; --line:#2C3945;
+    --base:#232D37; --base-line:#3A4855;
+    --c1:#6FA8C4; --c1-bg:#20303A; --c2:#A08CCB; --c2-bg:#2A2536; --c3:#5FB39B; --c3-bg:#1E322C;
+    --c4:#D2A35C; --c4-bg:#352B1B; --c5:#D07A71; --c5-bg:#372321;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12181F; --panel:#1A222B; --ink:#E8EEF3; --sub:#9AAAB9; --line:#2C3945;
+  --base:#232D37; --base-line:#3A4855;
+  --c1:#6FA8C4; --c1-bg:#20303A; --c2:#A08CCB; --c2-bg:#2A2536; --c3:#5FB39B; --c3-bg:#1E322C;
+  --c4:#D2A35C; --c4-bg:#352B1B; --c5:#D07A71; --c5-bg:#372321;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;padding:28px 20px 48px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:22px;font-weight:700;letter-spacing:.2px}
+.sub{color:var(--sub);font-size:13px;margin-top:4px}
+.band{margin-top:26px}
+.band h2{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);
+  border-left:3px solid var(--line);padding-left:8px;margin-bottom:10px}
+.col{display:flex;flex-direction:column;gap:6px}
+.l{display:flex;align-items:center;gap:10px;background:var(--base);border:1px solid var(--base-line);
+  border-radius:6px;padding:7px 12px;font-size:13px}
+.l .idx{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sub);width:26px;flex:none}
+.l .name{font-weight:600}
+.l .spec{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sub);margin-left:auto;text-align:right;white-space:nowrap}
+.l .src{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sub);background:var(--panel);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap}
+/* improvement tints */
+.i1{background:var(--c1-bg);border-color:var(--c1);box-shadow:inset 3px 0 0 var(--c1)}
+.i2{background:var(--c2-bg);border-color:var(--c2);box-shadow:inset 3px 0 0 var(--c2)}
+.i3{background:var(--c3-bg);border-color:var(--c3);box-shadow:inset 3px 0 0 var(--c3)}
+.i4{background:var(--c4-bg);border-color:var(--c4);box-shadow:inset 3px 0 0 var(--c4)}
+.i5{background:var(--c5-bg);border-color:var(--c5);box-shadow:inset 3px 0 0 var(--c5)}
+.arrow{color:var(--sub);font-size:12px;text-align:center;line-height:1}
+.legend{margin-top:30px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+.legend h3{font-size:13px;font-weight:600;margin-bottom:10px}
+.lg{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;padding:6px 0;border-top:1px dashed var(--line)}
+.lg:first-of-type{border-top:none}
+.sw{width:14px;height:14px;border-radius:3px;flex:none;margin-top:1px}
+.lg b{font-weight:600}
+.lg .ref{color:var(--sub);font-size:11.5px}
+.foot{margin-top:14px;color:var(--sub);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>10-hybrid：面向远距离极小柑橘的 YOLO11 改进架构</h1>
+  <div class="sub">YOLO11n-seg 骨架 + 五处定向改进 · n 尺度实际通道数 · 步长标注 · ⊕ 表示 PAN 横向融合来源</div>
+
+  <div class="band"><h2>Backbone 骨干</h2><div class="col">
+    <div class="l"><span class="idx">0</span><span class="name">Conv</span><span class="spec">16 · /2</span></div>
+    <div class="l"><span class="idx">1</span><span class="name">Conv</span><span class="spec">32 · /4</span></div>
+    <div class="l"><span class="idx">2</span><span class="name">C3k2</span><span class="spec">64 · /4</span><span class="src">→ P2</span></div>
+    <div class="l"><span class="idx">3</span><span class="name">Conv</span><span class="spec">64 · /8</span></div>
+    <div class="l i1"><span class="idx">4</span><span class="name">C3k2_Faster</span><span class="spec">128 · /8</span><span class="src">→ P3</span></div>
+    <div class="l"><span class="idx">5</span><span class="name">Conv</span><span class="spec">128 · /16</span></div>
+    <div class="l i1"><span class="idx">6</span><span class="name">C3k2_Faster</span><span class="spec">128 · /16</span><span class="src">→ P4</span></div>
+    <div class="l"><span class="idx">7</span><span class="name">Conv</span><span class="spec">256 · /32</span></div>
+    <div class="l i1"><span class="idx">8</span><span class="name">C3k2_WT</span><span class="spec">256 · /32</span></div>
+    <div class="l i2"><span class="idx">9</span><span class="name">SPPF_LSKA</span><span class="spec">256 · /32</span></div>
+    <div class="l"><span class="idx">10</span><span class="name">C2PSA</span><span class="spec">256 · /32</span><span class="src">→ P5</span></div>
+  </div></div>
+
+  <div class="band"><h2>Neck 颈（PAN）</h2><div class="col">
+    <div class="l i3"><span class="idx">11</span><span class="name">CARAFE</span><span class="spec">256 · /16</span></div>
+    <div class="l i4"><span class="idx">12</span><span class="name">BiFPNConcat</span><span class="src">⊕ L6</span><span class="spec">384 · /16</span></div>
+    <div class="l"><span class="idx">13</span><span class="name">C3k2</span><span class="spec">128 · /16</span></div>
+    <div class="l i3"><span class="idx">14</span><span class="name">CARAFE</span><span class="spec">128 · /8</span></div>
+    <div class="l i4"><span class="idx">15</span><span class="name">BiFPNConcat</span><span class="src">⊕ L4</span><span class="spec">256 · /8</span></div>
+    <div class="l"><span class="idx">16</span><span class="name">C3k2</span><span class="spec">64 · /8</span><span class="src">P3 输出</span></div>
+    <div class="l"><span class="idx">17</span><span class="name">Conv</span><span class="spec">64 · /16</span></div>
+    <div class="l i4"><span class="idx">18</span><span class="name">BiFPNConcat</span><span class="src">⊕ L13</span><span class="spec">192 · /16</span></div>
+    <div class="l"><span class="idx">19</span><span class="name">C3k2</span><span class="spec">128 · /16</span><span class="src">P4 输出</span></div>
+    <div class="l"><span class="idx">20</span><span class="name">Conv</span><span class="spec">128 · /32</span></div>
+    <div class="l i4"><span class="idx">21</span><span class="name">BiFPNConcat</span><span class="src">⊕ L10</span><span class="spec">384 · /32</span></div>
+    <div class="l"><span class="idx">22</span><span class="name">C3k2</span><span class="spec">256 · /32</span><span class="src">P5 输出</span></div>
+  </div></div>
+
+  <div class="band"><h2>Head 检测头</h2><div class="col">
+    <div class="l i5"><span class="idx">23</span><span class="name">SegmentP2Boundary</span><span class="src">⊕ L2·P3·P4·P5</span><span class="spec">mask + boundary</span></div>
+  </div></div>
+
+  <div class="legend">
+    <h3>五处改进（相对原版 YOLO11）</h3>
+    <div class="lg"><span class="sw" style="background:var(--c1)"></span><div><b>① 分层骨干</b> — 浅层 P3/P4 用 C3k2_Faster（部分卷积省算力），深层 P5 用 C3k2_WT（小波保高频抗模糊）。<div class="ref">FasterNet CVPR'23 · WTConv ECCV'24</div></div></div>
+    <div class="lg"><span class="sw" style="background:var(--c2)"></span><div><b>② SPPF→SPPF_LSKA</b> — 大核分离注意力，为"远处暗点是否果"提供全局上下文。<div class="ref">LSKA, Expert Syst Appl '24</div></div></div>
+    <div class="lg"><span class="sw" style="background:var(--c3)"></span><div><b>③ nearest→CARAFE</b> — 内容感知上采样，恢复小目标边缘细节（非简单复制像素）。<div class="ref">CARAFE, ICCV'19</div></div></div>
+    <div class="lg"><span class="sw" style="background:var(--c4)"></span><div><b>④ Concat→BiFPNConcat</b> — 可学习加权多尺度融合，信息量大的尺度权重更高。<div class="ref">EfficientDet, CVPR'20</div></div></div>
+    <div class="lg"><span class="sw" style="background:var(--c5)"></span><div><b>⑤ Segment→SegmentP2Boundary</b> — 引入 P2 高分辨率支路精炼掩码原型 + 训练期边界监督，锐化小果掩码（改善 mAP50-95）。<div class="ref">PointRend / RefineMask 谱系</div></div></div>
+    <div class="foot">n 尺度（width 0.25）实际通道数；/2…/32 为步长。灰底为与原版 YOLO11 相同的层，彩底为改进层。观测 Mask AP50-95 ≈ 0.677（对 amp=1 旧基线，同协议基线待定）。</div>
+  </div>
+</div>
+</body>
+</html>

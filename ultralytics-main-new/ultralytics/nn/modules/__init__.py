@@ -87,6 +87,9 @@ from .head import (
     Pose26,
     RTDETRDecoder,
     Segment,
+    SegmentCitrusAux,
+    SegmentCitrusLite,
+    SegmentCitrusTopo,
     SegmentP2CFS,
     Segment26,
     SemanticSegment,
@@ -188,6 +191,7 @@ from .hvi_enhance import (
     RGBHVI,
 )
 from .p2_cfs_attention import P2CFSAttention
+from .citrus_topo import CitrusBoundaryFusion, CitrusScaleFusion, CitrusTrainAux, SPPFLSKAResidual, SPPFRepContext
 
 __all__ = (
     "AIFI",
@@ -251,6 +255,11 @@ __all__ = (
     "Pose",
     "Pose26",
     "P2CFSAttention",
+    "CitrusBoundaryFusion",
+    "CitrusScaleFusion",
+    "CitrusTrainAux",
+    "SPPFLSKAResidual",
+    "SPPFRepContext",
     "Proto",
     "RTDETRDecoder",
     "RepC3",
@@ -260,6 +269,9 @@ __all__ = (
     "ResNetLayer",
     "SCDown",
     "Segment",
+    "SegmentCitrusAux",
+    "SegmentCitrusLite",
+    "SegmentCitrusTopo",
     "SegmentP2CFS",
     "Segment26",
     "SemanticSegment",

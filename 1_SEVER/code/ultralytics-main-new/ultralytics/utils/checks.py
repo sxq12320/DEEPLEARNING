@@ -329,8 +329,6 @@ def check_font(font="Arial.ttf"):
     Returns:
         (Path | str): Resolved font file path.
     """
-    from matplotlib import font_manager  # scope for faster 'import ultralytics'
-
     # Check USER_CONFIG_DIR
     name = Path(font).name
     file = USER_CONFIG_DIR / name
@@ -338,6 +336,10 @@ def check_font(font="Arial.ttf"):
         return file
 
     # Check system fonts
+    # Keep Matplotlib optional when the requested Ultralytics font is already cached. Model construction, training,
+    # and validation do not otherwise require importing its plotting stack.
+    from matplotlib import font_manager  # scope for faster 'import ultralytics'
+
     matches = [s for s in font_manager.findSystemFonts() if font in s]
     if any(matches):
         return matches[0]

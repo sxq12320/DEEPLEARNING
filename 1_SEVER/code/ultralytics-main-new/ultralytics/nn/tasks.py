@@ -36,11 +36,15 @@ from ultralytics.nn.modules import (
     C2fPSA,
     C3Ghost,
     C3k2,
+    C3k2_Faster,
+    C3k2_WT,
     C3x,
     CBFuse,
     CBLinear,
+    CBAM,
     Classify,
     Concat,
+    CARAFE,
     Conv,
     Conv2,
     ConvTranspose,
@@ -65,8 +69,15 @@ from ultralytics.nn.modules import (
     RTDETRDecoder,
     SCDown,
     Segment,
+    SegmentCitrusAux,
+    SegmentCitrusBLite,
+    SegmentCitrusBQuality,
+    SegmentCitrusLite,
+    SegmentCitrusLiteBQ,
+    SegmentCitrusTopo,
     SegmentP2Boundary,
     SegmentP2CFS,
+    SegmentP2DetectBoundary,
     Segment26,
     SemanticSegment,
     TorchVision,
@@ -134,18 +145,23 @@ from ultralytics.nn.modules import (
     HVIEnhance,
     # P2 channel-frequency-spatial attention
     P2CFSAttention,
-    # CBAM attention (stock module, registered for citrus experiments)
-    CBAM,
-    # Citrus far-field small-object modules (柑橘远距离小目标改进)
     BiFPNConcat,
+    CitrusDetailInject,
+    CitrusPagFM,
+    CitrusScaleFusion,
+    LiteHRDetailBlock,
+    SPPFLSKAResidual,
+    SPPF_LSKA,
+    SPPFRepContext,
+)
+from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
+from ultralytics.nn.modules.citrus_far import (
+    AAFM,
     C3k2_DWR,
-    C3k2_Faster,
     C3k2_LS,
     C3k2_MoCE,
     C3k2_SXQ,
-    C3k2_WT,
     CAA,
-    CARAFE,
     CSFG,
     CoordAtt,
     DFEM,
@@ -165,12 +181,11 @@ from ultralytics.nn.modules import (
     PCFA,
     RFB,
     SPDConv,
-    SPPF_LSKA,
     SimAM,
     TDAM,
     TGP,
 )
-from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
+from ultralytics.nn.modules.citrus_savss import CitrusSAVSS, FrequencyAwareDown
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, SETTINGS, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import REMOTE_FILE_PREFIXES, check_file, check_requirements, check_suffix, check_yaml
@@ -1810,10 +1825,15 @@ def parse_model(d, ch, verbose=True):
             DGFFN,
             C2MANO,
             P2CFSAttention,
-            # citrus far-field modules with (c1, c2, ...) channel semantics
             SPDConv,
             HWDown,
+            AAFM,
+            FrequencyAwareDown,
+            CitrusSAVSS,
+            SPPFLSKAResidual,
             SPPF_LSKA,
+            SPPFRepContext,
+            LiteHRDetailBlock,
             RFB,
             C3k2_Faster,
             C3k2_WT,
@@ -1830,6 +1850,12 @@ def parse_model(d, ch, verbose=True):
             C2,
             C2f,
             C3k2,
+            C3k2_Faster,
+            C3k2_WT,
+            C3k2_DWR,
+            C3k2_LS,
+            C3k2_SXQ,
+            C3k2_MoCE,
             C2fAttn,
             C3,
             C3TR,
@@ -1842,12 +1868,6 @@ def parse_model(d, ch, verbose=True):
             A2C2f,
             SFM,
             C2MANO,
-            C3k2_Faster,
-            C3k2_WT,
-            C3k2_DWR,
-            C3k2_LS,
-            C3k2_SXQ,
-            C3k2_MoCE,
         }
     )
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
@@ -1875,7 +1895,7 @@ def parse_model(d, ch, verbose=True):
             if m in repeat_modules:
                 args.insert(2, n)  # number of repeats
                 n = 1
-            if m in {C3k2, C3k2_Faster, C3k2_WT, C3k2_DWR, C3k2_LS, C3k2_SXQ, C3k2_MoCE}:  # for M/L/X sizes
+            if m in {C3k2, C3k2_Faster, C3k2_WT, C3k2_DWR, C3k2_LS, C3k2_SXQ, C3k2_MoCE}:
                 legacy = False
                 if scale in "mlx":
                     args[3] = True
@@ -1899,6 +1919,32 @@ def parse_model(d, ch, verbose=True):
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
+        elif m is CitrusScaleFusion:
+            if not isinstance(f, list):
+                raise ValueError("CitrusScaleFusion requires a list of feature indices")
+            c2 = sum(ch[x] for x in f)
+            args = [[ch[x] for x in f], *args]
+        elif m in {CitrusPagFM, CitrusDetailInject}:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError(f"{m.__name__} requires exactly two feature indices")
+            c2 = ch[f[0]]
+            args = [[ch[x] for x in f], *args]
+        elif m in {EMA, SimAM, CoordAtt, ELA, CAA, CBAM, LIAM, DFEM, FarFormer, LumiFormer, TDAM, MWCA,
+                   HCO, HyperACE, PCFA, HyperRes}:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m in {CARAFE, DySample}:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m is BiFPNConcat:
+            c2 = sum(ch[x] for x in f)
+            args = [len(f), *args]
+        elif m is CSFG:
+            c2 = ch[f[1]]
+            args = [ch[f[0]], ch[f[1]], *args]
+        elif m is HSF:
+            c2 = ch[f[0]]
+            args = [ch[f[0]], ch[f[1]], *args]
         elif m is ESOFusion:
             # ESOFusion 输出 = cat(f_clean, f_fused_p3)，通道数 = ch[f[0]] + ch[f[1]]
             if isinstance(f, list):
@@ -1922,28 +1968,8 @@ def parse_model(d, ch, verbose=True):
             else:
                 c2 = ch[f]
                 args = [c2, c2]
-        elif m in {EMA, SimAM, CoordAtt, ELA, CAA, CBAM, LIAM, DFEM, FarFormer, LumiFormer, TDAM, MWCA, HCO, HyperACE, PCFA, HyperRes}:
-            # 单输入注意力/增强模块：输出通道 = 输入通道，通道数注入为第一个参数
-            c2 = ch[f]
-            args = [c2, *args]
-        elif m in {CARAFE, DySample}:
-            # 内容感知上采样：输出通道 = 输入通道，空间 2x
-            c2 = ch[f]
-            args = [c2, *args]
-        elif m is BiFPNConcat:
-            # BiFPN 加权 concat：输出通道 = 各输入通道之和，权重个数 = 输入路数
-            c2 = sum(ch[x] for x in f)
-            args = [len(f), *args]
-        elif m is CSFG:
-            # 跨级小目标引导：输入 [P2, P3]，输出通道 = P3 通道
-            c2 = ch[f[1]]
-            args = [ch[f[0]], ch[f[1]], *args]
-        elif m is HSF:
-            # 高层筛选融合：输入 [low, high]，输出通道 = low 通道（不翻倍，后续块参数下降）
-            c2 = ch[f[0]]
-            args = [ch[f[0]], ch[f[1]], *args]
         elif m in {HVIEnhance, LCE, TGP}:
-            # 图像域增强前端 (HVI / LCE 暗区曲线 / TGP 纹理先验): 3-ch image in, 3-ch enhanced image out.
+            # HVI low-light enhancement front-end: 3-ch image in, 3-ch enhanced image out.
             # NOT width-scaled — must preserve exactly 3 channels for the backbone stem.
             c1 = ch[f]
             c2 = c1
@@ -2012,7 +2038,14 @@ def parse_model(d, ch, verbose=True):
                 WorldDetect,
                 YOLOEDetect,
                 Segment,
+                SegmentCitrusAux,
+                SegmentCitrusBLite,
+                SegmentCitrusBQuality,
+                SegmentCitrusLite,
+                SegmentCitrusLiteBQ,
+                SegmentCitrusTopo,
                 SegmentP2Boundary,
+                SegmentP2DetectBoundary,
                 SegmentP2CFS,
                 Segment26,
                 YOLOESegment,
@@ -2024,10 +2057,27 @@ def parse_model(d, ch, verbose=True):
             }
         ):
             args.extend([reg_max, end2end, [ch[x] for x in f]])
-            if m in {Segment, SegmentP2Boundary, SegmentP2CFS, YOLOESegment, Segment26, YOLOESegment26}:
+            if m in {
+                Segment,
+                SegmentCitrusAux,
+                SegmentCitrusBLite,
+                SegmentCitrusBQuality,
+                SegmentCitrusLite,
+                SegmentCitrusLiteBQ,
+                SegmentCitrusTopo,
+                SegmentP2Boundary,
+                SegmentP2DetectBoundary,
+                SegmentP2CFS,
+                YOLOESegment,
+                Segment26,
+                YOLOESegment26,
+            }:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
             if m in {
-                Detect, YOLOEDetect, Segment, SegmentP2Boundary, SegmentP2CFS, Segment26, YOLOESegment, YOLOESegment26,
+                Detect, YOLOEDetect, Segment, SegmentCitrusAux, SegmentCitrusBLite, SegmentCitrusBQuality,
+                SegmentCitrusLite, SegmentCitrusLiteBQ, SegmentCitrusTopo,
+                SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
+                Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
             }:
                 m.legacy = legacy

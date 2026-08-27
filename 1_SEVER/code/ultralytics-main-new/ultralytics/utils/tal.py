@@ -37,8 +37,6 @@ class TaskAlignedAssigner(nn.Module):
         stride: list = [8, 16, 32],
         eps: float = 1e-9,
         topk2=None,
-        metric: str = "ciou",
-        min_pos: bool = False,
     ):
         """Initialize a TaskAlignedAssigner object with customizable hyperparameters.
 
@@ -60,9 +58,6 @@ class TaskAlignedAssigner(nn.Module):
         self.stride = stride
         self.stride_val = self.stride[1] if len(self.stride) > 1 else self.stride[0]
         self.eps = eps
-        # GA-TAL 扩展（柑橘远距离小目标）：metric = ciou(默认, 原版行为) / nwd / mix；min_pos = 每 GT 保底 1 正样本
-        self.metric = str(metric or "ciou").lower()
-        self.min_pos = bool(min_pos)
 
     @torch.no_grad()
     def forward(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
@@ -172,25 +167,6 @@ class TaskAlignedAssigner(nn.Module):
         # Merge all mask to a final mask, (b, max_num_obj, h*w)
         mask_pos = mask_topk * mask_in_gts * mask_gt
 
-        if self.min_pos:
-            # GA-TAL 保底分配（柑橘远距离小目标扩展）：<16px 微小 GT 可能不含任何 anchor 中心
-            # （select_candidates_in_gts 全零 → 正样本为 0，该果整个训练期学不到）。
-            # 依据: RFLA 的层级补偿思想 (Xu et al., ECCV 2022, arXiv:2208.08738)。
-            # 做法：对正样本为 0 的有效 GT，绕过 in-gts 约束，取中心距离最近的 anchor 强制为正，
-            # 并为其计算真实 metric（含 0.05 的 overlap 下限，保证 target_scores 权重非零）。
-            empty = (mask_pos.sum(-1) == 0) & mask_gt.squeeze(-1).bool()  # (b, n_max)
-            if empty.any():
-                b_idx, g_idx = empty.nonzero(as_tuple=True)
-                gt_sel = gt_bboxes[b_idx, g_idx]  # (k, 4) xyxy
-                gt_c = (gt_sel[:, :2] + gt_sel[:, 2:]) / 2  # (k, 2)
-                a_sel = ((gt_c.unsqueeze(1) - anc_points.unsqueeze(0)) ** 2).sum(-1).argmin(1)  # (k,)
-                pd_sel = pd_bboxes[b_idx, a_sel]  # (k, 4)
-                ov = self.iou_calculation(gt_sel, pd_sel).clamp(min=0.05)
-                sc = pd_scores[b_idx, a_sel, gt_labels[b_idx, g_idx].squeeze(-1).long()].clamp(min=self.eps)
-                mask_pos[b_idx, g_idx, a_sel] = 1.0
-                overlaps[b_idx, g_idx, a_sel] = ov
-                align_metric[b_idx, g_idx, a_sel] = (sc.pow(self.alpha) * ov.pow(self.beta)).clamp(min=self.eps)
-
         return mask_pos, align_metric, overlaps
 
     def get_box_metrics(self, pd_scores, pd_bboxes, gt_labels, gt_bboxes, mask_gt):
@@ -236,19 +212,6 @@ class TaskAlignedAssigner(nn.Module):
         Returns:
             (torch.Tensor): IoU values between each pair of boxes.
         """
-        m = getattr(self, "metric", "ciou")
-        if m == "nwd":
-            # GA-TAL 高斯度量（柑橘远距离小目标扩展）：NWD 对微小框的像素级偏移不敏感，
-            # 避免 IoU 在 <16px 尺度坍缩导致 t=s^α·u^β 全零（Wang et al. 2021, arXiv:2110.13389）
-            from .iou_ext import nwd
-
-            return nwd(gt_bboxes, pd_bboxes).squeeze(-1).clamp_(0)
-        if m == "mix":
-            # 混合度量：大目标保留 CIoU 的形状敏感性，小目标由 NWD 托底
-            from .iou_ext import nwd
-
-            iou = bbox_iou(gt_bboxes, pd_bboxes, xywh=False, CIoU=True).squeeze(-1).clamp_(0)
-            return 0.5 * iou + 0.5 * nwd(gt_bboxes, pd_bboxes).squeeze(-1).clamp_(0)
         return bbox_iou(gt_bboxes, pd_bboxes, xywh=False, CIoU=True).squeeze(-1).clamp_(0)
 
     def select_topk_candidates(self, metrics, topk_mask=None):

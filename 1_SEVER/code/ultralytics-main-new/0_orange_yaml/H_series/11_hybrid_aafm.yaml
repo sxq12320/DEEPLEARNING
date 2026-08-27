@@ -1,0 +1,35 @@
+# 11: 10-hybrid + AAFM anti-aliasing downsampler.
+# Controlled single-variable vs 10_hybrid: the three backbone stride-2 Convs (idx 3/5/7) are
+# replaced by AAFM (anti-aliasing frequency-modulation downsample). Everything else identical,
+# so any delta is attributable to the anti-aliasing change.
+# AAFM = SFM(TPAMI25) modulation idea, re-implemented with Haar wavelets (deploy-friendly, no
+# grid_sample) + tiny-fruit saliency gating (dark & high-freq) + LayerScale identity init.
+nc: 80
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, AAFM, [256]]
+  - [-1, 2, C3k2_Faster, [512, False, 0.25]]
+  - [-1, 1, AAFM, [512]]
+  - [-1, 2, C3k2_Faster, [512, True]]
+  - [-1, 1, AAFM, [1024]]
+  - [-1, 2, C3k2_WT, [1024, True]]
+  - [-1, 1, SPPF_LSKA, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [-1, 1, CARAFE, []]
+  - [[-1, 6], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, CARAFE, []]
+  - [[-1, 4], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [256, False]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 13], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 10], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [1024, True]]
+  - [[2, 16, 19, 22], 1, SegmentP2Boundary, [nc, 32, 256]]

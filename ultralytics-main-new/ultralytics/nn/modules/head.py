@@ -18,6 +18,7 @@ from ultralytics.utils.torch_utils import TORCH_1_11, fuse_conv_and_bn, smart_in
 from .block import DFL, SAVPE, BNContrastiveHead, ContrastiveHead, Proto, Proto26, RealNVP, Residual, SwiGLUFFN
 from .conv import Conv, DWConv
 from .p2_cfs_attention import P2CFSAttention
+from .citrus_topo import CitrusBoundaryFusion, CitrusTrainAux
 from .transformer import MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer
 from .utils import bias_init_with_prob, linear_init
 
@@ -28,7 +29,10 @@ __all__ = (
     "Pose",
     "RTDETRDecoder",
     "Segment",
+    "SegmentCitrusAux",
+    "SegmentCitrusLite",
     "SegmentP2CFS",
+    "SegmentCitrusTopo",
     "SemanticSegment",
     "YOLOEDetect",
     "YOLOESegment",
@@ -416,6 +420,122 @@ class SegmentP2CFS(Segment):
         if self.training:
             return preds
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusTopo(Segment):
+    """Pretraining-compatible dual-resolution head for citrus topology and tiny fruit.
+
+    Detection and mask coefficients remain on the original P3/P4/P5 features.
+    P2 contributes only to candidate search and a mutually fused boundary branch,
+    which refines the standard P3 prototype input through a zero-initialized residual.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentCitrusTopo expects P2/P3/P4/P5 channels, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+        self.topology_fusion = CitrusBoundaryFusion(p2_channels, detect_channels[0])
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run the standard detector and topology-aware mask prototype branch."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        refined_p3, boundary_logits, query_logits = self.topology_fusion(p2, detect_features[0])
+        proto = self.proto(refined_p3)
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2many"]["citrus_boundary"] = boundary_logits
+                preds["one2many"]["citrus_query"] = query_logits
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+                preds["citrus_boundary"] = boundary_logits
+                preds["citrus_query"] = query_logits
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusAux(Segment):
+    """Standard YOLO segment head with inference-free task-specific supervision.
+
+    P2 is consumed only while training. Evaluation and export execute the exact
+    P3/P4/P5 detection and prototype path used by ``Segment``; consequently the
+    boundary, tiny-query, and camouflage supervision adds no deployment latency.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentCitrusAux expects P2/P3/P4/P5 channels, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+        self.citrus_aux = CitrusTrainAux(p2_channels, detect_channels[0])
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run the standard inference path and attach auxiliary logits only during training."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(detect_features[0])
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+
+        if self.training:
+            boundary_logits, query_logits, contrast_logits = self.citrus_aux(p2, detect_features[0])
+            target = preds["one2many"] if self.end2end else preds
+            target["citrus_boundary"] = boundary_logits
+            target["citrus_query"] = query_logits
+            target["citrus_contrast"] = contrast_logits
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusLite(SegmentCitrusAux):
+    """Latency-oriented citrus head with one prediction block per task and scale.
+
+    The stock head repeats two spatial blocks for box and mask-coefficient
+    prediction. This variant retains the first pretrained-compatible block and
+    removes the duplicate. Classification uses one depthwise-separable block.
+    The prototype generator is unchanged, while ``SegmentCitrusAux`` supplies
+    training-only task supervision.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        detect_channels = ch[1:]
+        box_channels = max(16, detect_channels[0] // 4, self.reg_max * 4)
+        cls_channels = max(32, detect_channels[0] // 2, min(self.nc, 100))
+        mask_channels = max(detect_channels[0] // 4, self.nm)
+
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(Conv(x, box_channels, 3), nn.Conv2d(box_channels, 4 * self.reg_max, 1))
+            for x in detect_channels
+        )
+        self.cv3 = nn.ModuleList(
+            nn.Sequential(
+                DWConv(x, x, 3),
+                Conv(x, cls_channels, 1),
+                nn.Conv2d(cls_channels, self.nc, 1),
+            )
+            for x in detect_channels
+        )
+        self.cv4 = nn.ModuleList(
+            nn.Sequential(Conv(x, mask_channels, 3), nn.Conv2d(mask_channels, self.nm, 1))
+            for x in detect_channels
+        )
+        if end2end:
+            self.one2one_cv2 = copy.deepcopy(self.cv2)
+            self.one2one_cv3 = copy.deepcopy(self.cv3)
+            self.one2one_cv4 = copy.deepcopy(self.cv4)
 
 
 class Segment26(Segment):

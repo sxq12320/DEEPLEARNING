@@ -1,0 +1,31 @@
+# N08: C3k2-SXQ backbone + SPPF-LSKA + CARAFE + P2 boundary head.
+# Evidence: F63 0.66830, F14 0.67599, F17 0.67170.
+nc: 80
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2_SXQ, [512, False, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2_SXQ, [512, True]]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2_SXQ, [1024, True]]
+  - [-1, 1, SPPF_LSKA, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [-1, 1, CARAFE, []]
+  - [[-1, 6], 1, Concat, [1]]
+  - [-1, 2, C3k2_SXQ, [512, False]]
+  - [-1, 1, CARAFE, []]
+  - [[-1, 4], 1, Concat, [1]]
+  - [-1, 2, C3k2_SXQ, [256, False]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 13], 1, Concat, [1]]
+  - [-1, 2, C3k2_SXQ, [512, False]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 10], 1, Concat, [1]]
+  - [-1, 2, C3k2_SXQ, [1024, True]]
+  - [[2, 16, 19, 22], 1, SegmentP2Boundary, [nc, 32, 256]]

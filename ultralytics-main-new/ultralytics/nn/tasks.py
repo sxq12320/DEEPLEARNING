@@ -65,6 +65,9 @@ from ultralytics.nn.modules import (
     RTDETRDecoder,
     SCDown,
     Segment,
+    SegmentCitrusAux,
+    SegmentCitrusLite,
+    SegmentCitrusTopo,
     SegmentP2CFS,
     Segment26,
     SemanticSegment,
@@ -133,6 +136,9 @@ from ultralytics.nn.modules import (
     HVIEnhance,
     # P2 channel-frequency-spatial attention
     P2CFSAttention,
+    CitrusScaleFusion,
+    SPPFLSKAResidual,
+    SPPFRepContext,
 )
 from ultralytics.nn.modules.ct_modules import APFM, KalmanGatedFusion, ESOFusion, IDAPBCFusion, BypassModule
 from ultralytics.nn.modules.shufflenetv2_depth import ShuffleV2Stem_Depth, ShuffleV2Stage
@@ -1774,6 +1780,8 @@ def parse_model(d, ch, verbose=True):
             DGFFN,
             C2MANO,
             P2CFSAttention,
+            SPPFLSKAResidual,
+            SPPFRepContext,
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1846,6 +1854,11 @@ def parse_model(d, ch, verbose=True):
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
+        elif m is CitrusScaleFusion:
+            if not isinstance(f, list):
+                raise ValueError("CitrusScaleFusion requires a list of feature indices")
+            c2 = sum(ch[x] for x in f)
+            args = [[ch[x] for x in f], *args]
         elif m is ESOFusion:
             # ESOFusion 输出 = cat(f_clean, f_fused_p3)，通道数 = ch[f[0]] + ch[f[1]]
             if isinstance(f, list):
@@ -1939,6 +1952,9 @@ def parse_model(d, ch, verbose=True):
                 WorldDetect,
                 YOLOEDetect,
                 Segment,
+                SegmentCitrusAux,
+                SegmentCitrusLite,
+                SegmentCitrusTopo,
                 SegmentP2CFS,
                 Segment26,
                 YOLOESegment,
@@ -1950,10 +1966,20 @@ def parse_model(d, ch, verbose=True):
             }
         ):
             args.extend([reg_max, end2end, [ch[x] for x in f]])
-            if m in {Segment, SegmentP2CFS, YOLOESegment, Segment26, YOLOESegment26}:
+            if m in {
+                Segment,
+                SegmentCitrusAux,
+                SegmentCitrusLite,
+                SegmentCitrusTopo,
+                SegmentP2CFS,
+                YOLOESegment,
+                Segment26,
+                YOLOESegment26,
+            }:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
             if m in {
-                Detect, YOLOEDetect, Segment, SegmentP2CFS, Segment26, YOLOESegment, YOLOESegment26,
+                Detect, YOLOEDetect, Segment, SegmentCitrusAux, SegmentCitrusLite, SegmentCitrusTopo, SegmentP2CFS,
+                Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
             }:
                 m.legacy = legacy

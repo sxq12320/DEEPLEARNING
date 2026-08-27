@@ -1,0 +1,29 @@
+# path: /data/sxq/datasets/apple/yolo
+
+# train: train/images
+# val: val/images
+# test: test/images
+
+# channels: 4
+# nc: 1
+# names: ["apple"]
+
+path: E:/mastercode/data/Apple_RGB_D_Amoal/apple_rgbd_amoal_png
+
+train: train/images
+val: val/images
+test: test/images
+
+channels: 4
+nc: 1
+names: ["apple"]
+
+
+
+# 保存的 .npy 文件形状为 (H, W, 4)：
+
+# 通道索引	内容	说明
+# [:, :, 0]	Blue	cv2 读取顺序为 BGR
+# [:, :, 1]	Green	
+# [:, :, 2]	Red	
+# [:, :, 3]	Depth	float32，单位米 (mm÷1000)

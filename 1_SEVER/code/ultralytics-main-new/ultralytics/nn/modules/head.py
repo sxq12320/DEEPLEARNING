@@ -17,6 +17,7 @@ from ultralytics.utils.torch_utils import TORCH_1_11, fuse_conv_and_bn, smart_in
 
 from .block import DFL, SAVPE, BNContrastiveHead, ContrastiveHead, Proto, Proto26, RealNVP, Residual, SwiGLUFFN
 from .conv import Conv, DWConv
+from .citrus_topo import CitrusBoundaryFusion, CitrusBoundaryQueryAux, CitrusTrainAux
 from .p2_cfs_attention import P2CFSAttention
 from .transformer import MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer
 from .utils import bias_init_with_prob, linear_init
@@ -28,8 +29,15 @@ __all__ = (
     "Pose",
     "RTDETRDecoder",
     "Segment",
+    "SegmentCitrusAux",
+    "SegmentCitrusBLite",
+    "SegmentCitrusBQuality",
+    "SegmentCitrusLite",
+    "SegmentCitrusLiteBQ",
     "SegmentP2Boundary",
     "SegmentP2CFS",
+    "SegmentP2DetectBoundary",
+    "SegmentCitrusTopo",
     "SemanticSegment",
     "YOLOEDetect",
     "YOLOESegment",
@@ -369,6 +377,121 @@ class Segment(Detect):
         self.cv2 = self.cv3 = self.cv4 = None
 
 
+class SegmentP2Boundary(Segment):
+    """Original G10 P2 detail head for high-resolution instance-mask prototypes.
+
+    Detection and mask coefficients remain on P3/P4/P5. P2 supplies a learned residual to the P3 prototype branch and
+    a boundary gate, matching the implementation used by the archived G10 baseline experiment.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentP2Boundary expects channels for P2/P3/P4/P5, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+
+        detail_channels = max(32, min(128, p2_channels))
+        self.p2_detail = nn.Sequential(Conv(p2_channels, detail_channels, 3), Conv(detail_channels, detail_channels, 3))
+        self.p2_to_proto = nn.Conv2d(detail_channels, nm, 1, bias=True)
+        self.boundary_head = nn.Conv2d(detail_channels, 1, 1, bias=True)
+
+        # Preserve the pretrained P3 prototype path exactly at initialization.
+        nn.init.zeros_(self.p2_to_proto.weight)
+        nn.init.zeros_(self.p2_to_proto.bias)
+        nn.init.zeros_(self.boundary_head.weight)
+        nn.init.constant_(self.boundary_head.bias, -2.0)
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run P3-P5 detection and refine P3 prototypes with boundary-gated P2 detail."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+
+        detail = self.p2_detail(p2)
+        boundary = self.boundary_head(detail)
+        proto_detail = self.p2_to_proto(detail)
+        proto = self.proto(detect_features[0])
+        if proto_detail.shape[-2:] != proto.shape[-2:]:
+            proto_detail = F.interpolate(proto_detail, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+            boundary = F.interpolate(boundary, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+        proto = proto + proto_detail * (1.0 + boundary.sigmoid())
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2many"]["boundary"] = boundary
+                preds["one2one"]["proto"] = proto.detach()
+                preds["one2one"]["boundary"] = boundary.detach()
+            else:
+                preds["proto"] = proto
+                preds["boundary"] = boundary
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentP2DetectBoundary(Segment):
+    """Four-level tiny-object segment head with P2 detection and boundary-refined P3 prototypes."""
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentP2DetectBoundary expects channels for P2/P3/P4/P5, got {ch}")
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        p2_channels = ch[0]
+        # Keep mask prototypes on P3 while adding P2 box, class, and mask-coefficient predictions.
+        self.proto = Proto(ch[1], self.npr, self.nm)
+
+        def lite_branch(mid_channels: int, out_channels: int) -> nn.Sequential:
+            return nn.Sequential(
+                DWConv(p2_channels, p2_channels, 3),
+                Conv(p2_channels, mid_channels, 1),
+                nn.Conv2d(mid_channels, out_channels, 1),
+            )
+
+        self.cv2[0] = lite_branch(max(32, min(64, p2_channels)), self.reg_max * 4)
+        self.cv3[0] = lite_branch(max(32, min(64, p2_channels)), self.nc)
+        self.cv4[0] = lite_branch(max(16, min(32, p2_channels)), self.nm)
+        if end2end:
+            self.one2one_cv2[0] = copy.deepcopy(self.cv2[0])
+            self.one2one_cv3[0] = copy.deepcopy(self.cv3[0])
+            self.one2one_cv4[0] = copy.deepcopy(self.cv4[0])
+
+        detail_channels = max(32, min(128, p2_channels))
+        self.p2_detail = nn.Sequential(Conv(p2_channels, detail_channels, 3), Conv(detail_channels, detail_channels, 3))
+        self.p2_to_proto = nn.Conv2d(detail_channels, nm, 1, bias=True)
+        self.boundary_head = nn.Conv2d(detail_channels, 1, 1, bias=True)
+        nn.init.zeros_(self.p2_to_proto.weight)
+        nn.init.zeros_(self.p2_to_proto.bias)
+        nn.init.zeros_(self.boundary_head.weight)
+        nn.init.constant_(self.boundary_head.bias, -2.0)
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Detect on P2-P5 and refine P3 mask prototypes using the P2 boundary path."""
+        outputs = Detect.forward(self, x)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        detail = self.p2_detail(x[0])
+        boundary = self.boundary_head(detail)
+        proto_detail = self.p2_to_proto(detail)
+        proto = self.proto(x[1])
+        if proto_detail.shape[-2:] != proto.shape[-2:]:
+            proto_detail = F.interpolate(proto_detail, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+            boundary = F.interpolate(boundary, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+        proto = proto + proto_detail * (1.0 + boundary.sigmoid())
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2many"]["boundary"] = boundary
+                preds["one2one"]["proto"] = proto.detach()
+                preds["one2one"]["boundary"] = boundary.detach()
+            else:
+                preds["proto"] = proto
+                preds["boundary"] = boundary
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
 class SegmentP2CFS(Segment):
     """YOLO11 segment head with a P2-only detail path for mask prototypes.
 
@@ -419,60 +542,286 @@ class SegmentP2CFS(Segment):
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
 
-class SegmentP2Boundary(Segment):
-    """Boundary-aware P2 detail head for high-resolution instance-mask prototypes.
+class SegmentCitrusTopo(Segment):
+    """Pretraining-compatible dual-resolution head for citrus topology and tiny fruit.
 
-    The P2 feature is deliberately excluded from the box/classification pyramid. It only supplies a lightweight
-    residual to the standard P3 prototype branch and predicts a training-time boundary map. This follows the
-    high-resolution mask-refinement principle of PointRend/RefineMask and the joint mask-boundary supervision of
-    BMask R-CNN without the memory cost of adding a full P2 detection level.
+    Detection and mask coefficients remain on the original P3/P4/P5 features.
+    P2 contributes only to candidate search and a mutually fused boundary branch,
+    which refines the standard P3 prototype input through a zero-initialized residual.
     """
 
     def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
-        """Initialize the P2 detail stem, boundary predictor, and standard P3-P5 segmentation head."""
         if len(ch) != 4:
-            raise ValueError(f"SegmentP2Boundary expects channels for P2/P3/P4/P5, got {ch}")
+            raise ValueError(f"SegmentCitrusTopo expects P2/P3/P4/P5 channels, got {ch}")
         p2_channels, *detect_channels = ch
         super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
-
-        detail_channels = max(32, min(128, p2_channels))
-        self.p2_detail = nn.Sequential(Conv(p2_channels, detail_channels, 3), Conv(detail_channels, detail_channels, 3))
-        self.p2_to_proto = nn.Conv2d(detail_channels, nm, 1, bias=True)
-        self.boundary_head = nn.Conv2d(detail_channels, 1, 1, bias=True)
-
-        # The pretrained P3 prototype path is exactly preserved at initialization.
-        nn.init.zeros_(self.p2_to_proto.weight)
-        nn.init.zeros_(self.p2_to_proto.bias)
-        nn.init.zeros_(self.boundary_head.weight)
-        nn.init.constant_(self.boundary_head.bias, -2.0)
+        self.topology_fusion = CitrusBoundaryFusion(p2_channels, detect_channels[0])
 
     def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
-        """Run P3-P5 detection and refine P3 prototypes with boundary-gated P2 detail."""
+        """Run the standard detector and topology-aware mask prototype branch."""
         p2, detect_features = x[0], x[1:]
         outputs = Detect.forward(self, detect_features)
         preds = outputs[1] if isinstance(outputs, tuple) else outputs
-
-        detail = self.p2_detail(p2)
-        boundary = self.boundary_head(detail)
-        proto_detail = self.p2_to_proto(detail)
-        proto = self.proto(detect_features[0])
-        if proto_detail.shape[-2:] != proto.shape[-2:]:
-            proto_detail = F.interpolate(proto_detail, size=proto.shape[-2:], mode="bilinear", align_corners=False)
-            boundary = F.interpolate(boundary, size=proto.shape[-2:], mode="bilinear", align_corners=False)
-        proto = proto + proto_detail * (1.0 + boundary.sigmoid())
+        refined_p3, boundary_logits, query_logits = self.topology_fusion(p2, detect_features[0])
+        proto = self.proto(refined_p3)
 
         if isinstance(preds, dict):
             if self.end2end:
                 preds["one2many"]["proto"] = proto
-                preds["one2many"]["boundary"] = boundary
+                preds["one2many"]["citrus_boundary"] = boundary_logits
+                preds["one2many"]["citrus_query"] = query_logits
                 preds["one2one"]["proto"] = proto.detach()
-                preds["one2one"]["boundary"] = boundary.detach()
             else:
                 preds["proto"] = proto
-                preds["boundary"] = boundary
+                preds["citrus_boundary"] = boundary_logits
+                preds["citrus_query"] = query_logits
         if self.training:
             return preds
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusAux(Segment):
+    """Standard YOLO segment head with inference-free task-specific supervision.
+
+    P2 is consumed only while training. Evaluation and export execute the exact
+    P3/P4/P5 detection and prototype path used by ``Segment``; consequently the
+    boundary, tiny-query, and camouflage supervision adds no deployment latency.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentCitrusAux expects P2/P3/P4/P5 channels, got {ch}")
+        p2_channels, *detect_channels = ch
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(detect_channels))
+        self.citrus_aux = CitrusTrainAux(p2_channels, detect_channels[0])
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run the standard inference path and attach auxiliary logits only during training."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(detect_features[0])
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+
+        if self.training:
+            boundary_logits, query_logits, contrast_logits = self.citrus_aux(p2, detect_features[0])
+            target = preds["one2many"] if self.end2end else preds
+            target["citrus_boundary"] = boundary_logits
+            target["citrus_query"] = query_logits
+            target["citrus_contrast"] = contrast_logits
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusLite(SegmentCitrusAux):
+    """Latency-oriented citrus head with one prediction block per task and scale.
+
+    The stock head repeats two spatial blocks for box and mask-coefficient
+    prediction. This variant retains the first pretrained-compatible block and
+    removes the duplicate. Classification uses one depthwise-separable block.
+    The prototype generator is unchanged, while ``SegmentCitrusAux`` supplies
+    training-only task supervision.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        detect_channels = ch[1:]
+        box_channels = max(16, detect_channels[0] // 4, self.reg_max * 4)
+        cls_channels = max(32, detect_channels[0] // 2, min(self.nc, 100))
+        mask_channels = max(detect_channels[0] // 4, self.nm)
+
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(Conv(x, box_channels, 3), nn.Conv2d(box_channels, 4 * self.reg_max, 1))
+            for x in detect_channels
+        )
+        self.cv3 = nn.ModuleList(
+            nn.Sequential(
+                DWConv(x, x, 3),
+                Conv(x, cls_channels, 1),
+                nn.Conv2d(cls_channels, self.nc, 1),
+            )
+            for x in detect_channels
+        )
+        self.cv4 = nn.ModuleList(
+            nn.Sequential(Conv(x, mask_channels, 3), nn.Conv2d(mask_channels, self.nm, 1))
+            for x in detect_channels
+        )
+        if end2end:
+            self.one2one_cv2 = copy.deepcopy(self.cv2)
+            self.one2one_cv3 = copy.deepcopy(self.cv3)
+            self.one2one_cv4 = copy.deepcopy(self.cv4)
+
+
+class SegmentCitrusLiteBQ(SegmentCitrusLite):
+    """Lite head with training-only boundary and tiny-query supervision.
+
+    The deployed graph is exactly the S04 lightweight P3/P4/P5 head. During
+    training, P2 and P3 additionally supervise visible-mask boundaries and
+    sparse tiny-fruit candidates. Unlike ``SegmentCitrusBLite``, these logits do
+    not alter mask prototypes at inference, preserving the recall-oriented PR
+    behavior selected after the completed S-series analysis.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        del self.citrus_aux
+        self.citrus_bq_aux = CitrusBoundaryQueryAux(ch[0], ch[1])
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run the unchanged lite inference graph and attach B/Q logits only while training."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(detect_features[0])
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+
+        if self.training:
+            boundary_logits, query_logits = self.citrus_bq_aux(p2, detect_features[0])
+            target = preds["one2many"] if self.end2end else preds
+            target["citrus_boundary"] = boundary_logits
+            target["citrus_query"] = query_logits
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusBLite(SegmentCitrusLite):
+    """Light YOLO head with P2 boundary-guided prototype refinement.
+
+    Detection remains on P3/P4/P5, so the persistent P2 branch does not create
+    the dense four-level head cost observed in earlier experiments. P2 changes
+    inference only through the prototype path and supplies training-only
+    boundary, tiny-query, and fruit/context signals.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        self.topology_fusion = CitrusBoundaryFusion(ch[0], ch[1])
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Detect at P3-P5 and refine mask prototypes using the final P2 detail stream."""
+        p2, detect_features = x[0], x[1:]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        refined_p3, boundary_logits, query_logits = self.topology_fusion(p2, detect_features[0])
+        proto = self.proto(refined_p3)
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                target = preds["one2many"]
+                target["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                target = preds
+                target["proto"] = proto
+        else:
+            target = None
+
+        if self.training and target is not None:
+            # Reuse only the local fruit/context output; topology_fusion already
+            # supplies the boundary and small-query logits used by the B series.
+            _, _, contrast_logits = self.citrus_aux(p2, detect_features[0])
+            target["citrus_boundary"] = boundary_logits
+            target["citrus_query"] = query_logits
+            target["citrus_contrast"] = contrast_logits
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusBQuality(SegmentCitrusBLite):
+    """CitrusB head with learned per-anchor mask-quality calibration.
+
+    Mask Scoring R-CNN showed that class confidence is an unreliable mask score.
+    This one-stage adaptation predicts mask IoU from each pyramid feature and its
+    mask coefficients. At inference the learned quality probability multiplies
+    the class probability, changing ranking but adding no proposals or NMS stage.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        detect_channels = ch[1:]
+        self.quality_feature = nn.ModuleList(DWConv(width, width, 3) for width in detect_channels)
+        self.quality_predictor = nn.ModuleList(
+            nn.Sequential(
+                Conv(width + self.nm, max(16, width // 4), 1),
+                nn.Conv2d(max(16, width // 4), 1, 1),
+            )
+            for width in detect_channels
+        )
+        for predictor in self.quality_predictor:
+            nn.init.constant_(predictor[-1].bias, 1.3863)  # initial quality probability = 0.8
+        if end2end:
+            self.one2one_quality_feature = copy.deepcopy(self.quality_feature)
+            self.one2one_quality_predictor = copy.deepcopy(self.quality_predictor)
+
+    @property
+    def one2many(self):
+        """Return dense training branches including mask-quality estimation."""
+        return dict(
+            box_head=self.cv2,
+            cls_head=self.cv3,
+            mask_head=self.cv4,
+            quality_feature=self.quality_feature,
+            quality_predictor=self.quality_predictor,
+        )
+
+    @property
+    def one2one(self):
+        """Return one-to-one branches when end-to-end mode is enabled."""
+        return dict(
+            box_head=self.one2one_cv2,
+            cls_head=self.one2one_cv3,
+            mask_head=self.one2one_cv4,
+            quality_feature=self.one2one_quality_feature,
+            quality_predictor=self.one2one_quality_predictor,
+        )
+
+    def forward_head(
+        self,
+        x: list[torch.Tensor],
+        box_head: torch.nn.Module,
+        cls_head: torch.nn.Module,
+        mask_head: torch.nn.Module,
+        quality_feature: torch.nn.Module,
+        quality_predictor: torch.nn.Module,
+    ) -> dict[str, torch.Tensor]:
+        """Predict boxes, classes, mask coefficients, and mask quality."""
+        preds = Detect.forward_head(self, x, box_head, cls_head)
+        batch_size = x[0].shape[0]
+        mask_maps = [mask_head[i](x[i]) for i in range(self.nl)]
+        quality_maps = [
+            quality_predictor[i](torch.cat((quality_feature[i](x[i]), mask_maps[i]), dim=1))
+            for i in range(self.nl)
+        ]
+        preds["mask_coefficient"] = torch.cat(
+            [mask_map.view(batch_size, self.nm, -1) for mask_map in mask_maps], dim=2
+        )
+        preds["mask_quality"] = torch.cat(
+            [quality_map.view(batch_size, 1, -1) for quality_map in quality_maps], dim=2
+        )
+        return preds
+
+    def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Decode predictions and calibrate class ranking with predicted mask IoU."""
+        boxes = self._get_decode_boxes(x)
+        scores = x["scores"].sigmoid() * x["mask_quality"].sigmoid()
+        return torch.cat((boxes, scores, x["mask_coefficient"]), dim=1)
+
+    def fuse(self) -> None:
+        """Drop training branches after model fusion."""
+        super().fuse()
+        self.quality_feature = self.quality_predictor = None
 
 
 class Segment26(Segment):

@@ -1,0 +1,35 @@
+# 14: requested strict fusion — 10_hybrid + AAFM anti-alias downsampling + CitrusSAVSS at P4.
+# Compare with 10_hybrid, 11_hybrid_aafm and 13_hybrid_savss under the identical baseline recipe.
+nc: 80
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]                 # 2 P2/4
+  - [-1, 1, AAFM, [256]]                              # /4 -> /8
+  - [-1, 2, C3k2_Faster, [512, False, 0.25]]          # 4 P3/8
+  - [-1, 1, AAFM, [512]]                              # /8 -> /16
+  - [-1, 2, C3k2_Faster, [512, True]]                 # 6 P4/16
+  - [-1, 1, CitrusSAVSS, [512, 8, 1.0, 2]]            # 7 local-global citrus context
+  - [-1, 1, AAFM, [1024]]                             # /16 -> /32
+  - [-1, 2, C3k2_WT, [1024, True]]
+  - [-1, 1, SPPF_LSKA, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+
+head:
+  - [-1, 1, CARAFE, []]
+  - [[-1, 7], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]                       # 14 P4
+  - [-1, 1, CARAFE, []]
+  - [[-1, 4], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [256, False]]                       # 17 P3
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 14], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [512, False]]                       # 20 P4
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 11], 1, BiFPNConcat, []]
+  - [-1, 2, C3k2, [1024, True]]                       # 23 P5
+  - [[2, 17, 20, 23], 1, SegmentP2Boundary, [nc, 32, 256]]
+
