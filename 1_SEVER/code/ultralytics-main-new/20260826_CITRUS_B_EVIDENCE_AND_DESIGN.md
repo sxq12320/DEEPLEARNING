@@ -1,6 +1,6 @@
 # CitrusB v2：S 系列全量结果驱动的重设计
 
-更新日期：2026-08-27。实现以 `0_orange_yaml/20260826_citrus_b/` 和自动化测试为准。
+更新日期：2026-08-27。实现以 `0_orange_yaml/B_series/` 和自动化测试为准。
 
 ## 结论
 
@@ -44,7 +44,7 @@ R=0.80 时 precision=0.5628 为关键模型最高；S09 的选定点 precision �
 候选的误检排序和约 0.85-0.89 的候选召回上限，不能通过删掉绘图端点解决。
 
 完整原始统计位于：
-`1_SEVER/results/CITRUS_SWIFT_ALL_300EP/CITRUS_SWIFT_SUMMARY.md` 和
+`1_SEVER/results/S_series/grouped_clean_300ep/CITRUS_SWIFT_SUMMARY.md` 和
 `_pr_supported_diagnostic/pr_summary.json`。
 
 ## 新 B 系列
@@ -63,8 +63,9 @@ R=0.80 时 precision=0.5628 为关键模型最高；S09 的选定点 precision �
 | B09 | RepContext + ScaleFusion + 仅训练 B/Q | **2.697M** | **9.45** | **147.43 ms** | boundary + query |
 
 这些延迟仅用于同机筛选。B09 比 B00 少 5.1% 参数、少 8.7% GFLOPs，本机 CPU median 快约 3.2%；
-B08 用于判断推理期拓扑细化带来的严格 AP 是否足以抵消约 19 ms 的额外延迟和潜在召回损失。B09
-目前只是“推荐筛选候选”，不是已经证明优于基线的最终模型。
+B08 用于判断推理期拓扑细化带来的严格 AP 是否足以抵消约 19 ms 的额外延迟和潜在召回损失。完整
+300 epoch B09 得到 Mask AP50-95=0.61361、P=0.92770、R=0.69263：轻量化成立，但没有超过
+B00，也没有实现预设的召回平衡，故不再列为精度优先候选。
 
 ## 文献与代码边界
 
@@ -95,16 +96,16 @@ python 20260826_citrus_b_batch.py --data /清洗数据/data.yaml --suite smoke -
 # 2. B02-B09 三 epoch 冒烟；B00/B01 已由同协议 S00/S04 覆盖
 python 20260826_citrus_b_batch.py \
   --data /清洗数据/data.yaml --suite smoke --epochs 3 \
-  --batch 4 --workers 4 --device 0 --project 1_results/CITRUS_B_V2_SMOKE
+  --batch 4 --workers 4 --device 0 --project 1_results/B_series/grouped_clean_smoke
 
 # 3. 冒烟全部正常后做含 B00/B01 同周期基线的 50 epoch 结构筛选
 nohup python 20260826_citrus_b_batch.py \
   --data /清洗数据/data.yaml --suite screening --epochs 50 \
-  --batch 16 --workers 4 --device 0 --project 1_results/CITRUS_B_V2_SCREEN_50EP \
+  --batch 16 --workers 4 --device 0 --project 1_results/B_series/grouped_clean_screen50 \
   > citrus_b_v2_screen.log 2>&1 &
 
 # 4. 汇总
-python report_citrus_b_results.py --project 1_results/CITRUS_B_V2_SCREEN_50EP
+python report_citrus_b_results.py --project 1_results/B_series/grouped_clean_screen50
 ```
 
 50-epoch 新模型不能直接与 300-epoch S04 数值比较，所以该筛选会重跑 B00/B01 作为同周期参考。只有

@@ -3,7 +3,7 @@
 # F16: 颈部 4 处 Concat → BiFPNConcat（可学习加权融合）。
 # 动机: 深层语义在 Concat 中淹没浅层细节；可学习权重让网络自动上调小目标浅层贡献。
 # 文献: Tan et al., EfficientDet CVPR 2020, arXiv:1911.09070。
-# 消融角色: F 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F16_yolo11-seg-bifpn.yaml --pretrained yolo11n-seg.pt --name F16_bifpn
+# 消融角色: F 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F16_yolo11-seg-bifpn.yaml --pretrained yolo11n-seg.pt --name F16_bifpn
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

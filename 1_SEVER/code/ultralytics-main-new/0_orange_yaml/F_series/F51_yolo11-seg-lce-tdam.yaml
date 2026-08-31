@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 #
 # F51: LCE（治暗）+ TDAM@P2P3（治伪装）——数据体检两大退化的联合修复。
-# 消融角色: N 组组合（F49 x F50）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F51_yolo11-seg-lce-tdam.yaml --pretrained yolo11n-seg.pt --name F51_lce_tdam
+# 消融角色: N 组组合（F49 x F50）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F51_yolo11-seg-lce-tdam.yaml --pretrained yolo11n-seg.pt --name F51_lce_tdam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

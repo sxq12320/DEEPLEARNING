@@ -3,7 +3,7 @@
 # F04: Haar 小波下采样 HWDown 替换骨干全部步长下采样。
 # 动机: 与 SPD 同为无损下采样，但按频带分解——高频子带显式保留模糊小果的微弱边缘。
 # 文献: Xu et al., Pattern Recognition 2023, doi:10.1016/j.patcog.2023.109819。
-# 消融角色: B 组单模块（与 F03 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F04_yolo11-seg-hwd.yaml --pretrained yolo11n-seg.pt --name F04_hwd
+# 消融角色: B 组单模块（与 F03 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F04_yolo11-seg-hwd.yaml --pretrained yolo11n-seg.pt --name F04_hwd
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

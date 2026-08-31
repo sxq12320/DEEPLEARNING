@@ -3,7 +3,7 @@
 # F13: 颈部 P3 输出后插入 CAA 上下文锚点注意力（大条带核远程上下文）。
 # 动机: P3 是小目标检测与 mask 原型的共同来源；注意力在此放大与叶片同色的弱小果信号。
 # 文献: Cai et al., CVPR 2024, arXiv:2403.06258。
-# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F13_yolo11-seg-caa.yaml --pretrained yolo11n-seg.pt --name F13_caa
+# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F13_yolo11-seg-caa.yaml --pretrained yolo11n-seg.pt --name F13_caa
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

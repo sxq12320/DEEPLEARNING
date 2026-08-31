@@ -12,8 +12,8 @@ import torch
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_YAML_ROOT = ROOT / "0_orange_yaml" / "legacy_pre20260824"
-DEFAULT_OUTPUT = ROOT / "1_results" / "_compatibility" / "legacy_yaml_compatibility"
+DEFAULT_YAML_ROOT = ROOT / "0_orange_yaml"
+DEFAULT_OUTPUT = ROOT / "1_results" / "_compatibility" / "all_series_yaml_compatibility"
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--forward-size", type=int, default=64, help="Square input used for an explicit eval forward.")
     parser.add_argument("--no-forward", action="store_true", help="Build only; model construction still initializes stride.")
+    parser.add_argument("--weights", type=Path, default=None, help="Optional checkpoint loaded through YOLO(yaml).load().")
     parser.add_argument("--fail-fast", action="store_true")
     return parser.parse_args()
 
@@ -42,9 +43,12 @@ def main() -> None:
     """Build and optionally forward every model YAML, then save a machine-readable compatibility matrix."""
     args = parse_args()
     yaml_root = args.yaml_root.resolve()
+    weights = args.weights.resolve() if args.weights else None
     yaml_files = sorted(yaml_root.rglob("*.yaml"))
     if not yaml_files:
         raise FileNotFoundError(f"No YAML files found under {yaml_root}")
+    if weights is not None and not weights.is_file():
+        raise FileNotFoundError(f"Checkpoint not found: {weights}")
 
     from ultralytics import YOLO
 
@@ -56,12 +60,16 @@ def main() -> None:
             "status": "failed",
             "head": "",
             "params": 0,
+            "weights_loaded": False,
             "output_tensors": 0,
             "seconds": 0.0,
             "error": "",
         }
         try:
             wrapper = YOLO(str(yaml_path), task="segment", verbose=False)
+            if weights is not None:
+                wrapper.load(str(weights))
+                record["weights_loaded"] = True
             model = wrapper.model.eval()
             record["head"] = type(model.model[-1]).__name__
             record["params"] = sum(parameter.numel() for parameter in model.parameters())

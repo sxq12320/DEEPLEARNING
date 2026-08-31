@@ -1,0 +1,93 @@
+protocol_id: citrus_paper1_rgb_groupaware_v1
+revision_date: "2026-08-30"
+scope: RGB immature-citrus instance segmentation
+
+dataset_contract:
+  split: group-aware train/val/test
+  requirement: Record the data.yaml path, split version, image/instance counts, and split-manifest checksum for every run.
+  note: Filesystem paths may differ by machine, but split membership must not change.
+
+initialization:
+  checkpoint: yolo11n-seg.pt
+  rule: Every YAML starts from the same checkpoint; unmatched new-backbone tensors use their declared initializer.
+
+phases:
+  smoke_epochs: [1, 3]
+  screening_epochs: 50
+  final_epochs: 300
+  screening_seeds: [42]
+  final_seeds: [42, 43, 44]
+
+fixed_train:
+  batch: 16
+  imgsz: 640
+  workers: 4
+  cache: false
+  optimizer: AdamW
+  lr0: 0.001
+  lrf: 0.01
+  momentum: 0.937
+  weight_decay: 0.0005
+  warmup_epochs: 3.0
+  warmup_momentum: 0.8
+  warmup_bias_lr: 0.1
+  box: 7.5
+  cls: 0.5
+  dfl: 1.5
+  nbs: 64
+  patience: 300
+  close_mosaic: 10
+  overlap_mask: true
+  mask_ratio: 4
+  dropout: 0.0
+  amp: false
+  deterministic: true
+  rect: false
+  cos_lr: false
+  multi_scale: 0.0
+  fraction: 1.0
+  freeze: null
+  compile: false
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 0.0
+  translate: 0.1
+  scale: 0.5
+  shear: 0.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.5
+  bgr: 0.0
+  mosaic: 1.0
+  mixup: 0.0
+  cutmix: 0.0
+  copy_paste: 0.0
+  copy_paste_mode: flip
+
+fixed_validation:
+  split: val
+  iou: 0.7
+  max_det: 300
+  half: false
+  plots: true
+
+allowed_run_variables:
+  - model YAML
+  - experiment name and output project
+  - machine-specific dataset path with identical split membership
+  - device identifier
+  - epochs selected from the declared phase
+  - seed selected from the declared phase
+  - explicitly numbered method loss/assignment ablation
+
+forbidden_silent_changes:
+  - AMP
+  - batch size
+  - image size
+  - initialization checkpoint
+  - optimizer or learning-rate schedule
+  - dropout
+  - augmentation
+  - mask resolution
+  - early-stopping patience

@@ -3,7 +3,7 @@
 # F10: 颈部 P3 输出后插入 CBAM 通道+空间串联注意力（经典基线）。
 # 动机: P3 是小目标检测与 mask 原型的共同来源；注意力在此放大与叶片同色的弱小果信号。
 # 文献: Woo et al., ECCV 2018, arXiv:1807.06521。
-# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F10_yolo11-seg-cbam.yaml --pretrained yolo11n-seg.pt --name F10_cbam
+# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F10_yolo11-seg-cbam.yaml --pretrained yolo11n-seg.pt --name F10_cbam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

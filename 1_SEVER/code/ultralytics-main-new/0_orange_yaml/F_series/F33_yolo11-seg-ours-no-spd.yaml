@@ -2,7 +2,7 @@
 #
 # F33: F31 拓扑（DFEM@5 + SPD 下采样 + SPPF_LSKA + BiFPN + DySample + LIAM@18），去 SPD（下采样还原步长 Conv）。
 # 与 F31 逐层索引完全对齐（占位模块），预训练迁移与层深一致——干净 leave-one-out。
-# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F33_yolo11-seg-ours-no-spd.yaml --pretrained yolo11n-seg.pt --name F33_no_spd
+# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/F_series/F33_yolo11-seg-ours-no-spd.yaml --pretrained yolo11n-seg.pt --name F33_no_spd
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

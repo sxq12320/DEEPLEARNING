@@ -17,6 +17,8 @@ from ultralytics.utils.torch_utils import TORCH_1_11, fuse_conv_and_bn, smart_in
 
 from .block import DFL, SAVPE, BNContrastiveHead, ContrastiveHead, Proto, Proto26, RealNVP, Residual, SwiGLUFFN
 from .conv import Conv, DWConv
+from .citrus_c import CitrusTopologyPrototype
+from .citrus_g0839 import CitrusSDRSupport
 from .citrus_topo import CitrusBoundaryFusion, CitrusBoundaryQueryAux, CitrusTrainAux
 from .p2_cfs_attention import P2CFSAttention
 from .transformer import MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer
@@ -32,8 +34,10 @@ __all__ = (
     "SegmentCitrusAux",
     "SegmentCitrusBLite",
     "SegmentCitrusBQuality",
+    "SegmentCitrusDualProto",
     "SegmentCitrusLite",
     "SegmentCitrusLiteBQ",
+    "SegmentCitrusSDR",
     "SegmentP2Boundary",
     "SegmentP2CFS",
     "SegmentP2DetectBoundary",
@@ -658,6 +662,102 @@ class SegmentCitrusLite(SegmentCitrusAux):
             self.one2one_cv4 = copy.deepcopy(self.cv4)
 
 
+class SegmentCitrusSDR(Segment):
+    """Lightweight G_0839 Search--Discriminate--Refine mask head.
+
+    Stage 1 is the controlled lightweight P3--P5 head. Stages 2--5 consume P2
+    and progressively enable coarse tiny-fruit search, fruit/context contrast,
+    visible-boundary support, and four-state neighbouring-instance topology.
+    Every stage retains standard YOLO outputs and is trainable through the public
+    YAML API.
+    """
+
+    def __init__(
+        self,
+        nc: int = 80,
+        nm: int = 32,
+        npr: int = 256,
+        stage: int = 1,
+        topk: int = 64,
+        detail_channels: int = 32,
+        reg_max=16,
+        end2end=False,
+        ch: tuple = (),
+    ):
+        if stage not in {1, 2, 3, 4, 5}:
+            raise ValueError(f"SegmentCitrusSDR stage must be in [1, 5], got {stage}")
+        if stage >= 2 and len(ch) != 4:
+            raise ValueError(f"SDR stage {stage} expects P2/P3/P4/P5 channels, got {ch}")
+        if stage == 1 and len(ch) not in {3, 4}:
+            raise ValueError(f"SDR stage 1 expects P3/P4/P5, optionally preceded by P2, got {ch}")
+
+        detect_channels = tuple(ch[-3:])
+        super().__init__(nc, nm, npr, reg_max, end2end, detect_channels)
+        self.sdr_stage = int(stage)
+
+        # Reuse the clean S04 evidence: one prediction block per task and scale.
+        box_channels = max(16, detect_channels[0] // 4, self.reg_max * 4)
+        cls_channels = max(32, detect_channels[0] // 2, min(self.nc, 100))
+        mask_channels = max(detect_channels[0] // 4, self.nm)
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(Conv(width, box_channels, 3), nn.Conv2d(box_channels, 4 * self.reg_max, 1))
+            for width in detect_channels
+        )
+        self.cv3 = nn.ModuleList(
+            nn.Sequential(DWConv(width, width, 3), Conv(width, cls_channels, 1), nn.Conv2d(cls_channels, self.nc, 1))
+            for width in detect_channels
+        )
+        self.cv4 = nn.ModuleList(
+            nn.Sequential(Conv(width, mask_channels, 3), nn.Conv2d(mask_channels, self.nm, 1))
+            for width in detect_channels
+        )
+        if end2end:
+            self.one2one_cv2 = copy.deepcopy(self.cv2)
+            self.one2one_cv3 = copy.deepcopy(self.cv3)
+            self.one2one_cv4 = copy.deepcopy(self.cv4)
+
+        self.sdr_support = None
+        if stage >= 2:
+            self.sdr_support = CitrusSDRSupport(
+                (ch[0], detect_channels[0], detect_channels[1]),
+                prototype_channels=nm,
+                stage=stage,
+                topk=topk,
+                detail_channels=detail_channels,
+            )
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Detect on P3--P5 and refine prototypes with the enabled SDR stages."""
+        has_p2 = len(x) == 4
+        p2 = x[0] if has_p2 else None
+        detect_features = list(x[-3:])
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(detect_features[0])
+
+        auxiliary: dict[str, torch.Tensor] = {}
+        if self.sdr_support is not None:
+            if p2 is None:
+                raise RuntimeError("SDR support requires the P2 tensor")
+            residual, auxiliary = self.sdr_support(p2, detect_features[0], detect_features[1])
+            if residual.shape[-2:] != proto.shape[-2:]:
+                residual = F.interpolate(residual, size=proto.shape[-2:], mode="bilinear", align_corners=False)
+            proto = proto + residual
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                target = preds["one2many"]
+                target["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                target = preds
+                target["proto"] = proto
+            if self.training:
+                target.update(auxiliary)
+                return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
 class SegmentCitrusLiteBQ(SegmentCitrusLite):
     """Lite head with training-only boundary and tiny-query supervision.
 
@@ -737,6 +837,131 @@ class SegmentCitrusBLite(SegmentCitrusLite):
             target["citrus_contrast"] = contrast_logits
             return preds
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusDualProto(SegmentCitrusLite):
+    """Topology-decoupled P2/P3 prototype head for visible citrus masks.
+
+    Detection remains on P3-P5. P3 supplies semantic prototype channels that
+    preserve an occluded fruit as one instance, while P2 supplies a small set of
+    native-resolution detail prototypes for concave boundaries and touching-fruit
+    separators. A single four-state topology prediction supervises fruit/context,
+    boundary, and separator reasoning without stacking independent auxiliary heads.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentCitrusDualProto expects P2/P3/P4/P5 channels, got {ch}")
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        del self.citrus_aux
+        self.proto = CitrusTopologyPrototype(ch[0], ch[1], npr, nm, detail_channels=max(nm // 4, 4))
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Detect on P3-P5 and form masks from semantic plus topology prototypes."""
+        p2, detect_features = x[0], list(x[1:])
+        proto, topology_logits, refined_p3 = self.proto(p2, detect_features[0])
+        detect_features[0] = refined_p3
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                target = preds["one2many"]
+                target["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                target = preds
+                target["proto"] = proto
+            if self.training:
+                target["citrus_topology"] = topology_logits
+                return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusQualityLite(SegmentCitrusLite):
+    """Lite P3--P5 head with learned mask-IoU calibration.
+
+    This is the isolated Mask Scoring-style ablation for the Light series.  It
+    deliberately omits inference-time P2 prototype refinement so Light03 versus
+    Light04 changes only mask-quality ranking.  The predicted quality multiplies
+    the class probability before post-processing; it can improve ordering of
+    mask hypotheses but cannot manufacture a candidate that the detector missed.
+    """
+
+    def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
+        super().__init__(nc, nm, npr, reg_max, end2end, ch)
+        detect_channels = ch[1:]
+        self.quality_feature = nn.ModuleList(DWConv(width, width, 3) for width in detect_channels)
+        self.quality_predictor = nn.ModuleList(
+            nn.Sequential(
+                Conv(width + self.nm, max(16, width // 4), 1),
+                nn.Conv2d(max(16, width // 4), 1, 1),
+            )
+            for width in detect_channels
+        )
+        for predictor in self.quality_predictor:
+            nn.init.constant_(predictor[-1].bias, 1.3863)  # initial quality probability = 0.8
+        if end2end:
+            self.one2one_quality_feature = copy.deepcopy(self.quality_feature)
+            self.one2one_quality_predictor = copy.deepcopy(self.quality_predictor)
+
+    @property
+    def one2many(self):
+        """Return dense training branches including mask-quality estimation."""
+        return dict(
+            box_head=self.cv2,
+            cls_head=self.cv3,
+            mask_head=self.cv4,
+            quality_feature=self.quality_feature,
+            quality_predictor=self.quality_predictor,
+        )
+
+    @property
+    def one2one(self):
+        """Return one-to-one branches when end-to-end mode is enabled."""
+        return dict(
+            box_head=self.one2one_cv2,
+            cls_head=self.one2one_cv3,
+            mask_head=self.one2one_cv4,
+            quality_feature=self.one2one_quality_feature,
+            quality_predictor=self.one2one_quality_predictor,
+        )
+
+    def forward_head(
+        self,
+        x: list[torch.Tensor],
+        box_head: torch.nn.Module,
+        cls_head: torch.nn.Module,
+        mask_head: torch.nn.Module,
+        quality_feature: torch.nn.Module,
+        quality_predictor: torch.nn.Module,
+    ) -> dict[str, torch.Tensor]:
+        """Predict boxes, classes, mask coefficients, and mask quality."""
+        preds = Detect.forward_head(self, x, box_head, cls_head)
+        batch_size = x[0].shape[0]
+        mask_maps = [mask_head[i](x[i]) for i in range(self.nl)]
+        quality_maps = [
+            quality_predictor[i](torch.cat((quality_feature[i](x[i]), mask_maps[i]), dim=1))
+            for i in range(self.nl)
+        ]
+        preds["mask_coefficient"] = torch.cat(
+            [mask_map.view(batch_size, self.nm, -1) for mask_map in mask_maps], dim=2
+        )
+        preds["mask_quality"] = torch.cat(
+            [quality_map.view(batch_size, 1, -1) for quality_map in quality_maps], dim=2
+        )
+        return preds
+
+    def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Decode predictions and calibrate class ranking with predicted mask IoU."""
+        boxes = self._get_decode_boxes(x)
+        scores = x["scores"].sigmoid() * x["mask_quality"].sigmoid()
+        return torch.cat((boxes, scores, x["mask_coefficient"]), dim=1)
+
+    def fuse(self) -> None:
+        """Drop training branches after model fusion."""
+        super().fuse()
+        self.quality_feature = self.quality_predictor = None
 
 
 class SegmentCitrusBQuality(SegmentCitrusBLite):

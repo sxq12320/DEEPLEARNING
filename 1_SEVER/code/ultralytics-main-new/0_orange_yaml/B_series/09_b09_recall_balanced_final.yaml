@@ -1,4 +1,4 @@
-# B09: promoted recall-balanced candidate; B/Q supervision is removed at inference.
+# B09: historical "recall-balanced" name; full run showed a precision-oriented lightweight model.
 nc: 80
 scales:
   n: [0.50, 0.25, 1024]

@@ -2,7 +2,7 @@
 #
 # SXQNet-V10 Max（上限轴）：回答'全部手段齐上性能天花板在哪'。= V1 骨干/颈部 + P2 四层头。
 #   参数仍 ≤ 基线；FLOPs 为全家最高（P2 头代价），作性能上界与蒸馏教师候选。
-# 训练: python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V10-max.yaml --pretrained yolo11n-seg.pt --name SXQ_V10 --iou-type NWDWise --tal-metric NWD --tal-min-pos --freq-loss 0.1
+# 训练: python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V10-max.yaml --pretrained yolo11n-seg.pt --name SXQ_V10 --iou-type NWDWise --tal-metric NWD --tal-min-pos --freq-loss 0.1
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

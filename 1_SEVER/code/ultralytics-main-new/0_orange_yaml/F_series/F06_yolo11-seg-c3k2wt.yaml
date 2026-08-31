@@ -3,7 +3,7 @@
 # F06: 骨干 P3-P5 C3k2 → C3k2_WT（小波卷积 bottleneck，频域大感受野）。
 # 动机: 模糊 = 高频衰减；WTConv 在小波域分频带卷积，可学习放大残存高频、低频补结构。
 # 文献: Finder et al., ECCV 2024, arXiv:2407.05848。
-# 消融角色: C 组单模块（抗模糊）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F06_yolo11-seg-c3k2wt.yaml --pretrained yolo11n-seg.pt --name F06_wt
+# 消融角色: C 组单模块（抗模糊）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F06_yolo11-seg-c3k2wt.yaml --pretrained yolo11n-seg.pt --name F06_wt
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

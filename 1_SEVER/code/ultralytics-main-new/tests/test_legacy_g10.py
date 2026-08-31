@@ -18,8 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 G10_YAML = (
     ROOT
     / "0_orange_yaml"
-    / "legacy_pre20260824"
-    / "2026_8_20_gpt_test"
+    / "G_series"
     / "10_yolo11n-seg-hybrid-lska-carafe-bifpn-p2b.yaml"
 )
 

@@ -6,7 +6,7 @@
 #   FFN = MSDFFFN（5x5/7x7 通道拆分+洗牌的多尺度动态混合）。
 # 融合来源: LRFormer (TPAMI 2025, IEEE doc 11029508) + WTConv (ECCV 2024, arXiv:2407.05848)
 #   + SRConvNet DML (IJCV 2025, doi:10.1007/s11263-024-02147-y)；组合与门控原创。
-# 消融角色: L 组 Former 单模块（vs C2PSA 基线 / vs F14）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F46_yolo11-seg-farformer.yaml --pretrained yolo11n-seg.pt --name F46_farformer
+# 消融角色: L 组 Former 单模块（vs C2PSA 基线 / vs F14）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F46_yolo11-seg-farformer.yaml --pretrained yolo11n-seg.pt --name F46_farformer
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

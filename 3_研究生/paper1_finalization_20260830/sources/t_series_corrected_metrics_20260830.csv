@@ -1,0 +1,11 @@
+model,source,epochs_completed,requested_epochs,status,precision,recall,mask_map50,mask_map50_95,best_epoch,tail20_mean_map50_95,tail20_sd,params_m,gflops_640,pretrained_items,pretrained_total,decision
+T00_yolo11n_reference,official,16,300,failed_dataloader,0.89103,0.68970,0.78424,0.62445,11,NA,NA,2.876848,10.529498,561,561,invalid_baseline_rerun_required
+T01_f14_sppf_lska,F14,271,300,early_stopped,0.91301,0.75500,0.82888,0.66919,78,0.651599,0.002256,3.153840,10.749043,561,571,efficient_reference
+T02_g10_hybrid,G10,240,300,early_stopped,0.90978,0.74978,0.83319,0.67115,141,0.656734,0.002674,3.248457,14.714189,472,554,not_pareto_high_compute
+T03_n02_moce_lska,N02,186,300,early_stopped,0.87312,0.75767,0.83106,0.67178,87,0.659357,0.003909,3.201485,14.602906,475,560,not_proven_high_compute
+T04_l06_lska_topology,L06,195,300,early_stopped,0.90625,0.75643,0.82957,0.67367,96,0.663026,0.002746,2.964722,10.957120,561,603,promising_pareto_anchor_needs_repeats
+T05_s04_lite_head,S04,285,300,early_stopped,0.93468,0.74337,0.82070,0.66526,186,0.651750,0.001160,2.788435,9.618534,441,519,precision_efficiency_candidate
+T06_b06_context_topology_lite,B06,279,300,early_stopped,0.93110,0.72355,0.82141,0.66198,87,0.647339,0.001291,2.819221,10.002330,441,563,reject_current_combination
+T07_c03_dualproto_core,C03,222,300,early_stopped,0.90193,0.76276,0.82546,0.66226,124,0.651552,0.003134,2.733252,9.887232,436,510,recall_tradeoff_not_total_gain
+T08_d06_shape_semantic_full,D06,297,300,early_stopped,0.89489,0.75884,0.82358,0.67140,147,0.661776,0.001232,3.019039,12.246797,555,716,non_pareto_shape_hypothesis_only
+T09_d07_deploy_lite,D07,282,300,early_stopped,0.91848,0.73642,0.82059,0.66379,131,0.649333,0.001606,2.791582,11.335834,435,643,reject_relative_to_T08

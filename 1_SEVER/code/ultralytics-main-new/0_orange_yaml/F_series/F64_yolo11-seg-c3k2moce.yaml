@@ -6,7 +6,7 @@
 # 文献: MoE (arXiv:1701.06538) → CondConv (arXiv:1904.04971) → DynamicConv (arXiv:1912.03458)；
 #   软路由可导出引 Soft MoE (arXiv:2308.00951)。先例边界: YOLO-Master (arXiv:2512.23273) 已做
 #   MoE-in-YOLO，本行只可声称组合创新（nano分割+成像条件路由+全软路由DW专家），写作须做差异对比。
-# 消融角色: C 组块横评第五路 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F64_yolo11-seg-c3k2moce.yaml --pretrained yolo11n-seg.pt --name F64_moce
+# 消融角色: C 组块横评第五路 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F64_yolo11-seg-c3k2moce.yaml --pretrained yolo11n-seg.pt --name F64_moce
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

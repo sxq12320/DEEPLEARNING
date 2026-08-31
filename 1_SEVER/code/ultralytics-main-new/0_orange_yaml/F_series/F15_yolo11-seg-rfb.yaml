@@ -3,7 +3,7 @@
 # F15: SPPF → RFB（多膨胀率感受野块）。
 # 动机: 模拟人类视觉离心感受野，'小感受野看果、大感受野看枝叶'并联进行。
 # 文献: Liu et al., ECCV 2018, arXiv:1711.07767。
-# 消融角色: E 组单模块（与 F14 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F15_yolo11-seg-rfb.yaml --pretrained yolo11n-seg.pt --name F15_rfb
+# 消融角色: E 组单模块（与 F14 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F15_yolo11-seg-rfb.yaml --pretrained yolo11n-seg.pt --name F15_rfb
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

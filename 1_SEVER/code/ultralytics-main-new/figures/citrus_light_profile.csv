@@ -1,0 +1,7 @@
+﻿model,params_m,gflops_640,latency_ms_320,latency_min_ms,latency_max_ms,device,threads
+YOLO11n_control,2.8768,10.529,51.632,46.237,55.009,cpu,1
+Light00_backbone_only,2.2827,9.889,46.168,45.19,49.052,cpu,1
+Light01_neck_only,2.264,9.655,48.829,48.466,49.731,cpu,1
+Light02_joint_core,1.6699,9.015,45.229,44.131,45.461,cpu,1
+Light03_deploy_lite,1.5815,8.104,39.167,37.658,43.311,cpu,1
+Light04_topology_quality,1.7577,9.442,53.287,51.229,56.569,cpu,1

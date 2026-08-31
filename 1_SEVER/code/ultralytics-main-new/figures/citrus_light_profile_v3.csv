@@ -1,0 +1,10 @@
+﻿model,params_m,gflops_640,latency_ms_320,latency_min_ms,latency_max_ms,device,threads
+YOLO11n_control,2.8768,10.529,50.634,50.503,52.737,cpu,1
+Light00_backbone_only,2.6555,10.243,51.333,49.139,55.657,cpu,1
+Light01_neck_only,2.264,9.655,48.286,46.642,55.222,cpu,1
+Light02_joint_core,2.0427,9.368,47.053,46.636,47.652,cpu,1
+Light03_deploy_lite,1.9543,8.458,40.821,40.314,41.129,cpu,1
+Light04_quality_rank,1.9847,8.529,47.647,44.976,50.159,cpu,1
+Light05_repmixer_backbone_only,2.6137,10.192,52.86,51.933,61.519,cpu,1
+Light06_repmixer_afpn,2.0009,9.318,49.003,47.606,51.999,cpu,1
+Light07_repmixer_pan_lite,2.5253,9.281,48.329,48.246,50.728,cpu,1

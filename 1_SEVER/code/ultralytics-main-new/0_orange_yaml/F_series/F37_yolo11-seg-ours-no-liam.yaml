@@ -2,7 +2,7 @@
 #
 # F37: F31 拓扑（DFEM@5 + SPD 下采样 + SPPF_LSKA + BiFPN + DySample + LIAM@18），去 LIAM（层18 → nn.Identity）。
 # 与 F31 逐层索引完全对齐（占位模块），预训练迁移与层深一致——干净 leave-one-out。
-# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F37_yolo11-seg-ours-no-liam.yaml --pretrained yolo11n-seg.pt --name F37_no_liam
+# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/F_series/F37_yolo11-seg-ours-no-liam.yaml --pretrained yolo11n-seg.pt --name F37_no_liam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

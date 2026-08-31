@@ -1,0 +1,10 @@
+experiment,yaml,causal_change,params_m,gflops_640,pretrained_items,pretrained_total,auxiliary_or_loss_settings,priority
+G00_official_control,00_g00_official_control.yaml,complete official baseline,2.876848,10.529498,561,561,stock,mandatory
+G01_t04_anchor,01_g01_t04_anchor.yaml,residual LSKA context plus topology-guided prototype head,2.964722,10.957120,561,603,boundary=.15 query=.03,mandatory
+G02_bilateral_backbone,02_g02_bilateral_backbone.yaml,narrow persistent P2 branch with P3-P5 bilateral exchanges,3.003314,11.595584,562,723,boundary=.15 query=.03,mandatory
+G03_frequency_neck,03_g03_frequency_neck.yaml,G02 plus four identity-initialized frequency-aligned PAN fusions,3.037618,11.755533,562,827,boundary=.15 query=.03,mandatory
+G04_deep_repmixer,04_g04_deep_repmixer.yaml,G03 plus non-CSP RepMixer at P4 and P5,2.774450,11.418432,454,757,boundary=.15 query=.03,screen_after_G03
+G05_g03_nwd,03_g03_frequency_neck.yaml,G03 fixed architecture with small-target NWD blend,3.037618,11.755533,562,827,boundary=.15 query=.03 nwd=.25,loss_ablation
+G06_g03_vfl,03_g03_frequency_neck.yaml,G03 fixed architecture with quality-aware classification blend,3.037618,11.755533,562,827,boundary=.15 query=.03 vfl=.50,loss_ablation
+G07_g03_nwd_vfl,03_g03_frequency_neck.yaml,G03 fixed architecture with NWD and VFL,3.037618,11.755533,562,827,boundary=.15 query=.03 nwd=.25 vfl=.50,loss_ablation
+G08_g03_strong_aux_audit,03_g03_frequency_neck.yaml,G03 fixed architecture with T04-strength auxiliary weights,3.037618,11.755533,562,827,boundary=.50 query=.10,loss_ablation

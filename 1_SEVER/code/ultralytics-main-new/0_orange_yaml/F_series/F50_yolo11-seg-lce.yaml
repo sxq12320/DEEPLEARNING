@@ -5,7 +5,7 @@
 #   LCE 用 Zero-DCE 曲线 LE(x)=x+A·x·(1-x) 迭代提亮，暗区门控保护近处亮果不过曝。
 #   全 conv/mul 算子（比 HVIEnhance 更端侧友好），A init=0 恒等起步、预训练权重安全迁移。
 # 文献: Zero-DCE (CVPR 2020, doi:10.1109/CVPR42600.2020.00185) + PE-YOLO 暗区思想；门控组合原创。
-# 消融角色: N 组原创前端（vs 010_hvi 图像域对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F50_yolo11-seg-lce.yaml --pretrained yolo11n-seg.pt --name F50_lce
+# 消融角色: N 组原创前端（vs 010_hvi 图像域对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F50_yolo11-seg-lce.yaml --pretrained yolo11n-seg.pt --name F50_lce
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -47,3 +47,21 @@ def test_other_heads_keep_auxiliary_losses_disabled_and_negative_gains_fail():
     assert custom_loss_overrides(arguments(), "Segment") == {}
     with pytest.raises(ValueError, match="non-negative"):
         custom_loss_overrides(arguments(nwd_ratio=-0.1), "Segment")
+
+
+def test_g0839_single_model_defaults_follow_the_yaml_stage():
+    """Every G_0839 stage receives one identical declared hyperparameter vector."""
+    expected = {
+        "citrus_query": 0.03,
+        "citrus_contrast": 0.05,
+        "citrus_boundary": 0.10,
+        "citrus_topology": 0.05,
+    }
+    assert custom_loss_overrides(arguments(), "SegmentCitrusSDR", 1) == expected
+    assert custom_loss_overrides(arguments(), "SegmentCitrusSDR", 3) == expected
+    assert custom_loss_overrides(arguments(citrus_boundary=0.08), "SegmentCitrusSDR", 5) == {
+        "citrus_boundary": 0.08,
+        "citrus_query": 0.03,
+        "citrus_contrast": 0.05,
+        "citrus_topology": 0.05,
+    }

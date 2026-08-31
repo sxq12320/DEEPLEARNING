@@ -13,7 +13,7 @@ from ultralytics.utils.torch_utils import get_flops, intersect_dicts
 
 
 ROOT = Path(__file__).resolve().parents[1]
-YAML_DIR = ROOT / "0_orange_yaml" / "20260824_citrus_topo"
+YAML_DIR = ROOT / "0_orange_yaml" / "L_series"
 FULL_YAML = YAML_DIR / "07_citrus_toposeg_full.yaml"
 
 

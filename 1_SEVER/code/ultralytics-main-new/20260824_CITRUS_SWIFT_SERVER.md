@@ -58,7 +58,7 @@ python 20260824_citrus_swift_batch.py \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --suite architectures --only S00_reference,S08_swift_full \
   --epochs 1 --batch 4 --workers 4 --device 0 \
-  --project 1_results/CITRUS_SWIFT_SMOKE
+  --project 1_results/S_series/grouped_clean_smoke
 ```
 
 显存不足时把 batch 改为 2。冒烟测试只检查程序完整性，不能判断模型好坏。
@@ -72,7 +72,7 @@ nohup python 20260824_citrus_swift_batch.py \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --suite architectures --epochs 50 \
   --batch 16 --workers 4 --device 0 \
-  --project 1_results/CITRUS_SWIFT_GROUPED_DEDUP_SCREEN50 \
+  --project 1_results/S_series/grouped_clean_screen50 \
   > citrus_swift_arch_screen50.log 2>&1 &
 ```
 
@@ -86,7 +86,7 @@ tail -f citrus_swift_arch_screen50.log
 
 ```bash
 python 20260824_citrus_swift_report.py \
-  --project 1_results/CITRUS_SWIFT_GROUPED_DEDUP_SCREEN50
+  --project 1_results/S_series/grouped_clean_screen50
 ```
 
 之后再跑 10 个损失消融：
@@ -96,7 +96,7 @@ nohup python 20260824_citrus_swift_batch.py \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --suite losses --epochs 50 \
   --batch 16 --workers 4 --device 0 \
-  --project 1_results/CITRUS_SWIFT_LOSS_SCREEN50 \
+  --project 1_results/S_series/grouped_clean_loss_screen50 \
   > citrus_swift_loss_screen50.log 2>&1 &
 ```
 
@@ -107,7 +107,7 @@ nohup python 20260824_citrus_swift_batch.py \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --suite final --epochs 300 --seeds 42,43,44 \
   --batch 16 --workers 4 --device 0 \
-  --project 1_results/CITRUS_SWIFT_FINAL_300EP_3SEEDS \
+  --project 1_results/S_series/grouped_clean_final_300ep_3seeds \
   > citrus_swift_final_300ep_3seeds.log 2>&1 &
 ```
 
@@ -122,7 +122,7 @@ nohup python 20260824_citrus_swift_batch.py \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --suite architectures --epochs 300 \
   --batch 16 --workers 4 --device 0 \
-  --project 1_results/CITRUS_SWIFT_ALL_300EP \
+  --project 1_results/S_series/grouped_clean_300ep \
   > citrus_swift_all_300ep.log 2>&1 &
 ```
 

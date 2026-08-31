@@ -3,7 +3,7 @@
 # F18: 颈部 2 处最近邻上采样 → DySample 动态点采样上采样（超轻量）。
 # 动机: 与 CARAFE 同目的但代价更低（nano 模型友好），小目标边界恢复更好。
 # 文献: Liu et al., ICCV 2023, arXiv:2308.15085。
-# 消融角色: F 组单模块（与 F17 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F18_yolo11-seg-dysample.yaml --pretrained yolo11n-seg.pt --name F18_dysample
+# 消融角色: F 组单模块（与 F17 互为对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F18_yolo11-seg-dysample.yaml --pretrained yolo11n-seg.pt --name F18_dysample
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

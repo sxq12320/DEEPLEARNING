@@ -7,7 +7,7 @@
 # 融合来源: HS-FPN HFP (AAAI 2025, arXiv:2412.10116) + CIDNet/PE-YOLO 暗区增强
 #   (CVPR 2025, doi:10.1109/CVPR52734.2025.00533; arXiv:2307.10953) + EVSSM EDFFN
 #   (CVPR 2025, arXiv:2405.14343)；串联组合原创。
-# 消融角色: L 组 Former 单模块（与 D 组注意力同位置横评）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F47_yolo11-seg-lumiformer.yaml --pretrained yolo11n-seg.pt --name F47_lumiformer
+# 消融角色: L 组 Former 单模块（与 D 组注意力同位置横评）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F47_yolo11-seg-lumiformer.yaml --pretrained yolo11n-seg.pt --name F47_lumiformer
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

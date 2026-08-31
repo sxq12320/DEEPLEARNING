@@ -3,7 +3,7 @@
 # F17: 颈部 2 处最近邻上采样 → CARAFE 内容感知重组上采样。
 # 动机: 最近邻把小果 1 个特征像素复制 4 份（无新信息）；CARAFE 按内容聚合邻域重建细节。
 # 文献: Wang et al., ICCV 2019, arXiv:1905.02188。
-# 消融角色: F 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F17_yolo11-seg-carafe.yaml --pretrained yolo11n-seg.pt --name F17_carafe
+# 消融角色: F 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F17_yolo11-seg-carafe.yaml --pretrained yolo11n-seg.pt --name F17_carafe
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

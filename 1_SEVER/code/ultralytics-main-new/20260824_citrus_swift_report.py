@@ -23,7 +23,7 @@ SEED_SUFFIX = re.compile(r"_seed(?P<seed>\d+)$")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Summarize CitrusSwift runs without hiding run-to-run variance.")
-    parser.add_argument("--project", type=Path, default=Path("1_results/CITRUS_SWIFT_GROUPED_DEDUP_SCREEN50"))
+    parser.add_argument("--project", type=Path, default=Path("1_results/S_series/grouped_clean_screen50"))
     parser.add_argument("--tail", type=int, default=10)
     parser.add_argument("--noise-floor", type=float, default=0.003)
     return parser.parse_args()

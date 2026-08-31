@@ -3,7 +3,7 @@
 # F03: SPD-Conv 替换骨干全部步长下采样（P3/P4/P5 三处）。
 # 动机: 远处 <16px 柑橘经步长卷积两次下采样后特征几乎消失；SPD 无损重排保信息。
 # 文献: Sunkara & Luo, ECML-PKDD 2022, arXiv:2208.03641。
-# 消融角色: B 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F03_yolo11-seg-spdconv.yaml --pretrained yolo11n-seg.pt --name F03_spd
+# 消融角色: B 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F03_yolo11-seg-spdconv.yaml --pretrained yolo11n-seg.pt --name F03_spd
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

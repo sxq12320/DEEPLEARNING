@@ -90,8 +90,11 @@ from .head import (
     SegmentCitrusAux,
     SegmentCitrusBLite,
     SegmentCitrusBQuality,
+    SegmentCitrusDualProto,
     SegmentCitrusLite,
     SegmentCitrusLiteBQ,
+    SegmentCitrusQualityLite,
+    SegmentCitrusSDR,
     SegmentCitrusTopo,
     SegmentP2Boundary,
     SegmentP2CFS,
@@ -205,6 +208,11 @@ from .citrus_topo import (
     SPPFRepContext,
 )
 from .citrus_b import CitrusDetailInject, CitrusPagFM, LiteHRDetailBlock
+from .citrus_c import CitrusTopologyPrototype
+from .citrus_d import CitrusShapeFusion, CitrusShapeStream, CitrusStructureStem
+from .citrus_g0830 import CitrusBilateralExchange, CitrusFrequencyAlignedConcat, CitrusRepMixerStage
+from .citrus_g0839 import CitrusDualResolutionBackbone, CitrusSDRSupport
+from .citrus_light import CitrusLightAFPN, CitrusLightStage
 from .citrus_savss import CitrusSAVSS, FrequencyAwareDown
 from .citrus_far import (
     AAFM,
@@ -354,10 +362,21 @@ __all__ = (
     "CitrusDetailInject",
     "CitrusPagFM",
     "CitrusSAVSS",
+    "CitrusShapeFusion",
+    "CitrusShapeStream",
+    "CitrusBilateralExchange",
+    "CitrusFrequencyAlignedConcat",
+    "CitrusRepMixerStage",
+    "CitrusDualResolutionBackbone",
+    "CitrusSDRSupport",
+    "CitrusLightAFPN",
+    "CitrusLightStage",
+    "CitrusStructureStem",
     "FrequencyAwareDown",
     "CitrusScaleFusion",
     "CitrusBoundaryQueryAux",
     "CitrusTrainAux",
+    "CitrusTopologyPrototype",
     "LiteHRDetailBlock",
     "SPPFLSKAResidual",
     "SPPF_LSKA",
@@ -374,8 +393,11 @@ __all__ = (
     "SegmentCitrusAux",
     "SegmentCitrusBLite",
     "SegmentCitrusBQuality",
+    "SegmentCitrusDualProto",
     "SegmentCitrusLite",
     "SegmentCitrusLiteBQ",
+    "SegmentCitrusQualityLite",
+    "SegmentCitrusSDR",
     "SegmentCitrusTopo",
     "SegmentP2Boundary",
     "SegmentP2CFS",

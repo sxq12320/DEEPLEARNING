@@ -3,7 +3,7 @@
 # F22: CSFG 跨级小目标特征引导（原创）——P2 细节经 SPD 无损对齐+内容门控注入颈部 P3。
 # 动机: P2 检测头涨点但代价大；CSFG 以 <0.1 GFLOPs 代价把 P2 细节送进 P3，轻量替代。
 # 文献基础: Gold-YOLO GD (NeurIPS 2023, arXiv:2309.11331) + ASF-YOLO (doi:10.1016/j.imavis.2024.104957)，组合原创。
-# 消融角色: G 组原创单模块（vs F01 P2 头的性价比对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F22_yolo11-seg-csfg.yaml --pretrained yolo11n-seg.pt --name F22_csfg
+# 消融角色: G 组原创单模块（vs F01 P2 头的性价比对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F22_yolo11-seg-csfg.yaml --pretrained yolo11n-seg.pt --name F22_csfg
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

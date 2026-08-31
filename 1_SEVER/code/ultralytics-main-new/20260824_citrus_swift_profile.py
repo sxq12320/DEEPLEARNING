@@ -21,7 +21,7 @@ from ultralytics.utils.torch_utils import get_flops, intersect_dicts
 
 
 ROOT = Path(__file__).resolve().parent
-YAML_DIR = ROOT / "0_orange_yaml" / "20260824_citrus_swift"
+YAML_DIR = ROOT / "0_orange_yaml" / "S_series"
 
 
 def parse_args() -> argparse.Namespace:

@@ -20,7 +20,7 @@ METRICS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build a provisional CitrusTopo result table.")
-    parser.add_argument("--project", type=Path, default=Path("1_results/CITRUS_TOPO_GROUPED_DEDUP_300EP"))
+    parser.add_argument("--project", type=Path, default=Path("1_results/L_series/grouped_clean_300ep"))
     parser.add_argument("--tail", type=int, default=10, help="Epochs used for the stable-tail mean.")
     return parser.parse_args()
 

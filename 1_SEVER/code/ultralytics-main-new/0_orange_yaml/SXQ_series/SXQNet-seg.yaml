@@ -24,7 +24,7 @@
 #     --freq-loss 0.1（GA-TAL 治正样本饥饿 / NWDWise 治估计标注 / FFL 治小果边界）
 #
 # 训练命令:
-#   python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-seg.yaml \
+#   python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-seg.yaml \
 #       --pretrained yolo11n-seg.pt --name SXQNet_full \
 #       --iou-type NWDWise --tal-metric NWD --tal-min-pos --freq-loss 0.1
 # 消融: 各组件的独立行=F60/F50/F42/F59/F04/F49/F55/F14/F58/F62/F22/F47；

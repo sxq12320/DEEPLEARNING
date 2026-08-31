@@ -108,7 +108,7 @@ nohup python 20260826_citrus_b_batch.py \
 
 ```bash
 python train_citrus_yaml.py \
-  --model 0_orange_yaml/20260826_citrus_b/09_b09_recall_balanced_final.yaml \
+  --model 0_orange_yaml/B_series/09_b09_recall_balanced_final.yaml \
   --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
   --name B09_single --epochs 300 --batch 16 --device 0 \
   --citrus-boundary 0.25 --citrus-query 0.05

@@ -2,7 +2,7 @@
 #
 # SXQNet-V4 Former（全 Former 轴）：回答'MetaFormer 范式化到什么程度最划算'。
 #   = Shallow-Heavy + FarFormer@P5 + LumiFormer@P4与P3 双位置（vs F48 仅 P3 一处）。
-# 消融: vs F48 增量 = P4 位 LumiFormer | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V4-former.yaml --pretrained yolo11n-seg.pt --name SXQ_V4
+# 消融: vs F48 增量 = P4 位 LumiFormer | python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V4-former.yaml --pretrained yolo11n-seg.pt --name SXQ_V4
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

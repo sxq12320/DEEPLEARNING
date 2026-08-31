@@ -529,6 +529,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         self.citrus_contrast_gain = float(getattr(model.args, "citrus_contrast", 0.0))
         self.citrus_exclusive_gain = float(getattr(model.args, "citrus_exclusive", 0.0))
         self.citrus_quality_gain = float(getattr(model.args, "citrus_quality", 0.0))
+        self.citrus_topology_gain = float(getattr(model.args, "citrus_topology", 0.0))
 
     def loss(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate and return the combined loss for detection and segmentation."""
@@ -647,9 +648,25 @@ class v8SegmentationLoss(v8DetectionLoss):
                     imgsz,
                 )
 
+        if self.citrus_topology_gain > 0:
+            topology_logits = preds.get("citrus_topology")
+            if topology_logits is not None:
+                topology_target = self.build_topology_targets(
+                    masks, batch["batch_idx"].view(-1), batch_size, topology_logits.shape[-2:]
+                )
+                loss[1] += self.citrus_topology_gain * self.topology_cross_entropy(
+                    topology_logits, topology_target
+                )
+
         # Keep optional auxiliary parameters DDP-safe even when one of their
         # gains is zero. The zero terms have no numerical effect.
-        for auxiliary_name in ("citrus_boundary", "citrus_query", "citrus_contrast", "mask_quality"):
+        for auxiliary_name in (
+            "citrus_boundary",
+            "citrus_query",
+            "citrus_contrast",
+            "citrus_topology",
+            "mask_quality",
+        ):
             auxiliary = preds.get(auxiliary_name)
             if auxiliary is not None:
                 loss[1] += auxiliary.sum() * 0.0
@@ -778,6 +795,62 @@ class v8SegmentationLoss(v8DetectionLoss):
             targets[image_index] = eroded.amax(dim=0)
             active[image_index] = torch.maximum(eroded, rings).amax(dim=0)
         return targets, active
+
+    def build_topology_targets(
+        self,
+        masks: torch.Tensor,
+        batch_idx: torch.Tensor,
+        batch_size: int,
+        size: tuple[int, int],
+    ) -> torch.Tensor:
+        """Derive context/interior/boundary/separator states from instance masks.
+
+        Pixels far from labeled fruit are ignored. This prevents the auxiliary
+        objective from degenerating into generic background segmentation and
+        concentrates gradients on the green fruit-versus-leaf ring, visible-mask
+        concavities, and corridors shared by neighboring instances.
+        """
+        ignore_index = -100
+        targets = torch.full(
+            (batch_size, *size),
+            ignore_index,
+            device=masks.device,
+            dtype=torch.long,
+        )
+        for image_index in range(batch_size):
+            instances = self.image_instance_masks(masks, batch_idx, image_index, size)
+            if not len(instances):
+                continue
+            instances = instances[:, None]
+            union = instances.amax(dim=0)[0] > 0.5
+
+            eroded = 1.0 - F.max_pool2d(1.0 - instances, 3, stride=1, padding=1)
+            dilated = F.max_pool2d(instances, 3, stride=1, padding=1)
+            boundary = (dilated - eroded).amax(dim=0)[0] > 0.5
+            interior = eroded.amax(dim=0)[0] > 0.5
+
+            outer = F.max_pool2d(union[None, None].float(), 7, stride=1, padding=3)[0, 0] > 0.5
+            context_ring = outer & ~union
+
+            # A separator is a narrow band simultaneously close to two distinct
+            # instances. It remains valid when masks touch and the visible gap is 0.
+            near_instances = F.max_pool2d(instances, 5, stride=1, padding=2) > 0.5
+            separator = near_instances.sum(dim=0)[0] >= 2
+
+            target = targets[image_index]
+            target[context_ring] = 0
+            target[interior] = 1
+            target[boundary] = 2
+            target[separator] = 3  # highest priority at touching-fruit interfaces
+        return targets
+
+    @staticmethod
+    def topology_cross_entropy(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Class-balanced loss for local citrus topology states."""
+        if not (target >= 0).any():
+            return logits.sum() * 0.0
+        weights = logits.new_tensor([1.0, 1.0, 2.0, 3.0])
+        return F.cross_entropy(logits, target, weight=weights, ignore_index=-100)
 
     @staticmethod
     def contrast_ring_loss(logits: torch.Tensor, target: torch.Tensor, active: torch.Tensor) -> torch.Tensor:

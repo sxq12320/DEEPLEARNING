@@ -3,7 +3,7 @@
 # F56: CitrusFreq-Seg 频域主线组合 = HWDown 小波下采样 + C3k2_WT 小波骨干 + MWCA@P3。
 #   训练配 --freq-loss 0.1（FFL 频域掩码对齐损失，ICCV 2021 arXiv:2012.12821 迁移）
 #   构成'分解-卷积-注意力-监督'全频域链路——频域创新的完整故事线。
-# 消融角色: O 组频域组合（LOO: 去 MWCA=F04+F06 / 去 WT / 去 FFL 训练项）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F56_yolo11-seg-freqsuite.yaml --pretrained yolo11n-seg.pt --name F56_freqsuite --freq-loss 0.1
+# 消融角色: O 组频域组合（LOO: 去 MWCA=F04+F06 / 去 WT / 去 FFL 训练项）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F56_yolo11-seg-freqsuite.yaml --pretrained yolo11n-seg.pt --name F56_freqsuite --freq-loss 0.1
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

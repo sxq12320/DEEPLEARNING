@@ -5,7 +5,7 @@
 #   训练中残差'方向/速率'可学习——Shallow-Heavy 加深浅层后的梯度路径增强件。
 # 文献: Hyper-Connections (ByteDance, ICLR 2025, arXiv:2409.19606) 2流 lite 版；谱系 mHC (DeepSeek,
 #   arXiv:2512.24880) → Attention Residuals (Kimi Team, arXiv:2603.15031, 深度注意力残差=可升级方向)。
-# 消融角色: P 组 P5-mixer 第六路 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F65_yolo11-seg-hyperres.yaml --pretrained yolo11n-seg.pt --name F65_hyperres
+# 消融角色: P 组 P5-mixer 第六路 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F65_yolo11-seg-hyperres.yaml --pretrained yolo11n-seg.pt --name F65_hyperres
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

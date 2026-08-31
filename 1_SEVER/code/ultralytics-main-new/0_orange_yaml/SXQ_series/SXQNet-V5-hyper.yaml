@@ -2,7 +2,7 @@
 #
 # SXQNet-V5 Hyper（关系建模轴）：回答'密集粘连错检主导时怎么办'（47-58.5% 图密集相邻）。
 #   = HyperACE 双层超图（P4+P5 群体关联）+ HSF 筛选融合 + CSFG——错检专攻版。
-# 消融: vs F58（单层超图）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V5-hyper.yaml --pretrained yolo11n-seg.pt --name SXQ_V5
+# 消融: vs F58（单层超图）| python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V5-hyper.yaml --pretrained yolo11n-seg.pt --name SXQ_V5
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -5,7 +5,7 @@
 #   MWCA 用 2 级 Haar 分解出 7 个子带 + 跨频带注意力自适应选频带 + 高频显著图门控低频。
 #   全 slice/conv/linear 算子（无 FFT），端侧可转。
 # 文献: FEDER 频率分解辨伪装 (CVPR 2023) + WTConv (ECCV 2024) + HS-FPN (AAAI 2025)；组合原创。
-# 消融角色: O 组频域单模块（vs F19 DFEM(FFT 频带增益) / F06 C3k2_WT 同位置对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F55_yolo11-seg-mwca.yaml --pretrained yolo11n-seg.pt --name F55_mwca
+# 消融角色: O 组频域单模块（vs F19 DFEM(FFT 频带增益) / F06 C3k2_WT 同位置对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F55_yolo11-seg-mwca.yaml --pretrained yolo11n-seg.pt --name F55_mwca
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

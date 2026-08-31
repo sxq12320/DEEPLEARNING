@@ -3,7 +3,7 @@
 # F19: 骨干 P3 后插入 DFEM 双域频率增强模块（原创）。
 # 动机: 直接针对'远处柑橘模糊(高频衰减)+发黑(弱响应)'——频带可学习增益 + 暗区响应补偿。
 # 文献基础: FreqFusion (TPAMI 2024, arXiv:2408.12879) + PE-YOLO (ICANN 2023, arXiv:2307.10953)，组合原创。
-# 消融角色: G 组原创单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F19_yolo11-seg-dfem.yaml --pretrained yolo11n-seg.pt --name F19_dfem
+# 消融角色: G 组原创单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F19_yolo11-seg-dfem.yaml --pretrained yolo11n-seg.pt --name F19_dfem
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

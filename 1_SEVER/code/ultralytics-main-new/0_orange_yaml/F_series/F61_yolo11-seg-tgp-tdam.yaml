@@ -3,7 +3,7 @@
 # F61: 纹理主线组合 = TGP 前端（图像域纹理先验）+ TDAM@P2P3（特征域纹理放大）。
 #   与频域主线 F56 对称成线：图像域先验 → 特征域放大 → (可选 --freq-loss 频域监督)，
 #   构成'纹理感知'完整故事——直击 |Δa*|≈2.2 的绿绿伪装痛点。
-# 消融角色: Q 组组合（LOO: F60 只有前端 / F49 只有 TDAM）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F61_yolo11-seg-tgp-tdam.yaml --pretrained yolo11n-seg.pt --name F61_tgp_tdam
+# 消融角色: Q 组组合（LOO: F60 只有前端 / F49 只有 TDAM）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F61_yolo11-seg-tgp-tdam.yaml --pretrained yolo11n-seg.pt --name F61_tgp_tdam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

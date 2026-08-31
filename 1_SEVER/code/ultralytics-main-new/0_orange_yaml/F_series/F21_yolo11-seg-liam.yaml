@@ -3,7 +3,7 @@
 # F21: 颈部 P3 输出后插入 LIAM 亮度不变注意力模块（原创）。
 # 动机: 近亮果/远暗果亮度分布差异大，IN 对齐亮度统计量 + 无参能量注意力突出弱信号。
 # 文献基础: IBN-Net (ECCV 2018, arXiv:1807.09441) + SimAM (ICML 2021)，门控级联原创。
-# 消融角色: G 组原创单模块（与 D 组注意力同位置可横评）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F21_yolo11-seg-liam.yaml --pretrained yolo11n-seg.pt --name F21_liam
+# 消融角色: G 组原创单模块（与 D 组注意力同位置可横评）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F21_yolo11-seg-liam.yaml --pretrained yolo11n-seg.pt --name F21_liam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -4,7 +4,7 @@
 # 依据: theme7 调研裁决——P5 仅 400 token，Mamba selective scan 无优势且部署困难；
 #   MLLA (NeurIPS 2024, arXiv:2405.16605) 证明 Mamba≈门控线性注意力，故用
 #   FLatten 式 focused 线性注意力 (ICCV 2023, arXiv:2308.00442) 做可导出替代。
-# 消融角色: L 组 mixer 消融（vs F46）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F54_yolo11-seg-farformer-fla.yaml --pretrained yolo11n-seg.pt --name F54_farformer_fla
+# 消融角色: L 组 mixer 消融（vs F46）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F54_yolo11-seg-farformer-fla.yaml --pretrained yolo11n-seg.pt --name F54_farformer_fla
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

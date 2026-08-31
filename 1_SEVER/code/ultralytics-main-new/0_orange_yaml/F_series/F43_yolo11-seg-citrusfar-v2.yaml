@@ -3,7 +3,7 @@
 # F43: CitrusFar-Seg-V2（最大架构创新组合）= Shallow-Heavy 骨干 + FreqDetail-PAN 颈部。
 #   训练配合 --iou-type NWDWise（原创损失）即构成完整的论文候选方法：
 #   浅层重分配（治小）+ 频域细节双路颈（治模糊/发黑）+ 尺度自适应损失（治估计标注）。
-# 消融角色: J 组终极组合（vs F31 模块堆叠版做架构对照）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F43_yolo11-seg-citrusfar-v2.yaml --pretrained yolo11n-seg.pt --name F43_citrusfar_v2
+# 消融角色: J 组终极组合（vs F31 模块堆叠版做架构对照）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F43_yolo11-seg-citrusfar-v2.yaml --pretrained yolo11n-seg.pt --name F43_citrusfar_v2
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

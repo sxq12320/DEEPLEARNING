@@ -1,0 +1,131 @@
+flowchart TD
+    %% Global Styling & Classes
+    classDef inputStyle fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,font-weight:bold;
+    classDef backboneStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef neckStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100;
+    classDef headStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
+    classDef auxStyle fill:#ffebee,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5,color:#b71c1c;
+    classDef outputStyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#004d40,font-weight:bold;
+    classDef moduleStyle fill:#ffffff,stroke:#37474f,stroke-width:1.5px,color:#263238;
+
+    %% 1. Input Image
+    Input["RGB Input Image<br><b>3 × 640 × 640</b>"]:::inputStyle
+
+    %% 2. Backbone Feature Extraction Stages
+    subgraph Backbone ["Backbone: Citrus-Tailored YOLO11n Feature Extractor (2.697M Params Budget)"]
+        direction TB
+        Stem["Stage 0 (P1/2): Conv 3x3 s=2<br><b>16 × 320 × 320</b>"]:::backboneStyle
+        P2_Block["Stage 1-2 (P2/4): Conv 3x3 s=2 + C3k2<br><b>64 × 160 × 160</b><br><i>High-Res Spatial Geometry Details</i>"]:::backboneStyle
+        P3_Block["Stage 3-4 (P3/8): Conv 3x3 s=2 + C3k2<br><b>128 × 80 × 80</b><br><i>Primary Immature Fruit Features</i>"]:::backboneStyle
+        P4_Block["Stage 5-6 (P4/16): Conv 3x3 s=2 + C3k2<br><b>128 × 40 × 40</b><br><i>Cluster & Context Features</i>"]:::backboneStyle
+        P5_Block["Stage 7-8 (P5/32): Conv 3x3 s=2 + C3k2<br><b>256 × 20 × 20</b><br><i>Deep Semantic Canopy Features</i>"]:::backboneStyle
+        
+        subgraph P5_Context_Enhancement ["P5 Receptive Field Innovation (Theme F & N)"]
+            RepContext["<b>SPPFRepContext</b><br>• Training: Multi-Branch 7x7 RepConv + 3x3 DWConv + SPPF<br>• Deploy: Structurally Fused into Single 3x3 DWConv (0 Latency Overhead)<br><i>Spans Leaf/Branch Strip Occlusions (Solidity < 0.85)</i>"]:::moduleStyle
+            C2PSA_Block["<b>C2PSA</b>: Pointwise Spatial Attention<br><b>256 × 20 × 20</b>"]:::moduleStyle
+        end
+    end
+
+    Input --> Stem
+    Stem --> P2_Block
+    P2_Block --> P3_Block
+    P3_Block --> P4_Block
+    P4_Block --> P5_Block
+    P5_Block --> RepContext
+    RepContext --> C2PSA_Block
+
+    %% 3. Neck Feature Pyramid & Scale Fusion
+    subgraph Neck ["Neck: Cross-Scale Adaptive FPN + PAN Bidirectional Aggregation"]
+        direction TB
+        
+        %% Top-Down Path
+        Upsample_P5["Upsample 2x (Nearest)<br><b>256 × 40 × 40</b>"]:::neckStyle
+        Concat_P4["Concat [P5_up, P4_backbone]<br><b>384 → 128 × 40 × 40</b>"]:::neckStyle
+        C3k2_P4_TD["C3k2 Block (Top-Down P4)<br><b>128 × 40 × 40</b>"]:::neckStyle
+        
+        Upsample_P4["Upsample 2x (Nearest)<br><b>128 × 80 × 80</b>"]:::neckStyle
+        ScaleFusion["<b>CitrusScaleFusion (P3 Junction)</b><br>• Sample-Adaptive Bounded Gating (AvgPool + MaxPool)<br>• Dynamically weights shallow P3 vs deep P4 context<br><i>Mitigates 24.30x (peak 376x) Intra-Image Scale Disparity</i>"]:::moduleStyle
+        C3k2_P3_Fused["C3k2 Block (Fused P3 Neck Feature)<br><b>64 × 80 × 80 (N_P3)</b>"]:::neckStyle
+
+        %% Bottom-Up Path
+        Down_P3["Conv 3x3 s=2<br><b>64 × 40 × 40</b>"]:::neckStyle
+        Concat_PAN_P4["Concat [Down_P3, C3k2_P4_TD]<br><b>192 → 128 × 40 × 40</b>"]:::neckStyle
+        C3k2_P4_BU["C3k2 Block (Bottom-Up P4)<br><b>128 × 40 × 40 (N_P4)</b>"]:::neckStyle
+        
+        Down_P4["Conv 3x3 s=2<br><b>128 × 20 × 20</b>"]:::neckStyle
+        Concat_PAN_P5["Concat [Down_P4, C2PSA_out]<br><b>384 → 256 × 20 × 20</b>"]:::neckStyle
+        C3k2_P5_BU["C3k2 Block (Bottom-Up P5)<br><b>256 × 20 × 20 (N_P5)</b>"]:::neckStyle
+    end
+
+    C2PSA_Block --> Upsample_P5
+    Upsample_P5 --> Concat_P4
+    P4_Block --> Concat_P4
+    Concat_P4 --> C3k2_P4_TD
+    
+    C3k2_P4_TD --> Upsample_P4
+    Upsample_P4 --> ScaleFusion
+    P3_Block --> ScaleFusion
+    ScaleFusion --> C3k2_P3_Fused
+
+    C3k2_P3_Fused --> Down_P3
+    Down_P3 --> Concat_PAN_P4
+    C3k2_P4_TD --> Concat_PAN_P4
+    Concat_PAN_P4 --> C3k2_P4_BU
+
+    C3k2_P4_BU --> Down_P4
+    Down_P4 --> Concat_PAN_P5
+    C2PSA_Block --> Concat_PAN_P5
+    Concat_PAN_P5 --> C3k2_P5_BU
+
+    %% 4. Decoupled Lite Segmentation Heads
+    subgraph Head ["Prediction Head: SegmentCitrusLiteBQ (Single-Block Decoupled Architecture)"]
+        direction TB
+        
+        subgraph ProtoGen ["Mask Prototype Generation (P3 Feature)"]
+            ProtoConv["Proto 3x3 Conv + Upsample 2x<br><b>32 × 160 × 160 Prototype Maps</b>"]:::headStyle
+        end
+        
+        subgraph MultiScaleHeads ["Decoupled Decoders @ N_P3, N_P4, N_P5"]
+            ClsHead["<b>Class Branch</b>: 1-Block DWConv 3x3 + 1x1 Conv<br><i>Drastically cuts parameters, prevents small-sample overfitting</i>"]:::headStyle
+            BoxHead["<b>Box Branch</b>: 1-Block Conv 3x3 + DFL Regression<br><i>Predicts bounding box coordinates</i>"]:::headStyle
+            CoeffHead["<b>Mask Coeff Branch</b>: 1-Block Conv 3x3<br><i>Predicts 32 dynamic linear combination coefficients</i>"]:::headStyle
+        end
+
+        Assembly["<b>Linear Mask Assembly & Bounding-Box Crop</b><br>Mask = σ( Coefficients × Prototypes )"]:::headStyle
+    end
+
+    C3k2_P3_Fused --> ProtoGen
+    C3k2_P3_Fused & C3k2_P4_BU & C3k2_P5_BU --> MultiScaleHeads
+    ProtoConv & CoeffHead --> Assembly
+
+    %% 5. Final Deployable Output
+    subgraph FinalOutput ["Deployable Output (Inference: 146.6ms CPU / 6.8ms GPU / 9.45 GFLOPs)"]
+        Output_BBoxes["High-Precision Bounding Boxes"]:::outputStyle
+        Output_Masks["Fine-Grained Instance Masks<br><i>Resolves Deep Concavity & Touching Gaps</i>"]:::outputStyle
+    end
+
+    BoxHead --> Output_BBoxes
+    ClsHead --> Output_BBoxes
+    Assembly --> Output_Masks
+
+    %% 6. Training-Only Auxiliary Branch (Disconnected at Inference)
+    subgraph TrainingAux ["Training-Time Auxiliary Supervision Branch (CitrusTrainAux — 0 Inference Cost)"]
+        direction TB
+        
+        VFL_Loss["<b>Varifocal Quality Loss (VFL)</b><br>• Weights positive samples by continuous Mask IoU<br>• Suppresses low-confidence foliage false alarms<br><i>Directly eliminates PR Curve Tail Drop at R > 0.80</i>"]:::auxStyle
+        
+        Boundary_Aux["<b>P2/P3 Mutual Boundary Loss (λ=0.25)</b><br>• Morphological Sobel / Boundary IoU Supervision on P2 Features<br><i>Forces gradients to resolve narrow leaf occlusions</i>"]:::auxStyle
+        
+        Query_Aux["<b>Sparse Center Query Loss (λ=0.05)</b><br>• Focal center repulsion at touching fruit centroids (Gap ≤ 4px)<br><i>Prevents Merge Errors in Dense Clusters</i>"]:::auxStyle
+        
+        Contrast_Aux["<b>Local Feature Contrast Loss (λ=0.10)</b><br>• Enforces feature divergence between fruit & annular foliage<br><i>Overcomes 41% Green-on-Green Camouflage (ΔE < 15)</i>"]:::auxStyle
+    end
+
+    %% Training-Only Taps (Dashed Red Lines)
+    P2_Block -.->|"Tap P2 High-Res Features (Train Only)"| Boundary_Aux
+    P3_Block -.->|"Tap P3 Features (Train Only)"| Query_Aux
+    P3_Block -.->|"Tap P3 Contrast (Train Only)"| Contrast_Aux
+    ClsHead -.->|"IoU-Aware Quality Alignment (Train Only)"| VFL_Loss
+
+    %% Inference Disconnection Annotation
+    linkStyle 19,20,21,22 stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5;

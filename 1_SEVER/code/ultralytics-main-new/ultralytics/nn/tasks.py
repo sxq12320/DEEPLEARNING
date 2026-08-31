@@ -72,8 +72,11 @@ from ultralytics.nn.modules import (
     SegmentCitrusAux,
     SegmentCitrusBLite,
     SegmentCitrusBQuality,
+    SegmentCitrusDualProto,
     SegmentCitrusLite,
     SegmentCitrusLiteBQ,
+    SegmentCitrusQualityLite,
+    SegmentCitrusSDR,
     SegmentCitrusTopo,
     SegmentP2Boundary,
     SegmentP2CFS,
@@ -149,6 +152,15 @@ from ultralytics.nn.modules import (
     CitrusDetailInject,
     CitrusPagFM,
     CitrusScaleFusion,
+    CitrusShapeFusion,
+    CitrusShapeStream,
+    CitrusBilateralExchange,
+    CitrusFrequencyAlignedConcat,
+    CitrusRepMixerStage,
+    CitrusStructureStem,
+    CitrusDualResolutionBackbone,
+    CitrusLightAFPN,
+    CitrusLightStage,
     LiteHRDetailBlock,
     SPPFLSKAResidual,
     SPPF_LSKA,
@@ -420,6 +432,24 @@ class BaseModel(torch.nn.Module):
         model = weights["model"] if isinstance(weights, dict) else weights  # torchvision models are not dicts
         csd = model.float().state_dict()  # checkpoint state_dict as FP32
         updated_csd = intersect_dicts(csd, self.state_dict())  # intersect
+        # Architectures may insert explicitly documented graph layers while preserving
+        # the pretrained operation itself at a new index. An opt-in YAML mapping keeps
+        # the public ``YOLO(yaml).load(checkpoint)`` path useful without guessing from
+        # tensor shapes or changing legacy models. Mapping format: target_index: source_index.
+        layer_map = getattr(self, "yaml", {}).get("pretrained_layer_map", {})
+        if layer_map:
+            target_state = self.state_dict()
+            remapped = {}
+            for target_index, source_index in layer_map.items():
+                source_prefix = f"model.{int(source_index)}."
+                target_prefix = f"model.{int(target_index)}."
+                for key, value in csd.items():
+                    if not key.startswith(source_prefix):
+                        continue
+                    target_key = target_prefix + key[len(source_prefix) :]
+                    if target_key in target_state and target_state[target_key].shape == value.shape:
+                        remapped[target_key] = value
+            updated_csd.update(remapped)
         self.load_state_dict(updated_csd, strict=False)  # load
         len_updated_csd = len(updated_csd)
         first_conv = "model.0.conv.weight"  # hard-coded to yolo models for now
@@ -1830,6 +1860,9 @@ def parse_model(d, ch, verbose=True):
             AAFM,
             FrequencyAwareDown,
             CitrusSAVSS,
+            CitrusStructureStem,
+            CitrusRepMixerStage,
+            CitrusLightStage,
             SPPFLSKAResidual,
             SPPF_LSKA,
             SPPFRepContext,
@@ -1899,6 +1932,10 @@ def parse_model(d, ch, verbose=True):
                 legacy = False
                 if scale in "mlx":
                     args[3] = True
+            if m is CitrusLightStage:
+                # The Light backbone is a current YOLO11-style replacement. Without this flag a model that removes
+                # every C3k2 block silently falls back to the older, substantially heavier Detect class branch.
+                legacy = False
             if m is A2C2f:
                 legacy = False
                 if scale in "lx":  # for L/X sizes
@@ -1928,6 +1965,26 @@ def parse_model(d, ch, verbose=True):
             if not isinstance(f, list) or len(f) != 2:
                 raise ValueError(f"{m.__name__} requires exactly two feature indices")
             c2 = ch[f[0]]
+            args = [[ch[x] for x in f], *args]
+        elif m is CitrusShapeStream:
+            if not isinstance(f, list) or len(f) != 4:
+                raise ValueError("CitrusShapeStream requires P2/P3/P4/P5 feature indices")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[x] for x in f], c2, *args[1:]]
+        elif m is CitrusShapeFusion:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("CitrusShapeFusion requires [P3, shape] feature indices")
+            c2 = ch[f[0]]
+            args = [[ch[x] for x in f], *args]
+        elif m is CitrusBilateralExchange:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("CitrusBilateralExchange requires [P2 detail, semantic] feature indices")
+            c2 = [ch[f[0]], ch[f[1]]]
+            args = [[ch[x] for x in f], *args]
+        elif m is CitrusFrequencyAlignedConcat:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("CitrusFrequencyAlignedConcat requires exactly two feature indices")
+            c2 = sum(ch[x] for x in f)
             args = [[ch[x] for x in f], *args]
         elif m in {EMA, SimAM, CoordAtt, ELA, CAA, CBAM, LIAM, DFEM, FarFormer, LumiFormer, TDAM, MWCA,
                    HCO, HyperACE, PCFA, HyperRes}:
@@ -2023,6 +2080,18 @@ def parse_model(d, ch, verbose=True):
                 raise ValueError(f"Unknown StarNet variant '{variant}'. Choices: {sorted(STARNET_VARIANTS)}")
             base_dim = int(STARNET_VARIANTS[variant]["base_dim"])
             c2 = [base_dim, base_dim * 2, base_dim * 4, base_dim * 8]
+        elif m is CitrusDualResolutionBackbone:
+            if not args or not isinstance(args[0], list) or len(args[0]) != 4:
+                raise ValueError("CitrusDualResolutionBackbone requires explicit [P2, P3, P4, P5] channels")
+            c2 = [int(value) for value in args[0]]
+        elif m is CitrusLightAFPN:
+            if not isinstance(f, list) or len(f) != 4:
+                raise ValueError("CitrusLightAFPN requires P2/P3/P4/P5 feature indices")
+            if not args or not isinstance(args[0], list) or len(args[0]) != 3:
+                raise ValueError("CitrusLightAFPN requires explicit [P3, P4, P5] output channels")
+            output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
+            c2 = output_channels
+            args = [[ch[index] for index in f], output_channels, *args[1:]]
         elif m in (ScaleAwareFusion, ScaleAwareFusion_Depth2RGB, ScaleAwareFusion_Bidirectional,
                    ScaleAwareFusion_RGBLed, ScaleAwareFusion_Naive):
             # Scale-Aware Fusion: 双输入融合，输出通道由 YAML 指定
@@ -2041,8 +2110,11 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusAux,
                 SegmentCitrusBLite,
                 SegmentCitrusBQuality,
+                SegmentCitrusDualProto,
                 SegmentCitrusLite,
                 SegmentCitrusLiteBQ,
+                SegmentCitrusQualityLite,
+                SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
                 SegmentP2DetectBoundary,
@@ -2062,8 +2134,11 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusAux,
                 SegmentCitrusBLite,
                 SegmentCitrusBQuality,
+                SegmentCitrusDualProto,
                 SegmentCitrusLite,
                 SegmentCitrusLiteBQ,
+                SegmentCitrusQualityLite,
+                SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
                 SegmentP2DetectBoundary,
@@ -2075,7 +2150,8 @@ def parse_model(d, ch, verbose=True):
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
             if m in {
                 Detect, YOLOEDetect, Segment, SegmentCitrusAux, SegmentCitrusBLite, SegmentCitrusBQuality,
-                SegmentCitrusLite, SegmentCitrusLiteBQ, SegmentCitrusTopo,
+                SegmentCitrusDualProto, SegmentCitrusLite, SegmentCitrusLiteBQ, SegmentCitrusQualityLite,
+                SegmentCitrusSDR, SegmentCitrusTopo,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
@@ -2134,7 +2210,14 @@ def yaml_model_load(path):
     unified_path = re.sub(r"(\d+)([nslmx])(.+)?$", r"\1\3", str(path))  # i.e. yolov8x.yaml -> yolov8.yaml
     yaml_file = check_yaml(unified_path, hard=False) or check_yaml(path)
     d = YAML.load(yaml_file)  # model dict
-    d["scale"] = guess_model_scale(path)
+    # Prefer an explicit scale in custom YAMLs whose filenames do not follow the
+    # built-in ``yolo11n`` naming convention. A recognized filename suffix still
+    # takes precedence so official multi-scale YAML behavior remains unchanged.
+    filename_scale = guess_model_scale(path)
+    if filename_scale:
+        d["scale"] = filename_scale
+    else:
+        d.setdefault("scale", "")
     d["yaml_file"] = str(path)
     return d
 

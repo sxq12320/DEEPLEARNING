@@ -4,7 +4,7 @@
 #   新算子: 大核感知上下文 + 小核动态聚合细节的仿生卷积——与'远处小果需上下文佐证'同构；
 #   YOLOv10 团队出品、全标准算子构成、ONNX 可导出（theme10 裁决: backbone 侧最稳的新算子）。
 # 文献: LSNet (Wang et al., CVPR 2025, arXiv:2503.23135)；fork 内置官方结构 (lsnet.py)。
-# 消融角色: C 组追加（vs F05 PConv / F06 WTConv 同位置横评）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F59_yolo11-seg-c3k2ls.yaml --pretrained yolo11n-seg.pt --name F59_c3k2ls
+# 消融角色: C 组追加（vs F05 PConv / F06 WTConv 同位置横评）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F59_yolo11-seg-c3k2ls.yaml --pretrained yolo11n-seg.pt --name F59_c3k2ls
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

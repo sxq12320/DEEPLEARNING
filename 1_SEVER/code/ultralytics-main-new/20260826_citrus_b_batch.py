@@ -27,9 +27,9 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent
-YAML_DIR = ROOT / "0_orange_yaml" / "20260826_citrus_b"
+YAML_DIR = ROOT / "0_orange_yaml" / "B_series"
 LOCAL_DATA = Path(r"E:\mastercode\data\orange_yolo_grouped_dedup_20260820\data.yaml")
-DEFAULT_PROJECT = ROOT / "1_results" / "CITRUS_B_GROUPED_DEDUP_300EP"
+DEFAULT_PROJECT = ROOT / "1_results" / "B_series" / "grouped_clean_300ep"
 
 BQ = {"citrus_boundary": 0.25, "citrus_query": 0.05}
 

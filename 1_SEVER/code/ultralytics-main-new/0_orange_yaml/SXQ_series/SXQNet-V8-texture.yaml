@@ -2,7 +2,7 @@
 #
 # SXQNet-V8 Texture（纹理轴，用户思想主线版）：回答'绿绿伪装主导时怎么办'（|Δa*|=2.2）。
 #   = TGP 前端（图像域先验）+ TDAM@P2P3（特征域差分放大）+ CSFG + LIAM——纹理全链路。
-# 消融: vs F61（无 CSFG/LIAM）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V8-texture.yaml --pretrained yolo11n-seg.pt --name SXQ_V8
+# 消融: vs F61（无 CSFG/LIAM）| python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V8-texture.yaml --pretrained yolo11n-seg.pt --name SXQ_V8
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

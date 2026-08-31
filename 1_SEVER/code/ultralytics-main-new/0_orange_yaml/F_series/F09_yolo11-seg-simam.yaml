@@ -3,7 +3,7 @@
 # F09: 颈部 P3 输出后插入 SimAM 无参数能量注意力（0 参数增量）。
 # 动机: P3 是小目标检测与 mask 原型的共同来源；注意力在此放大与叶片同色的弱小果信号。
 # 文献: Yang et al., ICML 2021 (PMLR v139)。
-# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F09_yolo11-seg-simam.yaml --pretrained yolo11n-seg.pt --name F09_simam
+# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F09_yolo11-seg-simam.yaml --pretrained yolo11n-seg.pt --name F09_simam
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

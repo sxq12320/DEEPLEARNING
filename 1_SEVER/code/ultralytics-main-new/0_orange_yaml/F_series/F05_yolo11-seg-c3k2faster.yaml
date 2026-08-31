@@ -3,7 +3,7 @@
 # F05: 骨干 C3k2 → C3k2_Faster（FasterNet PConv 部分卷积）。
 # 动机: 轻量化对照——为后续加 P2/注意力腾出参数预算，验证骨干冗余度。
 # 文献: Chen et al., CVPR 2023, arXiv:2303.03667。
-# 消融角色: C 组单模块（轻量化）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F05_yolo11-seg-c3k2faster.yaml --pretrained yolo11n-seg.pt --name F05_faster
+# 消融角色: C 组单模块（轻量化）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F05_yolo11-seg-c3k2faster.yaml --pretrained yolo11n-seg.pt --name F05_faster
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -4,7 +4,7 @@
 #   + LumiFormer@颈部P3 + 全 BiFPN 加权融合；训练配 --iou-type NWDWise 构成完整方法。
 #   三个原创组件各治一痛点：Shallow-Heavy 治'小'（算力搬到高分辨率）、
 #   FarFormer 治'远+模糊'（全局上下文+高频细节）、LumiFormer 治'暗'（频域通道+暗区调制）。
-# 消融角色: L 组终极架构（vs F43 非 Former 版 / F46 F47 单点版做 LOO）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F48_yolo11-seg-citrusformer-net.yaml --pretrained yolo11n-seg.pt --name F48_citrusformer
+# 消融角色: L 组终极架构（vs F43 非 Former 版 / F46 F47 单点版做 LOO）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F48_yolo11-seg-citrusformer-net.yaml --pretrained yolo11n-seg.pt --name F48_citrusformer
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

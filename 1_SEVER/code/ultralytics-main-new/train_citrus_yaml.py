@@ -16,12 +16,15 @@ import numpy as np
 import torch
 import yaml
 
+from citrus_protocol import fixed_train_args, validate_locked_runtime, write_protocol_snapshot
+
 
 ROOT = Path(__file__).resolve().parent
 WORKSPACE = ROOT.parents[2]
 DEFAULT_DATA = WORKSPACE / "data" / "orange_yolo_grouped_dedup_20260820" / "data.yaml"
 DEFAULT_PROJECT = ROOT / "1_results" / "CITRUS_SINGLE_MODEL_300EP"
 DEFAULT_PRETRAINED = ROOT / "yolo11n-seg.pt"
+FIXED_TRAIN = fixed_train_args()
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,10 +36,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pretrained", type=Path, default=DEFAULT_PRETRAINED)
     parser.add_argument("--project", type=Path, default=DEFAULT_PROJECT)
     parser.add_argument("--epochs", type=int, default=300)
-    parser.add_argument("--batch", type=int, default=16)
-    parser.add_argument("--imgsz", type=int, default=640)
+    parser.add_argument("--batch", type=int, default=FIXED_TRAIN["batch"])
+    parser.add_argument("--imgsz", type=int, default=FIXED_TRAIN["imgsz"])
     parser.add_argument("--device", default="0")
-    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--workers", type=int, default=FIXED_TRAIN["workers"])
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--amp", action="store_true", help="Enable AMP; leave disabled to match the current S series.")
     parser.add_argument("--cache", choices=("false", "disk", "ram"), default="false")
@@ -46,6 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--citrus-contrast", type=float, default=None)
     parser.add_argument("--citrus-exclusive", type=float, default=None)
     parser.add_argument("--citrus-concavity", type=float, default=None)
+    parser.add_argument("--citrus-topology", type=float, default=None)
     parser.add_argument("--citrus-vfl", type=float, default=None)
     parser.add_argument("--nwd-ratio", type=float, default=None)
     parser.add_argument("--resume", action="store_true")
@@ -78,7 +82,7 @@ def prepare_runtime_data_yaml(source: Path, project: Path) -> Path:
     return runtime_yaml
 
 
-def custom_loss_overrides(args: argparse.Namespace, head_name: str) -> dict[str, float]:
+def custom_loss_overrides(args: argparse.Namespace, head_name: str, sdr_stage: int = 1) -> dict[str, float]:
     """Resolve explicit losses and apply the documented topology/quality head defaults."""
     names = (
         "citrus_quality",
@@ -87,15 +91,27 @@ def custom_loss_overrides(args: argparse.Namespace, head_name: str) -> dict[str,
         "citrus_contrast",
         "citrus_exclusive",
         "citrus_concavity",
+        "citrus_topology",
         "citrus_vfl",
         "nwd_ratio",
     )
-    overrides = {name: float(getattr(args, name)) for name in names if getattr(args, name) is not None}
+    overrides = {name: float(value) for name in names if (value := getattr(args, name, None)) is not None}
     if head_name in {"SegmentCitrusTopo", "SegmentCitrusBLite", "SegmentCitrusLiteBQ"}:
         overrides.setdefault("citrus_boundary", 0.25)
         overrides.setdefault("citrus_query", 0.05)
     if head_name == "SegmentCitrusBQuality" and "citrus_quality" not in overrides:
         overrides["citrus_quality"] = 0.20
+    if head_name == "SegmentCitrusDualProto" and "citrus_topology" not in overrides:
+        overrides["citrus_topology"] = 0.10
+    if head_name == "SegmentCitrusSDR":
+        if sdr_stage not in {1, 2, 3, 4, 5}:
+            raise ValueError(f"Unknown SegmentCitrusSDR stage: {sdr_stage}")
+        # Pass one identical hyperparameter vector to every G_0839 stage. Heads
+        # without a corresponding output naturally contribute zero loss.
+        overrides.setdefault("citrus_query", 0.03)
+        overrides.setdefault("citrus_contrast", 0.05)
+        overrides.setdefault("citrus_boundary", 0.10)
+        overrides.setdefault("citrus_topology", 0.05)
     if any(value < 0 for value in overrides.values()):
         raise ValueError(f"Custom loss gains must be non-negative: {overrides}")
     return overrides
@@ -108,6 +124,14 @@ def main() -> None:
     data_path = args.data.expanduser().resolve()
     pretrained = args.pretrained.expanduser().resolve()
     project = args.project.expanduser().resolve()
+    cache: bool | str = False if args.cache == "false" else args.cache
+    validate_locked_runtime(
+        batch=args.batch,
+        imgsz=args.imgsz,
+        workers=args.workers,
+        cache=cache,
+        amp=args.amp,
+    )
     if not model_path.is_file():
         raise FileNotFoundError(f"Model not found: {model_path}")
     if not data_path.is_file():
@@ -132,8 +156,9 @@ def main() -> None:
         if model_path.suffix.lower() == ".yaml":
             model.load(str(pretrained))
 
-    head_name = model.model.model[-1].__class__.__name__
-    loss_overrides = custom_loss_overrides(args, head_name)
+    head = model.model.model[-1]
+    head_name = head.__class__.__name__
+    loss_overrides = custom_loss_overrides(args, head_name, int(getattr(head, "sdr_stage", 1)))
 
     if args.dry_run:
         model.info(detailed=False, verbose=True, imgsz=args.imgsz)
@@ -141,34 +166,21 @@ def main() -> None:
         return
 
     runtime_data = prepare_runtime_data_yaml(data_path, project)
-    cache: bool | str = False if args.cache == "false" else args.cache
-    protocol = {
-        "data": str(runtime_data),
-        "project": str(project),
-        "name": args.name,
-        "epochs": args.epochs,
-        "batch": args.batch,
-        "imgsz": args.imgsz,
-        "device": args.device,
-        "workers": args.workers,
-        "optimizer": "AdamW",
-        "lr0": 0.001,
-        "lrf": 0.01,
-        "momentum": 0.937,
-        "weight_decay": 0.0005,
-        "warmup_epochs": 3.0,
-        "patience": 100,
-        "close_mosaic": 10,
-        "overlap_mask": True,
-        "mask_ratio": 4,
-        "dropout": 0.0,
-        "amp": args.amp,
-        "seed": args.seed,
-        "deterministic": True,
-        "cache": cache,
-        "exist_ok": False,
+    protocol_path, protocol_hash = write_protocol_snapshot(
+        project,
+        {"entrypoint": "train_citrus_yaml.py"},
+    )
+    protocol = fixed_train_args()
+    protocol.update(
+        data=str(runtime_data),
+        project=str(project),
+        name=args.name,
+        epochs=args.epochs,
+        device=args.device,
+        seed=args.seed,
+        exist_ok=False,
         **loss_overrides,
-    }
+    )
     project.mkdir(parents=True, exist_ok=True)
     (project / "_protocol" / f"{args.name}.json").write_text(
         json.dumps(
@@ -176,6 +188,9 @@ def main() -> None:
                 "model": str(model_path),
                 "pretrained": str(pretrained),
                 "source_data": str(data_path),
+                "formal_protocol": str(protocol_path),
+                "protocol_sha256": protocol_hash,
+                "method_loss_gains": loss_overrides,
                 "protocol": protocol,
             },
             ensure_ascii=False,

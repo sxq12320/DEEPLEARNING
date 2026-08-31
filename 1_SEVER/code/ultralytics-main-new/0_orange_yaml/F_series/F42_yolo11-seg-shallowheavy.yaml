@@ -5,7 +5,7 @@
 #   放在 P5/32（远处小果在此已 <1 格）。把算力搬到小目标所在的分辨率，参数量近似持平。
 # 文献基础: QueryDet 高分辨率查询 (CVPR 2022, arXiv:2103.09136)；深度/宽度再分配思想
 #   (EfficientNet, ICML 2019, arXiv:1905.11946)。重分配方案为本课题原创。
-# 消融角色: J 组架构创新 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F42_yolo11-seg-shallowheavy.yaml --pretrained yolo11n-seg.pt --name F42_shallowheavy
+# 消融角色: J 组架构创新 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F42_yolo11-seg-shallowheavy.yaml --pretrained yolo11n-seg.pt --name F42_shallowheavy
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

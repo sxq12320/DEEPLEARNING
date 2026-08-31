@@ -7,7 +7,7 @@
 #   辅助流以极小代价补足高分辨率处理深度（HRNet 保持高分辨率表征思想的轻量化实现）。
 # 文献基础: HRNet (Wang et al., TPAMI 2020, arXiv:1908.07919) + Gold-YOLO 汇聚分发
 #   (NeurIPS 2023, arXiv:2309.11331)；双流拓扑组合为本课题原创。
-# 消融角色: J 组架构创新 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F40_yolo11-seg-hrstream.yaml --pretrained yolo11n-seg.pt --name F40_hrstream
+# 消融角色: J 组架构创新 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F40_yolo11-seg-hrstream.yaml --pretrained yolo11n-seg.pt --name F40_hrstream
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

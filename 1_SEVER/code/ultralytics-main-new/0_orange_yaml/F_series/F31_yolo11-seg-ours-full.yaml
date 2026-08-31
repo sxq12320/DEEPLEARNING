@@ -4,7 +4,7 @@
 #   DFEM（原创，频域+暗区增强）+ SPD-Conv（无损下采样）+ SPPF_LSKA（全局上下文）
 #   + BiFPNConcat（加权融合）+ DySample（动态上采样）+ LIAM（原创，亮度不变注意力）。
 # 训练时配合 --iou-type NWDWise（原创损失）与可选 --slide 构成完整方法。
-# 消融角色: I 组主模型；F32-F37 为其 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F31_yolo11-seg-ours-full.yaml --pretrained yolo11n-seg.pt --name F31_ours_full
+# 消融角色: I 组主模型；F32-F37 为其 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/F_series/F31_yolo11-seg-ours-full.yaml --pretrained yolo11n-seg.pt --name F31_ours_full
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

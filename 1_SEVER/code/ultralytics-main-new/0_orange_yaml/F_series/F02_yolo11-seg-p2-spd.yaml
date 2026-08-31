@@ -3,7 +3,7 @@
 # F02: P2 检测层 + SPD-Conv 无损下采样（骨干 3 处步长卷积替换）。
 # 动机: P2 层保住分辨率后，下采样仍丢 3/4 像素；SPD 重排到通道维实现信息无损。
 # 文献: SPD-Conv (Sunkara & Luo, ECML-PKDD 2022, arXiv:2208.03641)。
-# 消融角色: A 组组合 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F02_yolo11-seg-p2-spd.yaml --pretrained yolo11n-seg.pt --name F02_p2_spd
+# 消融角色: A 组组合 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F02_yolo11-seg-p2-spd.yaml --pretrained yolo11n-seg.pt --name F02_p2_spd
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

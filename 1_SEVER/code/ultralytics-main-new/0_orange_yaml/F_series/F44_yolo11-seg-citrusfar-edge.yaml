@@ -7,7 +7,7 @@
 #   ONNX→NCNN/RKNN/TFLite-INT8 直转；PConv 对 MCU 内存带宽尤其友好（3/4 通道直通）。
 # 文献: FasterNet (CVPR 2023, arXiv:2303.03667); SPD-Conv (arXiv:2208.03641);
 #   LSKA (doi:10.1016/j.eswa.2023.121352); 重分配与 CSFG 为本课题原创。
-# 消融角色: K 组部署主推 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F44_yolo11-seg-citrusfar-edge.yaml --pretrained yolo11n-seg.pt --name F44_edge
+# 消融角色: K 组部署主推 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F44_yolo11-seg-citrusfar-edge.yaml --pretrained yolo11n-seg.pt --name F44_edge
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -2,7 +2,7 @@
 #
 # F38: CitrusFar-Seg-Full-P2 = F31 全部组件 + P2/4 高分辨率检测层（性能上限探索版）。
 # mask 原型来自 P2/4（160x160），远处小果掩码质量最优；代价为最大的显存与延迟。
-# 消融角色: I 组上限版（vs F31 权衡）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F38_yolo11-seg-ours-full-p2.yaml --pretrained yolo11n-seg.pt --name F38_ours_p2
+# 消融角色: I 组上限版（vs F31 权衡）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F38_yolo11-seg-ours-full-p2.yaml --pretrained yolo11n-seg.pt --name F38_ours_p2
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

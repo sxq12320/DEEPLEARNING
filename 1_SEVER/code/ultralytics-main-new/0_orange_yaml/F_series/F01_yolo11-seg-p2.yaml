@@ -4,7 +4,7 @@
 # 动机：640 输入下 34.9-40.5% 实例至少一边 <32px，P3/8 上 <16px 目标不足 2 个特征格。
 # 文献: QueryDet (Yang et al. CVPR 2022, arXiv:2103.09136); MAE-YOLOv8 绿果小目标用 p2 分支
 #       (Liu et al. 2024, doi:10.1016/j.compag.2024.109458)。
-# 消融角色: A 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F01_yolo11-seg-p2.yaml --pretrained yolo11n-seg.pt --name F01_p2
+# 消融角色: A 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F01_yolo11-seg-p2.yaml --pretrained yolo11n-seg.pt --name F01_p2
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -161,7 +161,7 @@ python 20260824_citrus_topo_batch.py \
 
 ```bash
 python 20260824_citrus_topo_report.py \
-  --project 1_results/CITRUS_TOPO_GROUPED_DEDUP
+  --project 1_results/L_series/grouped_clean_300ep
 ```
 
 脚本会自动把数据 YAML 内部的 Windows 路径改写成服务器运行时副本，跳过已经完整跑完的目录，并把 Git 状态、数据路径、损失参数和成功/失败状态写入 `experiment_ledger.jsonl`。环境不需要 Mamba。

@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 #
 # F28: DFEM 频域增强 + SPD 无损下采样（先增强、再无损传递）。
-# 消融角色: H 组交互（F19 x F03）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F28_yolo11-seg-dfem-spd.yaml --pretrained yolo11n-seg.pt --name F28_dfem_spd
+# 消融角色: H 组交互（F19 x F03）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F28_yolo11-seg-dfem-spd.yaml --pretrained yolo11n-seg.pt --name F28_dfem_spd
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

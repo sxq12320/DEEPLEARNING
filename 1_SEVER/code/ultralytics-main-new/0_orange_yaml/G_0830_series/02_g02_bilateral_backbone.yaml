@@ -1,0 +1,42 @@
+# G_0830-G02: persistent P2 detail with P3/P4/P5 bilateral exchanges; standard PAN neck.
+nc: 80
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+pretrained_layer_map: {0: 0, 1: 1, 2: 2, 4: 3, 5: 4, 9: 5, 10: 6, 14: 7, 15: 8, 16: 9, 17: 10, 21: 11, 23: 13, 24: 14, 26: 16, 27: 17, 29: 19, 30: 20, 32: 22, 33: 23}
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]       # pretrained P2 source
+  - [-1, 1, Conv, [128, 1, 1]]               # narrow persistent P2 detail (32 ch at n scale)
+  - [2, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2, [512, False, 0.25]]       # P3
+  - [[3, 5], 1, CitrusBilateralExchange, [2, 16]]
+  - [6, 1, Index, [32, 0]]                   # persistent P2-a
+  - [6, 1, Index, [128, 1]]                  # semantic P3-a
+  - [8, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2, [512, True]]               # P4
+  - [[7, 10], 1, CitrusBilateralExchange, [4, 16]]
+  - [11, 1, Index, [32, 0]]                  # persistent P2-b
+  - [11, 1, Index, [128, 1]]                 # semantic P4-b
+  - [13, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2, [1024, True]]              # P5
+  - [-1, 1, SPPFLSKAResidual, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+  - [[12, 17], 1, CitrusBilateralExchange, [8, 16]]
+  - [18, 1, Index, [32, 0]]                  # final narrow P2
+  - [18, 1, Index, [256, 1]]                 # final P5
+head:
+  - [20, 1, nn.Upsample, [None, 2, nearest]]
+  - [[-1, 13], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, nn.Upsample, [None, 2, nearest]]
+  - [[-1, 8], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, False]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 23], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, False]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 20], 1, Concat, [1]]
+  - [-1, 2, C3k2, [1024, True]]
+  - [[19, 26, 29, 32], 1, SegmentCitrusTopo, [nc, 32, 256]]

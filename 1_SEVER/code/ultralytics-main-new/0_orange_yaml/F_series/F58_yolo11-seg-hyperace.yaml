@@ -5,7 +5,7 @@
 #   建模'同一果串/同一枝条'的多对多高阶关联——单个远处暗果证据不足时由群体模式互相佐证
 #   （数据依据: 47-58.5% 图像存在密集相邻实例）。O(E·N·C) 代价极小。
 # 文献: Hyper-YOLO (TPAMI 2025, arXiv:2408.04804); YOLOv13 (arXiv:2506.17733)；lite 软超边实现为本课题适配。
-# 消融角色: P 组 P5-mixer 横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F58_yolo11-seg-hyperace.yaml --pretrained yolo11n-seg.pt --name F58_hyperace
+# 消融角色: P 组 P5-mixer 横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F58_yolo11-seg-hyperace.yaml --pretrained yolo11n-seg.pt --name F58_hyperace
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

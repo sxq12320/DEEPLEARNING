@@ -4,7 +4,7 @@
 #   五个原创组件覆盖数据体检的全部退化：Shallow-Heavy(小) + FarFormer(远/糊)
 #   + LumiFormer(暗-特征域) + LCE(暗-图像域) + TDAM(伪装)；训练配 --iou-type NWDWise
 #   --tal-metric NWD --tal-min-pos 构成完整方法（GA-TAL 治 <16px 正样本饥饿）。
-# 消融角色: N 组终极（vs F48 增量 = LCE+TDAM 贡献）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F53_yolo11-seg-citrusformer-plus.yaml --pretrained yolo11n-seg.pt --name F53_citrusformer_plus
+# 消融角色: N 组终极（vs F48 增量 = LCE+TDAM 贡献）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F53_yolo11-seg-citrusformer-plus.yaml --pretrained yolo11n-seg.pt --name F53_citrusformer_plus
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -14,7 +14,7 @@ from ultralytics.utils.torch_utils import get_flops, intersect_dicts
 
 
 ROOT = Path(__file__).resolve().parents[1]
-YAML_DIR = ROOT / "0_orange_yaml" / "20260826_citrus_b"
+YAML_DIR = ROOT / "0_orange_yaml" / "B_series"
 FINAL_YAML = YAML_DIR / "09_b09_recall_balanced_final.yaml"
 
 

@@ -2,7 +2,7 @@
 #
 # SXQNet-V6 P2（小目标精度轴）：回答'不计 FLOPs 时小果精度能到多高'。
 #   = TGP 前端 + Shallow-Heavy×HWDown 骨干 + P2 四层头（mask 原型来自 P2/4）+ 全 BiFPN。
-# 消融: vs V1（三层头）量化 P2 层增益；FLOPs 高是本轴的 trade-off，参数仍轻 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V6-p2.yaml --pretrained yolo11n-seg.pt --name SXQ_V6
+# 消融: vs V1（三层头）量化 P2 层增益；FLOPs 高是本轴的 trade-off，参数仍轻 | python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V6-p2.yaml --pretrained yolo11n-seg.pt --name SXQ_V6
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

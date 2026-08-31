@@ -29,8 +29,8 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent
-YAML_DIR = ROOT / "0_orange_yaml" / "20260824_citrus_swift"
-DEFAULT_PROJECT = ROOT / "1_results" / "CITRUS_SWIFT_GROUPED_DEDUP_SCREEN50"
+YAML_DIR = ROOT / "0_orange_yaml" / "S_series"
+DEFAULT_PROJECT = ROOT / "1_results" / "S_series" / "grouped_clean_screen50"
 
 AUX_CORE = {"citrus_boundary": 0.25, "citrus_query": 0.05, "citrus_contrast": 0.10}
 AUX_FULL = {

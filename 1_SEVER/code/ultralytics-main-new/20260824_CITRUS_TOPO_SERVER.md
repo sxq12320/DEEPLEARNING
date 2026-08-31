@@ -30,7 +30,7 @@ ultralytics-main-new/
 ├── 20260824_citrus_topo_batch.py
 ├── 20260824_citrus_topo_report.py
 ├── yolo11n-seg.pt
-├── 0_orange_yaml/20260824_citrus_topo/*.yaml
+├── 0_orange_yaml/L_series/*.yaml
 └── ultralytics/...
 
 /your/data/orange_yolo_grouped_dedup_20260820/
@@ -65,7 +65,7 @@ Generate the first objective table:
 
 ```bash
 python 20260824_citrus_topo_report.py \
-  --project 1_results/CITRUS_TOPO_GROUPED_DEDUP_300EP
+  --project 1_results/L_series/grouped_clean_300ep
 ```
 
 Then run the six loss ablations on the fixed full architecture:

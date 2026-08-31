@@ -5,7 +5,7 @@
 #   感受野 7x7，门控让'信细节还是信上下文'由内容决定（远处糊果区自动偏上下文支）。
 # 文献融合: FasterNet (CVPR 2023, arXiv:2303.03667) × ConvNeXt 大核 (CVPR 2022, arXiv:2201.03545)
 #   × TransNeXt Convolutional GLU (CVPR 2024, arXiv:2311.17132)；三合一组合原创。
-# 消融角色: C 组四路块横评（F05 PConv / F06 WT / F59 LS / F63 SXQ）；SXQNet 家族颈部块的独立证据行 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F63_yolo11-seg-c3k2sxq.yaml --pretrained yolo11n-seg.pt --name F63_c3k2sxq
+# 消融角色: C 组四路块横评（F05 PConv / F06 WT / F59 LS / F63 SXQ）；SXQNet 家族颈部块的独立证据行 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F63_yolo11-seg-c3k2sxq.yaml --pretrained yolo11n-seg.pt --name F63_c3k2sxq
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

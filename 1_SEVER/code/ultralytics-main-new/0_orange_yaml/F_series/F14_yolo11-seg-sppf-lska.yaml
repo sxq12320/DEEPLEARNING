@@ -3,7 +3,7 @@
 # F14: SPPF → SPPF_LSKA（多尺度池化聚合特征上加大核分离注意力）。
 # 动机: 判断远处暗点是否为柑橘依赖全局上下文；LSKA 让 SPPF 聚合具备空间选择性。
 # 文献: Lau et al., Expert Syst. Appl. 2024, doi:10.1016/j.eswa.2023.121352。
-# 消融角色: E 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F14_yolo11-seg-sppf-lska.yaml --pretrained yolo11n-seg.pt --name F14_lska
+# 消融角色: E 组单模块 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F14_yolo11-seg-sppf-lska.yaml --pretrained yolo11n-seg.pt --name F14_lska
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

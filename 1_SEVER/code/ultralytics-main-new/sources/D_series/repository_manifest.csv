@@ -1,0 +1,10 @@
+role,name,url,commit,license,local_path
+implemented_evidence,PiDiNet,https://github.com/zhuoinoulu/pidinet.git,d21aa881ed9c628571636fad39acfe1fad517ebd,LICENSE,C:\Users\33836\Desktop\github\PiDiNet
+implemented_evidence,Gated-SCNN,https://github.com/nv-tlabs/GSCNN.git,edd16c5d3f346a0ec009cec539fbcaf6d79b5111,LICENSE,C:\Users\33836\Desktop\github\GSCNN
+implemented_evidence,PIDNet,https://github.com/XuJiacong/PIDNet.git,4c158cf24ce432f0a8cb43364fae38d93cee0dc3,LICENSE,C:\Users\33836\Desktop\github\PIDNet
+implemented_evidence,Lite-HRNet,https://github.com/HRNet/Lite-HRNet.git,7b9049d264fa40402a27d1f175deff3b46a6b91b,LICENSE,C:\Users\33836\Desktop\github\Lite-HRNet
+auxiliary_evidence,QueryDet,https://github.com/ChenhongyiYang/QueryDet-PyTorch.git,feebf218d53d59ba054132dfa6ef84159f793967,LICENSE,C:\Users\33836\Desktop\github\QueryDet-PyTorch
+comparison_evidence,BiSeNet,https://github.com/CoinCheung/BiSeNet.git,6b4b67a8e3eb0cc23b3d7a94843a7c3c11dedca8,LICENSE,C:\Users\33836\Desktop\github\BiSeNet
+held_candidate,FreqFusion,https://github.com/Linwei-Chen/FreqFusion.git,3fb0c70637a3c194fb74294d3ce4681958b26241,NONE,C:\Users\33836\Desktop\github\FreqFusion
+excluded_current,HCFNet,https://github.com/zhengshuchen/HCFNet.git,fda3279e2d9c2f2b31abe9c67d8487b226d2ae98,Apache-2.0,C:\Users\33836\Desktop\github\HCFNet
+

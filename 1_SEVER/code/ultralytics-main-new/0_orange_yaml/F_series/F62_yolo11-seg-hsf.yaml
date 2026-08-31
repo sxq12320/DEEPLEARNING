@@ -5,7 +5,7 @@
 #   通道筛选权重过滤低层，只保留语义相关响应再相加——且输出通道不翻倍，后续 C3k2 参数下降。
 # 文献: HS-FPN (Chen et al., Comput. Biol. Med. 2024, doi:10.1016/j.compbiomed.2024.107917，
 #   微小目标专用轻量筛选式 FPN)。
-# 消融角色: R 组融合范式横评（Concat 基线 vs F16 BiFPN vs F62 HSF）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F62_yolo11-seg-hsf.yaml --pretrained yolo11n-seg.pt --name F62_hsf
+# 消融角色: R 组融合范式横评（Concat 基线 vs F16 BiFPN vs F62 HSF）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F62_yolo11-seg-hsf.yaml --pretrained yolo11n-seg.pt --name F62_hsf
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

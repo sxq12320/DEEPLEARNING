@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 #
 # F25: SPD 无损下采样 + 颈部 P3 EMA 注意力。
-# 消融角色: H 组交互（F03 x F08）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F25_yolo11-seg-spd-ema.yaml --pretrained yolo11n-seg.pt --name F25_spd_ema
+# 消融角色: H 组交互（F03 x F08）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F25_yolo11-seg-spd-ema.yaml --pretrained yolo11n-seg.pt --name F25_spd_ema
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

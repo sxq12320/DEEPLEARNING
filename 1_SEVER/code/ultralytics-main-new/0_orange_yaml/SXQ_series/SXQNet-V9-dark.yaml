@@ -3,7 +3,7 @@
 # SXQNet-V9 Dark（暗光轴）：回答'逆光/夜间/阴天主导时怎么办'（小果 V=103 且比背景暗）。
 #   = LCE（图像域曲线）+ DFEM@P3（特征域频率+暗区）+ LumiFormer@P3颈部（Former 级）
 #   ——暗光三级火箭；训练配 --aug-preset dark。
-# 消融: vs F23（HVI+DFEM 版做图像域前端横评）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V9-dark.yaml --pretrained yolo11n-seg.pt --name SXQ_V9 --aug-preset dark
+# 消融: vs F23（HVI+DFEM 版做图像域前端横评）| python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V9-dark.yaml --pretrained yolo11n-seg.pt --name SXQ_V9 --aug-preset dark
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

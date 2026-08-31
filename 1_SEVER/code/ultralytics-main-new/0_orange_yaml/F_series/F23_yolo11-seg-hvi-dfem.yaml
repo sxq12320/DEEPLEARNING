@@ -3,7 +3,7 @@
 # F23: HVIEnhance 低照度增强前端（图像域）+ DFEM（特征域）双重增强。
 # 动机: 发黑柑橘先在图像域做 HVI 色彩空间增强，再在特征域做频率/暗区补偿，互补验证。
 # 文献: HVI/CIDNet (Yan et al. 2024, arXiv:2402.05809)；DFEM 见 F19。
-# 消融角色: G 组组合（vs F19 与已有 010_hvi）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F23_yolo11-seg-hvi-dfem.yaml --pretrained yolo11n-seg.pt --name F23_hvi_dfem
+# 消融角色: G 组组合（vs F19 与已有 010_hvi）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F23_yolo11-seg-hvi-dfem.yaml --pretrained yolo11n-seg.pt --name F23_hvi_dfem
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

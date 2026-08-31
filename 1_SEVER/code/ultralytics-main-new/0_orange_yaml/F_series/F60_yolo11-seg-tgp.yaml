@@ -6,7 +6,7 @@
 #   ③远处糊果纹理不可靠→局部 σ 即置信度，c=sigmoid(a·σ+b) 门控，糊果处自动回退 RGB 主流；
 #   ④γ init=0 恒等起步。参数 ~20 个、FLOPs≈0——轻量化硬约束的极致案例。
 # 文献: LCN (Jarrett et al., ICCV 2009) + Zhai 2024 伪装立论；金字塔+门控组合原创。
-# 消融角色: Q 组单模块（vs F50 LCE / 010 HVI 前端三路横评）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F60_yolo11-seg-tgp.yaml --pretrained yolo11n-seg.pt --name F60_tgp
+# 消融角色: Q 组单模块（vs F50 LCE / 010 HVI 前端三路横评）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F60_yolo11-seg-tgp.yaml --pretrained yolo11n-seg.pt --name F60_tgp
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

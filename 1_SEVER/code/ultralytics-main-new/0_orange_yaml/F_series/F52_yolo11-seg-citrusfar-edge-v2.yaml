@@ -3,7 +3,7 @@
 # F52: CitrusFar-Edge-V2（部署主推升级版）= F44 + LCE（治暗）+ TDAM（治伪装）。
 #   全部组件仍为 conv/pool/concat/slice 算子——ONNX→NCNN/RKNN/TFLite-INT8 直转；
 #   数据体检显示暗与伪装在小果上最严重，而小果正是端侧采摘最远视距的目标。
-# 消融角色: N 组部署组合（vs F44 的 LOO：去 LCE / 去 TDAM）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F52_yolo11-seg-citrusfar-edge-v2.yaml --pretrained yolo11n-seg.pt --name F52_edge_v2
+# 消融角色: N 组部署组合（vs F44 的 LOO：去 LCE / 去 TDAM）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F52_yolo11-seg-citrusfar-edge-v2.yaml --pretrained yolo11n-seg.pt --name F52_edge_v2
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -136,6 +136,7 @@ citrus_query: 0.0 # (float) effective P2 sparse small-object query focal gain
 citrus_contrast: 0.0 # (float) fruit-interior vs immediate leaf/branch context-ring gain
 citrus_exclusive: 0.0 # (float) effective adjacent-instance leakage suppression gain
 citrus_quality: 0.0 # (float) Mask Scoring-style per-anchor mask-IoU regression gain
+citrus_topology: 0.0 # (float) four-state context/interior/boundary/separator supervision gain
 citrus_vfl: 0.0 # (float) blend from stock BCE (0) to Varifocal IoU-aware classification (1)
 nwd_ratio: 0.0 # (float) small-object NWD/CIoU blend; 0.0 preserves stock CIoU exactly
 pose: 12.0 # (float) pose loss gain (pose tasks)

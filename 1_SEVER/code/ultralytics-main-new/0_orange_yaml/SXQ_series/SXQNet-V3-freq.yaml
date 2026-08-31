@@ -3,7 +3,7 @@
 # SXQNet-V3 Freq（频域轴）：回答'模糊主导时怎么办'（模糊度差 20 倍）。全频域链路：
 #   HWDown(下采样) + C3k2_WT(块) + MWCA@P3(注意力) + PCFA@P4(部分通道频域,原创) + HCO@P5(热传导)；
 #   训练配 --freq-loss 0.1 构成'分解-卷积-注意力-物理算子-监督'五层频域故事。
-# 消融: vs F56（无 PCFA/HCO 版）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V3-freq.yaml --pretrained yolo11n-seg.pt --name SXQ_V3 --freq-loss 0.1
+# 消融: vs F56（无 PCFA/HCO 版）| python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V3-freq.yaml --pretrained yolo11n-seg.pt --name SXQ_V3 --freq-loss 0.1
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -3,7 +3,7 @@
 # F08: 颈部 P3 输出后插入 EMA 高效多尺度注意力。
 # 动机: P3 是小目标检测与 mask 原型的共同来源；注意力在此放大与叶片同色的弱小果信号。
 # 文献: Ouyang et al., ICASSP 2023, arXiv:2305.13563。
-# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F08_yolo11-seg-ema.yaml --pretrained yolo11n-seg.pt --name F08_ema
+# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F08_yolo11-seg-ema.yaml --pretrained yolo11n-seg.pt --name F08_ema
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

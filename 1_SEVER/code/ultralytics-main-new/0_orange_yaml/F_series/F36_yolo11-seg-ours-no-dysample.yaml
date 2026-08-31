@@ -2,7 +2,7 @@
 #
 # F36: F31 拓扑（DFEM@5 + SPD 下采样 + SPPF_LSKA + BiFPN + DySample + LIAM@18），去 DySample（还原最近邻上采样）。
 # 与 F31 逐层索引完全对齐（占位模块），预训练迁移与层深一致——干净 leave-one-out。
-# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F36_yolo11-seg-ours-no-dysample.yaml --pretrained yolo11n-seg.pt --name F36_no_dysample
+# 消融角色: I 组 leave-one-out | python train_citrus_seg.py --model 0_orange_yaml/F_series/F36_yolo11-seg-ours-no-dysample.yaml --pretrained yolo11n-seg.pt --name F36_no_dysample
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

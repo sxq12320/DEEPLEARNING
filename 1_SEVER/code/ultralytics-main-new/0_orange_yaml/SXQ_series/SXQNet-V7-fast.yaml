@@ -2,7 +2,7 @@
 #
 # SXQNet-V7 Fast（延迟轴）：回答'实测延迟优先时留什么'。全 PConv + HSF（通道减半）
 #   + SimAM（0 参数注意力）+ 去 C2PSA + nearest 上采样——每层都选延迟最优件。
-# 消融: vs V2（V2 重参数量，V7 重延迟——两种轻量化的区别行）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V7-fast.yaml --pretrained yolo11n-seg.pt --name SXQ_V7
+# 消融: vs V2（V2 重参数量，V7 重延迟——两种轻量化的区别行）| python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V7-fast.yaml --pretrained yolo11n-seg.pt --name SXQ_V7
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

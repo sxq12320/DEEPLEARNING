@@ -6,7 +6,7 @@
 # 动机: PAN 颈部的 P3 输出被深层语义主导，模糊/发黑小果的高频细节在融合前就已丢失；
 #   本设计让细节以独立通路直达融合点，且频域增强发生在最高分辨率处。
 # 文献基础: DFEM 见 F19；WTConv (ECCV 2024, arXiv:2407.05848)；加权融合 (EfficientDet)。
-# 消融角色: J 组架构创新（vs F19/F22 单点版）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F41_yolo11-seg-freqdetail-pan.yaml --pretrained yolo11n-seg.pt --name F41_freqdetail
+# 消融角色: J 组架构创新（vs F19/F22 单点版）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F41_yolo11-seg-freqdetail-pan.yaml --pretrained yolo11n-seg.pt --name F41_freqdetail
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

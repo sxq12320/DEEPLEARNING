@@ -4,7 +4,7 @@
 #   去 C2PSA（注意力 MatMul 对 INT8 量化不友好），其余同 F44。
 #   目标 <1.5M 参数；配合 INT8 PTQ 后权重 <1.5MB，可进高端 MCU（如 RV1106/K230）。
 #   精度换算力的兜底方案：若 F44 在端侧仍超预算则退到本配置 + CWD 蒸馏补精度。
-# 消融角色: K 组极限版（vs F44 权衡）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F45_yolo11-seg-citrusfar-edge-nano.yaml --pretrained yolo11n-seg.pt --name F45_edge_nano
+# 消融角色: K 组极限版（vs F44 权衡）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F45_yolo11-seg-citrusfar-edge-nano.yaml --pretrained yolo11n-seg.pt --name F45_edge_nano
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -1,0 +1,61 @@
+{
+  "split_counts": {
+    "train": {
+      "images": 676,
+      "labeled_images": 675,
+      "instances": 4120
+    },
+    "val": {
+      "images": 193,
+      "labeled_images": 193,
+      "instances": 1181
+    },
+    "test": {
+      "images": 96,
+      "labeled_images": 96,
+      "instances": 589
+    }
+  },
+  "total_images": 965,
+  "total_instances": 5890,
+  "scale_distribution": {
+    "coco_small_count": 366,
+    "coco_small_pct": 6.213921901528013,
+    "coco_medium_count": 1297,
+    "coco_medium_pct": 22.020373514431242,
+    "coco_large_count": 4227,
+    "coco_large_pct": 71.76570458404075,
+    "tiny_16_count": 18,
+    "tiny_16_pct": 0.30560271646859083,
+    "tiny_24_count": 83,
+    "tiny_24_pct": 1.4091680814940577,
+    "tiny_32_count": 267,
+    "tiny_32_pct": 4.533106960950764
+  },
+  "morphology": {
+    "mean_area": 57046.17020373514,
+    "median_area": 24118.0,
+    "mean_eq_diameter": 214.5331281615754,
+    "median_eq_diameter": 175.2369565493606,
+    "mean_solidity": 0.9272694161652546,
+    "deep_concave_count (<0.85)": 841,
+    "deep_concave_pct": 14.278438030560272,
+    "severe_concave_count (<0.80)": 471,
+    "severe_concave_pct": 7.99660441426146,
+    "mean_convexity_deficit": 0.07273058383474539,
+    "boundary_complexity": 1.48102661273082
+  },
+  "topology_and_clusters": {
+    "mean_scale_ratio_per_image": 24.158827637362332,
+    "max_scale_ratio_per_image": 808.7773374314271,
+    "median_nn_distance_px": 315.25318099273517,
+    "touching_candidate_instances": 112,
+    "touching_candidate_pct": 1.9015280135823427
+  },
+  "camouflage": {
+    "mean_delta_e_lab": 31.623149017087883,
+    "median_delta_e_lab": 26.336023575659,
+    "low_contrast_count (<15 deltaE)": 1579,
+    "low_contrast_pct": 26.808149405772497
+  }
+}

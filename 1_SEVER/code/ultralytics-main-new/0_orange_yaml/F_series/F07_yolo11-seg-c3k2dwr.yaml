@@ -3,7 +3,7 @@
 # F07: 颈部 C3k2 → C3k2_DWR（多膨胀率残差，扩大颈部语义感受野）。
 # 动机: 远处小果需要大范围枝叶上下文佐证；DWR 以并联膨胀卷积零成本扩感受野。
 # 文献: Wei et al., DWRSeg 2022, arXiv:2212.01173。
-# 消融角色: C 组单模块（上下文）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F07_yolo11-seg-c3k2dwr.yaml --pretrained yolo11n-seg.pt --name F07_dwr
+# 消融角色: C 组单模块（上下文）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F07_yolo11-seg-c3k2dwr.yaml --pretrained yolo11n-seg.pt --name F07_dwr
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

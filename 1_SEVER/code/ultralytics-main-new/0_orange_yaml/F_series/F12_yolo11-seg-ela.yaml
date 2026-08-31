@@ -3,7 +3,7 @@
 # F12: 颈部 P3 输出后插入 ELA 高效局部注意力（条带池化+分组1D卷积）。
 # 动机: P3 是小目标检测与 mask 原型的共同来源；注意力在此放大与叶片同色的弱小果信号。
 # 文献: Xu & Wan 2024, arXiv:2403.01123。
-# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F12_yolo11-seg-ela.yaml --pretrained yolo11n-seg.pt --name F12_ela
+# 消融角色: D 组注意力横评 | python train_citrus_seg.py --model 0_orange_yaml/F_series/F12_yolo11-seg-ela.yaml --pretrained yolo11n-seg.pt --name F12_ela
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

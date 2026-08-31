@@ -3,7 +3,7 @@
 # SXQNet-V2 Nano（极限端侧轴）：回答'单片机放得下吗'。目标 <1.6M、INT8 <1.6MB。
 #   = TGP+LCE 双前端（~0 代价）+ C3k2_Faster 全网 + HWDown + SPPF_LSKA + CSFG + BiFPN；
 #   无 FFT/无超图 matmul/无 IN——纯 conv/pool/slice，NCNN/RKNN/TFLite-INT8 直转。
-# 消融: vs F45（无前端版）量化 TGP+LCE 增益 | python train_citrus_seg.py --model 0_orange_yaml/1_far_small/SXQNet-V2-nano.yaml --pretrained yolo11n-seg.pt --name SXQ_V2
+# 消融: vs F45（无前端版）量化 TGP+LCE 增益 | python train_citrus_seg.py --model 0_orange_yaml/SXQ_series/SXQNet-V2-nano.yaml --pretrained yolo11n-seg.pt --name SXQ_V2
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

@@ -2,7 +2,7 @@
 #
 # F20: DFEM 同时插在骨干 P2 与 P3 之后（双位置增强）。
 # 动机: P2 特征含最多小目标细节，先于 P3 增强可能更早止损；验证 DFEM 位置敏感性。
-# 消融角色: G 组位置消融（vs F19）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F20_yolo11-seg-dfem-p2p3.yaml --pretrained yolo11n-seg.pt --name F20_dfem_p2p3
+# 消融角色: G 组位置消融（vs F19）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F20_yolo11-seg-dfem-p2p3.yaml --pretrained yolo11n-seg.pt --name F20_dfem_p2p3
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)

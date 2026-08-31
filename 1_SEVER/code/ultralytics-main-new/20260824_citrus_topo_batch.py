@@ -29,8 +29,8 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent
-YAML_DIR = ROOT / "0_orange_yaml" / "20260824_citrus_topo"
-DEFAULT_PROJECT = ROOT / "1_results" / "CITRUS_TOPO_GROUPED_DEDUP_300EP"
+YAML_DIR = ROOT / "0_orange_yaml" / "L_series"
+DEFAULT_PROJECT = ROOT / "1_results" / "L_series" / "grouped_clean_300ep"
 
 CORE_TOPO_LOSS = {
     "citrus_boundary": 0.50,

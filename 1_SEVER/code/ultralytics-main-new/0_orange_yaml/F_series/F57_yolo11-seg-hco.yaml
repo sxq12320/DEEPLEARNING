@@ -4,7 +4,7 @@
 #   新范式: 特征传播 = 热传导方程，频域指数核 exp(-‖ω‖²k)，k=可学习每通道'传播距离'。
 #   O(N log N) 全局混合，比注意力便宜；k 可视化 = '每通道看多远'（论文可解释性卖点）。
 # 文献: vHeat (Wang et al., 2024, arXiv:2405.16555)；周期边界 FFT 近似实现为本课题适配。
-# 消融角色: P 组 P5-mixer 横评（C2PSA vs F46 FarFormer vs F54 FLA vs F57 HCO vs F58 超图）| python train_citrus_seg.py --model 0_orange_yaml/1_far_small/F57_yolo11-seg-hco.yaml --pretrained yolo11n-seg.pt --name F57_hco
+# 消融角色: P 组 P5-mixer 横评（C2PSA vs F46 FarFormer vs F54 FLA vs F57 HCO vs F58 超图）| python train_citrus_seg.py --model 0_orange_yaml/F_series/F57_yolo11-seg-hco.yaml --pretrained yolo11n-seg.pt --name F57_hco
 
 # Parameters
 nc: 80 # number of classes (overridden by the dataset YAML, e.g. nc=1 for citrus)
