@@ -19,6 +19,8 @@ from .block import DFL, SAVPE, BNContrastiveHead, ContrastiveHead, Proto, Proto2
 from .conv import Conv, DWConv
 from .citrus_c import CitrusTopologyPrototype
 from .citrus_g0839 import CitrusSDRSupport
+from .citrus_orchid import CitrusORCHIDMaskRouter
+from .citrus_sage import CitrusSAGEFuse
 from .citrus_topo import CitrusBoundaryFusion, CitrusBoundaryQueryAux, CitrusTrainAux
 from .p2_cfs_attention import P2CFSAttention
 from .transformer import MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer
@@ -37,6 +39,9 @@ __all__ = (
     "SegmentCitrusDualProto",
     "SegmentCitrusLite",
     "SegmentCitrusLiteBQ",
+    "SegmentCitrusORCHID",
+    "SegmentCitrusSAGE",
+    "SegmentCitrusSAGEV2",
     "SegmentCitrusSDR",
     "SegmentP2Boundary",
     "SegmentP2CFS",
@@ -660,6 +665,229 @@ class SegmentCitrusLite(SegmentCitrusAux):
             self.one2one_cv2 = copy.deepcopy(self.cv2)
             self.one2one_cv3 = copy.deepcopy(self.cv3)
             self.one2one_cv4 = copy.deepcopy(self.cv4)
+
+
+class SegmentCitrusORCHID(Segment):
+    """Task-decoupled ORCHID head for candidate-conditioned mask evidence.
+
+    Two public graph forms are supported:
+
+    * Seven inputs: raw C2/C3/C4/C5 plus pretrained PAN P3/P4/P5.  Boxes,
+      classes, and mask coefficients use PAN; only mask prototypes use the raw
+      candidate-routed evidence path.
+    * Four inputs: P3/P4/P5 plus a query map emitted by
+      :class:`CitrusORCHIDNeck`.  This is the single-canvas neck ablation.
+
+    Args:
+        stage: 1 for ungated task decoupling, 2 for supervised query routing,
+            or 3 for query routing with DCNet-inspired local-reference contrast.
+        lite: Replace the repeated stock prediction towers with one regular
+            block per scale while leaving the ORCHID evidence path unchanged.
+    """
+
+    def __init__(
+        self,
+        nc: int = 80,
+        nm: int = 32,
+        npr: int = 256,
+        stage: int = 2,
+        lite: bool = False,
+        route_channels: int = 48,
+        reg_max=16,
+        end2end=False,
+        ch: tuple = (),
+    ):
+        if stage not in {1, 2, 3}:
+            raise ValueError(f"SegmentCitrusORCHID stage must be 1, 2, or 3, got {stage}")
+        if len(ch) not in {4, 7}:
+            raise ValueError(f"SegmentCitrusORCHID expects 4 or 7 feature tensors, got channels {ch}")
+
+        self.orchid_single_canvas = len(ch) == 4
+        detect_channels = tuple(ch[:3] if self.orchid_single_canvas else ch[-3:])
+        if self.orchid_single_canvas and int(ch[3]) != 1:
+            raise ValueError(f"The fourth single-canvas input must be a one-channel query map, got {ch[3]}")
+        super().__init__(nc, nm, npr, reg_max, end2end, detect_channels)
+        self.orchid_stage = int(stage)
+        self.orchid_router = None
+        if not self.orchid_single_canvas:
+            raw_channels = tuple(ch[:4])
+            self.orchid_router = CitrusORCHIDMaskRouter(
+                (*raw_channels, detect_channels[0]),
+                mode=stage,
+                route_channels=route_channels,
+            )
+
+        if lite:
+            box_channels = max(16, detect_channels[0] // 4, self.reg_max * 4)
+            cls_channels = max(32, detect_channels[0] // 2, min(self.nc, 100))
+            mask_channels = max(detect_channels[0] // 4, self.nm)
+            self.cv2 = nn.ModuleList(
+                nn.Sequential(Conv(width, box_channels, 3), nn.Conv2d(box_channels, 4 * self.reg_max, 1))
+                for width in detect_channels
+            )
+            self.cv3 = nn.ModuleList(
+                nn.Sequential(
+                    DWConv(width, width, 3),
+                    Conv(width, cls_channels, 1),
+                    nn.Conv2d(cls_channels, self.nc, 1),
+                )
+                for width in detect_channels
+            )
+            self.cv4 = nn.ModuleList(
+                nn.Sequential(Conv(width, mask_channels, 3), nn.Conv2d(mask_channels, self.nm, 1))
+                for width in detect_channels
+            )
+            if end2end:
+                self.one2one_cv2 = copy.deepcopy(self.cv2)
+                self.one2one_cv3 = copy.deepcopy(self.cv3)
+                self.one2one_cv4 = copy.deepcopy(self.cv4)
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run stable detection and the separate ORCHID mask-evidence path."""
+        if self.orchid_single_canvas:
+            detect_features = list(x[:3])
+            refined_p3 = detect_features[0]
+            query_logits = x[3]
+            contrast_logits = None
+        else:
+            raw_features = list(x[:4])
+            detect_features = list(x[-3:])
+            refined_p3, query_logits, contrast_logits = self.orchid_router(
+                [*raw_features, detect_features[0]]
+            )
+
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(refined_p3)
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                target = preds["one2many"]
+                target["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                target = preds
+                target["proto"] = proto
+            if self.training:
+                if query_logits is not None:
+                    target["citrus_query"] = query_logits
+                if contrast_logits is not None:
+                    target["citrus_contrast"] = contrast_logits
+                return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusSAGE(Segment):
+    """Keep native PAN detection and refine only the prototype input with SAGE.
+
+    The seven inputs are raw C2/C3/C4/C5 followed by native PAN P3/P4/P5.
+    Box regression, classification and mask coefficients remain identical to
+    the official Segment head.  Only ``self.proto`` consumes the fused feature,
+    so an unsuccessful fusion cannot directly disturb detection ranking.
+    """
+
+    def __init__(
+        self,
+        nc: int = 80,
+        nm: int = 32,
+        npr: int = 256,
+        stage: int = 4,
+        route_channels: int = 32,
+        initial_scale: float = 0.1,
+        reg_max=16,
+        end2end=False,
+        ch: tuple = (),
+    ):
+        if len(ch) != 7:
+            raise ValueError(f"SegmentCitrusSAGE expects C2/C3/C4/C5/PAN-P3/P4/P5 channels, got {ch}")
+        detect_channels = tuple(ch[-3:])
+        super().__init__(nc, nm, npr, reg_max, end2end, detect_channels)
+        self.sage_stage = int(stage)
+        self.sage_fuse = CitrusSAGEFuse(
+            (*tuple(ch[:4]), detect_channels[0]),
+            stage=stage,
+            width=route_channels,
+            initial_scale=initial_scale,
+        )
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Run the official detection path and the narrow mask-only SAGE path."""
+        raw_features = list(x[:4])
+        detect_features = list(x[-3:])
+        refined_p3 = self.sage_fuse([*raw_features, detect_features[0]])
+
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(refined_p3)
+        if isinstance(preds, dict):
+            if self.end2end:
+                preds["one2many"]["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                preds["proto"] = proto
+        if self.training:
+            return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
+
+
+class SegmentCitrusSAGEV2(Segment):
+    """Standard YOLO segment decoder supervised by a shared citrus topology map.
+
+    Inputs are corrected P3/P4/P5 tensors followed by the four-state topology
+    logits emitted by :class:`CitrusSAGEPyramid`.  All standard box, class, mask
+    coefficient and prototype tensors retain their official names and shapes.
+    The topology map supplies three related training views without three separate
+    prediction towers: foreground evidence for tiny-object query supervision,
+    structural evidence for boundary/concavity supervision, and the complete
+    context/interior/boundary/separator map for topology supervision.
+    """
+
+    def __init__(
+        self,
+        nc: int = 80,
+        nm: int = 32,
+        npr: int = 256,
+        reg_max=16,
+        end2end=False,
+        ch: tuple = (),
+    ):
+        if len(ch) != 4:
+            raise ValueError(f"SegmentCitrusSAGEV2 expects P3/P4/P5/topology channels, got {ch}")
+        if int(ch[-1]) != 4:
+            raise ValueError(f"SAGE topology input must have four channels, got {ch[-1]}")
+        super().__init__(nc, nm, npr, reg_max, end2end, tuple(ch[:3]))
+
+    @staticmethod
+    def _binary_log_odds(positive: torch.Tensor, negative: torch.Tensor) -> torch.Tensor:
+        """Convert two groups of unnormalized logits to one stable binary logit."""
+        return torch.logsumexp(positive, dim=1, keepdim=True) - torch.logsumexp(
+            negative, dim=1, keepdim=True
+        )
+
+    def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
+        """Decode standard predictions and attach shared topology supervision while training."""
+        detect_features = list(x[:3])
+        topology_logits = x[3]
+        outputs = Detect.forward(self, detect_features)
+        preds = outputs[1] if isinstance(outputs, tuple) else outputs
+        proto = self.proto(detect_features[0])
+
+        if isinstance(preds, dict):
+            if self.end2end:
+                target = preds["one2many"]
+                target["proto"] = proto
+                preds["one2one"]["proto"] = proto.detach()
+            else:
+                target = preds
+                target["proto"] = proto
+            if self.training:
+                target["citrus_topology"] = topology_logits
+                target["citrus_query"] = self._binary_log_odds(topology_logits[:, 1:], topology_logits[:, :1])
+                target["citrus_boundary"] = self._binary_log_odds(
+                    topology_logits[:, 2:4], topology_logits[:, :2]
+                )
+                return preds
+        return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
 
 class SegmentCitrusSDR(Segment):

@@ -14,7 +14,7 @@ def test_model_index_matches_every_yaml_exactly():
     with (YAML_ROOT / "MODEL_INDEX.csv").open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     indexed = [row["yaml"] for row in rows]
-    assert len(actual) == 203
+    assert len(actual) == 234
     assert len(indexed) == len(set(indexed))
     assert set(indexed) == actual
 
@@ -25,4 +25,3 @@ def test_each_model_series_has_a_readme_and_root_has_no_model_yaml():
     model_series = {path.parent for path in YAML_ROOT.rglob("*.yaml")}
     for directory in model_series:
         assert (directory / "README.md").is_file(), f"Missing README: {directory}"
-

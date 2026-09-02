@@ -93,6 +93,9 @@ from .head import (
     SegmentCitrusDualProto,
     SegmentCitrusLite,
     SegmentCitrusLiteBQ,
+    SegmentCitrusORCHID,
+    SegmentCitrusSAGE,
+    SegmentCitrusSAGEV2,
     SegmentCitrusQualityLite,
     SegmentCitrusSDR,
     SegmentCitrusTopo,
@@ -213,6 +216,14 @@ from .citrus_d import CitrusShapeFusion, CitrusShapeStream, CitrusStructureStem
 from .citrus_g0830 import CitrusBilateralExchange, CitrusFrequencyAlignedConcat, CitrusRepMixerStage
 from .citrus_g0839 import CitrusDualResolutionBackbone, CitrusSDRSupport
 from .citrus_light import CitrusLightAFPN, CitrusLightStage
+from .citrus_orchid import CitrusORCHIDMaskRouter, CitrusORCHIDNeck
+from .citrus_sage import (
+    C3k2SAGE,
+    C3k2SAGEShape,
+    CitrusSAGEFuse,
+    CitrusSAGEInnovationPyramid,
+    CitrusSAGEPyramid,
+)
 from .citrus_savss import CitrusSAVSS, FrequencyAwareDown
 from .citrus_far import (
     AAFM,
@@ -371,6 +382,13 @@ __all__ = (
     "CitrusSDRSupport",
     "CitrusLightAFPN",
     "CitrusLightStage",
+    "CitrusORCHIDMaskRouter",
+    "CitrusORCHIDNeck",
+    "C3k2SAGE",
+    "C3k2SAGEShape",
+    "CitrusSAGEFuse",
+    "CitrusSAGEInnovationPyramid",
+    "CitrusSAGEPyramid",
     "CitrusStructureStem",
     "FrequencyAwareDown",
     "CitrusScaleFusion",
@@ -396,6 +414,9 @@ __all__ = (
     "SegmentCitrusDualProto",
     "SegmentCitrusLite",
     "SegmentCitrusLiteBQ",
+    "SegmentCitrusORCHID",
+    "SegmentCitrusSAGE",
+    "SegmentCitrusSAGEV2",
     "SegmentCitrusQualityLite",
     "SegmentCitrusSDR",
     "SegmentCitrusTopo",

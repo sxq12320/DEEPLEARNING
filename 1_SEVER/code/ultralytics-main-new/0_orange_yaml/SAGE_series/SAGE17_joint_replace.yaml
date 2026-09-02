@@ -1,0 +1,27 @@
+# SAGE17: aggressive full replacement: deep SAGE backbone plus direct SAGE pyramid.
+nc: 80
+scale: n
+pretrained_layer_map: {16: 23}
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2, [512, False, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2SAGE, [512, True, 0.5, 0.5, 0.1]]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2SAGE, [1024, True, 0.5, 0.5, 0.1]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+
+head:
+  - [[2, 4, 6, 10], 1, CitrusSAGEPyramid, [[256, 512, 1024], 32, 16, 0.1]]
+  - [11, 1, Index, [64, 0]]
+  - [11, 1, Index, [128, 1]]
+  - [11, 1, Index, [256, 2]]
+  - [11, 1, Index, [4, 3]]
+  - [[12, 13, 14, 15], 1, SegmentCitrusSAGEV2, [nc, 32, 256]]

@@ -1,0 +1,2 @@
+﻿# Test Literal String
+hello world < > | &

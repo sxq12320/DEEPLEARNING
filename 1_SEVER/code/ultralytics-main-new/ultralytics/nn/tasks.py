@@ -36,6 +36,8 @@ from ultralytics.nn.modules import (
     C2fPSA,
     C3Ghost,
     C3k2,
+    C3k2SAGE,
+    C3k2SAGEShape,
     C3k2_Faster,
     C3k2_WT,
     C3x,
@@ -75,6 +77,9 @@ from ultralytics.nn.modules import (
     SegmentCitrusDualProto,
     SegmentCitrusLite,
     SegmentCitrusLiteBQ,
+    SegmentCitrusORCHID,
+    SegmentCitrusSAGE,
+    SegmentCitrusSAGEV2,
     SegmentCitrusQualityLite,
     SegmentCitrusSDR,
     SegmentCitrusTopo,
@@ -161,6 +166,10 @@ from ultralytics.nn.modules import (
     CitrusDualResolutionBackbone,
     CitrusLightAFPN,
     CitrusLightStage,
+    CitrusORCHIDNeck,
+    CitrusSAGEFuse,
+    CitrusSAGEPyramid,
+    CitrusSAGEInnovationPyramid,
     LiteHRDetailBlock,
     SPPFLSKAResidual,
     SPPF_LSKA,
@@ -1834,6 +1843,8 @@ def parse_model(d, ch, verbose=True):
             C2,
             C2f,
             C3k2,
+            C3k2SAGE,
+            C3k2SAGEShape,
             RepNCSPELAN4,
             ELAN1,
             ADown,
@@ -1883,6 +1894,8 @@ def parse_model(d, ch, verbose=True):
             C2,
             C2f,
             C3k2,
+            C3k2SAGE,
+            C3k2SAGEShape,
             C3k2_Faster,
             C3k2_WT,
             C3k2_DWR,
@@ -2092,6 +2105,37 @@ def parse_model(d, ch, verbose=True):
             output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
             c2 = output_channels
             args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is CitrusORCHIDNeck:
+            if not isinstance(f, list) or len(f) != 4:
+                raise ValueError("CitrusORCHIDNeck requires C2/C3/C4/C5 feature indices")
+            if not args or not isinstance(args[0], list) or len(args[0]) != 3:
+                raise ValueError("CitrusORCHIDNeck requires explicit [P3, P4, P5] output channels")
+            output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
+            c2 = [*output_channels, 1]
+            args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is CitrusSAGEFuse:
+            if not isinstance(f, list) or len(f) != 5:
+                raise ValueError("CitrusSAGEFuse requires C2/C3/C4/C5/PAN-P3 feature indices")
+            c2 = ch[f[4]]
+            args = [[ch[index] for index in f], *args]
+        elif m is CitrusSAGEPyramid:
+            if not isinstance(f, list) or len(f) not in {4, 7}:
+                raise ValueError("CitrusSAGEPyramid requires C2/C3/C4/C5 and optional PAN-P3/P4/P5 indices")
+            if not args or not isinstance(args[0], list) or len(args[0]) != 3:
+                raise ValueError("CitrusSAGEPyramid requires explicit [P3, P4, P5] output channels")
+            output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
+            c2 = [*output_channels, 4]
+            args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is CitrusSAGEInnovationPyramid:
+            if not isinstance(f, list) or len(f) != 7:
+                raise ValueError(
+                    "CitrusSAGEInnovationPyramid requires C2/C3/C4/C5 and native PAN-P3/P4/P5 indices"
+                )
+            if not args or not isinstance(args[0], list) or len(args[0]) != 3:
+                raise ValueError("CitrusSAGEInnovationPyramid requires explicit [P3, P4, P5] output channels")
+            output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
+            c2 = [*output_channels, 4]
+            args = [[ch[index] for index in f], output_channels, *args[1:]]
         elif m in (ScaleAwareFusion, ScaleAwareFusion_Depth2RGB, ScaleAwareFusion_Bidirectional,
                    ScaleAwareFusion_RGBLed, ScaleAwareFusion_Naive):
             # Scale-Aware Fusion: 双输入融合，输出通道由 YAML 指定
@@ -2113,6 +2157,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusDualProto,
                 SegmentCitrusLite,
                 SegmentCitrusLiteBQ,
+                SegmentCitrusORCHID,
+                SegmentCitrusSAGE,
+                SegmentCitrusSAGEV2,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2137,6 +2184,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusDualProto,
                 SegmentCitrusLite,
                 SegmentCitrusLiteBQ,
+                SegmentCitrusORCHID,
+                SegmentCitrusSAGE,
+                SegmentCitrusSAGEV2,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2151,7 +2201,8 @@ def parse_model(d, ch, verbose=True):
             if m in {
                 Detect, YOLOEDetect, Segment, SegmentCitrusAux, SegmentCitrusBLite, SegmentCitrusBQuality,
                 SegmentCitrusDualProto, SegmentCitrusLite, SegmentCitrusLiteBQ, SegmentCitrusQualityLite,
-                SegmentCitrusSDR, SegmentCitrusTopo,
+                SegmentCitrusORCHID, SegmentCitrusSAGE, SegmentCitrusSDR, SegmentCitrusTopo,
+                SegmentCitrusSAGEV2,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
