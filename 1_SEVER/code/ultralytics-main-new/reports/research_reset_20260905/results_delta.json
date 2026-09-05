@@ -1,0 +1,20 @@
+{
+  "csv_files": 154,
+  "unique_contents": 140,
+  "changed_or_new": [],
+  "groups": {
+    "A_baselines": 9,
+    "B_series": 11,
+    "Best_models_showcase_20260901": 12,
+    "CITRUS_SAGE_V4R_SCREEN_50EP": 10,
+    "F_series": 48,
+    "G0830": 3,
+    "G_series": 10,
+    "N_series": 10,
+    "S_series": 9,
+    "SAGE": 4,
+    "SXQ_series": 9,
+    "T": 5
+  },
+  "caveat": "An identical CSV is not an independent repeat. Missing latest V5 is not a failed run."
+}

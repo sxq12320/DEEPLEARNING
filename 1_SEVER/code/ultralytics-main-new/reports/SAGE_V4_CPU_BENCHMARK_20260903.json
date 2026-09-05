@@ -1,0 +1,69 @@
+{
+  "device": "cpu",
+  "device_name": "CPU",
+  "torch": "2.8.0+cpu",
+  "batch": 1,
+  "imgsz": 256,
+  "steps": 30,
+  "threads": 2,
+  "amp": false,
+  "io_optimizer_validation_included": false,
+  "results": [
+    {
+      "model": "SAGE21_innovation_pyramid",
+      "median_forward_backward_ms": 97.1120000000001,
+      "params": 2940732,
+      "gflops640": 11.040409599999998,
+      "relative_to_control": 1.1295422546064484
+    },
+    {
+      "model": "SAGE23_joint_core_v3",
+      "median_forward_backward_ms": 104.11295000000021,
+      "params": 2986014,
+      "gflops640": 11.1020544,
+      "relative_to_control": 1.210972652985507
+    },
+    {
+      "model": "SAGE30_official_control",
+      "median_forward_backward_ms": 85.97464999999983,
+      "params": 2842803,
+      "gflops640": 10.355763199999998,
+      "relative_to_control": 1.0
+    },
+    {
+      "model": "SAGE31_bounded_fusion",
+      "median_forward_backward_ms": 86.74549999999925,
+      "params": 2858229,
+      "gflops640": 10.434944,
+      "relative_to_control": 1.0089660149823165
+    },
+    {
+      "model": "SAGE32_direct_mask_detail",
+      "median_forward_backward_ms": 84.80240000000094,
+      "params": 2844579,
+      "gflops640": 10.4483328,
+      "relative_to_control": 0.9863651669416638
+    },
+    {
+      "model": "SAGE33_fusion_detail",
+      "median_forward_backward_ms": 89.07394999999951,
+      "params": 2860005,
+      "gflops640": 10.5275136,
+      "relative_to_control": 1.0360489981639902
+    },
+    {
+      "model": "SAGE34_decoupled_geometry",
+      "median_forward_backward_ms": 90.73035000000118,
+      "params": 2860056,
+      "gflops640": 10.5275136,
+      "relative_to_control": 1.0553151423123137
+    },
+    {
+      "model": "SAGE35_gated_p4",
+      "median_forward_backward_ms": 87.05345000000086,
+      "params": 2824165,
+      "gflops640": 10.4115968,
+      "relative_to_control": 1.0125478847544136
+    }
+  ]
+}

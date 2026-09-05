@@ -1,14 +1,33 @@
 # SAGE series
 
-_Immature-citrus instance segmentation · SAGE-v3 redesign · 2026-09-02_
+_Immature-citrus instance segmentation · SAGE V5 candidates / preserved V4R evidence · 2026-09-04_
+
+## Current SAGE V5 candidates
+
+Use `RUN_SAGE_V5.py` for VS Code foreground sequential training. `SAGE50--56` are seven new candidates;
+`SAGE30` and `SAGE42` are the two reference models in the V5 matrix. No V4R YAML is overwritten.
+
+Read the [evidence and design](../../docs/SAGE_V5_EVIDENCE_AND_DESIGN.md),
+[training instructions and fixed hyperparameters](../../docs/SAGE_V5_TRAINING.md), and
+[verification record](../../reports/sage_v5_20260904/VERIFICATION.md) first.
+Default `screen` selects 30/42/50/51/52. `DRY_RUN=False` actually trains; True only builds and exits.
+No new candidate has a verified full-training accuracy result yet.
 
 ---
+
+## Preserved SAGE V4R reconstruction
+
+`SAGE40--48` are the preserved V4R experiments and `SAGE30` is their fixed-protocol official control. The complete
+architecture, loss definitions, evidence limits and run order are documented in
+[`docs/SAGE_V4_RECONSTRUCTED_GUIDE.md`](../../docs/SAGE_V4_RECONSTRUCTED_GUIDE.md). Use `RUN_SAGE_V4.py` for a
+visible, sequential VS Code run. `SAGE00--35` remain unchanged below for reproducibility; V4R does not make their
+historical results directly comparable when dataset or protocol differs.
 
 ## 📋 Which files are current
 
 SAGE means **Semantic-Aligned Geometry-Evidence**. `SAGE00--04` and `SAGE10--17` remain unchanged for reproducibility.
-The current experiments are `SAGE20--27`: a low-resolution axial shape-context backbone and a topology-supervised
-innovation pyramid. Every YAML remains loadable through the standard `YOLO(yaml).load(pt)` API.
+The v3 experiments are `SAGE20--27`: a low-resolution axial shape-context backbone and a topology-supervised
+innovation pyramid. Every YAML, including current V4R, remains loadable through the standard `YOLO(yaml).load(pt)` API.
 
 | Range | Status | Purpose |
 | --- | --- | --- |
@@ -16,8 +35,11 @@ innovation pyramid. Every YAML remains loadable through the standard `YOLO(yaml)
 | `SAGE10` | Paired control | Exact YOLO11n-seg |
 | `SAGE11--15` | Primary v2 | Conservative pretrained-residual route |
 | `SAGE16--17` | Aggressive v2 | Complete PAN replacement control |
-| `SAGE20--26` | Current v3 | Shape-context and innovation-correction causal ablations |
+| `SAGE20--26` | Preserved v3 | Shape-context and innovation-correction causal ablations |
 | `SAGE27` | Exploratory v3 | Narrow-FLOPs candidate; not in the default queue |
+| `SAGE30--35` | Preserved v4 | First V4 attempt; retained unchanged |
+| `SAGE40--48` | Preserved V4R | Asymmetric neck, mask correction, geometry and P4 isolation |
+| `SAGE50--56` | New V5 candidates | Dual-use detail route, late prototypes, geometry and isolated P5 WT |
 
 ## 📚 SAGE-v2 ablation matrix
 

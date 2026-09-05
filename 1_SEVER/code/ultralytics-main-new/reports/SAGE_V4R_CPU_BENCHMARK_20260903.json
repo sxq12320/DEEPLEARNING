@@ -1,0 +1,131 @@
+{
+  "device": "cpu",
+  "torch": "2.8.0+cpu",
+  "batch": 1,
+  "imgsz": 256,
+  "device_name": "CPU",
+  "threads": 2,
+  "steps": 25,
+  "amp": false,
+  "instances_per_image": 12,
+  "excludes": [
+    "data_loading",
+    "optimizer_step",
+    "NMS",
+    "mask_postprocessing",
+    "validation"
+  ],
+  "warning": "Synthetic microbenchmark, not final training speed, end-to-end latency or accuracy.",
+  "results": [
+    {
+      "model": "SAGE47_asym_faster_p4",
+      "params": 2292996,
+      "gflops640": 9.9621376,
+      "forward_median_ms": 25.16850000000037,
+      "forward_p90_ms": 26.538099999999787,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 88.29689999999957,
+      "forward_loss_backward_p90_ms": 106.84870000000046,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE45_asym_neighbor",
+      "params": 2319620,
+      "gflops640": 10.048153600000001,
+      "forward_median_ms": 24.508699999999273,
+      "forward_p90_ms": 25.605800000000123,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 95.44960000000025,
+      "forward_loss_backward_p90_ms": 111.46190000000011,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE30_official_control",
+      "params": 2842803,
+      "gflops640": 10.355763199999998,
+      "forward_median_ms": 24.578800000000456,
+      "forward_p90_ms": 26.398099999999758,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 92.89470000000044,
+      "forward_loss_backward_p90_ms": 98.63329999999948,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE48_asym_gated_p4",
+      "params": 2283780,
+      "gflops640": 9.9322368,
+      "forward_median_ms": 25.035799999999497,
+      "forward_p90_ms": 26.641399999999038,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 86.59010000000222,
+      "forward_loss_backward_p90_ms": 92.94299999999822,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE42_asym_semantic_detail",
+      "params": 2319092,
+      "gflops640": 10.041600000000003,
+      "forward_median_ms": 24.259000000000697,
+      "forward_p90_ms": 24.63290000000029,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 88.38400000000135,
+      "forward_loss_backward_p90_ms": 91.7981999999995,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE40_asym_control",
+      "params": 2316211,
+      "gflops640": 9.9326464,
+      "forward_median_ms": 23.05159999999873,
+      "forward_p90_ms": 27.335100000001944,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 84.02129999999985,
+      "forward_loss_backward_p90_ms": 89.2792,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE44_asym_boundary",
+      "params": 2319620,
+      "gflops640": 10.048153600000001,
+      "forward_median_ms": 24.320899999999313,
+      "forward_p90_ms": 25.177100000000507,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 94.0759999999976,
+      "forward_loss_backward_p90_ms": 96.22450000000171,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE41_asym_direct_detail",
+      "params": 2317987,
+      "gflops640": 10.025216,
+      "forward_median_ms": 23.875000000000313,
+      "forward_p90_ms": 25.016900000000675,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 87.2684000000028,
+      "forward_loss_backward_p90_ms": 90.70820000000168,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE43_asym_reprojection",
+      "params": 2319620,
+      "gflops640": 10.048153600000001,
+      "forward_median_ms": 24.98729999999938,
+      "forward_p90_ms": 26.848299999997494,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 90.54940000000045,
+      "forward_loss_backward_p90_ms": 109.60229999999882,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE46_asym_geometry",
+      "params": 2319620,
+      "gflops640": 10.048153600000001,
+      "forward_median_ms": 24.5485999999957,
+      "forward_p90_ms": 26.213099999999656,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 94.09920000000227,
+      "forward_loss_backward_p90_ms": 97.22329999999602,
+      "forward_loss_backward_peak_allocated_mb": null
+    }
+  ]
+}

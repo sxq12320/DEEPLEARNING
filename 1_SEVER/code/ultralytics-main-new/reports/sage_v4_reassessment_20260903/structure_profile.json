@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-03",
+  "method": "SegmentationModel(yaml, nc=1).eval(); sum(p.numel()); get_flops(model, 640)",
+  "environment": "Local PyTorch CPU; no GPU latency measurement",
+  "notes": "Current source, untrained models. FLOPs are operator-count estimates, not measured speed. These are existing architectures, not the proposed revised v4.",
+  "models": [
+    {
+      "yaml": "0_orange_yaml/SAGE_series/SAGE30_official_control.yaml",
+      "params": 2842803,
+      "gflops_640": 10.3557632
+    },
+    {
+      "yaml": "0_orange_yaml/S_series/06_asym_pan_neck.yaml",
+      "params": 2316211,
+      "gflops_640": 9.9326464
+    }
+  ]
+}

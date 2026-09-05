@@ -217,6 +217,9 @@ from .citrus_g0830 import CitrusBilateralExchange, CitrusFrequencyAlignedConcat,
 from .citrus_g0839 import CitrusDualResolutionBackbone, CitrusSDRSupport
 from .citrus_light import CitrusLightAFPN, CitrusLightStage
 from .citrus_orchid import CitrusORCHIDMaskRouter, CitrusORCHIDNeck
+from .citrus_sage_v4 import CitrusSAGEBoundedP3, SAGEGatedStage, SegmentCitrusSAGEV4
+from .citrus_sage_v4r import SegmentCitrusSAGEV4R
+from .citrus_sage_v5 import SegmentCitrusSAGEV5
 from .citrus_sage import (
     C3k2SAGE,
     C3k2SAGEShape,
@@ -269,6 +272,11 @@ from .citrus_far import (
 )
 
 __all__ = (
+    "CitrusSAGEBoundedP3",
+    "SAGEGatedStage",
+    "SegmentCitrusSAGEV4",
+    "SegmentCitrusSAGEV4R",
+    "SegmentCitrusSAGEV5",
     "AIFI",
     "C1",
     "C2",

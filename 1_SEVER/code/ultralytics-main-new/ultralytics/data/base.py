@@ -166,20 +166,48 @@ class BaseDataset(Dataset):
         """
         try:
             f = []  # image files
+            discovered = set()  # directory discoveries, not explicitly selected manifest entries
+            explicit = set()
             for p in img_path if isinstance(img_path, list) else [img_path]:
                 p = Path(p)  # os-agnostic
                 if p.is_dir():  # dir
-                    f += glob.glob(str(Path(glob.escape(p)) / "**" / "*.*"), recursive=True)
+                    directory_files = glob.glob(str(Path(glob.escape(p)) / "**" / "*.*"), recursive=True)
+                    f += directory_files
+                    discovered.update(os.path.normcase(os.path.abspath(x)) for x in directory_files)
                     # F = list(p.rglob('*.*'))  # pathlib
                 elif p.is_file():  # file
                     with open(p, encoding="utf-8") as t:
                         t = t.read().strip().splitlines()
                         parent = str(p.parent) + os.sep
-                        f += [x.replace("./", parent, 1) if x.startswith("./") else x for x in t]  # local to global
+                        manifest_files = [x.replace("./", parent, 1) if x.startswith("./") else x for x in t]
+                        f += manifest_files
+                        explicit.update(os.path.normcase(os.path.abspath(x)) for x in manifest_files)
                         # F += [p.parent / x.lstrip(os.sep) for x in t]  # local to global (pathlib)
                 else:
                     raise FileNotFoundError(f"{self.prefix}{p} does not exist")
             im_files = sorted(x.replace("/", os.sep) for x in f if x.rpartition(".")[-1].lower() in IMG_FORMATS)
+            if self.channels == 3:
+                # RGB cache files share a stem with their source image. Enumerating
+                # both doubles the sample count. Preserve NPY-only source datasets,
+                # explicit manifests and four-channel RGB-D side projects.
+                raster_stems = {
+                    os.path.normcase(os.path.abspath(str(Path(x).with_suffix(""))))
+                    for x in im_files if Path(x).suffix.lower() != ".npy"
+                }
+                kept = []
+                for x in im_files:
+                    key = os.path.normcase(os.path.abspath(x))
+                    stem = os.path.normcase(os.path.abspath(str(Path(x).with_suffix(""))))
+                    paired_cache = Path(x).suffix.lower() == ".npy" and stem in raster_stems
+                    if paired_cache and key in discovered and key not in explicit:
+                        continue
+                    kept.append(x)
+                if len(kept) != len(im_files):
+                    LOGGER.warning(
+                        f"{self.prefix}RGB cache de-duplication: excluded {len(im_files) - len(kept)} paired .npy "
+                        "cache entries from sample enumeration; no files deleted. Use a new comparison baseline."
+                    )
+                im_files = kept
             # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in IMG_FORMATS])  # pathlib
             assert im_files, f"{self.prefix}No images found in {img_path}. {FORMATS_HELP_MSG}"
         except Exception as e:

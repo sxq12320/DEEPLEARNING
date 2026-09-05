@@ -90,12 +90,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pretrained", type=Path, default=ROOT / "yolo11n-seg.pt")
     parser.add_argument("--seeds", default="42", help="Comma-separated seeds; use 42,43,44 for final repeats.")
     parser.add_argument("--only", default="", help="Comma-separated experiment names.")
-    parser.add_argument(
+    amp_group = parser.add_mutually_exclusive_group()
+    amp_group.add_argument(
         "--amp",
-        action=argparse.BooleanOptionalAction,
-        default=FIXED_TRAIN["amp"],
+        dest="amp",
+        action="store_true",
         help="Use only for a paired AMP control; the formal grouped-clean protocol is AMP-off.",
     )
+    amp_group.add_argument("--no-amp", dest="amp", action="store_false")
+    parser.set_defaults(amp=FIXED_TRAIN["amp"])
     parser.add_argument("--cache", choices=("false", "disk", "ram"), default="false")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-completed", action="store_true")

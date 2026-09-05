@@ -12,6 +12,11 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    CitrusSAGEBoundedP3,
+    SAGEGatedStage,
+    SegmentCitrusSAGEV4,
+    SegmentCitrusSAGEV4R,
+    SegmentCitrusSAGEV5,
     AIFI,
     C1,
     C2,
@@ -733,6 +738,14 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusSAGEV4R):
+            from ultralytics.utils.sage_v4r_loss import SAGEV4RSegmentationLoss
+
+            return SAGEV4RSegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusSAGEV4):
+            from ultralytics.utils.sage_v4_loss import SAGEV4SegmentationLoss
+
+            return SAGEV4SegmentationLoss(self)
         return E2ELoss(self, v8SegmentationLoss) if getattr(self, "end2end", False) else v8SegmentationLoss(self)
 
 
@@ -2113,6 +2126,15 @@ def parse_model(d, ch, verbose=True):
             output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
             c2 = [*output_channels, 1]
             args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is SAGEGatedStage:
+            c1, c2 = ch[f], make_divisible(min(args[0], max_channels) * width, 8)
+            args = [c1, c2, n, *args[1:]]
+            n = 1
+        elif m is CitrusSAGEBoundedP3:
+            if not isinstance(f, list) or len(f) != 4:
+                raise ValueError("CitrusSAGEBoundedP3 expects C3/C4/C5/PAN-P3 indices")
+            c2 = ch[f[-1]]
+            args = [[ch[index] for index in f], *args]
         elif m is CitrusSAGEFuse:
             if not isinstance(f, list) or len(f) != 5:
                 raise ValueError("CitrusSAGEFuse requires C2/C3/C4/C5/PAN-P3 feature indices")
@@ -2160,6 +2182,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusORCHID,
                 SegmentCitrusSAGE,
                 SegmentCitrusSAGEV2,
+                SegmentCitrusSAGEV4,
+                SegmentCitrusSAGEV4R,
+                SegmentCitrusSAGEV5,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2187,6 +2212,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusORCHID,
                 SegmentCitrusSAGE,
                 SegmentCitrusSAGEV2,
+                SegmentCitrusSAGEV4,
+                SegmentCitrusSAGEV4R,
+                SegmentCitrusSAGEV5,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2203,6 +2231,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusDualProto, SegmentCitrusLite, SegmentCitrusLiteBQ, SegmentCitrusQualityLite,
                 SegmentCitrusORCHID, SegmentCitrusSAGE, SegmentCitrusSDR, SegmentCitrusTopo,
                 SegmentCitrusSAGEV2,
+                SegmentCitrusSAGEV4,
+                SegmentCitrusSAGEV4R,
+                SegmentCitrusSAGEV5,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

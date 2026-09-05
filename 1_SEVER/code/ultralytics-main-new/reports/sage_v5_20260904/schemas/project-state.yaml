@@ -1,0 +1,46 @@
+project_id: citrus-sage-v5-20260904
+entry_route: project_continue
+primary_paper_family: M
+diagnosed_stage: M4
+execution_mode: REFINE
+action_route: HYBRID
+active_capabilities: [literature-search, paper-deep-reading]
+external_playbook: prototype-and-validation
+research_direction: RGB immature citrus visible instance segmentation
+data_sufficiency:
+  status: SUFFICIENT
+  assessed_on: 2026-09-04
+  research_question_fit: sufficient for exploratory architecture selection, not final causal publication claims
+  evidence_reviewed: [154 local results.csv files, 10 V4R 300-epoch runs, loaded_data_summary.json, three checkpoint local validations]
+  critical_unrepairable_gaps: [no multi-seed final comparison, no new architecture full training]
+  acquisition_needed: false
+data_acquisition:
+  status: NOT_NEEDED
+  crawl_necessity: BLOCKED
+figure_workflow:
+  readiness: NOT_READY
+  user_rendering_approval: not_requested
+  rendered_outputs: []
+stage_status:
+  partially_passed: [M2, M3, M4]
+  passed: []
+field_status:
+  verified:
+    v4r_epochs: 300
+    train_images: 676
+    val_images: 193
+    val_instances: 1049
+    amp: false
+    new_yaml_count: 7
+    new_model_public_api_builds: passed
+    new_model_backward: passed
+    new_model_one_epoch_fixture_smoke: passed_all_seven
+    cpu_microbenchmark: measured_not_GPU
+    final_tests_passed: 66
+    final_tests_skipped: 1_legacy_optional_fixture_missing
+  pending_verification: [local/server image-byte identity, new model accuracy, controlled GPU latency]
+next_action:
+  type: server_smoke_then_fixed_protocol_screening
+  stage: M4
+  expected_return_materials: [server smoke log, fixed-protocol training outputs]
+last_updated: 2026-09-04
