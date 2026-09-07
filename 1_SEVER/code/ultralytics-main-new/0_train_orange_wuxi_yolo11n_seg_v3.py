@@ -30,7 +30,7 @@ if __name__ == "__main__":
         lr0=0.001,
         workers=4,
         device=0,
-        cache=False,
+        cache=True,
         seed=SEED,
         amp=0,
         dropout=0.1,

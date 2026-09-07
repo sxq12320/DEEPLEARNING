@@ -242,7 +242,7 @@ def main() -> None:
         "amp": False,
         "seed": args.seed,
         "deterministic": True,
-        "cache": False,
+        "cache": True,
         "exist_ok": False,
     }
     repository = git_state()

@@ -1,0 +1,34 @@
+# SAGE V6: native high-resolution Proto retained. See docs/SAGE_V6_TRAINING.md.
+# New structural hypothesis; no accuracy or target-GPU speed guarantee.
+nc: 80
+pretrained_map_family: sage_v6_dual
+pretrained_layer_map: {8: 5, 13: 7, 15: 9, 16: 10}
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, SAGEV6Stage, [256]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [-1, 2, SAGEV6Stage, [512]]
+  - [2, 1, Conv, [64, 1, 1]]
+  - [[5, 4], 1, SAGEV6Exchange, [64, select]]
+  - [[4, 6], 1, SAGEV6Exchange, [512, add]]
+  - [7, 1, Conv, [512, 3, 2]]
+  - [-1, 2, SAGEV6Stage, [512]]
+  - [[6, 9], 1, SAGEV6Exchange, [64, select]]
+  - [-1, 2, SAGEV6Stage, [64]]
+  - [[9, 11], 1, SAGEV6Exchange, [512, add]]
+  - [12, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, SAGEV6Stage, [1024]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [[12, 16], 1, SAGEV6Exchange, [512, select]]
+  - [-1, 2, SAGEV6Stage, [512]]
+  - [[7, 18], 1, SAGEV6Exchange, [256, select]]
+  - [-1, 2, SAGEV6Stage, [256]]
+  - [-1, 1, nn.Identity, []]
+  - [-1, 1, nn.Identity, []]
+  - [[20, 18, 16, 11], 1, SegmentCitrusSAGEV5, [nc, 32, 256, 16, true, false, 0, 0]]

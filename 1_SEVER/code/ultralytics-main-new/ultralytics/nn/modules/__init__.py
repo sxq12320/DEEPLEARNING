@@ -220,6 +220,9 @@ from .citrus_orchid import CitrusORCHIDMaskRouter, CitrusORCHIDNeck
 from .citrus_sage_v4 import CitrusSAGEBoundedP3, SAGEGatedStage, SegmentCitrusSAGEV4
 from .citrus_sage_v4r import SegmentCitrusSAGEV4R
 from .citrus_sage_v5 import SegmentCitrusSAGEV5
+from .citrus_sage_v6 import SAGEV6Exchange, SAGEV6Stage
+from .citrus_sage_v7 import SegmentCitrusSAGEV7
+from .citrus_sage_v7r import SegmentCitrusSAGEV7R
 from .citrus_sage import (
     C3k2SAGE,
     C3k2SAGEShape,
@@ -277,6 +280,10 @@ __all__ = (
     "SegmentCitrusSAGEV4",
     "SegmentCitrusSAGEV4R",
     "SegmentCitrusSAGEV5",
+    "SegmentCitrusSAGEV7",
+    "SegmentCitrusSAGEV7R",
+    "SAGEV6Exchange",
+    "SAGEV6Stage",
     "AIFI",
     "C1",
     "C2",

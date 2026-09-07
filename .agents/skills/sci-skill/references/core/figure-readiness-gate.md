@@ -1,73 +1,21 @@
-# Figure Readiness Gate
+# Figure readiness and verification
 
-Apply this gate before any scientific-figure rendering, adaptation, or final insertion.
+Follow local SKILL.md authorization and interaction rules. Classify panels as RESULT (empirical evidence), EXPLANATORY (concept/method) or ENHANCEMENT (navigation/synthesis).
 
-## 1. Classify the figure
+## Result figures
 
-- `RESULT`: displays evidence from experiments, observations, models, coding, statistics, or material analysis.
-- `EXPLANATORY`: explains an algorithm, module, workflow, method, theory, mechanism, or process.
-- `ENHANCEMENT`: improves navigation or synthesis, such as a graphical abstract or study overview.
+Before execution, ensure real inputs and variable/metric meanings are available. Define units, grouping, filters, missingness, aggregation and statistical transformations. Create or reuse Python/R source reading those inputs, run it and retain execution evidence.
 
-If a figure mixes classes, apply the strictest relevant rule to each panel. Any result-bearing panel remains a `RESULT` panel even when surrounded by explanatory graphics.
+Before claiming completion, verify output exists and values trace to inputs and transformations. Writing code is not evidence it ran. Text-only conclusions, unverified hand-typed metrics, simulated results and image-generated result pixels are insufficient. Screenshots alone do not authorize invention of underlying observations.
 
-## 2. Set readiness
+If execution is unavailable, deliver source and concrete return requirements; state rendering remains unverified. Mixed figures keep these requirements for every result panel.
 
-| Status | Meaning | Allowed action |
-|---|---|---|
-| `NOT_READY` | Purpose or essential source material is unknown | Ask for the smallest missing information |
-| `PLAN_READY` | Location, purpose, and intended content are known | Propose, decompose, or write executable code only |
-| `RENDER_READY` | All class-specific prerequisites pass | Render through the approved route |
-| `REVISION_READY` | Existing figure and source context are available | Audit and revise without inventing missing evidence |
+## Explanatory and enhancement figures
 
-## 3. Result-figure execution gate
+Establish purpose, supported content and suitable layout from the request/materials. Choose decomposition autonomously when scope is clear. Label hypotheses; do not imply unsupported measured performance or causal certainty.
 
-Set `RESULT` to `RENDER_READY` only when all are true:
+A request to create, revise or insert the figure authorizes those reversible local steps. Ask about a missing material decision or scope expansion, not a second approval for the same task.
 
-1. `real_inputs_available = true` — real data or verified result files exist;
-2. `semantics_defined = true` — variables, groups, units, metrics, sample structure, and uncertainty are defined;
-3. `transformations_declared = true` — filters, exclusions, missingness, normalization, aggregation, and tests are recorded;
-4. `backend in [python, r]`;
-5. `plotting_source_available = true` — source reads the real input rather than embedding invented result values;
-6. `execution_verified = true` — the source was actually run and evidence of the run is available;
-7. `traceability_verified = true` — displayed values and layers trace to the real input and declared transformations.
+## Delivery and insertion
 
-Keep `RESULT` at `PLAN_READY` or `NOT_READY` when any of the following is true:
-
-- only a textual conclusion is available;
-- metrics or p values were manually typed without a verified source file;
-- only a screenshot is available and reconstruction would require invented data;
-- simulated, random, or example values would be used as manuscript results;
-- an image-generation model would create result pixels;
-- a script has been written but not run;
-- an output exists but its input or transformation chain is unknown.
-
-If the current environment cannot run Python/R, produce the source and a hybrid return contract. Require the returned source, command, console/log evidence, and rendered files. Do not claim completion before verification.
-
-## 4. Explanatory and enhancement consent gate
-
-Set `EXPLANATORY` or `ENHANCEMENT` to `RENDER_READY` only when all are true:
-
-1. `manuscript_location_proposed = true`;
-2. `communication_purpose_disclosed = true`;
-3. `content_boundary_disclosed = true`;
-4. `decomposition_options_disclosed = true` when complexity warrants them;
-5. `required_materials_disclosed = true`;
-6. `generation_route_disclosed = true`;
-7. `user_rendering_approval = true`.
-
-Communication value is sufficient grounds to propose the figure. Do not require empirical evidence for a genuine explanatory or enhancement figure. However, do not imply measured results, verified mechanisms, or causal certainty that the manuscript does not support.
-
-## 5. Final insertion gate
-
-Rendering approval and final approval are separate.
-
-Set `manuscript_insertion_status = allowed` only when:
-
-- the rendered output exists;
-- source and output QA have passed or documented exceptions are accepted;
-- the legend and manuscript callout match the actual figure;
-- result panels have full input-to-pixel traceability;
-- reference adaptation and attribution requirements are resolved;
-- `user_final_approval = true`.
-
-Otherwise keep final insertion blocked and use the figure review card.
+Inspect output at intended size, verify labels/legend/callouts and result traceability, and resolve attribution. Insert when requested and authorized; local insertion does not establish author acceptance or permission to publish. Use a review card only if useful or requested.

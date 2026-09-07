@@ -2,12 +2,7 @@ name: sci-skill
 version: 1.3.0
 description: Declarative routing for the SCI保姆 stage-gated paper workflow.
 
-always_load:
-  - references/core/operating-principles.md
-  - references/core/beginner-guidance.md
-  - references/core/action-routing.md
-  - references/core/data-sufficiency-gate.md
-  - references/evidence-integrity.md
+always_load: []
 
 entry_routes:
   beginner_start:
@@ -84,11 +79,11 @@ figure_activation_conditions:
       - figure_class in [EXPLANATORY, ENHANCEMENT]
       - manuscript_location_and_purpose_proposed is true
       - content_and_decomposition_plan_disclosed is true
-      - user_rendering_approval is true
+      - rendering_is_within_existing_user_authorization is true
   final_insertion:
     require_all:
       - rendered_figure_qa_passed is true
-      - user_final_approval is true
+      - local_insertion_is_within_existing_user_authorization is true
 
 stage_capability_candidates:
   E1: [literature-search]

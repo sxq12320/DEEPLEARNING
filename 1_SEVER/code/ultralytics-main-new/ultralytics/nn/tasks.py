@@ -17,6 +17,10 @@ from ultralytics.nn.modules import (
     SegmentCitrusSAGEV4,
     SegmentCitrusSAGEV4R,
     SegmentCitrusSAGEV5,
+    SegmentCitrusSAGEV7,
+    SegmentCitrusSAGEV7R,
+    SAGEV6Exchange,
+    SAGEV6Stage,
     AIFI,
     C1,
     C2,
@@ -451,6 +455,11 @@ class BaseModel(torch.nn.Module):
         # the public ``YOLO(yaml).load(checkpoint)`` path useful without guessing from
         # tensor shapes or changing legacy models. Mapping format: target_index: source_index.
         layer_map = getattr(self, "yaml", {}).get("pretrained_layer_map", {})
+        # V6's semantic layers move in the graph. Remap the original initializer,
+        # but never remap an already-adapted V6 model during trainer reconstruction.
+        mapping_family = getattr(self, "yaml", {}).get("pretrained_map_family")
+        if mapping_family and getattr(model, "yaml", {}).get("pretrained_map_family") == mapping_family:
+            layer_map = {}
         if layer_map:
             target_state = self.state_dict()
             remapped = {}
@@ -1839,6 +1848,7 @@ def parse_model(d, ch, verbose=True):
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
+            SAGEV6Stage,
             Classify,
             Conv,
             ConvTranspose,
@@ -1902,6 +1912,7 @@ def parse_model(d, ch, verbose=True):
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
         {
+            SAGEV6Stage,
             BottleneckCSP,
             C1,
             C2,
@@ -1958,7 +1969,7 @@ def parse_model(d, ch, verbose=True):
                 legacy = False
                 if scale in "mlx":
                     args[3] = True
-            if m is CitrusLightStage:
+            if m in {CitrusLightStage, SAGEV6Stage}:
                 # The Light backbone is a current YOLO11-style replacement. Without this flag a model that removes
                 # every C3k2 block silently falls back to the older, substantially heavier Detect class branch.
                 legacy = False
@@ -2126,6 +2137,11 @@ def parse_model(d, ch, verbose=True):
             output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
             c2 = [*output_channels, 1]
             args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is SAGEV6Exchange:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("SAGEV6Exchange needs [anchor, source] inputs")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[x] for x in f], c2, *args[1:]]
         elif m is SAGEGatedStage:
             c1, c2 = ch[f], make_divisible(min(args[0], max_channels) * width, 8)
             args = [c1, c2, n, *args[1:]]
@@ -2185,6 +2201,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV4,
                 SegmentCitrusSAGEV4R,
                 SegmentCitrusSAGEV5,
+                SegmentCitrusSAGEV7,
+                SegmentCitrusSAGEV7R,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2215,6 +2233,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV4,
                 SegmentCitrusSAGEV4R,
                 SegmentCitrusSAGEV5,
+                SegmentCitrusSAGEV7,
+                SegmentCitrusSAGEV7R,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2234,6 +2254,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV4,
                 SegmentCitrusSAGEV4R,
                 SegmentCitrusSAGEV5,
+                SegmentCitrusSAGEV7,
+                SegmentCitrusSAGEV7R,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

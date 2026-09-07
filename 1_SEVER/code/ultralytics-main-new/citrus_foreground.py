@@ -35,6 +35,20 @@ class RunnerSpec:
 
 
 RUNNERS: Dict[str, RunnerSpec] = {
+    "SAGE_V7": RunnerSpec(
+        "20260906_citrus_sage_v7_batch.py",
+        ("smoke", "screen", "structure", "all", "control", "priority", "refusion", "refusion_new"),
+        ("SAGE7", "SAGE_V7", "SAGE-V7"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "SAGE_V6": RunnerSpec(
+        "20260905_citrus_sage_v6_batch.py",
+        ("smoke", "screen", "structure", "geometry", "backbone", "all", "control", "priority"),
+        ("SAGE6", "SAGE_V6", "SAGE-V6"),
+        supports_cache=True,
+        supports_amp=True,
+        supports_skip_completed=True,
+    ),
     "SAGE_V5": RunnerSpec(
         "20260904_citrus_sage_v5_batch.py",
         ("smoke", "screen", "structure", "geometry", "backbone", "all", "control"),
@@ -367,7 +381,7 @@ def run_foreground(
     pretrained: str = "",
     seeds: str = "42",
     only: str = "",
-    cache: str = "false",
+    cache: bool | str = True,
     amp: Optional[bool] = None,
     dry_run: bool = False,
     skip_completed: bool = True,
@@ -386,8 +400,10 @@ def run_foreground(
         raise FileNotFoundError(f"Dataset YAML not found: {data_path}")
     if epochs < 1 or batch < 1 or imgsz < 1 or workers < 0:
         raise ValueError("EPOCHS/BATCH/IMGSZ must be positive and WORKERS must be non-negative.")
-    if cache not in {"false", "disk", "ram"}:
-        raise ValueError("CACHE must be 'false', 'disk', or 'ram'.")
+    from citrus_protocol import normalize_cache
+
+    cache = normalize_cache(cache)
+    cache = "ram" if cache is True else "false" if cache is False else cache
 
     devices = _parse_devices(device, single_gpu_only=single_gpu_only)
     arguments = _build_argv(

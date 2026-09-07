@@ -34,7 +34,7 @@ def main():
         batch=16,
         imgsz=640,
         workers=4,
-        cache="false",
+        cache=True,
         amp=None,
         dry_run=DRY_RUN,
         skip_completed=True,

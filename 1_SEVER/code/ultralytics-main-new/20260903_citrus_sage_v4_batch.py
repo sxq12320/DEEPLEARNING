@@ -46,7 +46,7 @@ def parse_args():
     fixed = fixed_train_args()
     for key in ("batch", "imgsz", "workers"):
         parser.add_argument(f"--{key}", type=int, default=fixed[key])
-    parser.add_argument("--cache", choices=("false", "ram", "disk"), default="false")
+    parser.add_argument("--cache", type=str.lower, choices=("true", "false", "ram", "disk"), default="ram")
     amp = parser.add_mutually_exclusive_group()
     amp.add_argument("--amp", dest="amp", action="store_true")
     amp.add_argument("--no-amp", dest="amp", action="store_false")
@@ -139,7 +139,7 @@ def main():
         batch=args.batch,
         imgsz=args.imgsz,
         workers=args.workers,
-        cache=False if args.cache == "false" else args.cache,
+        cache=False if args.cache == "false" else True if args.cache in {"true", "ram"} else "disk",
         amp=args.amp,
     )
     data = args.data.expanduser().resolve()
@@ -197,7 +197,7 @@ def main():
     source_files = [
         Path(__file__).resolve(),
         ROOT / "citrus_protocol.py",
-        ROOT / "protocols/citrus_paper1_formal_v1.yaml",
+        ROOT / "protocols/citrus_paper1_formal_v2_ram.yaml",
         ROOT / "ultralytics/nn/modules/citrus_sage_v4.py",
         ROOT / "ultralytics/utils/sage_v4_loss.py",
         ROOT / "ultralytics/nn/tasks.py",

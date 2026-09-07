@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=FIXED_TRAIN["workers"])
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--amp", action="store_true", help="Enable AMP; leave disabled to match the current S series.")
-    parser.add_argument("--cache", choices=("false", "disk", "ram"), default="false")
+    parser.add_argument("--cache", type=str.lower, choices=("true", "false", "disk", "ram"), default="ram")
     parser.add_argument("--citrus-quality", type=float, default=None)
     parser.add_argument("--citrus-boundary", type=float, default=None)
     parser.add_argument("--citrus-query", type=float, default=None)
@@ -124,7 +124,7 @@ def main() -> None:
     data_path = args.data.expanduser().resolve()
     pretrained = args.pretrained.expanduser().resolve()
     project = args.project.expanduser().resolve()
-    cache: bool | str = False if args.cache == "false" else args.cache
+    cache: bool | str = False if args.cache == "false" else True if args.cache in {"true", "ram"} else "disk"
     validate_locked_runtime(
         batch=args.batch,
         imgsz=args.imgsz,

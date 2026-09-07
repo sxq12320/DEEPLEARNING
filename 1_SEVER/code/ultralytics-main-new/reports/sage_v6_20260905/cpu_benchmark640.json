@@ -1,0 +1,87 @@
+{
+  "device": "cpu",
+  "torch": "2.8.0+cpu",
+  "batch": 1,
+  "imgsz": 640,
+  "device_name": "CPU",
+  "threads": 2,
+  "steps": 20,
+  "amp": false,
+  "instances_per_image": 12,
+  "excludes": [
+    "data_loading",
+    "optimizer_step",
+    "NMS",
+    "mask_postprocessing",
+    "validation"
+  ],
+  "warning": "Synthetic microbenchmark, not final training speed, end-to-end latency or accuracy.",
+  "results": [
+    {
+      "model": "SAGE65_visible_geometry",
+      "params": 1794440,
+      "gflops640": 9.137408,
+      "forward_median_ms": 110.97054999999978,
+      "forward_p90_ms": 118.5223999999998,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 494.63290000000006,
+      "forward_loss_backward_p90_ms": 629.4515,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE60_relay_control",
+      "params": 2323380,
+      "gflops640": 10.097305599999999,
+      "forward_median_ms": 98.84610000000116,
+      "forward_p90_ms": 103.93810000000059,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 406.48119999999824,
+      "forward_loss_backward_p90_ms": 432.1503,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE64_selective_exchange",
+      "params": 1794440,
+      "gflops640": 9.137408,
+      "forward_median_ms": 108.36325000000357,
+      "forward_p90_ms": 116.09370000000041,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 459.16179999999684,
+      "forward_loss_backward_p90_ms": 500.19620000000486,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE61_singlepass_neck",
+      "params": 2128468,
+      "gflops640": 9.2031488,
+      "forward_median_ms": 90.846599999999,
+      "forward_p90_ms": 106.24529999999766,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 382.2928000000019,
+      "forward_loss_backward_p90_ms": 402.01330000000013,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE62_residual_backbone",
+      "params": 1783748,
+      "gflops640": 8.7702016,
+      "forward_median_ms": 89.36439999999735,
+      "forward_p90_ms": 93.70980000000628,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 371.83310000000347,
+      "forward_loss_backward_p90_ms": 386.67510000000505,
+      "forward_loss_backward_peak_allocated_mb": null
+    },
+    {
+      "model": "SAGE63_persistent_detail",
+      "params": 1793988,
+      "gflops640": 9.1316736,
+      "forward_median_ms": 109.92279999999965,
+      "forward_p90_ms": 114.26670000000172,
+      "forward_peak_allocated_mb": null,
+      "forward_loss_backward_median_ms": 448.44855000000194,
+      "forward_loss_backward_p90_ms": 482.8289000000012,
+      "forward_loss_backward_peak_allocated_mb": null
+    }
+  ]
+}

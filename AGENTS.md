@@ -1,64 +1,30 @@
-# Repository Guidelines
+# Citrus research
 
-## Current Research Priority
+- 目标：两篇衔接论文——轻量高精度未成熟柑橘实例分割；基于果实实例/ROI 的果梗点精确定位。
+- 研究依据：`3_研究生/柑橘套袋视觉_完整研究执行计划.md`。论文一限定 RGB 未成熟果实实例分割；除非另有任务，不加入 RGB-D、amodal、OBB、控制或多任务姿态头。
+- 难点：条带状叶枝遮挡造成深凹可见掩膜；保持遮挡果实完整与分离接触果实的拓扑冲突；单图极端尺度跨度。用 solidity/凸包缺损、实例间隙、split/merge 错误、单图尺度比量化后再声称解决。
 
-This repository supports a master's thesis on vision for citrus bagging. The immediate goal is to publish two connected papers:
+# Workspace
 
-1. Lightweight, high-accuracy instance segmentation of immature citrus fruit.
-2. Precise citrus peduncle-point localization using the fruit instances/ROIs produced by paper 1.
+- 主代码：`ultralytics-main-new/`；模型 YAML：`0_orange_yaml/`；驱动：`train_citrus_seg.py`、`eval_citrus_seg.py`；结果：`1_results/`（后三者相对主代码目录）。其他目录为独立旧项目，不做关联重构。
+- 数据：`data/test/`，941 张 RGB 图、4,576 个实例；连拍跨集合使现有划分仅适合初步实验，正式实验必须按组划分。
 
-Keep paper 1 focused on RGB immature-fruit instance segmentation. Do not mix in RGB-D, amodal segmentation, OBB, robotic control, or multi-task pose heads unless a later task explicitly requires them. The current research source of truth is `3_研究生/柑橘套袋视觉_完整研究执行计划.md`.
+# Experiments
 
-The current visual-problem framing is not generic "occlusion and small objects." Focus on strip-like leaf/branch occlusion that creates deeply concave visible masks, the topology conflict between preserving one occluded fruit and separating adjacent touching fruits, and extreme within-image scale span. Quantify these with solidity/convex-hull deficits, neighboring-instance gaps, split/merge errors, and per-image scale ratios before claiming a method solves them.
+- 主消融基线：YOLO11n-seg。切换前先做 YOLO11n 与 RTMDet-Ins-tiny 的 50 epoch 筛选。
+- 最少跨系列比较：YOLOv8n-seg、YOLO11n-seg、YOLO26n-seg、RTMDet-Ins-tiny、Mask R-CNN R50-FPN、RF-DETR Seg Nano。
+- 期刊加强比较加入无框位置式 SOLOv2-Light R18-FPN，替代可选 CondInst/SparseInst 名额，不替代主消融基线。
+- 辅助基线：U-Net + marker-controlled watershed。训练合并实例为前景；验证集调优距离变换分水岭拆分；报告语义 Dice/mIoU 及实例 Mask AP。U-Net 单独不是实例分割。
+- 可选一个语义比较：DeepLabV3+ 或 SegFormer-B0 + 同样分水岭。使用成熟 segmentation_models_pytorch/MMSegmentation；`1.coding/2_Unet/` 不用于正式论文。
+- `001`–`003` 为初步运行；仅在划分、初始化、优化器、学习率、dropout、图像尺寸、seed、评估集合完全一致时与新实验可比。正式实验前解决脚本协议冲突。
+- 最终报告 mask mAP50-95/mAP50、precision/recall、尺度 AP、Params、GFLOPs、实测延迟、难例子集表现；语义模型另报 Dice、mIoU、Boundary F1。
+- 筛选运行一次；主基线与最终方法各用三个 seed，报告均值±标准差。300 epoch 前做针对性检查及 1–3 epoch smoke run。
+- 每次正式实验记录命令、Git 状态、划分版本、硬件、最终指标；编号命名，不覆盖已完成运行。
 
-## Project Structure
+# Development
 
-`ultralytics-main-new/` is the active codebase, a customized Ultralytics fork. Citrus model YAMLs are in `ultralytics-main-new/0_orange_yaml/`, training/evaluation drivers are `train_citrus_seg.py` and `eval_citrus_seg.py`, and experiment artifacts are under `ultralytics-main-new/1_results/`.
-
-The current dataset is `data/test/`: 941 RGB images and 4,576 labeled instances. Treat the existing train/val/test split as preliminary because frames from the same burst sequence cross split boundaries. Formal paper experiments must use a group-aware split.
-
-Other directories are independent legacy or side projects. Do not refactor them while working on citrus experiments.
-
-## Baselines and Experiment Discipline
-
-Use YOLO11n-seg as the current primary ablation baseline because it is nano-scale, already trained locally, and directly comparable with recent citrus literature. Do not limit comparison experiments to YOLO. The minimum cross-family set is YOLOv8n-seg, YOLO11n-seg, YOLO26n-seg, RTMDet-Ins-tiny, Mask R-CNN R50-FPN, and RF-DETR Seg Nano. For the journal-strength comparison, add SOLOv2-Light R18-FPN as a box-free, location-based baseline; it is not the primary ablation model, and its inclusion replaces the optional CondInst/SparseInst slot. Run a 50-epoch YOLO11n versus RTMDet-Ins-tiny screening before considering any primary-baseline switch.
-
-Include `U-Net + marker-controlled watershed` as a semantic-to-instance auxiliary baseline. U-Net alone is not an instance segmentation model: merge instance masks into binary foreground for training, split predictions with a validation-tuned distance-transform watershed, and report both semantic Dice/mIoU and instance Mask AP. DeepLabV3+ or SegFormer-B0 plus the same watershed may be added as one optional semantic comparison. Use a mature `segmentation_models_pytorch` or MMSegmentation implementation; `1.coding/2_Unet/` is legacy learning code and is not paper-ready.
-
-Existing runs `001`-`003` are preliminary. Their results are not interchangeable with new runs unless the data split, initialization, optimizer, learning rate, dropout, image size, seed, and evaluation split are identical. The current scripts contain conflicting protocols; resolve this before formal experiments.
-
-For final tables, report mask mAP50-95, mask mAP50, precision, recall, AP by object scale, Params, GFLOPs, measured latency, and challenge-subset performance. For semantic models also report Dice, mIoU, and Boundary F1. Run screening experiments once, then repeat the primary baseline and final method with three seeds and report mean plus standard deviation.
-
-## Development Commands
-
-Run commands inside the YOLO fork:
-
-```powershell
-cd E:\mastercode\ultralytics-main-new
-pip install -e .
-python train_citrus_seg.py --model yolo11n-seg.pt --name E0_baseline
-python eval_citrus_seg.py --weights 1_results\ORANGE_WUXI_SEG\E0_baseline\weights\best.pt
-pytest tests
-```
-
-Use focused tests and a short 1-3 epoch smoke run before any 300-epoch experiment.
-
-## Coding and Model Integration
-
-Use Python with 4-space indentation and the repository's 120-column limit. Follow Ruff/isort/YAPF and Google-style docstrings.
-
-When adding a YOLO module:
-
-1. Implement it under `ultralytics/nn/modules/`.
-2. Export it from `ultralytics/nn/modules/__init__.py`.
-3. Import it in `ultralytics/nn/tasks.py`.
-4. Register its channel/repeat behavior in `parse_model()`.
-5. Add a minimal YAML and test model build, forward, backward, and FLOPs.
-
-Prefer one coherent, task-specific method over stacking published attention, convolution, and upsampling blocks.
-
-## Data, Results, and Git
-
-Do not commit datasets, weights, `runs/`, large result images, archives, or videos. Keep numbered experiment names and never overwrite a completed run. Record the exact command, Git state, dataset split version, hardware, and final metrics for every paper experiment.
-
-Do not revert unrelated user changes. Use concise scoped commits such as `citrus: add cross-family baseline configs`.
+- Python 四空格、120 列，遵循 Ruff/isort/YAPF 和 Google docstrings；优先连贯的任务方法，避免堆叠已有模块。
+- 新 YOLO 模块：实现于 `ultralytics/nn/modules/` → `__init__.py` 导出 → `ultralytics/nn/tasks.py` 导入 → `parse_model()` 注册通道/重复行为 → 最小 YAML 验证构建、前向、反向、FLOPs。
+- 在主代码目录执行：`pip install -e .`；训练 `python train_citrus_seg.py --model yolo11n-seg.pt --name E0_baseline`；评估 `python eval_citrus_seg.py --weights 1_results/ORANGE_WUXI_SEG/E0_baseline/weights/best.pt`。运行名已存在时换新编号。
+- 按改动选择 `pytest tests` 中的相关测试；上面是开发命令参考，不要求每次任务都安装、训练或运行完整测试。
+- 不提交数据集、权重、runs、大结果图、压缩包或视频；不撤销无关改动。提交信息简短且限定范围，例如 `citrus: add cross-family baseline configs`。

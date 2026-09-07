@@ -17,6 +17,7 @@ def test_formal_protocol_locks_accuracy_affecting_hyperparameters() -> None:
     assert fixed["optimizer"] == "AdamW"
     assert fixed["lr0"] == 0.001
     assert fixed["dropout"] == 0.0
+    assert fixed["cache"] is True
     assert fixed["amp"] is False
     assert fixed["patience"] == 300
     assert fixed["mask_ratio"] == 4
@@ -28,14 +29,14 @@ def test_formal_protocol_locks_accuracy_affecting_hyperparameters() -> None:
 def test_runtime_validator_rejects_silent_protocol_changes() -> None:
     """Batch and AMP changes must not enter formal structure comparisons silently."""
     assert validate_locked_runtime(
-        batch=16, imgsz=640, workers=4, cache=False, amp=False
+        batch=16, imgsz=640, workers=4, cache=True, amp=False
     ) == []
     with pytest.raises(ValueError, match="mismatches"):
-        validate_locked_runtime(batch=8, imgsz=640, workers=4, cache=False, amp=False)
+        validate_locked_runtime(batch=8, imgsz=640, workers=4, cache=True, amp=False)
     with pytest.raises(ValueError, match="locks amp"):
-        validate_locked_runtime(batch=16, imgsz=640, workers=4, cache=False, amp=True)
+        validate_locked_runtime(batch=16, imgsz=640, workers=4, cache=True, amp=True)
     assert validate_locked_runtime(
-        batch=16, imgsz=640, workers=4, cache=False, amp=True, allow_amp_audit=True
+        batch=16, imgsz=640, workers=4, cache=True, amp=True, allow_amp_audit=True
     )
 
 

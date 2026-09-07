@@ -26,7 +26,7 @@ WORKERS = 4
 SEEDS = "42"  # Formal final repeats: "42,43,44" (except legacy TOPO, one seed per launch).
 ONLY = ""  # Optional exact experiment name(s), comma-separated.
 PRETRAINED = ""  # Empty means <code root>/yolo11n-seg.pt.
-CACHE = "false"  # false/disk/ram; fixed paper protocol uses false.
+CACHE = True  # RAM image cache; user-requested protocol v2 (2026-09-07).
 AMP = None  # None keeps the dated runner's fixed protocol. Do not change for formal comparisons.
 
 DRY_RUN = True  # 第一次只检查构建；通过后改为 False 正式顺序训练。

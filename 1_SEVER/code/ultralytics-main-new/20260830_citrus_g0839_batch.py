@@ -99,7 +99,7 @@ def parse_args() -> argparse.Namespace:
     )
     amp_group.add_argument("--no-amp", dest="amp", action="store_false")
     parser.set_defaults(amp=FIXED_TRAIN["amp"])
-    parser.add_argument("--cache", choices=("false", "disk", "ram"), default="false")
+    parser.add_argument("--cache", type=str.lower, choices=("true", "false", "disk", "ram"), default="ram")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-completed", action="store_true")
     parser.add_argument("--fail-fast", action="store_true")
@@ -167,7 +167,7 @@ def main() -> None:
     pretrained = args.pretrained.expanduser().resolve()
     default_project = ROOT / "1_results" / "G_0839_series" / f"CITRUS_G0839_{args.suite.upper()}_{args.epochs}EP"
     project = (args.project or default_project).expanduser().resolve()
-    cache: bool | str = False if args.cache == "false" else args.cache
+    cache: bool | str = False if args.cache == "false" else True if args.cache in {"true", "ram"} else "disk"
     deviations = validate_locked_runtime(
         batch=args.batch,
         imgsz=args.imgsz,

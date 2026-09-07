@@ -11,7 +11,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent
-PROTOCOL_PATH = ROOT / "protocols" / "citrus_paper1_formal_v1.yaml"
+PROTOCOL_PATH = ROOT / "protocols" / "citrus_paper1_formal_v2_ram.yaml"
 
 
 def load_protocol() -> dict:
@@ -34,6 +34,21 @@ def fixed_train_args() -> dict:
     return deepcopy(load_protocol()["fixed_train"])
 
 
+def normalize_cache(cache: bool | str) -> bool | str:
+    """Canonical cache value: True/ram/true mean RAM, False/false mean disabled."""
+    if isinstance(cache, bool):
+        return cache
+    if isinstance(cache, str):
+        value = cache.lower()
+        if value in {"true", "ram"}:
+            return True
+        if value == "false":
+            return False
+        if value == "disk":
+            return "disk"
+    raise ValueError("cache must be True, False, ram, disk, true or false")
+
+
 def validate_locked_runtime(
     *,
     batch: int,
@@ -45,6 +60,7 @@ def validate_locked_runtime(
 ) -> list[str]:
     """Reject silent deviations and return explicitly authorized audit deviations."""
     fixed = fixed_train_args()
+    cache = normalize_cache(cache)
     received = {"batch": batch, "imgsz": imgsz, "workers": workers, "cache": cache}
     mismatches = {key: (fixed[key], value) for key, value in received.items() if value != fixed[key]}
     if mismatches:

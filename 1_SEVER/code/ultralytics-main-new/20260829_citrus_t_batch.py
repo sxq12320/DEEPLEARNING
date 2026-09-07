@@ -361,7 +361,7 @@ def main() -> None:
             "amp": False,
             "seed": seed,
             "deterministic": True,
-            "cache": False,
+            "cache": True,
             "exist_ok": False,
             **experiment.losses,
         }
