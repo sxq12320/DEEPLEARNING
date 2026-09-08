@@ -35,6 +35,18 @@ class RunnerSpec:
 
 
 RUNNERS: Dict[str, RunnerSpec] = {
+    "CITRUS_E": RunnerSpec(
+        "20260907_citrus_e_batch.py",
+        ("smoke", "screen", "structure", "all", "control", "priority", "guided"),
+        ("CITRUS_E", "E"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "SAGE_V8": RunnerSpec(
+        "20260907_citrus_sage_v8_batch.py",
+        ("smoke", "screen", "structure", "all", "control", "priority"),
+        ("SAGE8", "SAGE_V8", "SAGE-V8"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
     "SAGE_V7": RunnerSpec(
         "20260906_citrus_sage_v7_batch.py",
         ("smoke", "screen", "structure", "all", "control", "priority", "refusion", "refusion_new"),
@@ -445,6 +457,12 @@ def run_foreground(
     visible = os.environ.get("CUDA_VISIBLE_DEVICES", "")
     if devices and not dry_run and visible and visible != ",".join(devices):
         raise ValueError(f"CUDA_VISIBLE_DEVICES={visible!r} conflicts with DEVICE={device!r}; use a fresh terminal.")
+    if devices and not dry_run:
+        # Set physical visibility before importing the dated runner (which imports
+        # torch).  The runner still receives the physical index and validates it;
+        # Ultralytics then sees one logical cuda:0 mapped to this physical card.
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(devices)
     with DeviceRunLock(devices, enabled=device_lock and not dry_run):
         if refuse_busy_gpu and devices and not dry_run:
             busy = gpu_processes(devices)

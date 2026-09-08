@@ -1,0 +1,12 @@
+{
+  "name": "E00_global_control",
+  "seed": 42,
+  "epochs": 1,
+  "data": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\reports\\citrus_e_20260907\\smoke_test_artifacts\\test_real_trainer_calls_batch_0\\source\\data.yaml",
+  "git": "f0dc072e2388d6d8d002ed2c87a64539a7a36969",
+  "protocol": "TEST_ONLY_SMOKE_NOT_FORMAL",
+  "python": "3.9.13 (main, Aug 25 2022, 23:51:50) [MSC v.1916 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "torch": "2.8.0+cpu",
+  "yaml_sha256": "e2caa119d4684c8a456e104d53055162053c523bc60dd80e6ec285e9e509c97d"
+}

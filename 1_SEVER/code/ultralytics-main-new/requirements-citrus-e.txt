@@ -1,0 +1,2 @@
+# Exact polygon/rectangle intersection. CPU wheel; no Mamba or custom CUDA.
+shapely==2.0.7

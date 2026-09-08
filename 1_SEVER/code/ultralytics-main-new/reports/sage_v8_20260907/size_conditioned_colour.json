@@ -1,0 +1,80 @@
+{
+  "SAGE70_relay_control_seed42_diagnostics": {
+    "tiny_low_contrast": {
+      "n": 73,
+      "recall25": 0.273972602739726
+    },
+    "tiny_higher_contrast": {
+      "n": 79,
+      "recall25": 0.189873417721519
+    },
+    "small_low_contrast": {
+      "n": 74,
+      "recall25": 0.7837837837837838
+    },
+    "small_higher_contrast": {
+      "n": 205,
+      "recall25": 0.7268292682926829
+    },
+    "larger_low_contrast": {
+      "n": 212,
+      "recall25": 0.9811320754716981
+    },
+    "larger_higher_contrast": {
+      "n": 405,
+      "recall25": 0.9728395061728395
+    }
+  },
+  "SAGE72_p2_candidates_seed42_diagnostics": {
+    "tiny_low_contrast": {
+      "n": 73,
+      "recall25": 0.2191780821917808
+    },
+    "tiny_higher_contrast": {
+      "n": 79,
+      "recall25": 0.10126582278481013
+    },
+    "small_low_contrast": {
+      "n": 74,
+      "recall25": 0.7432432432432432
+    },
+    "small_higher_contrast": {
+      "n": 205,
+      "recall25": 0.6536585365853659
+    },
+    "larger_low_contrast": {
+      "n": 212,
+      "recall25": 0.9811320754716981
+    },
+    "larger_higher_contrast": {
+      "n": 405,
+      "recall25": 0.9604938271604938
+    }
+  },
+  "SAGE76_shared_context_seed42_diagnostics": {
+    "tiny_low_contrast": {
+      "n": 73,
+      "recall25": 0.1917808219178082
+    },
+    "tiny_higher_contrast": {
+      "n": 79,
+      "recall25": 0.12658227848101267
+    },
+    "small_low_contrast": {
+      "n": 74,
+      "recall25": 0.8243243243243243
+    },
+    "small_higher_contrast": {
+      "n": 205,
+      "recall25": 0.6634146341463415
+    },
+    "larger_low_contrast": {
+      "n": 212,
+      "recall25": 0.9811320754716981
+    },
+    "larger_higher_contrast": {
+      "n": 405,
+      "recall25": 0.9506172839506173
+    }
+  }
+}

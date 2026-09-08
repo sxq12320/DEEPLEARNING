@@ -1,0 +1,5 @@
+names:
+  0: fruit
+path: E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_prepared_source_balancing0\views
+train: train/images
+val: E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_prepared_source_balancing0\source\val\images

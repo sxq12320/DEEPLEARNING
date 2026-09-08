@@ -1,0 +1,8 @@
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000000_view0.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000001_view0.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000002_view0.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000002_view1.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000002_view2.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000002_view3.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000002_view4.png
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\SMOKE_NOT_FORMAL\_prepared_views\train\images\source000003_view0.png

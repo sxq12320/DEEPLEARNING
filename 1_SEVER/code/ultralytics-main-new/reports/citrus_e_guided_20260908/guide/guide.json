@@ -1,0 +1,4101 @@
+{
+  "identity": {
+    "version": "citrus_rgb_heatmap_v1",
+    "size": 384,
+    "epochs": 20,
+    "seed": 20260908,
+    "sources": [
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0000.jpg",
+        "size": 3575779,
+        "mtime": 1784254252565248700,
+        "label_sha256": "e33d63b960ec62298f6385c53dc41088f231f42fea94abbfe31afe7d1d2f9909"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0001.jpg",
+        "size": 3135487,
+        "mtime": 1784254259026089200,
+        "label_sha256": "68252dec4027b5a50151aa3b06251945f35889e22ca520d60bf1297d331e150e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0002.jpg",
+        "size": 2915373,
+        "mtime": 1784254237974702300,
+        "label_sha256": "89634a4f0159ff97241865733af7077ec2771ab7d88925e86cdf0b3236f52f20"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0003.jpg",
+        "size": 4588620,
+        "mtime": 1783302902000000000,
+        "label_sha256": "db3dda99c34a51606cffc15d93affee109011954efbeeaa09c8386451eb915e2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0004.jpg",
+        "size": 2958986,
+        "mtime": 1783302904000000000,
+        "label_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0005.jpg",
+        "size": 2640548,
+        "mtime": 1783303610000000000,
+        "label_sha256": "98af4839b43f4cb803fc151cc16b32802a3ed698fb9e9c8c8582427d94dfc7fd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0006.jpg",
+        "size": 2689104,
+        "mtime": 1783303612000000000,
+        "label_sha256": "ad88d1f68d1f469aaedd19eb9712593c752002c7c9c774a95bc662f7b1c9905e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0007.jpg",
+        "size": 2847469,
+        "mtime": 1783303616000000000,
+        "label_sha256": "6024b7c89c376e4af2887b829f4918046bc1fe903efd38dcbf48ac74f6c9c35e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0008.jpg",
+        "size": 2909811,
+        "mtime": 1783303618000000000,
+        "label_sha256": "95058934bb0d36b271d57b1a3637c43fd8d78eedf3cf70a063d17dcbac44ad8e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0009.jpg",
+        "size": 2990122,
+        "mtime": 1783303619000000000,
+        "label_sha256": "c2ab07a02c54c228462e3660846bd41d28948fb50c61a72bfbb35963c8eff100"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0010.jpg",
+        "size": 2505281,
+        "mtime": 1783303621000000000,
+        "label_sha256": "2362ab7dbbd47d7d600574651b3119ac423265af0c16e2123c51e082aa680278"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0011.jpg",
+        "size": 2898528,
+        "mtime": 1783303623000000000,
+        "label_sha256": "7034a4be41e85def3f33357529fd9eb7e2d3602f63d94b6c1c488ca952661bc3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0017.jpg",
+        "size": 2711711,
+        "mtime": 1783304021000000000,
+        "label_sha256": "33738373d8c3040da7d0df8e2085b2d75e42fbbdfbdd7f3a17d8a85f8a3c545d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0020.jpg",
+        "size": 2054149,
+        "mtime": 1783304577000000000,
+        "label_sha256": "be89ac04d148922ca4221e3bd5afb7f429943d247569c5242a4601b3a03beae4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0026.jpg",
+        "size": 2753004,
+        "mtime": 1783304587000000000,
+        "label_sha256": "999c47ab7be42644b6a9dbb7fcb9ec3308832f6cc6e5cdd65e4a3fc8207dae94"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0027.jpg",
+        "size": 3085386,
+        "mtime": 1783304588000000000,
+        "label_sha256": "3697a6eae63a2c0e3fe1e15bafc464a873aa366aeceed4dcd4a2b858c07007b6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0029.jpg",
+        "size": 3017688,
+        "mtime": 1783304591000000000,
+        "label_sha256": "cbd2153566a6f2c787b9572fd46f61ab55546e5274c159c2b3247debcb8e32c5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0031.jpg",
+        "size": 3717961,
+        "mtime": 1783304594000000000,
+        "label_sha256": "449f891f58704480e25ad8c3708be3a4f9190c35607890d14ae9fac705efde5c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0035.jpg",
+        "size": 3537305,
+        "mtime": 1783315017000000000,
+        "label_sha256": "26a62e439b7ec8a71ba6da35b611fa30650987393d363d70b5511a88815f6aa4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0036.jpg",
+        "size": 3451051,
+        "mtime": 1783310565000000000,
+        "label_sha256": "639cdade9fec4a609b4ea76a8a0a985ee017eefecfe12a737237d521970d91ee"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0037.jpg",
+        "size": 3656735,
+        "mtime": 1783310566000000000,
+        "label_sha256": "50130b1df2d813b5693935c671801c9fd49bba947f4ed4356695ddd9fa1c4556"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0039.jpg",
+        "size": 3075240,
+        "mtime": 1783310569000000000,
+        "label_sha256": "855d05b1e3e73def3bec57b86d640d88a18ae7fd133a2af22e5aabf03c8843ff"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0042.jpg",
+        "size": 2686583,
+        "mtime": 1783310573000000000,
+        "label_sha256": "c0d06ba6c3f3f31696231132564b94b9d0416bbceb7c4a5e3698ab5e4206f3c5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0044.jpg",
+        "size": 3175096,
+        "mtime": 1783310576000000000,
+        "label_sha256": "64e91493ed1165d35690b3735989e5c3597ec1725100d50460467c9667811d21"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0045.jpg",
+        "size": 2523797,
+        "mtime": 1783310577000000000,
+        "label_sha256": "04b3c0285a6d457453139ef6a57703327c8afba4603b02e53edf4349c1bc5423"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0046.jpg",
+        "size": 2709015,
+        "mtime": 1783310579000000000,
+        "label_sha256": "2cad78a19e61d672bb7c83946ab21cd5fe561358c31d1e4bbd632e8b1d8aa58f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0047.jpg",
+        "size": 3436607,
+        "mtime": 1783310580000000000,
+        "label_sha256": "88ccbddd969e05083042f458fcb57c73688b0318d25bddb20a16156c602e838b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0048.jpg",
+        "size": 3017804,
+        "mtime": 1783310581000000000,
+        "label_sha256": "938768488cfc674f4c635c10d17fbb8849641eff4f7bd7f7e7fbdb70bbb34a6d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0049.jpg",
+        "size": 3067389,
+        "mtime": 1783310583000000000,
+        "label_sha256": "e05b29f95c4f1cab2d810b246a19d02ba7c53d06f99645e105900c02eae417e8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0050.jpg",
+        "size": 2908914,
+        "mtime": 1783310584000000000,
+        "label_sha256": "b650bc25869a5fe5b8e10aceae8507a6af8382683bce9cf523ad5a5cd215b447"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0051.jpg",
+        "size": 3339275,
+        "mtime": 1783310586000000000,
+        "label_sha256": "5437065e9738915884d5fd6bb5f5a85d802f41ab4c887a3d95120a440813499a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0053.jpg",
+        "size": 3843457,
+        "mtime": 1783310588000000000,
+        "label_sha256": "8f246d5037603879869cd8cb885fe9fc8b6f37ed6341b3908730dff53d1df4a8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0054.jpg",
+        "size": 3200816,
+        "mtime": 1783304071000000000,
+        "label_sha256": "6da55379e32566a4d8c81252488f760705ebe24779f194ca990ccf0ccb8b982c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0056.jpg",
+        "size": 3208314,
+        "mtime": 1783304065000000000,
+        "label_sha256": "490bde7ccc49491cec6837ab92663ea2317b6e42e2d88cc030064f6385035761"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0057.jpg",
+        "size": 3132737,
+        "mtime": 1783304067000000000,
+        "label_sha256": "f8b92b61b0e17ca82e79439c42adf022529cca2e9bf288618eade62629e31495"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0058.jpg",
+        "size": 3726640,
+        "mtime": 1783310590000000000,
+        "label_sha256": "068c0f45aeda27f96b4f16bf88f33093bcf427279edce58f981811b33dbce606"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0059.jpg",
+        "size": 3818478,
+        "mtime": 1783310591000000000,
+        "label_sha256": "74947b5b0d2fa16e04d1ba72acf453fdf2c5a3277d4b23ac91811210a009ac01"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0060.jpg",
+        "size": 3329364,
+        "mtime": 1783310592000000000,
+        "label_sha256": "652af5b46baaf6338256e0d34c770fb87cdeeaf5178a9c9f6de4b56d021a3ddc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0061.jpg",
+        "size": 2998627,
+        "mtime": 1783310594000000000,
+        "label_sha256": "fb067b5ee6a605ed72d88a060c7c098bb1a31d0bc6f950ee5702ba47ef2e654d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0062.jpg",
+        "size": 2544264,
+        "mtime": 1783310595000000000,
+        "label_sha256": "a46b16ae591133569fa2a621dd98f3db2633dcb9ed0b1537260acd577b9f7430"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0063.jpg",
+        "size": 2840697,
+        "mtime": 1783303468000000000,
+        "label_sha256": "66b0596812b1a79ee3925bd153a58661b26efc359f47995710ea5bd5fc4e9481"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0065.jpg",
+        "size": 2642395,
+        "mtime": 1783303476000000000,
+        "label_sha256": "4e202073c9266705da5326ba84a019d5d38c2d194d7026d3c7cf2442d08d00e5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0066.jpg",
+        "size": 2635457,
+        "mtime": 1783303481000000000,
+        "label_sha256": "d1cbbe8030bc73865298ba4a2207035f027d5d06cf9c2074c7aa07e7bcf0f352"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0068.jpg",
+        "size": 2921677,
+        "mtime": 1783303489000000000,
+        "label_sha256": "18d930812b8c1f483456855123433de72354cb5738a0dc488458cd9bfe724962"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0069.jpg",
+        "size": 2709490,
+        "mtime": 1783303492000000000,
+        "label_sha256": "89a46fbf69ab7d97f91d536df98279f82781bcf6201070441f4440b4e51a5db6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0070.jpg",
+        "size": 2695781,
+        "mtime": 1783303494000000000,
+        "label_sha256": "65a7190469ead481973fd31848c63007850805a1c73e734e1f58611e2369c333"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0071.jpg",
+        "size": 3099761,
+        "mtime": 1783303496000000000,
+        "label_sha256": "962639128efb901d5be223a745f0e38f3488228efdb0fecc3bbfbb7dd4266049"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0072.jpg",
+        "size": 2969471,
+        "mtime": 1783303500000000000,
+        "label_sha256": "4c7e2075abe0c28afa7dc21c46a876273dd818a871576719ed529d6e6bb6f227"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0073.jpg",
+        "size": 3111921,
+        "mtime": 1783303504000000000,
+        "label_sha256": "5cfc63d6c5f5dc23ae344ee64977c520dc3c74b029c3c48e0299e21471fa7c5c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0074.jpg",
+        "size": 2816289,
+        "mtime": 1783303508000000000,
+        "label_sha256": "b68948996067c3b73600c6b80a01edeb902bc7b09ee4a9303b0cb8f805d4ba0e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0076.jpg",
+        "size": 2616871,
+        "mtime": 1783303520000000000,
+        "label_sha256": "d4cf3704f0570e310dea2800594390d80c6bab1d82fb7f31d690fe6c56d9f47c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0077.jpg",
+        "size": 2210770,
+        "mtime": 1783303522000000000,
+        "label_sha256": "837aa99a9b29e896fa395ebb168df23dc9486bdb2b69a9eed09c1c3e3f6cd3ed"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0080.jpg",
+        "size": 2677786,
+        "mtime": 1783303539000000000,
+        "label_sha256": "e5c99d2babc51f053c1e672e2b7e04f12e106c95575359b2c8c912f7272ef682"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0083.jpg",
+        "size": 2353743,
+        "mtime": 1783303591000000000,
+        "label_sha256": "cb13676e9947303ea17c2bfaee80f855b9261e7871c959a0028d4ac83cf3ad17"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0084.jpg",
+        "size": 2292834,
+        "mtime": 1783303593000000000,
+        "label_sha256": "761aaede9f5878994e9ed178aacf4c3308fb6abe03e39ce4a90fd4a9230f6308"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0085.jpg",
+        "size": 2199262,
+        "mtime": 1783303596000000000,
+        "label_sha256": "fd2d21bba14432f6e50efff902f5aa76724c58d75c7737959517fcbef5b61689"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0086.jpg",
+        "size": 2370358,
+        "mtime": 1783303600000000000,
+        "label_sha256": "81d7ab250698b1c42a29afe45a10a1c2a1d0ef87e7ceb1713a92f8575e37f816"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0087.jpg",
+        "size": 2143092,
+        "mtime": 1783303602000000000,
+        "label_sha256": "3d3ce427355f84b0df8c0113dbeba60c7f473dbf3aaee5db5a1bc8ebe0efc099"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0088.jpg",
+        "size": 2470565,
+        "mtime": 1783303665000000000,
+        "label_sha256": "0a788faf125e4b20add05ea659c7633c730bc0c6dabc77519ef76e1f40f26c32"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0089.jpg",
+        "size": 2318372,
+        "mtime": 1783303667000000000,
+        "label_sha256": "661a2e3fc68f20e49e5bdf9cb3681928a1d22ba091ed40f21221f75aa2bbc20a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0090.jpg",
+        "size": 2271948,
+        "mtime": 1783303674000000000,
+        "label_sha256": "57fe56c1529276e8f0afb47ad4f2a74c575becfc2f7223288b30e8a6797101e6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0091.jpg",
+        "size": 2724800,
+        "mtime": 1783303675000000000,
+        "label_sha256": "320c5d76de579dc6668aa4f83d3278f872ead81b7ab5ca9a7495990f4cd28c81"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0092.jpg",
+        "size": 2245194,
+        "mtime": 1783303681000000000,
+        "label_sha256": "d17f2745f3d4d60946f0a3a3b9ade0b9087f700f200329986cd08ad8ab8f5740"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0095.jpg",
+        "size": 2727868,
+        "mtime": 1783303705000000000,
+        "label_sha256": "3288f14e769d3df1f20c1400819b240ec3afed2e5e68e473f91b7f0d8bae5444"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0098.jpg",
+        "size": 2328144,
+        "mtime": 1783303732000000000,
+        "label_sha256": "7bd57392a8dc0a70bc2b8ef862eaf18f8c06fd3a2047491c7841f8c1e750c79c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0099.jpg",
+        "size": 2430890,
+        "mtime": 1783303734000000000,
+        "label_sha256": "89a021ff3de8e5299096ac64dd2a8bf6721d71b776b7d0d1ee309c00a4354522"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0101.jpg",
+        "size": 2228747,
+        "mtime": 1783303747000000000,
+        "label_sha256": "19cdc9e8becb2a6ef4c6d675161ef4dca4ebf9124f44a0c144e6e79d1b55dd79"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0103.jpg",
+        "size": 2316380,
+        "mtime": 1783303752000000000,
+        "label_sha256": "191a42f012a449a9fdb58628126da0c58787d1be02a53f8d26a0b4533b8f650d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0104.jpg",
+        "size": 2641182,
+        "mtime": 1783303758000000000,
+        "label_sha256": "8f0304b5a1fcb6aea02e12cb5f01fe82e30f1b81edf01b60253c0e9936009601"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0105.jpg",
+        "size": 2871869,
+        "mtime": 1783303760000000000,
+        "label_sha256": "b15a091d4857ff35eb4629d7f6a8bdd3392b2669a2ef4436cb98b7b0a945bb47"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0106.jpg",
+        "size": 2689469,
+        "mtime": 1783303763000000000,
+        "label_sha256": "9951bc7a9925fae2e442befd2fdee50f3b5b883d008516b7d05266d89f3f5853"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0107.jpg",
+        "size": 2623554,
+        "mtime": 1783303769000000000,
+        "label_sha256": "8eb4a5712a019dfd68cf9fcbc5205340939f0c7c01bd512b275638262c8daba2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0109.jpg",
+        "size": 2244068,
+        "mtime": 1783303777000000000,
+        "label_sha256": "6f61b7242a1d2360aa0d1b333e4176dd7f8fe76cb8905d1f1161fb7ad9194ddd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0111.jpg",
+        "size": 2881005,
+        "mtime": 1783303791000000000,
+        "label_sha256": "274f1dc8907505138756444dc0dcb1e1ce0a92d4b4aa87938ef16fd6fa65f014"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0112.jpg",
+        "size": 2411579,
+        "mtime": 1783303798000000000,
+        "label_sha256": "5905906f557e9e09f4e514f0f2229ad0a8cf04d2c424c986fe84a9f74996a9f6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0113.jpg",
+        "size": 2478666,
+        "mtime": 1783303801000000000,
+        "label_sha256": "0dea48cd4464563915b5e3d35b50ef26abb4826ecfb213f572124946edd5b288"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0115.jpg",
+        "size": 2255751,
+        "mtime": 1783303807000000000,
+        "label_sha256": "a60d7596d6ee798553d8b52bfe9daf5222d420f4e629fefc6f08240bdd88f1fc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0118.jpg",
+        "size": 2933402,
+        "mtime": 1783303837000000000,
+        "label_sha256": "d49a8525b3bc8f4a3f7449cff5c38fbab26bf50aee0ebfa5b413cfaa24de5e2b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0119.jpg",
+        "size": 2459786,
+        "mtime": 1783303847000000000,
+        "label_sha256": "957bdfdf4f6142ad54e0df2e0bf16f3d5e86f6678f8b2558d2d6095d61671cbf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0122.jpg",
+        "size": 2539183,
+        "mtime": 1783303872000000000,
+        "label_sha256": "10a29cecc48068d879db5de373fc44dd00484fe97238ede73eb0bb76ef11ffac"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0123.jpg",
+        "size": 2606614,
+        "mtime": 1783303899000000000,
+        "label_sha256": "6ef2df7f01fe61e5b1c113ed25f7b2063a31d2f914db79e91c7d4e81d1ca36fc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0124.jpg",
+        "size": 2452013,
+        "mtime": 1783303904000000000,
+        "label_sha256": "9af79d2e28135b35a00c8467d5a4a6a37ac826f0a52cc091498f918add0b6740"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0126.jpg",
+        "size": 2493622,
+        "mtime": 1783303938000000000,
+        "label_sha256": "7aac2d976f9cb168e9fe23436d280ad6b9e78bd773aaf7c570c3cafa86cc78a2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0130.jpg",
+        "size": 3159529,
+        "mtime": 1783303950000000000,
+        "label_sha256": "7a6a5b7563900d5192fe9ef46a916635385203b5621180a30a7c2b103077ec4a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0132.jpg",
+        "size": 2376075,
+        "mtime": 1783303958000000000,
+        "label_sha256": "fb8924dc65532abd6cd7c55159cec8306c6873c097ee6b30351581d727900132"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0133.jpg",
+        "size": 2381368,
+        "mtime": 1783310597000000000,
+        "label_sha256": "7cb447eb3d2fb3f48cebc7fdb74fbab5b85b8cb7f9ae72c5d791eb861fad9b1f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0135.jpg",
+        "size": 2807225,
+        "mtime": 1783310600000000000,
+        "label_sha256": "824bd227393abbb0a47b76b40aab3132d4ade6da9a9a7981a4c22566504c6f32"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0136.jpg",
+        "size": 2532718,
+        "mtime": 1783310602000000000,
+        "label_sha256": "6a564a59cdffac0673dabc0df66b5fe1b4d1b29a51d802261d35046585e3df15"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0137.jpg",
+        "size": 2535618,
+        "mtime": 1783310603000000000,
+        "label_sha256": "0faf92151fb32aeb14254e201743ce3f343438785cb5cad30f6bf664b6a214c2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0138.jpg",
+        "size": 2583093,
+        "mtime": 1783310605000000000,
+        "label_sha256": "6028426d665d308ee8541f1962e904ad39e75147670c314de4d0941129b4a2b9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0139.jpg",
+        "size": 3085523,
+        "mtime": 1783310822000000000,
+        "label_sha256": "93d65a967621e554b721dc42455516262462ded8fba3f45fc6ef9ce8a1bd3c7b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0140.jpg",
+        "size": 1835376,
+        "mtime": 1783310824000000000,
+        "label_sha256": "031a114760bde0c5233c537c85ef498a379c83f4f32960bee537ccf8a900297b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0141.jpg",
+        "size": 3384905,
+        "mtime": 1783310825000000000,
+        "label_sha256": "fefaaa48493a1e21367a09e288a3b33882b4812a7fb92f35324bfdd19740cd14"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0143.jpg",
+        "size": 3156926,
+        "mtime": 1783310828000000000,
+        "label_sha256": "b9d3523404b79ea7a73c46625791f56acf090709a317f6b2b30f0cd98f4e9693"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0144.jpg",
+        "size": 3267490,
+        "mtime": 1783310830000000000,
+        "label_sha256": "e99d08f82b29804f16e9f87d3ac3968056ad7909ecba44e0ad7571284de33110"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0145.jpg",
+        "size": 2841063,
+        "mtime": 1783310831000000000,
+        "label_sha256": "a3131eb068646832250c047f80efcd175057dc3d77cf224a9b92c7abdc67b839"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0147.jpg",
+        "size": 2786006,
+        "mtime": 1783310834000000000,
+        "label_sha256": "c9cac8e4896e41ae4358283e04e58e903a7818ba4acbc9e4066d5d18adc96091"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0148.jpg",
+        "size": 2484352,
+        "mtime": 1783310835000000000,
+        "label_sha256": "656223746506158bc850bbf24750262f45e46fdd8bd1f099b1fd5f75811b35fb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0149.jpg",
+        "size": 3484871,
+        "mtime": 1783310837000000000,
+        "label_sha256": "dea3534a1b2f5cca0442661495c6273ee9adb8ba458cb14cc46787c900103c6a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0150.jpg",
+        "size": 3227223,
+        "mtime": 1783310838000000000,
+        "label_sha256": "4e1983738fcbad67fa6e0aae4723a17722d7479cd02df47d0f1ab143c1727a10"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0152.jpg",
+        "size": 3757316,
+        "mtime": 1783310841000000000,
+        "label_sha256": "4b299a152def86f6fe1df1a6765e0872cf43d033739aa4400024a2e99f79de1a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0153.jpg",
+        "size": 2076463,
+        "mtime": 1783310842000000000,
+        "label_sha256": "a4c2f9907d985f52921127e3eb1cdde7c5138f0727278020fa1fc2efc1f58250"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0155.jpg",
+        "size": 2558721,
+        "mtime": 1783310845000000000,
+        "label_sha256": "4aaea5d7912927d33a2b935aad712b1358716d9e451b39489edc7d07126c0b1f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0156.jpg",
+        "size": 3563754,
+        "mtime": 1783310847000000000,
+        "label_sha256": "7fcba393fd7867d86c3e478689c1d3054e239b35eeba5521a726b7ccbfc9aead"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0157.jpg",
+        "size": 2959349,
+        "mtime": 1783310848000000000,
+        "label_sha256": "8b302897c59e75452b0798373cd2c1a3bca30b21686ea4968e4da625db5fb950"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0159.jpg",
+        "size": 1996134,
+        "mtime": 1783310851000000000,
+        "label_sha256": "3ac7802e7aeef80a9641d0e0ac827f7ca5734654e08e456929ef242220c6fa86"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0160.jpg",
+        "size": 2807628,
+        "mtime": 1783310853000000000,
+        "label_sha256": "3003bc75981fd3cc58ed2ffd36fa2e1f687fc9ae1622ff7c41d390cd5df4800b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0161.jpg",
+        "size": 2906931,
+        "mtime": 1783310855000000000,
+        "label_sha256": "9676c12ba867ba8d1689c5dced51c471167a497188a4adda1be02ad0fa1828be"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0162.jpg",
+        "size": 2572838,
+        "mtime": 1783310856000000000,
+        "label_sha256": "a5187ed9d35df05142ec6a899e8d27f0956d26f619104745ebd6a5cf6e1c55e2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0164.jpg",
+        "size": 3012860,
+        "mtime": 1783310859000000000,
+        "label_sha256": "852ca56061689efca409bcfb7b1bbecd32a5c6bb8a9e0c9cd471b9ec3287186f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0165.jpg",
+        "size": 2408299,
+        "mtime": 1783310861000000000,
+        "label_sha256": "ea18bdb553dca26fb6279f36d34a6d052a4a1a891aa1a9365b1b778b36a152fe"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0166.jpg",
+        "size": 4257733,
+        "mtime": 1783310862000000000,
+        "label_sha256": "a5467f6c043442f2a2a6870d150db89142dcdc7dda38ba480c6aee4f212dba1f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0170.jpg",
+        "size": 3186448,
+        "mtime": 1783310977000000000,
+        "label_sha256": "aa354a06ddf88346ee471525d3a0e3645973b91098255b6847ded9f4f914b46b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0172.jpg",
+        "size": 3388245,
+        "mtime": 1783310980000000000,
+        "label_sha256": "1df5dd5bea026454682789bf82465263d99f00ab5f04eec5dbad1386337cd755"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0174.jpg",
+        "size": 2626972,
+        "mtime": 1783310983000000000,
+        "label_sha256": "e76b8c73e16c08d09f2f106b90967c08ba12f931b528d11e39e76f1a1ed92c44"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0175.jpg",
+        "size": 2906399,
+        "mtime": 1783310984000000000,
+        "label_sha256": "f7ef279817ccbb8119160410ce425a8f027f6b16a57c2346b1276cea169384c0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0179.jpg",
+        "size": 3641263,
+        "mtime": 1783310990000000000,
+        "label_sha256": "b5b15d215109682fbb5808bd2aaf7fcef0ddcf8633bf35a87d38724b821befdc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0180.jpg",
+        "size": 3054667,
+        "mtime": 1783310991000000000,
+        "label_sha256": "8163321a2fea9426b95213b687613bb43004434ac471d8df1e683aeb2056dc56"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0182.jpg",
+        "size": 2656837,
+        "mtime": 1783310994000000000,
+        "label_sha256": "965595c4ec4d6368e0721acf4e26f58dd8a284f879d45274e209354fbacbc074"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0183.jpg",
+        "size": 2476312,
+        "mtime": 1783311291000000000,
+        "label_sha256": "74fc0343f4cdd7c9f16ca5b22a9d336f6a1d80090b782738d5ae93dd641fda25"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0185.jpg",
+        "size": 3112617,
+        "mtime": 1783311294000000000,
+        "label_sha256": "c7d8d02fb04fa668b7736b9f97412948b0fabf4269ba4d37a148a1520abe392f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0186.jpg",
+        "size": 3043139,
+        "mtime": 1783311295000000000,
+        "label_sha256": "5be4a0153b04f36ad1fe13a21b9ded962c797f78a463325130844977f03c1d8d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0188.jpg",
+        "size": 2708113,
+        "mtime": 1783311299000000000,
+        "label_sha256": "cdd525a12490e8a7a5e179b2a448a377e7133b295229f1b0e3e592d417b772d2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0189.jpg",
+        "size": 2277610,
+        "mtime": 1783311300000000000,
+        "label_sha256": "b7d4baf47a9c97c8d6356b9f6882a7b1216c7eb9e0cc44e3c2141d61c4e641ff"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0190.jpg",
+        "size": 2532497,
+        "mtime": 1783311301000000000,
+        "label_sha256": "b457c3081f9ebfc7917ce1ce83e2a02e0f2f837a40e9f89274b6cb36086d0441"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0193.jpg",
+        "size": 1978371,
+        "mtime": 1783311306000000000,
+        "label_sha256": "6d12ef52d60cdf58134ea8e7f0d8cceda969329c3218185be7c92f513c84aaac"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0194.jpg",
+        "size": 4212505,
+        "mtime": 1783311307000000000,
+        "label_sha256": "fbf10c302de7323636cec77b4935ccce86671101265acbbc9288f607b4328048"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0195.jpg",
+        "size": 2607320,
+        "mtime": 1783311308000000000,
+        "label_sha256": "0b9171bbe04176fe6101d0d5f697381c2a736b5cc3701c41e0a5bdcd7cedbb4c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0198.jpg",
+        "size": 3289633,
+        "mtime": 1783311313000000000,
+        "label_sha256": "d100be56f52926a2c6452ca3fc449cd50d2aa2ce10e6d5c3b0d434adf2580f69"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0199.jpg",
+        "size": 3480766,
+        "mtime": 1783311314000000000,
+        "label_sha256": "e3227099b072f0195ca38835f518f285424a330794b969d6a5b610609d1ece5c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0201.jpg",
+        "size": 2928638,
+        "mtime": 1783311317000000000,
+        "label_sha256": "5106d142a618ec18dfc10614f089cc59d2f81db31326a997474c5529f67663b3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0202.jpg",
+        "size": 1942905,
+        "mtime": 1783311318000000000,
+        "label_sha256": "287932e856470b3edc49eda106b86b8b1a3910a19caddbb9737ed9b88712d70e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0203.jpg",
+        "size": 2291612,
+        "mtime": 1783311320000000000,
+        "label_sha256": "0885b6861427d360d715339fc67cf718e320226d2a365ea008cbce2818606a85"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0204.jpg",
+        "size": 2304637,
+        "mtime": 1783311321000000000,
+        "label_sha256": "e422f7aa502bf294625c9d730c8b2e009d22d5389d036ed2a62e46db264db82e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0205.jpg",
+        "size": 2105040,
+        "mtime": 1783311323000000000,
+        "label_sha256": "44c59570324a0cba50aa97028aa3927c750aabdeeacdb93f87c7a5e98b89abfa"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0207.jpg",
+        "size": 2327955,
+        "mtime": 1783311326000000000,
+        "label_sha256": "0f8d25b1afa9e908103332a61978d392a04abbeff1574e9599b603c3f99be2c1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0208.jpg",
+        "size": 3266084,
+        "mtime": 1783311327000000000,
+        "label_sha256": "d74d4852ddee08daabe888e14b9965eead089975aa2205b48e52943e72ebefdb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0209.jpg",
+        "size": 2440511,
+        "mtime": 1783311328000000000,
+        "label_sha256": "4faab7952a69e865f5c036e599bbb2070d31da8e0f6871b31d6f46ba17854444"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0210.jpg",
+        "size": 3144699,
+        "mtime": 1783311330000000000,
+        "label_sha256": "14d20af7ee952fa3e32238a4fbdb434abdafade8c12773ed021fb644aa38f5eb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0211.jpg",
+        "size": 2642604,
+        "mtime": 1783311331000000000,
+        "label_sha256": "2bf80bf27fa6a8943be377595a2b455a8f9a1784f709d057b6412a3e028c67e9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0213.jpg",
+        "size": 2960045,
+        "mtime": 1783311334000000000,
+        "label_sha256": "afb73b59622e8cf8076a204f89e23a4d243b6f26363ff3b7f252bef29acdc0a5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0214.jpg",
+        "size": 1959348,
+        "mtime": 1783311335000000000,
+        "label_sha256": "89f5b5534be86fadb9e814e6059e13cb3e14a18064bfb7ad453de5003b9d5f1a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0215.jpg",
+        "size": 2177073,
+        "mtime": 1783311452000000000,
+        "label_sha256": "ed1e746acc8d2948fa27d450fd5f78e2e0175b4c553d171a0b317dfb6e29dda4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0217.jpg",
+        "size": 2170707,
+        "mtime": 1783311455000000000,
+        "label_sha256": "2c3ed3d1533e7b9b2d4fbfb36d39cdc15eb601152d22f3e15a096456a4eb4c88"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0218.jpg",
+        "size": 3381323,
+        "mtime": 1783311457000000000,
+        "label_sha256": "d95bb05e43608ee0c22e19edbb01c6d14a4c4ee11a5d104cbf345b89a57a1e04"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0219.jpg",
+        "size": 3972081,
+        "mtime": 1783311458000000000,
+        "label_sha256": "5564e7162eb0f6289c74114ce7a82312d21c8545e6eb4791fc64c4afad5ec479"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0222.jpg",
+        "size": 2000932,
+        "mtime": 1783311462000000000,
+        "label_sha256": "e5511785cc1a99a2dc4449942533b696735b2851db613363a68b6e915511035c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0223.jpg",
+        "size": 2335590,
+        "mtime": 1783311463000000000,
+        "label_sha256": "8d4801f8ca1d7cbb041e295637db70afecdb4ede9773c44e33a5065327b5e902"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0225.jpg",
+        "size": 2496134,
+        "mtime": 1783311466000000000,
+        "label_sha256": "15502aa9f2a3853cb30a8a7adb201ce3f1eb64ecbb980fc24a3ff52d17d5fb4b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0226.jpg",
+        "size": 3032132,
+        "mtime": 1783311468000000000,
+        "label_sha256": "8e7bc791a3a5aaa10ddb0dc299b2c7097f51fcd9d1ae364297912e76f871d05b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0227.jpg",
+        "size": 3349018,
+        "mtime": 1783311469000000000,
+        "label_sha256": "38a1b4cd774657352fd8b808f7d4b6de4a1f17cef7e81c11b855a3668b6e95fb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0228.jpg",
+        "size": 3605043,
+        "mtime": 1783311470000000000,
+        "label_sha256": "a2e620e54aa54f0147df47e1f83cfb005ab71c813b1910d5629cbdd3c82b1b20"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0230.jpg",
+        "size": 3383532,
+        "mtime": 1783311473000000000,
+        "label_sha256": "9a9c25294d86efcea9fec644a16df4d05133dfa983ea424a2f71f4164e73d77f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0231.jpg",
+        "size": 2980525,
+        "mtime": 1783311475000000000,
+        "label_sha256": "664fec777367cc42c579ae1d10181ab9cb1281ac1a3603cbfb60cef1519729d5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0232.jpg",
+        "size": 3202701,
+        "mtime": 1783311476000000000,
+        "label_sha256": "8a91be5d7e0da10f139527033330f60cd130e7c279a1050398f7ead35f36f569"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0233.jpg",
+        "size": 3530978,
+        "mtime": 1783311477000000000,
+        "label_sha256": "4405d658afdde3cf7532c839096b807e107d51d17c67ea9b7f45d4f0e67c8536"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0234.jpg",
+        "size": 3364819,
+        "mtime": 1783311479000000000,
+        "label_sha256": "55046af8b761b5e40de0feaa4291ef729717ea79d9437597a2cfb25708bdd79a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0235.jpg",
+        "size": 3009420,
+        "mtime": 1783311480000000000,
+        "label_sha256": "7b4b9d45eb8c922616abcf49402345b82984be38fc615ae102ecdfcc366e4853"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0237.jpg",
+        "size": 2467673,
+        "mtime": 1783311483000000000,
+        "label_sha256": "8a4e3e3e0d80f52cea8801b88fd5ed407b0fcb48585866effa78523a52fae529"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0238.jpg",
+        "size": 2768237,
+        "mtime": 1783311485000000000,
+        "label_sha256": "b2952f2a254a6a68bbf6e8eb43f046ac28b19e698dedd8c29ff5cb4d30e1aabd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0240.jpg",
+        "size": 2141373,
+        "mtime": 1783311487000000000,
+        "label_sha256": "5adfdc653c6d4519571ea52b3845e790504b6d31cf9279d4da4edd47393f84c0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0241.jpg",
+        "size": 3437659,
+        "mtime": 1783311489000000000,
+        "label_sha256": "5c50d1d0a1468906e6d78e84e3d664f8489d79692a320b1b01eb60fccf4285a5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0244.jpg",
+        "size": 2637343,
+        "mtime": 1783311594000000000,
+        "label_sha256": "0848e1fe8b47bf01c27e33228d4bbb0a3f6b4ca478a207e79de2892bd87748bd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0245.jpg",
+        "size": 2523220,
+        "mtime": 1783311595000000000,
+        "label_sha256": "f69dc81708df6fca08f40c7b8785c281fc2ac64ae9dcc6a3b2690c1cdcccc342"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0246.jpg",
+        "size": 2015966,
+        "mtime": 1783311596000000000,
+        "label_sha256": "6509b1ad2e1727a5dfed67f24be60429088d5fd8dba9b258205266af51a07437"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0247.jpg",
+        "size": 2124073,
+        "mtime": 1783311598000000000,
+        "label_sha256": "b1365be2f2e5ca7a9bbe17f721b3dbc39729e5936b5a9389a27d021ac5292f22"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0248.jpg",
+        "size": 2504414,
+        "mtime": 1783311599000000000,
+        "label_sha256": "412922ab5cd1315e9111ec0f5f796ea772687bbc05ae918d19310b4b0bcbddf5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0250.jpg",
+        "size": 3206165,
+        "mtime": 1783311602000000000,
+        "label_sha256": "f7ebe4fc4098bf02b791dd0417664ed661cb45a64c9183793169cf0822580fdf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0251.jpg",
+        "size": 2218427,
+        "mtime": 1783311604000000000,
+        "label_sha256": "72b223a805ec50a7f8fd473ff080c7112e8f4f5fb05ce6b8f16feb67f0f7e0ce"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0253.jpg",
+        "size": 4638779,
+        "mtime": 1783311606000000000,
+        "label_sha256": "1d1768d8b81ebb5cb861513cce5b2261de376086df469e817fd71d3393a2e8b0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0254.jpg",
+        "size": 2505431,
+        "mtime": 1783311608000000000,
+        "label_sha256": "c393a33f84383c30f29b85f49a6d7db4311819f14dc24e08c3e6e2c77c3579a3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0255.jpg",
+        "size": 3586046,
+        "mtime": 1783311609000000000,
+        "label_sha256": "f5509ccab3b018038c8b858df37bfc3de1f1e87823717903c03b3890b1b07084"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0256.jpg",
+        "size": 3070086,
+        "mtime": 1783311611000000000,
+        "label_sha256": "4ef8905e453c4ccf67990da5fc83152720c63ae272b7dd34ab15d4a3aa5fe2e0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0258.jpg",
+        "size": 2961864,
+        "mtime": 1783311614000000000,
+        "label_sha256": "de30295ae39a091e3435cfec723bc52677a749788fdae3d1198cb8098678f6e9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0259.jpg",
+        "size": 2394991,
+        "mtime": 1783311615000000000,
+        "label_sha256": "8aacfe9ce1fd4d9b3471ec1300706c03aa084e4dd4c908fff3d6ae546d54547e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0260.jpg",
+        "size": 2251274,
+        "mtime": 1783311617000000000,
+        "label_sha256": "829c42b6cc8a808d54600d2a805b1f6cfbb59cbd2696cc7cc0616eb1842c1bbd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0261.jpg",
+        "size": 2405970,
+        "mtime": 1783311618000000000,
+        "label_sha256": "9a637edb159f756590ec30ba78e2d47cc68e5647a221656444c7d898fd3d342c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0262.jpg",
+        "size": 3116889,
+        "mtime": 1783311619000000000,
+        "label_sha256": "1ad966ec6475ac66bc2440b1556123c0e0fd3958177566caafbd83e02644fd2e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0263.jpg",
+        "size": 3355288,
+        "mtime": 1783311621000000000,
+        "label_sha256": "12ea0ed2a5455ae3bf0e33bcdb0ce4d9bd19981347abfdf43631a3b7338b020a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0265.jpg",
+        "size": 3043545,
+        "mtime": 1783311624000000000,
+        "label_sha256": "2170ddd1150e5e5e5d2a52b40a8466851f7058ef015837c0fd0bf2acedccd6f6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0266.jpg",
+        "size": 2808718,
+        "mtime": 1783311626000000000,
+        "label_sha256": "3d743242496015f0062b2136c14dcf2fbe997c08f2bad841aa9c442ffbedb5ae"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0268.jpg",
+        "size": 3030324,
+        "mtime": 1783311630000000000,
+        "label_sha256": "1784c663aad52ff82535ab94b143ee873473359094e7560f0a41101bbbd4aeaf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0269.jpg",
+        "size": 2798516,
+        "mtime": 1783311632000000000,
+        "label_sha256": "d22117cbdaf3618665987a5d087399e68a00bf7e5635116b0b1a985c128899eb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0270.jpg",
+        "size": 3172336,
+        "mtime": 1783311633000000000,
+        "label_sha256": "32c6202b629fb510e7f7ef816a82c5d9720b97cea82d4fa0a808300e6d555952"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0272.jpg",
+        "size": 2891263,
+        "mtime": 1783312964000000000,
+        "label_sha256": "3dfb76754b17033bd41a5e963569cbd938dddcc84b96c35ccb045b28854812c7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0273.jpg",
+        "size": 3193367,
+        "mtime": 1783312965000000000,
+        "label_sha256": "e57d1b40c196a43c7821b42de68af1a6dfe64c37f73209044b42466cb08ab196"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0274.jpg",
+        "size": 3059301,
+        "mtime": 1783312967000000000,
+        "label_sha256": "76fe3585eff86751fe84b10affdae884b248b90db2727b2495a9f1e216755d0e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0275.jpg",
+        "size": 3424287,
+        "mtime": 1783312968000000000,
+        "label_sha256": "f2ec6c1f3b4045822a0c5d09b2fd3eedc568976a55f38a293f66ea819e03fe2b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0276.jpg",
+        "size": 3658802,
+        "mtime": 1783312969000000000,
+        "label_sha256": "69cecc7d04628ad3107f67bc0478cb5dda3b4e6086e512ce7864039eb031931b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0281.jpg",
+        "size": 2438678,
+        "mtime": 1783312978000000000,
+        "label_sha256": "3e6ce50f6e7c26ff0624e0b9adf9dfdd51bf4a0cec90574d63216681e46690a8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0283.jpg",
+        "size": 3579574,
+        "mtime": 1783312981000000000,
+        "label_sha256": "9fd7d56dfff0533fc4f16940440b9ff55a1a869013036b76790a153f8786a57d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0284.jpg",
+        "size": 3280380,
+        "mtime": 1783312983000000000,
+        "label_sha256": "c2720c79bf84bcb075e2737247551ad36d0f07e9bd16b66fd6406ab6ca697b5e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0285.jpg",
+        "size": 2747979,
+        "mtime": 1783312984000000000,
+        "label_sha256": "a234d7c99af15427487ceabcaf70dd36114f3bb2c4b3731274af3ace696f28c3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0287.jpg",
+        "size": 3066290,
+        "mtime": 1783312987000000000,
+        "label_sha256": "8970723c50b9c72cc29eb24a539b7e527ce742ae3b19e37390fcd0e09991bb62"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0288.jpg",
+        "size": 2995494,
+        "mtime": 1783313129000000000,
+        "label_sha256": "d6acbe1e5b6fb3610c6c4391e31cc325b72c58f09c666f9acd8567cb1a8eeef9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0289.jpg",
+        "size": 2893019,
+        "mtime": 1783313130000000000,
+        "label_sha256": "007d0283d29f628f1ea461c39650000cb23de0f97a29ad2bf20865f21ebdc191"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0291.jpg",
+        "size": 2406161,
+        "mtime": 1783313133000000000,
+        "label_sha256": "19338ef382f8d1298d9da783653c158c675b52a12f464e6fae3209b762e56e41"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0292.jpg",
+        "size": 1503161,
+        "mtime": 1783313134000000000,
+        "label_sha256": "b357f35caac070dc436220348779cdb52ff06e249be988b930ac333fac11d92f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0294.jpg",
+        "size": 2799836,
+        "mtime": 1783313137000000000,
+        "label_sha256": "c01d49e3f7324410c948ff730a5f17604034ed6acd128eda10ac95a2f9a6b0c0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0297.jpg",
+        "size": 2783786,
+        "mtime": 1783313141000000000,
+        "label_sha256": "d1912500b799d627319ec3eeae5e5e4561cb92d91cc9ecd39c8f1a57eb2e7aa4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0298.jpg",
+        "size": 1450505,
+        "mtime": 1783313143000000000,
+        "label_sha256": "8f82e4c55dbb2fbd2509828c0d9f53a9e21bbfd5cc84b0e045015b0059c16239"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0300.jpg",
+        "size": 2900964,
+        "mtime": 1783313146000000000,
+        "label_sha256": "d81afb1879d2afb710d713f31e2ad51a78f544ab6d29170cde70cc6b9075c511"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0302.jpg",
+        "size": 3212930,
+        "mtime": 1783313148000000000,
+        "label_sha256": "7b5835e00cf796fcc80d2ccf2d2196c8518cf0188325ce91d1ccb92f36fa476d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0306.jpg",
+        "size": 3511473,
+        "mtime": 1783313154000000000,
+        "label_sha256": "d5b695c0c4b9e615535954d534bc6590ff856d673d0408f687e7797037baff4d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0307.jpg",
+        "size": 3173058,
+        "mtime": 1783313156000000000,
+        "label_sha256": "4260fa205c614b9b5a3bdcd82aea2d21f9b83964ad3b56ca56ee3a14351eeab6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0308.jpg",
+        "size": 3099466,
+        "mtime": 1783313157000000000,
+        "label_sha256": "c63e2067b57af5b0c7318d0d0551f21c9c0f9fb0e49d2bca49ffa8a598e05678"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0310.jpg",
+        "size": 1710278,
+        "mtime": 1783313160000000000,
+        "label_sha256": "1e61c4593069b5bb7906a5be21d5609b4226c42f6cb5eeb7aeff2946afe2adc0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0311.jpg",
+        "size": 1641843,
+        "mtime": 1783313161000000000,
+        "label_sha256": "385f3ac942328659c18db2cfa4284b7cc436aa163543095f622e41910e2b17e0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0312.jpg",
+        "size": 2690753,
+        "mtime": 1783313163000000000,
+        "label_sha256": "e5b914daef481d418d4e27776c65cd09d6c747ae8ab123a8c01c799578510334"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0313.jpg",
+        "size": 2689795,
+        "mtime": 1783313164000000000,
+        "label_sha256": "32477dc1a0df59a6e8f4278e9025e8f8a2ef624b4e503095a2022a1cc29c2492"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0314.jpg",
+        "size": 2630350,
+        "mtime": 1783313166000000000,
+        "label_sha256": "799c18cbe9ecaedd2dfa5cd8fdd797eaca2e838d850dbc9b1e45f205e985a7cf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0317.jpg",
+        "size": 3393250,
+        "mtime": 1783313290000000000,
+        "label_sha256": "34504f452d75c76d776364f82061a205d84d5201b5e358f96723d6dfeab7906a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0318.jpg",
+        "size": 3516651,
+        "mtime": 1783313292000000000,
+        "label_sha256": "ba33b935a060bdcfba1789157e838950dc1014c5a8016e7f08b1e7cf1accf8a8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0319.jpg",
+        "size": 4792072,
+        "mtime": 1783313293000000000,
+        "label_sha256": "49c5ed62d3f3667ee4d633ca0055cf6b06098e427b5010057580b377fe8e8f42"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0320.jpg",
+        "size": 4527916,
+        "mtime": 1783313295000000000,
+        "label_sha256": "88313a57e5d87d0698bceb0eaa4f6be32a41ce3e88ad2943bb9323c6ad5cd621"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0321.jpg",
+        "size": 3361399,
+        "mtime": 1783313296000000000,
+        "label_sha256": "fb10a848be20e767c470c97bfce7a4f524a87de44bf688a5eb8d4947d3e92bc7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0322.jpg",
+        "size": 2960693,
+        "mtime": 1783313297000000000,
+        "label_sha256": "e355208930da84a9ddd72b6f7226d77bb608b7f51dfea9732ffc092a7cead63f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0325.jpg",
+        "size": 2148996,
+        "mtime": 1783313302000000000,
+        "label_sha256": "a616500f8411cd3b9540f0deb12e819fbc0c1a17e258a14123c0bfb8e23c4b39"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0326.jpg",
+        "size": 1845671,
+        "mtime": 1783313303000000000,
+        "label_sha256": "92d8c3563a85c007446e0b8908936bb327e0563c72ef4136c7191df0c77bdfc8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0327.jpg",
+        "size": 1556634,
+        "mtime": 1783313305000000000,
+        "label_sha256": "6e2f82c631e30e9f74e095ca886f2f7160d9616710756da5026df91968204669"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0328.jpg",
+        "size": 2477586,
+        "mtime": 1783313306000000000,
+        "label_sha256": "35e2cdc6d6d70468d6b60b748e07ae4d96f52c3dbdb3515487c3dba84601f8df"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0329.jpg",
+        "size": 2611234,
+        "mtime": 1783313308000000000,
+        "label_sha256": "d40f26733ee31a51ec63b2347cceab40bc05d5ca143eb8265aee10efa82c62d1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0332.jpg",
+        "size": 1894522,
+        "mtime": 1783313312000000000,
+        "label_sha256": "1470129cbfd778b42897204b25092ee564e02bae7bd2bead3a1264fa4b8de7ab"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0333.jpg",
+        "size": 2531868,
+        "mtime": 1783313314000000000,
+        "label_sha256": "8c2fe74e95215f1bec5d196c84baa3a70c67d05a0ef1d99304d06d49477ad5b5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0334.jpg",
+        "size": 4258187,
+        "mtime": 1783313315000000000,
+        "label_sha256": "6689b8594a02cf45ad25f74da25bc5565fd12b454f548fc2c2da58e9581a59ad"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0336.jpg",
+        "size": 3452011,
+        "mtime": 1783313318000000000,
+        "label_sha256": "39e0a5b08dbb91f27add3ac96bc3463eaec6467ea0bb8c2b6dbba44dbec90e42"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0339.jpg",
+        "size": 2035398,
+        "mtime": 1783313324000000000,
+        "label_sha256": "22e1ae22f051b539e6bcc9f72b31c1ee1b68d577351b66b4192d28aaf3db32fe"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0341.jpg",
+        "size": 2998071,
+        "mtime": 1783313452000000000,
+        "label_sha256": "02121d21a15d6620a3c0104de563d2da2be387a0d78fcb5012b713bc7eccbb6b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0342.jpg",
+        "size": 2708553,
+        "mtime": 1783313454000000000,
+        "label_sha256": "8686715c37f94cbea5fd59656842ce96cc541fb46385e352a70c12cecaf9cf5d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0343.jpg",
+        "size": 2649220,
+        "mtime": 1783313455000000000,
+        "label_sha256": "c032f6169c9ae22633adabed566854aa47d95ca6d1eb5ae3bf5dccb428a34294"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0344.jpg",
+        "size": 2739356,
+        "mtime": 1783313457000000000,
+        "label_sha256": "f2ea33460e37c5daaf485864188517ea64f78a33abacc8e9c7221c3eb5219d30"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0345.jpg",
+        "size": 2692346,
+        "mtime": 1783313458000000000,
+        "label_sha256": "31fa7f39ef080a50f54158ee70a94a8c19613d5e9ff9aad2665d6e4090e2ced1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0346.jpg",
+        "size": 2138778,
+        "mtime": 1783313460000000000,
+        "label_sha256": "e81931f634aff688d3c8d3707d23352b52f99758e83c9e724c231c5e3303094a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0347.jpg",
+        "size": 2334073,
+        "mtime": 1783313461000000000,
+        "label_sha256": "7e73a56fd9847f00224413fa43f2035958a209cc47d65d9ab121680044de7ce5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0348.jpg",
+        "size": 3614968,
+        "mtime": 1783313462000000000,
+        "label_sha256": "9e449dd7f0fcd9a10de30b9835150090f846072bcd04ae36e1371792d4a468eb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0349.jpg",
+        "size": 2317532,
+        "mtime": 1783313464000000000,
+        "label_sha256": "a67935ad4bdb7dc7f1a5556836e4f6c1cbe229324020dd834b45865a9a8a7a3d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0352.jpg",
+        "size": 2470083,
+        "mtime": 1783313468000000000,
+        "label_sha256": "6db344395a0744fc02d2b22686d64145943d64b20735c12fda9f011f384797b5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0353.jpg",
+        "size": 1833294,
+        "mtime": 1783313469000000000,
+        "label_sha256": "9a4cb4ac2f896b674225141e62a25fff279eae3a42d82ceab3150cceae3db4ce"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0354.jpg",
+        "size": 2686286,
+        "mtime": 1783313471000000000,
+        "label_sha256": "3775fc0e6dd877178ca7ceb8801ba47c68ed977303e9ad8abef2486e43a248af"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0356.jpg",
+        "size": 2523193,
+        "mtime": 1783313474000000000,
+        "label_sha256": "0d9786a57072983e1170d199965a1bdea1d63c318822cd090c868edcff849229"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0358.jpg",
+        "size": 2364128,
+        "mtime": 1783313476000000000,
+        "label_sha256": "45ac65c1274b955de1bf6a117d1894dd00597836aee38d95d03b7b3252fdb061"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0359.jpg",
+        "size": 1669242,
+        "mtime": 1783313478000000000,
+        "label_sha256": "99642d0a5fe83f533df791b1fcc0e27b42f6af5c9db0ec9e1af2afe63746ef08"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0361.jpg",
+        "size": 3199085,
+        "mtime": 1783313481000000000,
+        "label_sha256": "3866c24e6fd23914c4d697853271132b14d285fab04ba5db9310b9d2cf9f4a23"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0363.jpg",
+        "size": 2682263,
+        "mtime": 1783313483000000000,
+        "label_sha256": "f79a393c1e26fc0bf0dd3d3407f60e2845810197af5bf7a92da333be58810e90"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0364.jpg",
+        "size": 2596788,
+        "mtime": 1783313485000000000,
+        "label_sha256": "ee97e5d757c31168015c18f0b2bfbf770a7e3d93a691b6d9d6538943a8c4dec6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0365.jpg",
+        "size": 3421528,
+        "mtime": 1783313486000000000,
+        "label_sha256": "3b04831aefcb465615b40ca3e8f6c15ff14dc10e0e7363e936b66dd09382c7e6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0366.jpg",
+        "size": 3407127,
+        "mtime": 1783313488000000000,
+        "label_sha256": "7078fcae2d0e9eb73d092cd66d48110ed63ec7b8d7e11a47f48aff9614f28aec"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0368.jpg",
+        "size": 3453418,
+        "mtime": 1783313490000000000,
+        "label_sha256": "3aeb570425202b46db60616b248c9c1f6f0f147929080057c46299e6b0c3115c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0370.jpg",
+        "size": 3294039,
+        "mtime": 1783313493000000000,
+        "label_sha256": "f88cebb5508fb493d69ddf8ceb909250a57145c07651c55fbd5edcc362cb68b7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0371.jpg",
+        "size": 2298036,
+        "mtime": 1783313495000000000,
+        "label_sha256": "4b820d92a75c5633351c4aa959a68d280f6f18edbef6aff1defcd3755ba506c5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0372.jpg",
+        "size": 3358806,
+        "mtime": 1783313496000000000,
+        "label_sha256": "ef4065987fda1e36b9d1287182809674a2600e727fc68114e064da87b9d71da6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0374.jpg",
+        "size": 2825701,
+        "mtime": 1783313595000000000,
+        "label_sha256": "6b8f1d39eb30bea2b1a712786a119b32e2da29be618bd73b68bb3bfa9c55baa8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0376.jpg",
+        "size": 2541514,
+        "mtime": 1783313598000000000,
+        "label_sha256": "a3bd2c2a7fb91db7d20599a962b520fbd6c775804451fb3e1a002c14157f004d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0377.jpg",
+        "size": 2477348,
+        "mtime": 1783313599000000000,
+        "label_sha256": "7f40cefe200b49b8c65f41c3dc240450400624f3bfffe60674ac567a028cb574"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0378.jpg",
+        "size": 2540489,
+        "mtime": 1783313601000000000,
+        "label_sha256": "c9e6e85947042f7e12004b1f66e9070143a853379246e3321d2daa33966b2749"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0379.jpg",
+        "size": 4314455,
+        "mtime": 1783313602000000000,
+        "label_sha256": "99ac152c4d2851f7094a6c38911099320ffd37d8318e0fe98440a3bca6bbda86"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0382.jpg",
+        "size": 1342214,
+        "mtime": 1783313606000000000,
+        "label_sha256": "2bd333db0dd571e9add2e674213f623742b784f37369067e5361e67c6bd46105"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0383.jpg",
+        "size": 2638784,
+        "mtime": 1783313608000000000,
+        "label_sha256": "8560312a52366aa0b714ef51c5c85e3add5ac10177cc573ff79569f7c53b0c77"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0384.jpg",
+        "size": 3034797,
+        "mtime": 1783313609000000000,
+        "label_sha256": "b0fdab1ae68c960f4fbccd560aae722930895a0da0e19af6136159f772fe031c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0387.jpg",
+        "size": 1594754,
+        "mtime": 1783313613000000000,
+        "label_sha256": "ec5197a9dabca0aaefc191b06b501d7cb502753a496e33852b7ca03b3745756a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0388.jpg",
+        "size": 3383357,
+        "mtime": 1783313615000000000,
+        "label_sha256": "df11d07134a77822eb6878c1145fe4e7259aceef9cf6bae74930d2de3e6017ff"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0389.jpg",
+        "size": 2329460,
+        "mtime": 1783313616000000000,
+        "label_sha256": "801a07224e2e524d47f7ca395f635e84a4f37b29e93e1c479af45ec9e6637b53"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0390.jpg",
+        "size": 2181395,
+        "mtime": 1783313618000000000,
+        "label_sha256": "e128a4e9ff1cecc32218d4477caef2ded3053dda3846927540328171b6c26f44"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0391.jpg",
+        "size": 2579120,
+        "mtime": 1783313619000000000,
+        "label_sha256": "c35b8d77542ab55ac72a940c681ff772ca65e6599761e5de65ad343145ebf9d9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0392.jpg",
+        "size": 3225606,
+        "mtime": 1783313620000000000,
+        "label_sha256": "af7cfec8198af7596b9a2f14c307d74caf9f9e2376048724daf8e9f892f9cb31"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0394.jpg",
+        "size": 3374624,
+        "mtime": 1783313623000000000,
+        "label_sha256": "b20142286c74214acd4dc091aa324bb5b667efba8e106fa9eb78652fe77ac0d2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0396.jpg",
+        "size": 3374976,
+        "mtime": 1783313626000000000,
+        "label_sha256": "149be0bb43362b54b78a993f9ac6da9b92418bf4ebe3938f34d11a27476c84c2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0397.jpg",
+        "size": 3024172,
+        "mtime": 1783313628000000000,
+        "label_sha256": "71f164d77b6132fe351c9d186ca3446df84f3d202eb523a81789ae811860d508"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0398.jpg",
+        "size": 3048213,
+        "mtime": 1783313629000000000,
+        "label_sha256": "b1c0f1788e460556a2f14422915354304bb3c15f036bc95bd38223b31672fa21"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0399.jpg",
+        "size": 3543711,
+        "mtime": 1783313631000000000,
+        "label_sha256": "ff9939f060162c058b212f4d0b80975f8a94780a5b9b1623bac747edca0f4e47"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0401.jpg",
+        "size": 3491137,
+        "mtime": 1783313634000000000,
+        "label_sha256": "1c3ffd6113a3796c3dd57fa4e164a0cfc7d0c2d3e4f395f35b1749864c3622fe"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0402.jpg",
+        "size": 3360078,
+        "mtime": 1783313720000000000,
+        "label_sha256": "d1aee44baa59397e03800bcb4bd36da61480a6249bfeeb10df87462c96411860"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0403.jpg",
+        "size": 2891093,
+        "mtime": 1783313721000000000,
+        "label_sha256": "1f681a0410a5c550eb8da843db6e4952b4d5282058e10728a27feba74f5ce182"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0405.jpg",
+        "size": 2773649,
+        "mtime": 1783313724000000000,
+        "label_sha256": "3326390399384f3a785ecb7077885e694cf7d235730f4b1627911d1c4be2acca"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0406.jpg",
+        "size": 3960930,
+        "mtime": 1783313725000000000,
+        "label_sha256": "a1373bfcf2e465f5429b75121b4fe0427963c7cf2350b30e64d9d4f003995e47"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0407.jpg",
+        "size": 3159743,
+        "mtime": 1783313727000000000,
+        "label_sha256": "62a4b713f1e471f88703d4d0486d88a7e16d5b9c77b0e1d2b10246f59605191c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0409.jpg",
+        "size": 3495114,
+        "mtime": 1783313729000000000,
+        "label_sha256": "597a684b52dbc23354ea03833b6532854404fa2dc5baf46ece58cd87252042cd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0410.jpg",
+        "size": 3626493,
+        "mtime": 1783313731000000000,
+        "label_sha256": "66cb9a6a62c2a10798847ac4badeefa1657b945af0d2f043da10d74b2dadf733"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0411.jpg",
+        "size": 3358511,
+        "mtime": 1783313732000000000,
+        "label_sha256": "a20b73f4bc8f4a14d58ce72521d773ee2fedd417b510c9e13b1e77b91a72771f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0412.jpg",
+        "size": 3260039,
+        "mtime": 1783313734000000000,
+        "label_sha256": "b35ffa2af8f7a977a758f64116351f09eae82c41cac463b54ec682549e00543b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0414.jpg",
+        "size": 2503609,
+        "mtime": 1783313736000000000,
+        "label_sha256": "a22ab537136b6d1acc7fee0023aca4acd4a218031df8b70009b67109e3a4f11d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0415.jpg",
+        "size": 3169908,
+        "mtime": 1783313738000000000,
+        "label_sha256": "b591b7f5273ab6d8774b368c80c907d5878b57fe998168febe8b4ce6949cbb4b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0416.jpg",
+        "size": 2828498,
+        "mtime": 1783313739000000000,
+        "label_sha256": "68ce21703d11f3e7ba56343ab05a94c3c7f139e25e1072eb2950f378e6790619"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0419.jpg",
+        "size": 3282661,
+        "mtime": 1783313743000000000,
+        "label_sha256": "1e7975f6a4527e5dd682af7030f1247950a0228bc147a91c2004de7c5b6fb3d2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0421.jpg",
+        "size": 3065021,
+        "mtime": 1783313746000000000,
+        "label_sha256": "f6ff3dd25abcb318b5f235e1765ab8b93688572ba625b6bf9bcf5e6ad68c5212"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0423.jpg",
+        "size": 3143813,
+        "mtime": 1783313749000000000,
+        "label_sha256": "b6321bb492688aa6221271ef97a3c501d7e9ac3719b2aa28cd3994d407a1eba0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0427.jpg",
+        "size": 3076704,
+        "mtime": 1783313755000000000,
+        "label_sha256": "25171ba550b74bac0abe755bd587381534c4b27a9d600c8d0020007d6eb9b785"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0428.jpg",
+        "size": 3277109,
+        "mtime": 1783313757000000000,
+        "label_sha256": "c86efe18f40f092638cbe633e6c480682452a52c9d00c1ebe4f1eabd804822cb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0430.jpg",
+        "size": 2706651,
+        "mtime": 1783315020000000000,
+        "label_sha256": "e1759f92c53aa31ef0d92d9d1d11c9e6300690c3b88889f0bfb7ab314c311374"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0431.jpg",
+        "size": 2125415,
+        "mtime": 1783313953000000000,
+        "label_sha256": "5d2eb06adaadb381478febfecca5a17cbdce65ede4c4f17d9faa85ba9678b0de"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0433.jpg",
+        "size": 3687947,
+        "mtime": 1783313955000000000,
+        "label_sha256": "5a07b338c3ef708309ec4723d400f60d0f1e76eb9681652b2aa3d3948012f91c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0434.jpg",
+        "size": 3127320,
+        "mtime": 1783313957000000000,
+        "label_sha256": "7934b7e59d3aa3a00d944d6b7845a74044487d8056ec420e706d103c0e9b4df9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0435.jpg",
+        "size": 3101189,
+        "mtime": 1783313958000000000,
+        "label_sha256": "aa02220a1ba88c78daf8d54b3dc1e9fe4c75ac1ceeeda418443327af39040f8c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0436.jpg",
+        "size": 2412255,
+        "mtime": 1783313960000000000,
+        "label_sha256": "5872ebf4c8274efdba02264b00bd0eebd8771e4b0fed7f7f7efeb8c24ae684df"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0438.jpg",
+        "size": 2749084,
+        "mtime": 1783313962000000000,
+        "label_sha256": "af54a4fe7f67f17350c8852e00c10c271cc89e7de7878f086fb56ab1e3cb83ec"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0439.jpg",
+        "size": 2961566,
+        "mtime": 1783313964000000000,
+        "label_sha256": "cdda674a6d64318cbc8f77608568acae8b224c6b99997e5e0125e8769b34cecd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0440.jpg",
+        "size": 2846801,
+        "mtime": 1783313965000000000,
+        "label_sha256": "257177a88b65e1b52b70395f5637a5e7fe058fdf580d6b19208e9c374d3d9054"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0442.jpg",
+        "size": 2402666,
+        "mtime": 1783313968000000000,
+        "label_sha256": "e6022335ac2217aa11762e01aad976c9b56eec3b4d4da9146ae3ab557b6970dc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0444.jpg",
+        "size": 3604804,
+        "mtime": 1783313971000000000,
+        "label_sha256": "72a949c51d53b9321594319a07d5536d1390bdd74e945b51e1849caca41d195e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0446.jpg",
+        "size": 3520895,
+        "mtime": 1783313973000000000,
+        "label_sha256": "7dde2856fd17bc3ddbb42cc250b4454776d0cca6e2ded7afa33026cb1078f5e2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0449.jpg",
+        "size": 2136411,
+        "mtime": 1783313978000000000,
+        "label_sha256": "0e034f517918c9f76c64c0fda5554eb82d61bb08385e12d73d2e375acd851ae9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0450.jpg",
+        "size": 2411543,
+        "mtime": 1783313979000000000,
+        "label_sha256": "9b65a1b23aa37f38ec2aaf9f5ec35d1bcc3397a8c97e6f638e182083382b2cec"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0452.jpg",
+        "size": 3899541,
+        "mtime": 1783313983000000000,
+        "label_sha256": "907ee4347d2b70302f35d11053a48652ff16d35a82e2ceb1e2971313882225a2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0455.jpg",
+        "size": 3200127,
+        "mtime": 1783313987000000000,
+        "label_sha256": "534363211088b43e8d1c4756d735aeeab206f14f8447861a09c68f61dc893d24"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0456.jpg",
+        "size": 2583178,
+        "mtime": 1783313989000000000,
+        "label_sha256": "c9f32940dc7efc4553f248ce28c957462d7ad73bebbf38eb78ca8f58b5767a64"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0457.jpg",
+        "size": 3206813,
+        "mtime": 1783313990000000000,
+        "label_sha256": "9491aa71399864d5a23e9586cce958cfa97feb872befa3b7a722f3c5242b246d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0458.jpg",
+        "size": 3400958,
+        "mtime": 1783313992000000000,
+        "label_sha256": "154ef70b4d0ee102b38c2f840c63aea4647fc48424f9f897b9c0ef57020228b6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0461.jpg",
+        "size": 3454237,
+        "mtime": 1783314127000000000,
+        "label_sha256": "9a2bca0ffcf950083e53bd52d30374d1b52751e2bb5aa9c92b3fa6f3cc3b8d38"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0462.jpg",
+        "size": 3177941,
+        "mtime": 1783314128000000000,
+        "label_sha256": "d3c0413d702da9c364e0deb9cd894258d259d87bc27eef016299e38e11023318"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0463.jpg",
+        "size": 3108599,
+        "mtime": 1783314130000000000,
+        "label_sha256": "38adad4e7a8ba2ff1a1f0c8e346f544fbbf87718b60dcf43e74edec61c7654e4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0464.jpg",
+        "size": 3334253,
+        "mtime": 1783314131000000000,
+        "label_sha256": "1eaf26ed020dfc74b534b7262beaddedd05473d082cfc6fe544644f830a21397"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0465.jpg",
+        "size": 2640322,
+        "mtime": 1783314132000000000,
+        "label_sha256": "5fa7d1b8c55643c3924070ac2fb3b6906382261bed46bdce41220d72ac53926b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0467.jpg",
+        "size": 3196301,
+        "mtime": 1783314135000000000,
+        "label_sha256": "4ed3220a91d75857c450ba4b55429d686929872609077837cd88db70d9b8966f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0468.jpg",
+        "size": 2781543,
+        "mtime": 1783314136000000000,
+        "label_sha256": "ada4025246498875a927ac74a5d93ced029813ea7383f7708988660c6cd5a74b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0473.jpg",
+        "size": 3243327,
+        "mtime": 1783314143000000000,
+        "label_sha256": "009085dd25515a1bf4cda6e2a6fd4bcaf42362b120a586bdb3fcd4145cfc81a6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0474.jpg",
+        "size": 4073236,
+        "mtime": 1783314145000000000,
+        "label_sha256": "4721ff36d26376d81606075d7cebd490f8ab4fe97739b12e181fcbb26fcebba7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0475.jpg",
+        "size": 2736101,
+        "mtime": 1783314146000000000,
+        "label_sha256": "68995c7a880e6ab208e3fbcc576138b4937ee9e307d9c4965e54c0cf3b75b4ff"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0480.jpg",
+        "size": 2357315,
+        "mtime": 1783314153000000000,
+        "label_sha256": "da0d3bbc6f091fb5993953e3a9a3f2bb5f142b06601aea3abd6504d6549e31d3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0481.jpg",
+        "size": 2657093,
+        "mtime": 1783314155000000000,
+        "label_sha256": "89a187f1d29b9ef86714428fcef95554ea1e16f56277319cfe545c2ff0623b7e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0482.jpg",
+        "size": 2314455,
+        "mtime": 1783314157000000000,
+        "label_sha256": "bf9b33e51f2918939ac64bc2f5bff8781f66fb29cb31c507e32c3cbd9d045ba3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0484.jpg",
+        "size": 2460350,
+        "mtime": 1783314161000000000,
+        "label_sha256": "33d9bf8b8a82bc2024449af8b04eaa6fbe2922150d19272cb4bed4d63631a909"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0485.jpg",
+        "size": 2452358,
+        "mtime": 1783314163000000000,
+        "label_sha256": "5e048f576b27e9714a076308d92cb896d9ff8c1f6d4d555182b72064926da301"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0486.jpg",
+        "size": 3074033,
+        "mtime": 1783314271000000000,
+        "label_sha256": "2d57d442fb1cdf2586ee3141eac0742f76fc63e4ed3d5f369f3520c60bb9f137"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0487.jpg",
+        "size": 3175177,
+        "mtime": 1783314272000000000,
+        "label_sha256": "324f71cf2e67e39b99b88b79ff14f0673e05e1fdb83a2b94c4779caf6683aacd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0488.jpg",
+        "size": 4250556,
+        "mtime": 1783314273000000000,
+        "label_sha256": "a25599a5b0bafe7e49f716a333cf30110a80b365e340328c7a2cc5255dc6d18c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0489.jpg",
+        "size": 1862737,
+        "mtime": 1783314275000000000,
+        "label_sha256": "2d365b33f01918df5384cf43764dcb51f817d3f124d72072d2a29403b612e5f6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0492.jpg",
+        "size": 1980810,
+        "mtime": 1783314279000000000,
+        "label_sha256": "203f08e9fade7b153aa288d26213238b04d86d7c2767c3bab338a19835d1da86"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0493.jpg",
+        "size": 2321459,
+        "mtime": 1783314281000000000,
+        "label_sha256": "37d58edd4971c3c5076c4d57ae20d9dd8ad26db3f9e3b422ab01efe563a06b2d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0494.jpg",
+        "size": 2344396,
+        "mtime": 1783314282000000000,
+        "label_sha256": "9d5140b1c64286bb43f90e79a0245bf76aee7eb51fcde8e0cbe7df020d1661cd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0496.jpg",
+        "size": 2735730,
+        "mtime": 1783314284000000000,
+        "label_sha256": "52f26b630f77a59baffd76239d8d20e74838a88ba8dfc2b50b8fc9af9e7f2224"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0497.jpg",
+        "size": 2167607,
+        "mtime": 1783314286000000000,
+        "label_sha256": "f1be69cf10c0bb4cfc1298332e915d0dec6aa974392ba130682a160d65f3979b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0498.jpg",
+        "size": 3756888,
+        "mtime": 1783314287000000000,
+        "label_sha256": "be8236ad4de3f4a633a6ada422641255028acacbef665aab44df0fb9b2191dce"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0499.jpg",
+        "size": 3105104,
+        "mtime": 1783314288000000000,
+        "label_sha256": "770a082fe572e6e2824811f93d4a76bdba92ddd4d7ac18812ef5724e2292af3b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0500.jpg",
+        "size": 3496404,
+        "mtime": 1783314290000000000,
+        "label_sha256": "78a8b16ba0588824c3001aa4751bd0f0c99dae97a9456217cc022554ec111109"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0501.jpg",
+        "size": 3338073,
+        "mtime": 1783314291000000000,
+        "label_sha256": "01d7b2d48a2d8e3d6be07a91ad892803736da6e0623672710253b402d655208b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0502.jpg",
+        "size": 3553247,
+        "mtime": 1783314292000000000,
+        "label_sha256": "87ae5d0beee437ddbbc90feb87c7b2bd94f4fbfc2aa7bcd45e6fb51515381794"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0504.jpg",
+        "size": 3775070,
+        "mtime": 1783314295000000000,
+        "label_sha256": "46e76c8426dab503168f96ed9e20d13e6fa46f3a38fd0a75951da932b59b6ffd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0506.jpg",
+        "size": 2105343,
+        "mtime": 1783314298000000000,
+        "label_sha256": "775d02b169f15dead493308d2a8d22f98191404ed4884bc8674c3912f9006464"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0507.jpg",
+        "size": 2215275,
+        "mtime": 1783314299000000000,
+        "label_sha256": "e285870e2a13ff6ada186baca8ec5d55f58a5265fe09de5bd0e2d1cb71dda387"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0508.jpg",
+        "size": 2428366,
+        "mtime": 1783314301000000000,
+        "label_sha256": "673f9598de59c5cfff6baccb54e2b466053b39c4ab40b20281723d5447430395"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0510.jpg",
+        "size": 1998146,
+        "mtime": 1783314304000000000,
+        "label_sha256": "7bcdccd055c7518d919b622ffd18efad4f55f64fc98a403d8236fc5d5db5067f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0512.jpg",
+        "size": 3138195,
+        "mtime": 1783314307000000000,
+        "label_sha256": "36f95b0d1401bb30b76794cfabd36645b5d68f33ca3cbe292b8381eb1f5175cd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0515.jpg",
+        "size": 2352514,
+        "mtime": 1783314311000000000,
+        "label_sha256": "89d5de0c1693fc7ffa1c60bfeb921b6d254922a50e44d51792007f59344a833e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0517.jpg",
+        "size": 3240929,
+        "mtime": 1783314314000000000,
+        "label_sha256": "ebe683b97fa61dba6b47f88ffeba7f61c0a4a14c37f091d17196cfe270015235"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0518.jpg",
+        "size": 3213202,
+        "mtime": 1783314316000000000,
+        "label_sha256": "b6cd5d3510a5f2facfdb7a60a4798cd175c6d4654fac30b015006c7c4e56cc3e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0519.jpg",
+        "size": 3020297,
+        "mtime": 1783314407000000000,
+        "label_sha256": "da01cd6fccd7049b3402ce7cc33cc3b13dc0148c31f37f334432a0d646d66459"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0520.jpg",
+        "size": 2926413,
+        "mtime": 1783314408000000000,
+        "label_sha256": "993f6e42192cd7cc99aacf59a5928f2d958f2ee82614c9db21334acd2fa34117"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0521.jpg",
+        "size": 2734162,
+        "mtime": 1783314409000000000,
+        "label_sha256": "e7a94ea1479d39ee256755392a35ee89f16d2c691ff6ea2845030ee7c1d2030f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0522.jpg",
+        "size": 3741477,
+        "mtime": 1783314411000000000,
+        "label_sha256": "e8206aadf467d09de844e2d10361b73b0a4bd828bb50a28cbb7c884c286e086e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0525.jpg",
+        "size": 3459540,
+        "mtime": 1783314415000000000,
+        "label_sha256": "c608a87ac99cc7b18f2c4049bf97f4b6a18a96d1875b45819532e457abcd65f9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0526.jpg",
+        "size": 3144963,
+        "mtime": 1783314417000000000,
+        "label_sha256": "062cfcd283a4e805aab047f25473035ba099cc9f063c6bb84ac5db68923d5a51"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0530.jpg",
+        "size": 2591443,
+        "mtime": 1783314422000000000,
+        "label_sha256": "e912646229f81db18cc5210007efa9c2dad84f6be35b348b2f14756643e22dc3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0531.jpg",
+        "size": 2465423,
+        "mtime": 1783314424000000000,
+        "label_sha256": "93097a17799f36afd6a17cc2e6e55453e11cbf7dc5b2c1f4cf197d035cdc2d62"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0532.jpg",
+        "size": 2580044,
+        "mtime": 1783314425000000000,
+        "label_sha256": "3416f6ccecfb6b0adc5b477f8aa33aeadbd720930ef0ffb28a1b6c45a049bba6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0533.jpg",
+        "size": 2578157,
+        "mtime": 1783314427000000000,
+        "label_sha256": "8bfafa536a72ec1757520940e85d7f4650a7e01468b991e6a24b7c7e8b390ce0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0534.jpg",
+        "size": 2497474,
+        "mtime": 1783314428000000000,
+        "label_sha256": "44da87bec0116af7b15fae92b9325ae495111fa9cd32ce48d4d31a447548e8fa"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0535.jpg",
+        "size": 2246531,
+        "mtime": 1783314429000000000,
+        "label_sha256": "a76c562bd3cd602a3cbe3c9ef030b07891fc5564f0fc2d02c6a1479923663e48"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0536.jpg",
+        "size": 2203598,
+        "mtime": 1783314430000000000,
+        "label_sha256": "b203194a99c115a885a8f06adeed0c0b2287c94be64aa0d6eb86f52cde956d0f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0537.jpg",
+        "size": 2029539,
+        "mtime": 1783314432000000000,
+        "label_sha256": "d3aaed86cbcb5e9191dded1464abb1b1710dbaac2b6943352b617b3fb20701c2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0538.jpg",
+        "size": 2258897,
+        "mtime": 1783314433000000000,
+        "label_sha256": "0866c909657d8ef986da1f3a1dd64fd1f168c76f46310817760ba2e5a198c797"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0540.jpg",
+        "size": 2523710,
+        "mtime": 1783314435000000000,
+        "label_sha256": "7b4d42f60075a5008a257ab5dc015c42138e6dc3231ebed2b42fed8ad5dd9068"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0543.jpg",
+        "size": 2862422,
+        "mtime": 1783314439000000000,
+        "label_sha256": "beb7c8a71d09d993511d3f17ed22bb92ec263bbb37cdb6a7a8f79b24c0f4eddd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0546.jpg",
+        "size": 2267659,
+        "mtime": 1783314443000000000,
+        "label_sha256": "6bdf837d8d1b94aa9efa6852cc084c212237045e407f22204c228806ccd3ecf6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0547.jpg",
+        "size": 2186654,
+        "mtime": 1783314445000000000,
+        "label_sha256": "eda02dc498f5b0212152d067854ce79f47a215fd62b29f9ec6e5d8b4c754e216"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0549.jpg",
+        "size": 1923085,
+        "mtime": 1783314447000000000,
+        "label_sha256": "be83a3496fe5cab10fa8e2810bb800df657ee5c48ac0d4eabb5d7725a7e594a1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0550.jpg",
+        "size": 1579921,
+        "mtime": 1783314448000000000,
+        "label_sha256": "d51a6bb2cdaf35bc2be198cbef478e5e4f64f0ce1b542af0db6160f0b178a0b2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0551.jpg",
+        "size": 1675287,
+        "mtime": 1783314449000000000,
+        "label_sha256": "1dccc2309a8f79b433382c12c9698cd94e93d231dd5650a1c60a183163cbd240"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0553.jpg",
+        "size": 1822905,
+        "mtime": 1783314528000000000,
+        "label_sha256": "200f31f9c490c1295fb14f44a25a2302d33356a6b80eefed94227ffe8b38d5fb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0555.jpg",
+        "size": 3246263,
+        "mtime": 1783314531000000000,
+        "label_sha256": "1836db062e4026679fb46574a5b0c63918f3c06e194fc7b1fe5dcafe662497cb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0556.jpg",
+        "size": 3126212,
+        "mtime": 1783314532000000000,
+        "label_sha256": "5a2615d38750251de64f22b7a8352a30475ddf0a6b27d6266b37320c619452ef"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0557.jpg",
+        "size": 3788777,
+        "mtime": 1783314534000000000,
+        "label_sha256": "694ff34c06a3cfd5f88bc7c645360571bd6f4f2cb6dfb9525e19d123e021bfca"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0558.jpg",
+        "size": 2110588,
+        "mtime": 1783314535000000000,
+        "label_sha256": "b3cf7f7a8615cafed639528879e5a2b40b9de9672da7cca24cc756b9eeb0fa56"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0559.jpg",
+        "size": 2046338,
+        "mtime": 1783314537000000000,
+        "label_sha256": "09022ddf2bd7272ca50b476dac679a8bc245f9d05da90c26fc761087648f6ad2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0560.jpg",
+        "size": 1922100,
+        "mtime": 1783314538000000000,
+        "label_sha256": "0af06b27026f519765b058cc249e94283735b28df57e3849fe2f582da136ba48"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0561.jpg",
+        "size": 1440352,
+        "mtime": 1783314539000000000,
+        "label_sha256": "30050250f506226dc7bcf13b49273f7a6fe42181f44a88aec36beed33e5e8630"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0562.jpg",
+        "size": 1931748,
+        "mtime": 1783314540000000000,
+        "label_sha256": "72742686fff9bf3f1e5f93ed60bb984bf961a2015b577aa24c20c65bac3167d4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0565.jpg",
+        "size": 2087139,
+        "mtime": 1783314544000000000,
+        "label_sha256": "b9db2b09e762ca1023b3446e437a0cf6a1c5c8cf38466663dbc7100bba3b70c1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0566.jpg",
+        "size": 2035947,
+        "mtime": 1783314545000000000,
+        "label_sha256": "690a9a8ecd35832b353f172508cc6f9edc0d500a9d31894a5fa0d5e460edf9fe"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0570.jpg",
+        "size": 2222745,
+        "mtime": 1783314551000000000,
+        "label_sha256": "2ded6589253338f28d5bd008f027b30e0611c0ff3b621da9c17b345f1972a9fb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0571.jpg",
+        "size": 2950935,
+        "mtime": 1783314552000000000,
+        "label_sha256": "7592501eaf8ebe5a9ac46aa6a20afa4646ac6619b2e42a3c1598aa700d9f3c65"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0572.jpg",
+        "size": 2720648,
+        "mtime": 1783314553000000000,
+        "label_sha256": "4a13230038ad2b3463b62febd89109fff1fbc39bd871ba97c6f808b2f3d1eb23"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0575.jpg",
+        "size": 3046745,
+        "mtime": 1783314558000000000,
+        "label_sha256": "1385ef3b9511e13249c0aa40585eef49e0cd9d41aa2632a4e52ea641104db125"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0576.jpg",
+        "size": 3072158,
+        "mtime": 1783314559000000000,
+        "label_sha256": "c2a43e3a4aaa0fcd62d04e016ecbfe883633cbe4bf24410df7a3ea8b3af5f290"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0577.jpg",
+        "size": 2595687,
+        "mtime": 1783314560000000000,
+        "label_sha256": "6622a28ef90214af50d3c1d663fed253b1ef480cd5091f22151d51642bf4ae03"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0578.jpg",
+        "size": 3865680,
+        "mtime": 1783314562000000000,
+        "label_sha256": "f1e13696dfc865f6f4255438bcb21dfcef168ec97c4cdf293fbdae11c1db11e0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0579.jpg",
+        "size": 4207133,
+        "mtime": 1783314563000000000,
+        "label_sha256": "66ffcb687407a2b64549b12cafe3983a186ba9faa57fc18d72da2401e98eb341"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0580.jpg",
+        "size": 3243972,
+        "mtime": 1783314565000000000,
+        "label_sha256": "42bfd4ae73510862cde90e75cfaf506d888863261f59894841bfda157e2777cb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0581.jpg",
+        "size": 1862470,
+        "mtime": 1783314566000000000,
+        "label_sha256": "b9e4e8ac72acb6403c9d9ae84c5bd068da64f78e6d7d84c38cede2dbb9ddff31"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0582.jpg",
+        "size": 1932590,
+        "mtime": 1783314567000000000,
+        "label_sha256": "b9198b82e2fc477e72d7333f476f49e26965e5385638f850d79f6b8e9e7d50be"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0583.jpg",
+        "size": 2612286,
+        "mtime": 1783314569000000000,
+        "label_sha256": "8938e16b489bf968506d72ee1067166bc3bb29edfc54817b14b129d92f6918b2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0584.jpg",
+        "size": 3131809,
+        "mtime": 1783314570000000000,
+        "label_sha256": "99390cbda06fb5bf091ba1b2030d95f7b5f6c3bf2a54f03b54c1556e51bda4fd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0585.jpg",
+        "size": 2657257,
+        "mtime": 1783314572000000000,
+        "label_sha256": "60c1d0b449bce792b7c9d0e1d060dc248a0073c97d8a54c0c36c1fb84a31aea2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0586.jpg",
+        "size": 3393860,
+        "mtime": 1783314573000000000,
+        "label_sha256": "5ace93b886e233ad628ab4764adc466c08fdd444826e1cc2b3a066851b308154"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0587.jpg",
+        "size": 2750117,
+        "mtime": 1783314574000000000,
+        "label_sha256": "9eeb2ee88fa8bf9da81560bc438cd066bc2aa70fd37114ae179fbf4c7681034d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0588.jpg",
+        "size": 3319187,
+        "mtime": 1783314576000000000,
+        "label_sha256": "1526f0ea6ac56f369a0d6365b0662047b3b7df311525d316795f8db50d9381fd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0589.jpg",
+        "size": 2995368,
+        "mtime": 1783314577000000000,
+        "label_sha256": "76aad70352d3df3f0412301ba9086032cdae2dda89de5a641671acd1c8068a44"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0591.jpg",
+        "size": 3243418,
+        "mtime": 1783314661000000000,
+        "label_sha256": "2cd397d53e661f942af187ba5273617bcdf765dc613f647e87c88c18bb1681e6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0592.jpg",
+        "size": 2350966,
+        "mtime": 1783314662000000000,
+        "label_sha256": "2380d30ab4647201851e4a6ff9a71b2ce29f8519ee458cc9d6fad4d37da359b9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0593.jpg",
+        "size": 2572922,
+        "mtime": 1783314664000000000,
+        "label_sha256": "88f4f117115b908672fc0c08a7b6859a7aa70b7d5713860f040a22bc909fb88d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0594.jpg",
+        "size": 3324754,
+        "mtime": 1783314665000000000,
+        "label_sha256": "16731936d4fac65e58fd5368180d4178842389d63694f3cb6118d209a28722c8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0595.jpg",
+        "size": 3120288,
+        "mtime": 1783314666000000000,
+        "label_sha256": "3e3305f1d77e4e0ec4148f42bc99e21f55160f0e09ff3ebb171d9e2b27406e97"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0596.jpg",
+        "size": 4766579,
+        "mtime": 1783314668000000000,
+        "label_sha256": "f76b1b0d5d3cb0fd9889eb0b06aafe14042a15c91b3685a26101deab7adf6419"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0597.jpg",
+        "size": 3218804,
+        "mtime": 1783314669000000000,
+        "label_sha256": "554e1d57e10202d314537ede8c5e51ba77192c65e3d24090500fe4720eedfedf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0598.jpg",
+        "size": 3602762,
+        "mtime": 1783314671000000000,
+        "label_sha256": "ad536a0fee28c34543a30a25fa35d3c7b26b050ca2c32e6ab1022edea68ed62f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0599.jpg",
+        "size": 1610771,
+        "mtime": 1783314672000000000,
+        "label_sha256": "7f86519200de737b1e9581bc437d1cc8508af4d52f870dd6e172bb8f72fa073e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0601.jpg",
+        "size": 3159131,
+        "mtime": 1783314675000000000,
+        "label_sha256": "f7d9a34e9007d49d3bbb6df3c004bf6f8514c2dc07aca845c23229803b1283cb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0602.jpg",
+        "size": 1779869,
+        "mtime": 1783314676000000000,
+        "label_sha256": "dffab568497dce5a0efb9afc37b29dfbaa662f59c000eacc648dc9017dcecde4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0603.jpg",
+        "size": 2516983,
+        "mtime": 1783314678000000000,
+        "label_sha256": "9bcb873a899951c373393438aa5e3d5a1d4bd5a89590aeba622efcce059dcbfc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0604.jpg",
+        "size": 2395588,
+        "mtime": 1783314679000000000,
+        "label_sha256": "bfa3e2414274aae16ae719d4ef8f319fb833d76e0f12d5a99a56ba9bc631c2b3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0605.jpg",
+        "size": 2511672,
+        "mtime": 1783314681000000000,
+        "label_sha256": "57d28d895046d387f1fee01fd7c7ce8d893e51f08025050b321f2c44afdf9e11"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0606.jpg",
+        "size": 2414020,
+        "mtime": 1783314682000000000,
+        "label_sha256": "49d208016fd61f2ecc7180388563c8bab450d2a907bdd6c4a42e1ab9874795a9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0607.jpg",
+        "size": 3427164,
+        "mtime": 1783314683000000000,
+        "label_sha256": "c2a277467d98457a9a566ecfe029b80688dcfe329f9ee1d3c8c4d01b9a150fab"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0608.jpg",
+        "size": 2133177,
+        "mtime": 1783315022000000000,
+        "label_sha256": "d5888971c55dd2e7791638bb22f642808eb8d0ad4d66b6d2fb38eb0ef08a4fa2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0609.jpg",
+        "size": 2318118,
+        "mtime": 1783314690000000000,
+        "label_sha256": "1afbf9fad03e29202fd318e0f87ca7c25bc8e6b0be83519297c2f4b847bc3d17"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0610.jpg",
+        "size": 2254236,
+        "mtime": 1783314693000000000,
+        "label_sha256": "1c826ba4c5aa690b13ebbe24df73d7db1d6a7f4413711562eab6ed2f7eefccdd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0611.jpg",
+        "size": 1868815,
+        "mtime": 1783314696000000000,
+        "label_sha256": "e968f0f29a802e1a8a8da1a1f96b4202a440bd9b5dada9380f33ef1ea42f47a7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0614.jpg",
+        "size": 2537371,
+        "mtime": 1783314852000000000,
+        "label_sha256": "94066bac13f6c0df26f1ca5457391cf957a13516cd6a55c8b85236b05e7705a1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0615.jpg",
+        "size": 3168746,
+        "mtime": 1783314853000000000,
+        "label_sha256": "9fcc97b82e1d95319ff22394c779ed308059f917f8a5a9519a86b3fd3c6b6348"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0618.jpg",
+        "size": 2519667,
+        "mtime": 1783314858000000000,
+        "label_sha256": "5dd007d826f9ac9ac40051e043726d56e55f7978221a6c975bbc3b4910d25ed5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0619.jpg",
+        "size": 2776524,
+        "mtime": 1783314859000000000,
+        "label_sha256": "7c6a9a0bfdd800c67e2b268f16eea6440ceeff25ef30ee6deb152a7072734962"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0620.jpg",
+        "size": 2872666,
+        "mtime": 1783314860000000000,
+        "label_sha256": "68eb8600e19a3173cdfd0ca8a2e5d8811d6bc3d4e847b781cd60378f3abbe95d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0621.jpg",
+        "size": 2813139,
+        "mtime": 1783314862000000000,
+        "label_sha256": "ec49304a797532b4a2bae9fba6e54cb01d88b96072c1fbad51270917143693d9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0622.jpg",
+        "size": 2649431,
+        "mtime": 1783314863000000000,
+        "label_sha256": "10c97d6b1baccd5c52f87a4a71014281482727d86d207fc4bfca45a26b88a993"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0624.jpg",
+        "size": 2466402,
+        "mtime": 1783314866000000000,
+        "label_sha256": "88f527b133d8c0c52963509f5e2a213b83d24b69c47279ce4efeb731a2e901cb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0626.jpg",
+        "size": 2238356,
+        "mtime": 1783314869000000000,
+        "label_sha256": "2aeaf1de92dbe826f8424f0906757fbead6c68dff3e4a0645dcb43b61dd41a66"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0629.jpg",
+        "size": 2945507,
+        "mtime": 1783314873000000000,
+        "label_sha256": "59e89f0071e900021f5790d7848ee971b98e4a99af025576ef8fd4147ace1343"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0630.jpg",
+        "size": 2412220,
+        "mtime": 1783314874000000000,
+        "label_sha256": "ce4a1805b56f1da6c90ae8f602d168323319a99bbdd681e979c9d669645a1c3f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0631.jpg",
+        "size": 1790018,
+        "mtime": 1783314876000000000,
+        "label_sha256": "345e4fd7bdbc84a58dade9f7ad915858da43805755bb759e810aeee4e7b4fb9f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0632.jpg",
+        "size": 2079094,
+        "mtime": 1783314877000000000,
+        "label_sha256": "9d6e29f87aff1b720e8fb63eebca774bbc38be13d9f84a937ae2f243eec52b02"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0634.jpg",
+        "size": 2263936,
+        "mtime": 1783314879000000000,
+        "label_sha256": "47ad9e73fe38d70bcf9884da1e0554b2ff0667e40c45dc24f29ec89322e981fc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0635.jpg",
+        "size": 2891302,
+        "mtime": 1783314881000000000,
+        "label_sha256": "aed18da3a64917e0bbba5f249987d56464c8461f605accd3b55ab4e87789f801"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0637.jpg",
+        "size": 2992345,
+        "mtime": 1783314883000000000,
+        "label_sha256": "c2e833325bf065a4dd2ee560722dd03ba79c38998c41ca6a243e8184d7d7ad22"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0638.jpg",
+        "size": 1744421,
+        "mtime": 1783314885000000000,
+        "label_sha256": "717f6b253484eacd92e835581f9ac7ac6059965b61c4357d3e9caedff73edd2a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0639.jpg",
+        "size": 3044066,
+        "mtime": 1783314886000000000,
+        "label_sha256": "77227f2267709d65b2dc4df6e66be56d219d496154893d390cfe6d10ef86b114"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0640.jpg",
+        "size": 1646038,
+        "mtime": 1783314887000000000,
+        "label_sha256": "ce6c26383e8c59c0cd09c8f89e00207de07df46118c7c1caca678f10638a2c14"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0642.jpg",
+        "size": 1580933,
+        "mtime": 1783314890000000000,
+        "label_sha256": "28c8967ca945d93a9390c4fd555911b062e6eda503da18a5ea152908c7d458a4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0643.jpg",
+        "size": 1809132,
+        "mtime": 1783314892000000000,
+        "label_sha256": "482bfba2848c8b29ea2b123bca4fe5b2c6d49b6269d4b3c69a8a8581b284bcc8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0644.jpg",
+        "size": 1773948,
+        "mtime": 1783314893000000000,
+        "label_sha256": "ef890abf5ca20be3cf1875675408cdf43703f590f56cbed792584e687f716a6d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0645.jpg",
+        "size": 1397253,
+        "mtime": 1783314895000000000,
+        "label_sha256": "e6c383c3e72d60dbbd35f08c625e9ea8ba18f84bfa03672055d49cffc145c451"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0647.jpg",
+        "size": 1318083,
+        "mtime": 1783314898000000000,
+        "label_sha256": "e756d57081df85338bbb4ad4a2a8be1902fa22a07f9d54af1807282533366f87"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0650.jpg",
+        "size": 2280441,
+        "mtime": 1783314902000000000,
+        "label_sha256": "9f7e49330e0c484bafe0167c770fd2979d62598aa9a2a46221016d7b6a02acf5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0651.jpg",
+        "size": 2034769,
+        "mtime": 1783314983000000000,
+        "label_sha256": "1f022e9d26f3c33290b68dba26b62f652564d6333bc42cc18fcf3ae2b13ac1d3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0653.jpg",
+        "size": 2957496,
+        "mtime": 1783314986000000000,
+        "label_sha256": "25be9a267bbcc85d63cb2212a0fbe40aef6ce605eacf3a8a0942902d6604a13a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0655.jpg",
+        "size": 3213799,
+        "mtime": 1783314988000000000,
+        "label_sha256": "7e14054d15db9d851299e85f6d6b98536f65c0582eb41d6377ec62a2284108d0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0656.jpg",
+        "size": 3106640,
+        "mtime": 1783314990000000000,
+        "label_sha256": "8dc49b6c94048e3e9be9740158a6e015af41198507f043fce51b391ae2abfa7f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0657.jpg",
+        "size": 3053680,
+        "mtime": 1783314991000000000,
+        "label_sha256": "c58101b9e455c9289fb567df38e552ddddda558e9951b31c3ec496dedd6eef55"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0659.jpg",
+        "size": 2130860,
+        "mtime": 1783314994000000000,
+        "label_sha256": "2e4c0589f3ee0a3740a8dd6ce8c7aaddaf06bf3e85736f85a2fa2ebf05e7ce1a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0662.jpg",
+        "size": 2353437,
+        "mtime": 1783314998000000000,
+        "label_sha256": "b996cb15d525a0430a1d94967a083f4e46cd269748a30f9621a12961c1136530"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0663.jpg",
+        "size": 3338857,
+        "mtime": 1783314999000000000,
+        "label_sha256": "e48612fd865405db2d7a7a507d3a461662a68effe9de513e85d02ac1375cc74e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0664.jpg",
+        "size": 2620927,
+        "mtime": 1783315001000000000,
+        "label_sha256": "f317ed953788e3150341f14e99b44ad32796cbad5bfa072df72973a97dd75204"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0665.jpg",
+        "size": 3154011,
+        "mtime": 1783315002000000000,
+        "label_sha256": "bb0f65dea351a5ab5cd35d0570c965de2af5218ac86d06bf3f94d6e63da18c96"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0666.jpg",
+        "size": 4180295,
+        "mtime": 1783315004000000000,
+        "label_sha256": "8e12c98d01a1bdc96fdad60893c262ccccd30adbddae3090b3824dfabfef8438"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0668.jpg",
+        "size": 2617155,
+        "mtime": 1783315006000000000,
+        "label_sha256": "c0e6c20f9ced677abe2ebe290d2822331979104bdc556ce1d1ec16e3385097dc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0671.jpg",
+        "size": 2306496,
+        "mtime": 1783315011000000000,
+        "label_sha256": "546aa0cd69597bf3c86b50480e1a5c832548c07f5b52da81b7215943c3813508"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0672.jpg",
+        "size": 2058916,
+        "mtime": 1783315012000000000,
+        "label_sha256": "80ee51a44d5281a94c183bac4bdb0b317b1f11944530d0175e247bc6b61103ed"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0673.jpg",
+        "size": 2906463,
+        "mtime": 1783315013000000000,
+        "label_sha256": "1cadcdb914a8be8da3f8af66137f30cd8e3205325af7691fbbf26571cad35c21"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0674.jpg",
+        "size": 2307332,
+        "mtime": 1783315015000000000,
+        "label_sha256": "64eb8c99efce2d6325b349269fa5623ec055081d367f92e0744a6f21afcf42cf"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0675.jpg",
+        "size": 2998030,
+        "mtime": 1783307321000000000,
+        "label_sha256": "50baae55aae5bec7f952b7103b036b2954630b6e5e7d6a9487ebd3d0ce9bc2cd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0676.jpg",
+        "size": 2365745,
+        "mtime": 1783307322000000000,
+        "label_sha256": "9583eda2570f13bec79a3e10fd51d93ef6d6d284e2f3f3a1fc4bb1c7197990c1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0677.jpg",
+        "size": 3610216,
+        "mtime": 1783307323000000000,
+        "label_sha256": "1dc29201fda595de07158dad89000e265b5a6c1e52781e93db2985bb53d38d04"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0678.jpg",
+        "size": 3813278,
+        "mtime": 1783307325000000000,
+        "label_sha256": "441d0c996d998d7f25ba01ab32a5f8364ceb384d6709134ecba9892a7e99b40e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0679.jpg",
+        "size": 2962261,
+        "mtime": 1783307327000000000,
+        "label_sha256": "66048c64b24a61141fb5e74b4b977421c6f505fb8511940032e386e0e89c7b7d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0680.jpg",
+        "size": 2168815,
+        "mtime": 1783307336000000000,
+        "label_sha256": "f2cfa42cb5b3b68854b0d631de49c0329e5d836b72ece19486e5cb807621d209"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0681.jpg",
+        "size": 2428593,
+        "mtime": 1783307342000000000,
+        "label_sha256": "2c2d2a1dc507fda462e722bbc70b9fd3b7a7716c9414e0291b946a10fe604089"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0682.jpg",
+        "size": 2308180,
+        "mtime": 1783307345000000000,
+        "label_sha256": "59e296e17d0da641095934d566ec324f30bf34b9c1fe8ca79677b4648be86f1b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0683.jpg",
+        "size": 2036054,
+        "mtime": 1783307345000000000,
+        "label_sha256": "705872bfac28042a951f045f3724bc6c221da2b3ae7ec3588b99de904c5b6826"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0684.jpg",
+        "size": 1843243,
+        "mtime": 1783307347000000000,
+        "label_sha256": "c3c0da1e831c48684119dbd9c91786071411836b42aeb22069317557bbe42fac"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0685.jpg",
+        "size": 2375272,
+        "mtime": 1783307349000000000,
+        "label_sha256": "af17f8670208126e787ab6e56403d873cc11efd592564683db46f3e1d052ec3f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0686.jpg",
+        "size": 2354309,
+        "mtime": 1783307350000000000,
+        "label_sha256": "f9372d54cd3eb278cbdb9d88f710dd9b11ac1790fec667159fd41ab2d1aa98b3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0687.jpg",
+        "size": 2733161,
+        "mtime": 1783307351000000000,
+        "label_sha256": "189c05ba396101dfe9ab348312a65782dac12494bad17983427db47157cf9321"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0688.jpg",
+        "size": 3055212,
+        "mtime": 1783307353000000000,
+        "label_sha256": "3b3abd3a687dbaa4a4011c0b7abdc5eb62e6e19ea54894742193d9e3ae1547dc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0689.jpg",
+        "size": 2159491,
+        "mtime": 1783307355000000000,
+        "label_sha256": "7e4992021c112fcd9a69ebf9eba5e11de910d0951990c65787bdcc0d6b09e706"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0691.jpg",
+        "size": 2274150,
+        "mtime": 1783307362000000000,
+        "label_sha256": "daec348a3ed1eba3029fcac2fafb8ad24f4617f242ea5a829c74f5b6c7cb929a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0692.jpg",
+        "size": 2529283,
+        "mtime": 1783307363000000000,
+        "label_sha256": "79f718dbd3584cff1268a03661c2413c430ad546e92d942db38200e5223480bb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0694.jpg",
+        "size": 2418052,
+        "mtime": 1783307388000000000,
+        "label_sha256": "bac6fd1cceeb13b8a1f3a4a5f767b88912f8d69b00ca8865223c3a09b42db01c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0697.jpg",
+        "size": 3444938,
+        "mtime": 1783307401000000000,
+        "label_sha256": "16043a9b50b6ae7ad404681554096f2a4d0c6fbf937280589c5bb431641f6bef"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0698.jpg",
+        "size": 1378625,
+        "mtime": 1783307408000000000,
+        "label_sha256": "5b4edf4fc75f1fe6d5593b2169ca72336f28184485098e1bb28bd9b2920319a1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0700.jpg",
+        "size": 2655190,
+        "mtime": 1783307430000000000,
+        "label_sha256": "b312b3c968da078ca2df2aa66f88e94beee1596f9fc930fafa70d903e12694aa"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0701.jpg",
+        "size": 2811658,
+        "mtime": 1783307448000000000,
+        "label_sha256": "8ecbbaf6af6e920df55cbded0ff58dc46a5a919a7c37f2c529cc6e4dcd83e683"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0702.jpg",
+        "size": 2704630,
+        "mtime": 1783307449000000000,
+        "label_sha256": "d0bbb84474f80b1a8cd7831d1a4ac88f30e037f16862f19622be95d5604f3906"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0704.jpg",
+        "size": 2643629,
+        "mtime": 1783307516000000000,
+        "label_sha256": "2bf85bc4d2b35120071fe13c9eae9d9ada77807a06f5b5d66c574f15f2e9802b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0708.jpg",
+        "size": 2459668,
+        "mtime": 1783307533000000000,
+        "label_sha256": "88d16351c4d28c40f3e9d9fe8c9b389d8ba1a4202864c2d11428aae5e3d339e6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0709.jpg",
+        "size": 1387682,
+        "mtime": 1783307535000000000,
+        "label_sha256": "efd46fd405b4829b4b94b740b7c360c3b6aabe5e3073556ab2225d36805ad2e9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0711.jpg",
+        "size": 2438341,
+        "mtime": 1783307544000000000,
+        "label_sha256": "fdf9a7c65a8c111d2beb5c831e3509de3a9e9f8346dd9d0d47623921e0a29af0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0712.jpg",
+        "size": 2486386,
+        "mtime": 1783307555000000000,
+        "label_sha256": "2102a85145ab2f622e85d228878caf36e110dfc310bb4d00eaf970a33413109e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0713.jpg",
+        "size": 2258703,
+        "mtime": 1783307556000000000,
+        "label_sha256": "181b13d7fda655c8c93e0d22a1fa7edd037c015d871e7dd968adecdfff9ab02e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0715.jpg",
+        "size": 2944650,
+        "mtime": 1783307561000000000,
+        "label_sha256": "b6e262c605ebab76a727a23a36b413b7390ecca7d33c3e0b91c15e013ddab339"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0716.jpg",
+        "size": 2301249,
+        "mtime": 1783307562000000000,
+        "label_sha256": "5b3e98e0b50b3af9281327f26017dfb45d3266ce8e06e273b3a26bd8ce762bcb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0717.jpg",
+        "size": 2371017,
+        "mtime": 1783307576000000000,
+        "label_sha256": "9820cb34595a34a07309f4ec609f32074f44824730348fb0790bf728b29d6c88"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0719.jpg",
+        "size": 2867408,
+        "mtime": 1783307589000000000,
+        "label_sha256": "f35d7979de79b128b70c2e7b8d3ff747a2b4b563f946a6b95cf131c21b4a244e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0720.jpg",
+        "size": 2525671,
+        "mtime": 1783307605000000000,
+        "label_sha256": "41361ff36ed82c7ddbbad19ee5f637b62ea384fc47a563fcf361e80b0866b08d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0721.jpg",
+        "size": 2937688,
+        "mtime": 1783307615000000000,
+        "label_sha256": "1775dcb866c655a1b6995ab5fa0159f73dee8b9f5d1b33992db066c7b229f953"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0722.jpg",
+        "size": 2741106,
+        "mtime": 1783307616000000000,
+        "label_sha256": "b6f40661987db7e80f131577c338c78089fcddaf406ba401c24efb08812e304e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0724.jpg",
+        "size": 2800005,
+        "mtime": 1783307620000000000,
+        "label_sha256": "ced83aab128a853eed23a440b88cab5e2b389d16758328e3c73996e81367854c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0726.jpg",
+        "size": 2683469,
+        "mtime": 1783307642000000000,
+        "label_sha256": "f90afe77b34882f404c8b1f6875f03670ef2c9e60338a3873d637fa8252183d7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0728.jpg",
+        "size": 2761871,
+        "mtime": 1783307647000000000,
+        "label_sha256": "24457c9ff5b2d20f7b7027234db4fe1e9f15201bcd0919332f8108c6a8ca0f7b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0730.jpg",
+        "size": 4016403,
+        "mtime": 1783307662000000000,
+        "label_sha256": "82c9808ea5aae5095bb069a27dae2e6c51558570023b392c00393772d866420c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0731.jpg",
+        "size": 3863698,
+        "mtime": 1783307663000000000,
+        "label_sha256": "5e8929b3a8fbd68084135ecfe71ba8f40adda15202cbf157d3381b7124a84554"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0733.jpg",
+        "size": 2650384,
+        "mtime": 1783307677000000000,
+        "label_sha256": "3a768e75914044b7f915598281aa5c69f9fca7992007d17cba931626a92ff4f9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0734.jpg",
+        "size": 2763198,
+        "mtime": 1783307690000000000,
+        "label_sha256": "de0059bd63c024aaa63ad5ec2401e779a72b05597896cf104f4aad8794e41ed5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0735.jpg",
+        "size": 2378040,
+        "mtime": 1783307692000000000,
+        "label_sha256": "ee96bdc5a5ef405a008aec65f758a2fe0489f6800f9a6a0db4caa18bb0ed5912"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0736.jpg",
+        "size": 1456467,
+        "mtime": 1783307694000000000,
+        "label_sha256": "f803147f880afd6f8470f5faff747fd60fe96069a04e9878c9ab917199488ac7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0737.jpg",
+        "size": 1363270,
+        "mtime": 1783307695000000000,
+        "label_sha256": "bd8ef26e664fb8fe162837b3b2851fe0d295810de0686210236f18c2c2d095f1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0738.jpg",
+        "size": 1317592,
+        "mtime": 1783307697000000000,
+        "label_sha256": "149df18e5b24f0389b7585fce65d4feac2b85d1a2508aafbf5aa750f53fe836d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0739.jpg",
+        "size": 1623092,
+        "mtime": 1783307699000000000,
+        "label_sha256": "898f08901d1d0350b46e2d4d36a2dbcc463fe62ed3cdab08345725f7becbeddb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0742.jpg",
+        "size": 1455750,
+        "mtime": 1783307704000000000,
+        "label_sha256": "368f0b680cab74ce1ac41b57201670a5b34cfd5930adc28437a013adf93ae374"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0745.jpg",
+        "size": 1554465,
+        "mtime": 1783307709000000000,
+        "label_sha256": "5bbcfa8500f6c3dfa8261bd876b41c9db1412343a1b6a2f7cd4fa2b3567007f0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0746.jpg",
+        "size": 1724424,
+        "mtime": 1783307711000000000,
+        "label_sha256": "b65b0bf16f2b5f6d4b389b1257dfa2ae0686eb4c6575acd03ad05556c22fff8b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0747.jpg",
+        "size": 1215045,
+        "mtime": 1783307713000000000,
+        "label_sha256": "e5e2e12dcf55c6a14b2f30c2fc1ea5aa33009e45b31b943f6483cdb6d70205ea"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0748.jpg",
+        "size": 1144287,
+        "mtime": 1783307719000000000,
+        "label_sha256": "b68a30cf90c2c34976963dcdf02a8d85ba28ae0db730833bce20d471d846237b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0750.jpg",
+        "size": 1672559,
+        "mtime": 1783307728000000000,
+        "label_sha256": "105623ac75d04bea506e0ce1f8f5bedcbb9304f36ea8486356c821daa9b0258e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0753.jpg",
+        "size": 2345134,
+        "mtime": 1783307736000000000,
+        "label_sha256": "eb0bd9b89d195acadfed538ba51a874a01b2457292c9fa15b5817da9e3aef460"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0756.jpg",
+        "size": 2172139,
+        "mtime": 1783307740000000000,
+        "label_sha256": "96c76ad60f300e61f61963b738930402dd9adac8b2cb8c77785c7a48e8f30f28"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0758.jpg",
+        "size": 2619025,
+        "mtime": 1783307744000000000,
+        "label_sha256": "88b108a4ea5fdf8fc4ce3b783e7e3d1594726a84f070c9fc08baceb2fa283c6c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0759.jpg",
+        "size": 1744121,
+        "mtime": 1783307749000000000,
+        "label_sha256": "a9c349e8b117aad5682ba2f563aef96f721133fc2b6eab76c25d561c0252e660"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0760.jpg",
+        "size": 1681032,
+        "mtime": 1783307751000000000,
+        "label_sha256": "1040f483d216e2c6a9fd6109b82bf782c4f8d118a09a7824a5a0af894b2fabbc"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0761.jpg",
+        "size": 1530969,
+        "mtime": 1783307757000000000,
+        "label_sha256": "d61b13710d58896304c131e62baca5f4c6cd7e30a7f0a910c5ef9001bd0f8e2c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0762.jpg",
+        "size": 1670940,
+        "mtime": 1783307758000000000,
+        "label_sha256": "f15d5522df36e52b9bd27e798bbf069865002056e18a4f0fd0f78984e04e5032"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0764.jpg",
+        "size": 1788217,
+        "mtime": 1783307762000000000,
+        "label_sha256": "037ce1ddad09b3c0912ea757a63e357daf61e144769f43adb728d5e580b039e7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0765.jpg",
+        "size": 1893668,
+        "mtime": 1783307764000000000,
+        "label_sha256": "e96cade186020840ca2cba3565aa94672167f8db83d0fc2a69ac3f07c1328383"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0766.jpg",
+        "size": 3092650,
+        "mtime": 1783307776000000000,
+        "label_sha256": "54d946068061304e421b7674bfaad47afc568ab5eff70c2afdce9c4c8f1eb68b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0767.jpg",
+        "size": 3254899,
+        "mtime": 1783307777000000000,
+        "label_sha256": "88f0395fb7979a69414a647f223b413b61b017040e4213dd45c778d3ba9f4f0f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0769.jpg",
+        "size": 1439037,
+        "mtime": 1783307786000000000,
+        "label_sha256": "51215898ff64601003ce9bbe286e790765563c476bb8c0b1ed45ba43f500a037"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0771.jpg",
+        "size": 2832814,
+        "mtime": 1783307800000000000,
+        "label_sha256": "1d30fb3987499011b89f11a73ac79c323be3dcf81b72671323c46d617c8ba838"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0772.jpg",
+        "size": 2773321,
+        "mtime": 1783307804000000000,
+        "label_sha256": "efedffd7ca90c00c7c5024d1e8768736f9a316feca1ce1270f1512e4695d9e78"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0774.jpg",
+        "size": 2508699,
+        "mtime": 1783307827000000000,
+        "label_sha256": "1b966dc5921c2c6fccf6aa9a5fb3c7efc922015300f6c771d94934a1fe168a4f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0775.jpg",
+        "size": 2661534,
+        "mtime": 1783307834000000000,
+        "label_sha256": "a4d3c03c260a58cba2351807bd0c880b1689ca8bb9129e32146025cef2cea4d5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0776.jpg",
+        "size": 2088475,
+        "mtime": 1783307835000000000,
+        "label_sha256": "8ae21dbc9b4c48773df69a8445cd77033ed7a908d7de73c3b0b0fce923e5f7cd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0777.jpg",
+        "size": 2549697,
+        "mtime": 1783307841000000000,
+        "label_sha256": "c81633a22369a26ffffa059945ba2ffdf9f3cad513069148a34f4fb1f705e8e7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0778.jpg",
+        "size": 2596324,
+        "mtime": 1783307842000000000,
+        "label_sha256": "42bf6ab3db660120b27003afb47dcf54be688a3a3b0e41a0ad5afc39ab3ca867"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0779.jpg",
+        "size": 2331060,
+        "mtime": 1783307844000000000,
+        "label_sha256": "45d21c3afd7f361665a0cb8d9b730dce895acc89951cae907b04d9936cc737e7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0780.jpg",
+        "size": 2595847,
+        "mtime": 1783307846000000000,
+        "label_sha256": "42bd1e12d47d5354202964363d032a2ba03bf28b7c291540055baa7168992b26"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0781.jpg",
+        "size": 2878353,
+        "mtime": 1783307848000000000,
+        "label_sha256": "91940119529318212c1d5a55c47ad0d48f964a548b537c1bdbf17d33b1cd8ff6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0782.jpg",
+        "size": 3674576,
+        "mtime": 1783307850000000000,
+        "label_sha256": "b73e279049429f32637e53013086ef4646a5117d1e5cc4dd047b10072837f7e4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0783.jpg",
+        "size": 3095650,
+        "mtime": 1783307853000000000,
+        "label_sha256": "b52f7ba65f8c46cfb792848b329342050211084b003ed33effb971eeae5f5fbb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0784.jpg",
+        "size": 3055385,
+        "mtime": 1783307854000000000,
+        "label_sha256": "1d656bd9d4f8212a55f24067933340f71d38de14ba3602d24fc88495a3593ce5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0786.jpg",
+        "size": 2802035,
+        "mtime": 1783307861000000000,
+        "label_sha256": "db6eaa065c9942c74f3c4b4c3f5f38b9b3e3273a1d32a3b12e9857eeb4dad49f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0787.jpg",
+        "size": 2790723,
+        "mtime": 1783307862000000000,
+        "label_sha256": "43b788d754515a891c55dc53c20f9335cba76d3c08830fe4ee83187523da924b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0788.jpg",
+        "size": 3082776,
+        "mtime": 1783307865000000000,
+        "label_sha256": "cd176bbd97cf380004e3ab1c1eb9527d32f2b9dc4f73c1bd749ef65c01648d1f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0789.jpg",
+        "size": 3639328,
+        "mtime": 1783307868000000000,
+        "label_sha256": "c124e18db07189d4c488e2a7bb6662348c2cc92e32b208b16e7d809e1ebe503e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0790.jpg",
+        "size": 3961017,
+        "mtime": 1783307872000000000,
+        "label_sha256": "a2a463e6f820403fd51569c659ec86efdfe6cf365fb9003682c6331dd0fe65eb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0791.jpg",
+        "size": 1582142,
+        "mtime": 1783307881000000000,
+        "label_sha256": "476cec1c87463f72aa8280e5abbc6fd74dae1be485e63d6a3b7dcde189dd8878"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0793.jpg",
+        "size": 2750068,
+        "mtime": 1783307891000000000,
+        "label_sha256": "07e2204becf15a9bbdd3244befda690904bdec385bbdac9b53955f2c4f63a3fe"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0794.jpg",
+        "size": 3381426,
+        "mtime": 1783307893000000000,
+        "label_sha256": "870000abbda3b1c246b5dcbcc0f2296f955c2613ccad8965e0a566ba5b3843d7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0795.jpg",
+        "size": 2297264,
+        "mtime": 1783307895000000000,
+        "label_sha256": "49c9201967a86eb4b839f7c8bf7a2c41b61d17e6cc25748d224a598ea5fecd9e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0797.jpg",
+        "size": 1664735,
+        "mtime": 1783307902000000000,
+        "label_sha256": "9d98d05665be7cbf332b528d8f129ed8de8a740b45398e60fc8837bf086f9fe1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0798.jpg",
+        "size": 1281144,
+        "mtime": 1783307906000000000,
+        "label_sha256": "8397995af39c32161585b54d95628f36618212bf2fb6a303ef0ec2eb4619cecb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0800.jpg",
+        "size": 1469201,
+        "mtime": 1783307927000000000,
+        "label_sha256": "825e70bde3417f212456ba9fb228e038e6ea05ea6e0e0ec9733de4fa8c2e2045"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0801.jpg",
+        "size": 2786804,
+        "mtime": 1783307930000000000,
+        "label_sha256": "1decdf63a54fc296daed52f9a92464c78d59a0b651cb839391e67ca714ecb203"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0802.jpg",
+        "size": 2903885,
+        "mtime": 1783307936000000000,
+        "label_sha256": "7c8da79e7fab34816b154f8786c7ef1c7ce6c98ab173823f5d73c1fe685b5f79"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0803.jpg",
+        "size": 2569461,
+        "mtime": 1783307991000000000,
+        "label_sha256": "c93cbf7a4e5ce3d52f7593d3db18187fdbe31e4d353bbbf40f21a5d59db59214"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0805.jpg",
+        "size": 2546511,
+        "mtime": 1783307994000000000,
+        "label_sha256": "9aa82d84c586985ed1abe92f82d1b8832228be20c395ac555ad6fbea32310766"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0806.jpg",
+        "size": 2885956,
+        "mtime": 1783308000000000000,
+        "label_sha256": "e203026853f7b3f3243021546a7f2b056719d71106457069938730e780a3af5d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0807.jpg",
+        "size": 3105044,
+        "mtime": 1783308001000000000,
+        "label_sha256": "e9206b69820ef7aecfe2d89726c1964f73c21a5f16e7d716dc1ef5f11fdc5302"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0809.jpg",
+        "size": 2666504,
+        "mtime": 1783308006000000000,
+        "label_sha256": "7f5e5423a1ce0e45f3035f8700273fb6d9b11b8fe02299ae8bf94ea1000e1ae8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0810.jpg",
+        "size": 2898889,
+        "mtime": 1783308007000000000,
+        "label_sha256": "f7fff1289432dd90c4675608323b9b574aa5bbceaead4b65a42cd2b1d6320544"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0811.jpg",
+        "size": 2624643,
+        "mtime": 1783308008000000000,
+        "label_sha256": "79119ad9ef5d06e0d4c783abb2d3deeb74a1c2309a1e1db93ad4f1ed0a8fb775"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0812.jpg",
+        "size": 2451353,
+        "mtime": 1783308010000000000,
+        "label_sha256": "869b0b50f9232570c9e87ef94497e0a6fa359d62d91e203113a5c52d7d0d4ca7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0813.jpg",
+        "size": 2662465,
+        "mtime": 1783308010000000000,
+        "label_sha256": "0defdfad3316bf1eda396b1adf11c8832b92b5a3fc8abea243e7d76abb028a22"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0817.jpg",
+        "size": 2927817,
+        "mtime": 1783308041000000000,
+        "label_sha256": "181aa79a6a0aa4299326314b3c4631ed39c93e7a90f61af43b218e912dc9163f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0820.jpg",
+        "size": 647723,
+        "mtime": 1784292098091882800,
+        "label_sha256": "86fc75badbb34fd293233ed641e7f59fcf49cfc492bba0a99703c1ca13d845c6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0821.jpg",
+        "size": 753902,
+        "mtime": 1784292103411677900,
+        "label_sha256": "3c2b929ce73d0c8755c70d7058f926ec043f0338215d29ecce88ffebbb015613"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0822.jpg",
+        "size": 888471,
+        "mtime": 1784285680105524200,
+        "label_sha256": "aadd44b22d93553bdaae9bbe7a0207b0dce775cfbf046875ff0bed9cfaef739f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0823.jpg",
+        "size": 419337,
+        "mtime": 1784285680265153100,
+        "label_sha256": "ce8855a3d90dc06bad2199ed16575ffe361d227fa640c020a7d3d08cc193fb21"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0824.jpg",
+        "size": 554243,
+        "mtime": 1784285680519886500,
+        "label_sha256": "ab402d1d0c12607fe62bc1fe6c50a8f6a550672521d360a838427f29592425b0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0825.jpg",
+        "size": 545934,
+        "mtime": 1784285680759460700,
+        "label_sha256": "c36e16db035e4ea405e928e5fb3dd8bd4db90a0c20b10c8b5af4736ec82277d8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0826.jpg",
+        "size": 502961,
+        "mtime": 1784285681079144300,
+        "label_sha256": "132c912d01c71c8684edc922b63b82e95c6f0b7c7602c92acc096b0273126b57"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0827.jpg",
+        "size": 557039,
+        "mtime": 1784285681405128000,
+        "label_sha256": "35e41716d093ca303155bb626b5a2e0fb94d96f4f8f7a3dea283ac0a7b6afcb6"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0828.jpg",
+        "size": 526167,
+        "mtime": 1784285681521070900,
+        "label_sha256": "e4d02861c0eed1388427fc70e413aaeb4807d30573a04b9385ee2feb8063278c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0829.jpg",
+        "size": 546218,
+        "mtime": 1784285681667191500,
+        "label_sha256": "d9537debad96d10747a9680c0fdc67740c6d3cb04d8d46293bf52ea6b3e3d7fa"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0830.jpg",
+        "size": 768870,
+        "mtime": 1784285681882597700,
+        "label_sha256": "26e967463d959ca4b12b89e9ca4b3d70bc55fe3727c1422599e1995dbb92d01b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0831.jpg",
+        "size": 404648,
+        "mtime": 1784285682506059700,
+        "label_sha256": "057e667c59ef6b6f82218004b9395efb58116fccc9f1e25f90409ec7b4fc0012"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0832.jpg",
+        "size": 755252,
+        "mtime": 1784285682720976200,
+        "label_sha256": "b4b51298f3796432abca997097841be9dbb3e59738069b445a0dd383a89dc045"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0833.jpg",
+        "size": 694280,
+        "mtime": 1784285682993911300,
+        "label_sha256": "4c5d2cf9796886719a938c8b1e919aebd787263b20e7f2451e628558e728c095"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0834.jpg",
+        "size": 534462,
+        "mtime": 1784285683319794900,
+        "label_sha256": "523d8bcf62f7de0cd5e8999df9fa75a0d90c7600b7b8db8b314781478790202b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0835.jpg",
+        "size": 485749,
+        "mtime": 1784285683649355700,
+        "label_sha256": "f5623760c685ca11bca6998c3765f957e9d8a0386b46612146dd04d1a0a10719"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0836.jpg",
+        "size": 649050,
+        "mtime": 1784285683762153900,
+        "label_sha256": "bb215c5c9cb6518e7862ea2d1ff2dad729034afd446dd3b4cdda04bd1d1843d1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0837.jpg",
+        "size": 846492,
+        "mtime": 1784285683918217800,
+        "label_sha256": "bc6682c953885740ca38ba55b12cfef25c841654eada4affe64149e4ee023c17"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0838.jpg",
+        "size": 658392,
+        "mtime": 1784285684128667200,
+        "label_sha256": "92caf39a95f29d548f16d3ade1831b80bd156f7249d0a8faa37f29f4f1f51265"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0839.jpg",
+        "size": 573928,
+        "mtime": 1784285684393355600,
+        "label_sha256": "8710ea21b144077eab364dce1ed37038a5f238e97170fd78aa9a318e16cfbc91"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0840.jpg",
+        "size": 548038,
+        "mtime": 1784285684770924800,
+        "label_sha256": "df5e07e78f1ffd37b5f6f58730f8497d776fe1fc0a256c137d1cf6d1ed3aeb8d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0841.jpg",
+        "size": 577863,
+        "mtime": 1784285684962484500,
+        "label_sha256": "c3c52669b09403a2297ec978f6a66509d74f4d693a7e7bbf4ca81d4ec9283408"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0842.jpg",
+        "size": 661162,
+        "mtime": 1784285685213421000,
+        "label_sha256": "4803f426c391fee63aacd7a6416cdb3b4805c57b1c45bab687af05dd569e4133"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0843.jpg",
+        "size": 504761,
+        "mtime": 1784285685501209100,
+        "label_sha256": "2ffdfc2419fd261c5f9b8a271b5d2d8623e2486f44731bd56937aa5994527b3e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0844.jpg",
+        "size": 447561,
+        "mtime": 1784285685600890300,
+        "label_sha256": "7976a8bbfd0d38678d522274987bb025e3def005a41a10d26424e25653d6da16"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0845.jpg",
+        "size": 577737,
+        "mtime": 1784285685746957100,
+        "label_sha256": "0c02430ba97a19bf2c273c2aced3aa46cb4f0672e3c59ae3c6348783649b018f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0846.jpg",
+        "size": 592528,
+        "mtime": 1784285685928460900,
+        "label_sha256": "b1179d2bc1d72a2c9f968afba24f5dacb4c2a20aa93de9c828df98c17bdeeb6d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0847.jpg",
+        "size": 535424,
+        "mtime": 1784285686156724700,
+        "label_sha256": "fc0d5e466bfa3a301b265a76ea260f046ce5e4ef13b992211b6cf48e5aa9ef40"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0848.jpg",
+        "size": 581621,
+        "mtime": 1784285686425362400,
+        "label_sha256": "4779834fe2b9d7ae63222e187ec5de4fcbda927c50061fc8ae2d3ab79e8baa5e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0849.jpg",
+        "size": 5641007,
+        "mtime": 1783332307997817800,
+        "label_sha256": "4be2634d1f952986b4ae958a8c3e8b8ccb5749d0e920f8b80a717e473420709d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0850.jpg",
+        "size": 4376511,
+        "mtime": 1783332307667041300,
+        "label_sha256": "627a24f70d8511bbe9e1612b36c261a0ddd7561e368a34ba929096b4e0f3d970"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0851.jpg",
+        "size": 4297625,
+        "mtime": 1783332308029118100,
+        "label_sha256": "9642584d52fd78c92e7d8c10a4eaf3fda9201dc72112e803a975c41141c54e6b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0854.jpg",
+        "size": 4520410,
+        "mtime": 1783332308712204500,
+        "label_sha256": "2be678b9e227f62a5af8fd966f60b538a0eac226804a079e4084a095f6be9046"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0855.jpg",
+        "size": 4970976,
+        "mtime": 1783332308524119000,
+        "label_sha256": "e6f72aa30ed26f968eea26f1fcfd947f9ef8972972f7470b7e3480772151f171"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0856.jpg",
+        "size": 5183858,
+        "mtime": 1783332308868623300,
+        "label_sha256": "ed3894469405fec1e41a10cf36b01d33987703a9b1473712f877da1bf0b5c19d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0857.jpg",
+        "size": 4515524,
+        "mtime": 1783332309055667700,
+        "label_sha256": "2db2115a4b8f218d7648b60ef5df6e7f026d0111f1cc646bca855a5e86dded13"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0858.jpg",
+        "size": 4206980,
+        "mtime": 1783332311956153300,
+        "label_sha256": "32d68acda2ae7035e30faf4af200b8eb68041346d0c1a8faad2fd7ee7e3dcb19"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0859.jpg",
+        "size": 4013361,
+        "mtime": 1783332311413109000,
+        "label_sha256": "70df101ae456d5482c3bc93ebe88b7bb8eda807b4844f937d599efe46e498ea4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0860.jpg",
+        "size": 4044761,
+        "mtime": 1783332311342444200,
+        "label_sha256": "fcf1302a68d27c3421b27e519f71cb99c9607e226522380888328ec9f963e9b7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0861.jpg",
+        "size": 4565760,
+        "mtime": 1783332311662745100,
+        "label_sha256": "3d3f007c9fc37cf03d441941062a4567a9831cbcc9023e2226939190b9f33669"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0862.jpg",
+        "size": 4458370,
+        "mtime": 1783332311489966500,
+        "label_sha256": "7b34c86821732aa96725923dc7764aa53a1373c153d750643858286743011006"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0864.jpg",
+        "size": 4568211,
+        "mtime": 1783332311699426400,
+        "label_sha256": "37da6b73a8692da3ac59e90b58e682804625e39522908675923c190097ea78a7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0867.jpg",
+        "size": 4415418,
+        "mtime": 1783332313246556700,
+        "label_sha256": "3b9d4f644168785f96a62c4991414d425e59941a13553b9aba11781216b28e7d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0868.jpg",
+        "size": 4303736,
+        "mtime": 1783332313140565500,
+        "label_sha256": "6ceda5ee72e2052d49e1bfda12e217b82bf760b4739e657974e31c5a60552396"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0870.jpg",
+        "size": 3854098,
+        "mtime": 1783332312683797400,
+        "label_sha256": "c6e54c188d58de1fb4448240ed2fd2e608373f172687e01c95d72984ac5924ba"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0872.jpg",
+        "size": 4518412,
+        "mtime": 1783332312905328500,
+        "label_sha256": "fb0ddc918ea47963cc4c86b86346cd2536f13c68ba2298843df1873160e9d89f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0874.jpg",
+        "size": 4090084,
+        "mtime": 1783332313105984400,
+        "label_sha256": "2cc8d9e04c0b251d537517e6292ca438e27a50b4d4f37697c2f30ca54bf4f973"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0875.jpg",
+        "size": 3675127,
+        "mtime": 1783332313213736100,
+        "label_sha256": "6e519704cbc5b6f2650d49879534525545d75802db5c97837e181d4cf48c966e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0876.jpg",
+        "size": 4268441,
+        "mtime": 1783332314055477900,
+        "label_sha256": "416a9b820c1fe1bdcc95066725cfa5896829ad33e1f94f17789a9c93e49b4e0a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0877.jpg",
+        "size": 4093519,
+        "mtime": 1783332313398118300,
+        "label_sha256": "ba5eedb1cda6a0bce2264aee9161fc8edf5bf227ac6803de89be00ef4a1bed29"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0879.jpg",
+        "size": 3774285,
+        "mtime": 1783332313982139900,
+        "label_sha256": "8749d1e0c34224a2a362584526a50a454af3e1de42380b7366e5f8dbbc7c55f8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0882.jpg",
+        "size": 3848495,
+        "mtime": 1783332314210208900,
+        "label_sha256": "8d0d65558b9f5483a8ba69b49ee9aa0ec544436ab44df170b6bdf5e1ae55370e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0884.jpg",
+        "size": 4644632,
+        "mtime": 1783332314599473300,
+        "label_sha256": "f33309d403ea52def566208edefcd6a56aba82f843edac33e8cf0f70800a1205"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0885.jpg",
+        "size": 4411146,
+        "mtime": 1783332314879871400,
+        "label_sha256": "8313d3221fa85d6afd8cac97292cbca9f778cddde03c2470011446e1a0546f97"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0886.jpg",
+        "size": 4087386,
+        "mtime": 1783332314242143400,
+        "label_sha256": "c09036bbe5dc9d555595e555e26d8d233e5006c30e554d77e1bd8a203f71271e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0887.jpg",
+        "size": 4042738,
+        "mtime": 1783332314109692800,
+        "label_sha256": "4770d0b1c8719a0891ba9f9f6267ac64c94cf88e60daa229058fe15fb3c888bd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0888.jpg",
+        "size": 3962344,
+        "mtime": 1783332314389667100,
+        "label_sha256": "3a7a53fa55866b2d0d5634d05a8faa284d13b06d00409e8278565dae744dcea4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0889.jpg",
+        "size": 3915338,
+        "mtime": 1783332314400263900,
+        "label_sha256": "8e5ba1bbfca2ff5565cf3e6395f11f05d27854e4c2c4f6f5b2b78d57088d1c8e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0890.jpg",
+        "size": 3947118,
+        "mtime": 1783332315196084300,
+        "label_sha256": "14c5d095991941c7ed9227c58460a7d0a02316a3cd0a770baa268f14cb94b873"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0891.jpg",
+        "size": 4851561,
+        "mtime": 1783332315229437400,
+        "label_sha256": "907ebdc9670f5429e1ef79a79732879b2b0a8049858bec58522ec3b5596a6429"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0892.jpg",
+        "size": 4077199,
+        "mtime": 1783332315582337600,
+        "label_sha256": "5749aea20b34411c8b8625cbec1c6adcc3ad355cd61df1f2623d5053d091a6d4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0894.jpg",
+        "size": 3984634,
+        "mtime": 1783332316617822600,
+        "label_sha256": "58dc7277c9f094dc54d74c9b249477c15661da39a61acc21cf6fa9dddbe61e90"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0895.jpg",
+        "size": 1178800,
+        "mtime": 1783332315474770800,
+        "label_sha256": "2df0d20fb1bf6da91bb8378cc08491d4fd4a338ea017e295a2b6860f1b90b5d9"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0896.jpg",
+        "size": 1170909,
+        "mtime": 1783332314934168100,
+        "label_sha256": "27027d0f839c73e067d097e58dcd8b64feb7bf283aa2a53434fec7b32b33d144"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0897.jpg",
+        "size": 1190325,
+        "mtime": 1783332315524917100,
+        "label_sha256": "d2ce5c8728086f2ea47e3364411a5b511b63709308cdeeeebed349d14a7554af"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0898.jpg",
+        "size": 1210454,
+        "mtime": 1783332314984269200,
+        "label_sha256": "b7c4a657653373829be50ee3dce4666d7a8ca2e0095f91b08440bb6f9d274280"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0899.jpg",
+        "size": 1267494,
+        "mtime": 1783332314984269200,
+        "label_sha256": "ceba36d78fea78afc6523a522cad260c10325533c8641de3a1d413d9105908ca"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0900.jpg",
+        "size": 1261115,
+        "mtime": 1783332315087859400,
+        "label_sha256": "8fa1a0eb362150eebc4ffb1f068e3da35c5d608fe51be63a5e601b175c23fcfd"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0901.jpg",
+        "size": 1259109,
+        "mtime": 1783332315716829400,
+        "label_sha256": "12dffc45433a827dea65c5411d15bc6da43a41a1849075eea5a17cbd9cd9318b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0902.jpg",
+        "size": 1269674,
+        "mtime": 1783332316002817200,
+        "label_sha256": "2e11f86884486db96090bb5f9528f54acce6e73a7e67a640eb023b9396639ecb"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0903.jpg",
+        "size": 1266170,
+        "mtime": 1783332315756504400,
+        "label_sha256": "e519550bf37dd8130332bc9034a126dc106c06003b8c8c539fcbf0677177304c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0904.jpg",
+        "size": 1248991,
+        "mtime": 1783332315680965100,
+        "label_sha256": "7e75db921af30ded4103d7efd230152f250682cba5434d9bb372d6212ca1b3d3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0905.jpg",
+        "size": 1226012,
+        "mtime": 1783332315866322500,
+        "label_sha256": "1ffd5e2e6e4bda844e3edb61c2ff7534ddf92ced23a8802489b1a6d50d7bcdd3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0906.jpg",
+        "size": 1257023,
+        "mtime": 1783332315818911700,
+        "label_sha256": "ebabd44313451eb8d58ef16128e1bad138f7bdbd68b7182dd630c0ea9d1a785b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0907.jpg",
+        "size": 1258625,
+        "mtime": 1783332316305801300,
+        "label_sha256": "d838b60ca06cb369dbc7c716e2679d2c4ad5189604c2e71b200ceb0cab6b63e1"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0908.jpg",
+        "size": 1261735,
+        "mtime": 1783332315941088500,
+        "label_sha256": "b4121ae9db1c641ab3566494036ab6989b30bb7fcb3c1dea3b2df9434bcc1ef7"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0909.jpg",
+        "size": 1254188,
+        "mtime": 1783332315939085800,
+        "label_sha256": "d2cb06849c5494a0c720ffdb2425fd0f53c66e32bc49d416152bcec7b6612ca5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0910.jpg",
+        "size": 1261290,
+        "mtime": 1783332315829499700,
+        "label_sha256": "07c80c45a6416b8cea23878d4b7f2603227a97d78e713be017cf6cdefb76086f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0911.jpg",
+        "size": 1263971,
+        "mtime": 1783332315810232900,
+        "label_sha256": "961df3854a7802860ecbcaf4627a23f80bb9a029eb74657afaa45af2cf539194"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0912.jpg",
+        "size": 1243230,
+        "mtime": 1783332316809699600,
+        "label_sha256": "4e29f8bf8d3032b31eb3463ea8405f7b9fb7290ae6c96ca4a2d4a2c7b7f83b56"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0913.jpg",
+        "size": 1246303,
+        "mtime": 1783332316755743500,
+        "label_sha256": "e859bdeecc2310d754f378b4ef5146b32bb26d25693563f2291608490742c6fa"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0917.jpg",
+        "size": 2835146,
+        "mtime": 1783332316741407200,
+        "label_sha256": "940bc9389e790cee3e5c4facc834c99b4525af195985995ee6f2990dd3da057d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0918.jpg",
+        "size": 4247402,
+        "mtime": 1783332316995008600,
+        "label_sha256": "b9d0ca7d038d46d95f51f93a67f020dcff3d82d67214da4f69a1fc76ba490ea2"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0919.jpg",
+        "size": 3790059,
+        "mtime": 1783332317168379600,
+        "label_sha256": "b7d25fc1888a93befd7c7bb519811944d7587da52cc0f684bd8add98739e8915"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0921.jpg",
+        "size": 4659353,
+        "mtime": 1783332317211061300,
+        "label_sha256": "92872e2c233f0387dbc9a91fe32f7e3218353385a9e199b847204f52e5db49e4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0922.jpg",
+        "size": 4599702,
+        "mtime": 1783332317519677200,
+        "label_sha256": "8671f781075779eae2b9b8e240d33c8b383590b6963658c2af1b977bd453c39c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0924.jpg",
+        "size": 4248385,
+        "mtime": 1783332318091156100,
+        "label_sha256": "a6ed7a6349c9cb85c101af6167a629224b556e46032994722c6dd0f1bbd146ce"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0925.jpg",
+        "size": 4561704,
+        "mtime": 1783332318707179500,
+        "label_sha256": "738c75d72bb8283b1cf5d444e8c156111d053cec51ee625a922050e1d34a3943"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0926.jpg",
+        "size": 4170278,
+        "mtime": 1783332318146362100,
+        "label_sha256": "3945643aa313b9e09466df466ba524fcf2529264c55359b1f66048b5c7297b27"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0927.jpg",
+        "size": 1330939,
+        "mtime": 1783332317795074400,
+        "label_sha256": "b1f78d6f12eaa5d352a47a0178ad98a30bf0c72f138e09c27dfb843b40ed741a"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0928.jpg",
+        "size": 1307694,
+        "mtime": 1783332317701266300,
+        "label_sha256": "ba82578f004eb15ec9b3f83b583b9771957f3e5024683225330ed505ab0c8670"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0929.jpg",
+        "size": 4618092,
+        "mtime": 1783332318602264600,
+        "label_sha256": "0cfee7c82c84a1d5e5d08d1a1189ab57c1ff948f608231ae63f3bc6a2a08cb73"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0930.jpg",
+        "size": 4010394,
+        "mtime": 1783332318474123100,
+        "label_sha256": "08bae04454139c5fa3a181e57225477bab01080e15d8cdbf55b1ca0b7ae15432"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0931.jpg",
+        "size": 3892485,
+        "mtime": 1783332317809884900,
+        "label_sha256": "92ef8c00a9ba670c17cb2b7c5738e6141671bf7f1b37d49ad145b3467aeb9144"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0932.jpg",
+        "size": 4339959,
+        "mtime": 1783332319056995400,
+        "label_sha256": "02645422e91f145cd03d668d688b4a5a60cb9c490a1c6cb0db0b22daae3dc67c"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0933.jpg",
+        "size": 4455511,
+        "mtime": 1783332319087635900,
+        "label_sha256": "e725974ec3e7357f5fc10f896d23da55b9cc0c51a0a61e3319c9eb76a6667978"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0935.jpg",
+        "size": 2642506,
+        "mtime": 1783332318739074500,
+        "label_sha256": "831fded5bc517667548914650451627bdcfa5919c6b033c233f7692524403b18"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0936.jpg",
+        "size": 3157978,
+        "mtime": 1783332319117318100,
+        "label_sha256": "71406e849655c3db62064d5408978d268054f5c4258f0365a7b4dce3b077faa5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0937.jpg",
+        "size": 3433710,
+        "mtime": 1783332319301089000,
+        "label_sha256": "29fe4011cdc5a4f0f0144ccf63f5e0c456d71e2a144527350f12cb39e9b3f958"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0938.jpg",
+        "size": 3983346,
+        "mtime": 1783332318973978000,
+        "label_sha256": "7092f687e9aeb8b570e054e255217663a4b10a8997e59dc25fa1b97cdace3aa3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0939.jpg",
+        "size": 4758112,
+        "mtime": 1783332321337843600,
+        "label_sha256": "cdf35882caa1e6382043d36ce36b1ded0942cf3593075bc340c95cf2426a53b5"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0943.jpg",
+        "size": 4224567,
+        "mtime": 1783332320148707700,
+        "label_sha256": "1651b69e4c69c95a26019798199c46c62a93d5dcabebe44bf2e900b8784e658d"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0944.jpg",
+        "size": 4168639,
+        "mtime": 1783332320265140200,
+        "label_sha256": "b5ce3c78d3c082fa5570cc9b57e88b2b844240ce5fa04eb04079ff981908115f"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0945.jpg",
+        "size": 4164978,
+        "mtime": 1783332320328443200,
+        "label_sha256": "e0605fc0b5d2d6c1bdf9dac12b62bcfa88f419de41b95c83a2337c8edaaab2d0"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0946.jpg",
+        "size": 4485163,
+        "mtime": 1783332320418007700,
+        "label_sha256": "1c7bfd8620313c46d1903a62b40013d5e3296177fb6e09e50619ff40f09052ba"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0951.jpg",
+        "size": 4456590,
+        "mtime": 1783332321995981000,
+        "label_sha256": "6afa19cc2aacdaafb1c69534e041f6778d09fe83942eadd3d47f46c5e5f97c3b"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0952.jpg",
+        "size": 3135955,
+        "mtime": 1783332321774499300,
+        "label_sha256": "77f29ea1c7fd611ad14723abfddc5681b446e5fa6b939a696ac2e4bcdedcc297"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0954.jpg",
+        "size": 4413849,
+        "mtime": 1783332321529062900,
+        "label_sha256": "e0bb330d34aa0bac35a9e2e9bf0323ba7f0d86ea77ccb80d01337e54d1ea6be8"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0955.jpg",
+        "size": 4498680,
+        "mtime": 1783332321822960800,
+        "label_sha256": "ee2a874a02b4a8c87abafa97efe9a9f50679755fc5dd9462e9558555e7611d7e"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0956.jpg",
+        "size": 3440178,
+        "mtime": 1783332320979154300,
+        "label_sha256": "be5ace655d2187a11ac093eeea1595dc57b765cc09e83491895687078af2a0b4"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0957.jpg",
+        "size": 4222706,
+        "mtime": 1783332321763709000,
+        "label_sha256": "3d9d778413a8dd24cd6686dd9c33a75061092ec2323f91a2e9e21d0b20fd6499"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0958.jpg",
+        "size": 4276450,
+        "mtime": 1783332321652281700,
+        "label_sha256": "4ff2dea55e1b24b02393a715d7f4ec304f589df6abf4ac745411aec708f8b284"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0959.jpg",
+        "size": 4496165,
+        "mtime": 1783332321831898400,
+        "label_sha256": "dafd16e463b5068dd8743569e76d5dfe3ed343aad68d4ab901c40c4c235caf12"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0960.jpg",
+        "size": 4234657,
+        "mtime": 1783332321930155600,
+        "label_sha256": "c88cc88ec8ef059ad25d04af02de6d0ced0768de92de30f78db4bf817ba1dbba"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0962.jpg",
+        "size": 4925575,
+        "mtime": 1783332332114276200,
+        "label_sha256": "a3da1bf6aa4e48f0947d9911a843538ff9fcfa103587cf5d0dacaced1b5ab1e3"
+      },
+      {
+        "image": "E:\\mastercode\\data\\orange_yolo\\train\\images\\IMG_0963.jpg",
+        "size": 4815703,
+        "mtime": 1783332331918935800,
+        "label_sha256": "6564cc3a7266e456ebab33acd542f71ff10a00d8bdd5558d191ba057a772e24d"
+      }
+    ],
+    "code_sha256": "c7fee4bb1da5134060058d8161336de85a8c61b8a2faa5ace77dc914e99c09ff"
+  },
+  "source_identity": "a72996e1c19804ab439079bc6a2403b07b98ec8404d70c723a9617ab852214fb",
+  "train_images": 676,
+  "parameters": 15401,
+  "losses": [
+    0.6103984625381831,
+    0.5489644503452369,
+    0.5175333037178897,
+    0.5053472767567494,
+    0.4914192479743055,
+    0.48657851459006585,
+    0.4839791503883678,
+    0.4780319403614518,
+    0.4743656858184634,
+    0.4736208527751223,
+    0.46863650534985335,
+    0.46996683093923086,
+    0.4662158797831225,
+    0.4602510805666094,
+    0.46231589162138087,
+    0.4633118570203612,
+    0.45946449006097556,
+    0.4597468136330328,
+    0.4559771651347008,
+    0.4525904027667977
+  ],
+  "cache_seconds": 32.240352099999996,
+  "training_seconds": 81.34271910000001,
+  "device": "cpu",
+  "batch": 16,
+  "optimizer": "AdamW",
+  "lr": 0.001,
+  "weight_decay": 0.0005,
+  "amp": false,
+  "selection": "last fixed epoch; no validation/test labels or metrics"
+}

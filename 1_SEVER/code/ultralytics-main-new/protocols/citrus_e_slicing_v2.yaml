@@ -1,0 +1,37 @@
+protocol_id: citrus_e_source_balanced_slicing_v2
+date: '2026-09-08'
+base_training_protocol: citrus_paper1_formal_v2_ram.yaml
+scope: E-series only; explicit input treatment, not a silent augmentation change
+training:
+  tile_fraction_per_axis: 0.6
+  windows: global plus four overlapping corners before resizing
+  tile_probability_when_available: 0.5
+  E06_tile_probability_when_available: 0.25
+  global_only_models: [E00_global_control, E02_phase_global, E05_hybrid_global]
+  no_valid_tile: retain global view
+  epoch_length: number of original training images
+  cache: true
+  preserve_standard_mosaic_and_other_augmentations: true
+  polygon_clip: shapely rectangle intersection
+  min_area_filter: none
+  disconnected_or_invalid_polygon: reject entire derived tile; keep original global label
+validation:
+  each_epoch: original whole validation images via existing validator
+  checkpoint: best_mask.pt selected by whole-image mask mAP50-95
+  after_training: paired global versus full-plus-four-slices at same common mask raster
+  common_mask_long_side: 640
+  inference_imgsz: 640
+  confidence: 0.001
+  merge: class-aware box NMS; no instance mask unions
+  iou: 0.7
+  max_det_per_original_image: 300
+  tiny_recall_diagnostic: visible mask area below 256 at 640-long-side, conf .25, mask IoU .5
+limits:
+  - Novelty and improvement are hypotheses until controlled training is completed.
+  - Sliced inference requires up to five forward passes; Params do not represent its extra compute.
+  - This paired raster AP is not directly comparable to historical stride4-validator AP.
+  - Eight experiments, four topologies. E00/E01; E02/E03/E06; E04/E05; E07.
+  - E06 input ratio is an explicit controlled treatment, not a changed optimizer/AMP setting.
+  - E07 replaces bottom-up neck refinement with direct top-down P4; full task towers retained.
+
+

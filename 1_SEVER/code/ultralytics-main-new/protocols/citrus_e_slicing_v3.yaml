@@ -1,0 +1,62 @@
+protocol_id: citrus_e_source_balanced_slicing_v3
+date: '2026-09-08'
+base_training_protocol: citrus_paper1_formal_v2_ram.yaml
+scope: E-series only; explicit input treatment, not a silent augmentation change
+training:
+  tile_fraction_per_axis: 0.6
+  windows: global plus four overlapping corners before resizing
+  tile_probability_when_available: 0.5
+  E06_tile_probability_when_available: 0.25
+  global_only_models: [E00_global_control, E02_phase_global, E05_hybrid_global]
+  no_valid_tile: retain global view
+  epoch_length: number of original training images
+  cache: true
+  preserve_standard_mosaic_and_other_augmentations: true
+  polygon_clip: shapely rectangle intersection
+  min_area_filter: none
+  disconnected_or_invalid_polygon: reject entire derived tile; keep original global label
+validation:
+  each_epoch: original whole validation images via existing validator
+  checkpoint: best_mask.pt selected by whole-image mask mAP50-95
+  after_training: paired global versus full-plus-four-slices at same common mask raster
+  common_mask_long_side: 640
+  inference_imgsz: 640
+  confidence: 0.001
+  merge: class-aware box NMS; no instance mask unions
+  iou: 0.7
+  max_det_per_original_image: 300
+  tiny_recall_diagnostic: visible mask area below 256 at 640-long-side, conf .25, mask IoU .5
+limits:
+  - Novelty and improvement are hypotheses until controlled training is completed.
+  - Sliced inference requires up to five forward passes; Params do not represent its extra compute.
+  - This paired raster AP is not directly comparable to historical stride4-validator AP.
+  - Nine experiments, four segmentation topologies plus a separately trained guide. E08 segmenter equals E03.
+  - E06 input ratio is an explicit controlled treatment, not a changed optimizer/AMP setting.
+  - E07 replaces bottom-up neck refinement with direct top-down P4; full task towers retained.
+
+
+
+
+guided_E08:
+  control: E03_phase_sliced
+  segmentation_yaml: identical to E03
+  guide: TinyCropGuide, trained on train split only, then frozen
+  guide_input: 384
+  guide_epochs: 20
+  smoke_guide_epochs: 1
+  guide_seed: 20260908
+  guide_optimizer: AdamW
+  guide_lr: 0.001
+  guide_weight_decay: 0.0005
+  guide_batch: 16
+  guide_amp: false
+  guide_checkpoint_selection: last fixed epoch; never validation metrics
+  target: Gaussian bbox-centre heatmap, sigma 1.5 at stride8; not density counts
+  guide_loss: foreground/background mass-balanced BCE
+  crop_budget: global plus three heat-guided windows and one uncovered-area window
+  tile_fraction: 0.6
+  segmentation_tile_probability: 0.5
+  fallback: fixed windows on flat/nonfinite heatmap; global always retained
+  guide_training_is_extra_compute: true
+  inference_extra_guide_pass: one CPU pass, included in guided timing
+  comparison: E03 versus E08 for training; same checkpoint global/fixed/guided for inference

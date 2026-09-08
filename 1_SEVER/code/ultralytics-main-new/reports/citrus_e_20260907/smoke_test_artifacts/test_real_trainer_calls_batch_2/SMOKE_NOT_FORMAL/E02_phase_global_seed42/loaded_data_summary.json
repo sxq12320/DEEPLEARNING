@@ -1,0 +1,21 @@
+{
+  "rgb_paired_cache_dedup": true,
+  "source_balanced_training": {
+    "source_images": 4,
+    "source_instances": 94,
+    "cached_views": 4,
+    "tile_probability": 0.0
+  },
+  "train": {
+    "images": 4,
+    "instances": 94,
+    "npy_sources": 0
+  },
+  "val": {
+    "images": 4,
+    "instances": 15,
+    "npy_sources": 0
+  },
+  "device": "cpu",
+  "gpu": "CPU"
+}

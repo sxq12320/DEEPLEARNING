@@ -19,6 +19,8 @@ from ultralytics.nn.modules import (
     SegmentCitrusSAGEV5,
     SegmentCitrusSAGEV7,
     SegmentCitrusSAGEV7R,
+    SegmentCitrusSAGEV8,
+    SAGEV8PhaseStem,
     SAGEV6Exchange,
     SAGEV6Stage,
     AIFI,
@@ -583,6 +585,8 @@ class DetectionModel(BaseModel):
             m.training = True  # Setting it to True to properly return strides
             m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, self.yaml["channels"], s, s))])  # forward
             self.stride = m.stride
+            if getattr(m, "required_input_stride", 0) > self.stride.max():
+                self.stride = torch.cat((self.stride, self.stride.new_tensor([m.required_input_stride])))
             self.model.train()  # Set model back to training(default) mode
             m.bias_init()  # only run once
         else:
@@ -1848,6 +1852,7 @@ def parse_model(d, ch, verbose=True):
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
+            SAGEV8PhaseStem,
             SAGEV6Stage,
             Classify,
             Conv,
@@ -2203,6 +2208,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV5,
                 SegmentCitrusSAGEV7,
                 SegmentCitrusSAGEV7R,
+                SegmentCitrusSAGEV8,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2235,6 +2241,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV5,
                 SegmentCitrusSAGEV7,
                 SegmentCitrusSAGEV7R,
+                SegmentCitrusSAGEV8,
                 SegmentCitrusQualityLite,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
@@ -2256,6 +2263,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV5,
                 SegmentCitrusSAGEV7,
                 SegmentCitrusSAGEV7R,
+                SegmentCitrusSAGEV8,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

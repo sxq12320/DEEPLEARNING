@@ -1,0 +1,5 @@
+names:
+  0: fruit
+path: E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_3\SMOKE_NOT_FORMAL\_prepared_views
+train: train/images
+val: E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_3\source\val\images

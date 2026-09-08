@@ -1,0 +1,4 @@
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\source\val\images\IMG_0014.jpg
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\source\val\images\IMG_0016.jpg
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\source\val\images\IMG_0019.jpg
+E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_4\source\val\images\IMG_0022.jpg

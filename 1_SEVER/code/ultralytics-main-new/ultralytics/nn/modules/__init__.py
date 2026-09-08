@@ -223,6 +223,7 @@ from .citrus_sage_v5 import SegmentCitrusSAGEV5
 from .citrus_sage_v6 import SAGEV6Exchange, SAGEV6Stage
 from .citrus_sage_v7 import SegmentCitrusSAGEV7
 from .citrus_sage_v7r import SegmentCitrusSAGEV7R
+from .citrus_sage_v8 import SAGEV8PhaseStem, SegmentCitrusSAGEV8
 from .citrus_sage import (
     C3k2SAGE,
     C3k2SAGEShape,
@@ -282,6 +283,8 @@ __all__ = (
     "SegmentCitrusSAGEV5",
     "SegmentCitrusSAGEV7",
     "SegmentCitrusSAGEV7R",
+    "SegmentCitrusSAGEV8",
+    "SAGEV8PhaseStem",
     "SAGEV6Exchange",
     "SAGEV6Stage",
     "AIFI",
