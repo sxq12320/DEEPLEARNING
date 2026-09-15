@@ -1,0 +1,78 @@
+{
+  "epochs": [
+    300,
+    300,
+    300,
+    300,
+    300,
+    300,
+    300,
+    300,
+    300,
+    300
+  ],
+  "args_differences": {
+    "model": [
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_00_phase_control.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_01_geometry.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_02_copy_paste.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_03_geometry_cp.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_04_context_backbone.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_05_native_neck.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_06_structure_pair.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_07_structure_geometry.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_08_structure_complete.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V8_series/V8_09_dense_complete.yaml"
+    ],
+    "name": [
+      "V8_00_phase_control_seed42",
+      "V8_01_geometry_seed42",
+      "V8_02_copy_paste_seed42",
+      "V8_03_geometry_cp_seed42",
+      "V8_04_context_backbone_seed42",
+      "V8_05_native_neck_seed42",
+      "V8_06_structure_pair_seed42",
+      "V8_07_structure_geometry_seed42",
+      "V8_08_structure_complete_seed42",
+      "V8_09_dense_complete_seed42"
+    ],
+    "copy_paste": [
+      0.0,
+      0.0,
+      0.3,
+      0.3,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.3,
+      0.3
+    ],
+    "save_dir": [
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_00_phase_control_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_01_geometry_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_02_copy_paste_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_03_geometry_cp_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_04_context_backbone_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_05_native_neck_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_06_structure_pair_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_07_structure_geometry_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_08_structure_complete_seed42",
+      "/data/sxq/results/E_V8/CITRUS_EV8_ALL_300EP/V8_09_dense_complete_seed42"
+    ]
+  },
+  "unique_train_lists": 1,
+  "unique_val_lists": 1,
+  "yaml_hash_match": {
+    "V8_00_phase_control_seed42": true,
+    "V8_01_geometry_seed42": true,
+    "V8_02_copy_paste_seed42": true,
+    "V8_03_geometry_cp_seed42": true,
+    "V8_04_context_backbone_seed42": true,
+    "V8_05_native_neck_seed42": true,
+    "V8_06_structure_pair_seed42": true,
+    "V8_07_structure_geometry_seed42": true,
+    "V8_08_structure_complete_seed42": true,
+    "V8_09_dense_complete_seed42": true
+  }
+}

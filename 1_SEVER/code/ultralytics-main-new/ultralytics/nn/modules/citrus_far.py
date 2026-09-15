@@ -224,8 +224,12 @@ class CARAFE(nn.Module):
         h_, w_ = h * self.scale, w * self.scale
         w_kernel = self.pix_shf(self.enc(self.comp(x)))  # b, k_up^2, h_, w_
         w_kernel = torch.softmax(w_kernel, dim=1)
-        x_up = self.unfold(self.upsmp(x)).view(b, c, -1, h_, w_)  # b, c, k_up^2, h_, w_
-        return torch.einsum("bkhw,bckhw->bchw", w_kernel, x_up)
+        # Dilated patches of nearest-upsampled x equal ordinary patches of x
+        # repeated across subpixel phases. Contract on the low-resolution grid
+        # to avoid materializing B*C*K^2*(scale*H)*(scale*W) activations.
+        patches = F.unfold(x, self.k_up, padding=self.k_up // 2).view(b, c, -1, h, w)
+        kernels = w_kernel.reshape(b, self.k_up ** 2, h, self.scale, w, self.scale)
+        return torch.einsum("bkhpwq,bckhw->bchpwq", kernels, patches).reshape(b, c, h_, w_)
 
 
 class DySample(nn.Module):
@@ -265,7 +269,8 @@ class DySample(nn.Module):
         coords_w = torch.arange(w, device=x.device, dtype=x.dtype) + 0.5
         coords = (
             torch.stack(torch.meshgrid([coords_w, coords_h], indexing="xy"))
-            .transpose(1, 2)
+            # xy already returns [H,W]. A second transpose swapped spatial
+            # axes on squares and crashed on rectangular validation images.
             .unsqueeze(1)
             .unsqueeze(0)
         )  # 1, 2, 1, h, w

@@ -40,6 +40,8 @@ SMCAO V2.2 — 滑模控制自适应优化器调度器（局部极小值逃逸�
 import math
 import torch
 
+from .smc_utils import ControllerNumerics
+
 
 def _levy_noise(shape, device, alpha=1.5, scale=1.0):
     """
@@ -59,7 +61,8 @@ def _levy_noise(shape, device, alpha=1.5, scale=1.0):
     """
     # Mantegna 算法
     sigma_u = (
-        math.gamma(1 + alpha) * math.sin(math.pi * alpha / 2)
+        math.gamma(1 + alpha)
+        * math.sin(math.pi * alpha / 2)
         / (math.gamma((1 + alpha) / 2) * alpha * 2 ** ((alpha - 1) / 2))
     ) ** (1 / alpha)
     u = torch.randn(shape, device=device) * sigma_u
@@ -71,7 +74,7 @@ def _levy_noise(shape, device, alpha=1.5, scale=1.0):
     return step
 
 
-class SMCAOV22Scheduler:
+class SMCAOV22Scheduler(ControllerNumerics):
     """
     SMCAO V2.2 调度器 — 四项改进驱动的局部极小值逃逸。
 
@@ -174,6 +177,8 @@ class SMCAOV22Scheduler:
         v_max=10.0,
         verbose=True,
     ):
+        if not 1.0 < dither_alpha < 2.0 or not 0.0 < alpha_frac < 1.0 or memory_window < 1:
+            raise ValueError("SMCAO requires 1 < dither_alpha < 2, 0 < alpha_frac < 1, memory_window >= 1")
         self.optimizer = optimizer
         self.total_steps = total_steps
         self.c0 = c0
@@ -256,20 +261,13 @@ class SMCAOV22Scheduler:
     #  基础工具方法
     # ================================================================
 
-    def _compute_grad_norm(self):
-        """计算所有参数梯度的全局 L2 范数"""
-        total_sq = 0.0
-        for pg in self.optimizer.param_groups:
-            for p in pg["params"]:
-                if p.grad is not None:
-                    total_sq += p.grad.data.norm(2).item() ** 2
-        return math.sqrt(total_sq)
-
     def _get_cosine_lr(self, step):
         """Cosine 学习率调度"""
+        if hasattr(self, "_external_lrs"):
+            return 1.0
         if step < self.warmup_steps:
             return step / max(self.warmup_steps, 1)
-        progress = (step - self.warmup_steps) / max(self.total_steps - self.warmup_steps, 1)
+        progress = min(max((step - self.warmup_steps) / max(self.total_steps - self.warmup_steps, 1), 0.0), 1.0)
         return self.min_lr_ratio + 0.5 * (1.0 - self.min_lr_ratio) * (1.0 + math.cos(math.pi * progress))
 
     @staticmethod
@@ -314,7 +312,7 @@ class SMCAOV22Scheduler:
         rho = 1.0 - self.alpha_frac  # 衰减系数
         mem = 0.0
         for k, gn in enumerate(self._grad_norm_history):
-            mem += (rho ** k) * gn
+            mem += (rho**k) * gn
         return mem
 
     # ================================================================
@@ -386,7 +384,7 @@ class SMCAOV22Scheduler:
         # 注：Lévy 噪声的梯度注入在 observe_gradients() 中完成，
         # 这里仅对滑模面标量值添加扰动以影响停滞检测
         if self._in_escape and self._escape_step_counter < self.dither_max_steps:
-            current_scale = self.dither_scale * (self.dither_decay ** self._escape_step_counter)
+            current_scale = self.dither_scale * (self.dither_decay**self._escape_step_counter)
             # Lévy 标量扰动
             levy_s = _levy_noise((1,), device="cpu", alpha=self.dither_alpha, scale=current_scale)
             s_t += levy_s.item()
@@ -406,10 +404,12 @@ class SMCAOV22Scheduler:
         2. Escape 时注入 Lévy 噪声到梯度
         3. 更新分数阶记忆缓冲区
         """
-        if self.step_count < self.warmup_steps:
+        if self._warming_up():
             return
 
         gn = self._compute_grad_norm()
+        if not math.isfinite(gn):
+            return
 
         # 更新分数阶记忆缓冲区
         self._grad_norm_history.insert(0, gn)
@@ -422,21 +422,13 @@ class SMCAOV22Scheduler:
 
         # 机制1: Escape 时注入 Lévy 飞行噪声到梯度
         if self._in_escape and self._escape_step_counter < self.dither_max_steps and gn > 1e-12:
-            current_scale = self.dither_scale * (self.dither_decay ** self._escape_step_counter)
+            current_scale = self.dither_scale * (self.dither_decay**self._escape_step_counter)
             for pg in self.optimizer.param_groups:
                 for p in pg["params"]:
                     if p.grad is not None:
-                        grad_norm_p = p.grad.data.norm(2).item()
-                        scale_p = current_scale * max(grad_norm_p, 1e-8)
-                        noise = _levy_noise(
-                            p.grad.data.shape,
-                            device=p.grad.data.device,
-                            alpha=self.dither_alpha,
-                            scale=scale_p,
-                        )
-                        p.grad.data.add_(noise)
+                        noise = _levy_noise(p.grad.shape, device=p.grad.device, alpha=self.dither_alpha)
+                        self._add_relative_noise(p.grad, noise, current_scale)
             self._noise_count += 1
-            self._escape_step_counter += 1
 
     def _update_sliding_surface_stats(self, abs_s_t):
         """更新滑模面峰值"""
@@ -457,6 +449,8 @@ class SMCAOV22Scheduler:
         5. 动态调整 AdamW 参数 (lr, betas)
         """
         self.step_count += 1
+        if self._in_escape:
+            self._escape_step_counter += 1
 
         # 记录 loss
         if loss_value is not None:
@@ -466,9 +460,9 @@ class SMCAOV22Scheduler:
         cos_factor = self._get_cosine_lr(self.step_count)
 
         # Warmup 期间不做任何控制逻辑
-        if self.step_count < self.warmup_steps:
-            for i, pg in enumerate(self.optimizer.param_groups):
-                pg["lr"] = self.initial_lrs[i] * cos_factor
+        if self._warming_up():
+            self._apply_lrs(cos_factor)
+            for pg in self.optimizer.param_groups:
                 pg["betas"] = (self.beta1_default, self.beta2_default)
             self.mode = "warmup"
             return
@@ -493,10 +487,7 @@ class SMCAOV22Scheduler:
 
         # ── Escape 触发条件 ──
         # 结合滑模面停滞 + epoch 级 loss plateau
-        should_escape = (
-            self._surface_counter >= self.surface_patience
-            and self._cooldown_counter == 0
-        )
+        should_escape = self._surface_counter >= self.surface_patience and self._cooldown_counter == 0
         # 额外触发：epoch 级 loss plateau（宏观、稳定）
         if not should_escape and self._loss_plateau_count >= 3 and self._cooldown_counter == 0:
             should_escape = True
@@ -507,21 +498,25 @@ class SMCAOV22Scheduler:
             self._escape_events += 1
             self._escape_step_counter = 0
             if self.verbose:
-                print(f"[SMCAO V2.2] step={self.step_count}: escape triggered "
-                      f"(surface_stall={self._surface_counter}, "
-                      f"loss_plateau={self._loss_plateau_count}, "
-                      f"ratio={surface_ratio:.4f})")
+                print(
+                    f"[SMCAO V2.2] step={self.step_count}: escape triggered "
+                    f"(surface_stall={self._surface_counter}, "
+                    f"loss_plateau={self._loss_plateau_count}, "
+                    f"ratio={surface_ratio:.4f})"
+                )
         elif self._in_escape:
             if self._surface_counter == 0 or self._escape_step_counter >= self.escape_max_duration:
                 self._in_escape = False
                 self._cooldown_counter = self.escape_cooldown
                 if self.verbose:
-                    print(f"[SMCAO V2.2] step={self.step_count}: escape deactivated "
-                          f"(duration={self._escape_step_counter}, cooldown={self.escape_cooldown})")
+                    print(
+                        f"[SMCAO V2.2] step={self.step_count}: escape deactivated "
+                        f"(duration={self._escape_step_counter}, cooldown={self.escape_cooldown})"
+                    )
 
         # ── 机制2: 计算有效阻尼系数 ──
         gn = self.prev_grad_norm if self.prev_grad_norm is not None else 0.0
-        self.a_eff = self._compute_effective_damping(gn, self._last_loss)
+        self.a_eff = self._compute_effective_damping(gn, self._last_loss) if self._in_escape else self.a0
 
         # ── 二阶动力学更新速度 v 和积分项 Z ──
         # v_next = v + (-a_eff·v - κ_eff·sat(s/φ) - ki·Z) · dt
@@ -544,7 +539,7 @@ class SMCAOV22Scheduler:
             self._velocity_norm = self.v_max * (1.0 if self._velocity_norm > 0 else -1.0)
 
         # 积分项更新
-        self._integral_Z = self._integral_Z + s_val * dt
+        self._integral_Z = max(-self.v_max, min(self.v_max, self._integral_Z + s_val * dt))
 
         # ── 参数组更新 ──
         ctrl = 1.0 if self._in_escape else 0.0
@@ -558,8 +553,8 @@ class SMCAOV22Scheduler:
         lr_factor = cos_factor * (1.0 + (self.lr_boost - 1.0) * ctrl) * neg_damping_boost
         b1 = self.beta1_default - (self.beta1_default - self.beta1_low) * ctrl
 
-        for i, pg in enumerate(self.optimizer.param_groups):
-            pg["lr"] = self.initial_lrs[i] * lr_factor
+        self._apply_lrs(lr_factor)
+        for pg in self.optimizer.param_groups:
             pg["betas"] = (b1, self.beta2_default)
 
         self.mode = "escape" if self._in_escape else "normal"
@@ -589,8 +584,7 @@ class SMCAOV22Scheduler:
             "avg_lr_ratio": self._lr_sum / max(self.step_count, 1),
             "noise_injections": self._noise_count,
             "escape_events": self._escape_events,
-            "surface_ratio": (abs(self.s_t) / self.s_t_peak
-                              if self.s_t is not None and self.s_t_peak > 1e-12 else 0.0),
+            "surface_ratio": (abs(self.s_t) / self.s_t_peak if self.s_t is not None and self.s_t_peak > 1e-12 else 0.0),
             "s_t_peak": self.s_t_peak,
             "in_escape": self._in_escape,
             "cooldown_counter": self._cooldown_counter,
@@ -600,45 +594,3 @@ class SMCAOV22Scheduler:
             "mode": self.mode,
             "loss_plateau": self._loss_plateau_count,
         }
-
-    def state_dict(self):
-        return {
-            "step_count": self.step_count,
-            "prev_grad_norm": self.prev_grad_norm,
-            "s_t": self.s_t,
-            "s_t_peak": self.s_t_peak,
-            "c_current": self.c_current,
-            "initial_lrs": self.initial_lrs,
-            "_best_loss": self._best_loss,
-            "_loss_plateau_count": self._loss_plateau_count,
-            "_in_escape": self._in_escape,
-            "_escape_step_counter": self._escape_step_counter,
-            "_cooldown_counter": self._cooldown_counter,
-            "_surface_counter": self._surface_counter,
-            "_velocity_norm": self._velocity_norm,
-            "_integral_Z": self._integral_Z,
-            "_grad_norm_history": list(self._grad_norm_history),
-            "_escape_events": self._escape_events,
-            "_noise_count": self._noise_count,
-            "a_eff": self.a_eff,
-        }
-
-    def load_state_dict(self, sd):
-        self.step_count = sd["step_count"]
-        self.prev_grad_norm = sd.get("prev_grad_norm")
-        self.s_t = sd.get("s_t")
-        self.s_t_peak = sd.get("s_t_peak", 0.0)
-        self.c_current = sd.get("c_current", self.c0)
-        self.initial_lrs = sd["initial_lrs"]
-        self._best_loss = sd.get("_best_loss")
-        self._loss_plateau_count = sd.get("_loss_plateau_count", 0)
-        self._in_escape = sd.get("_in_escape", False)
-        self._escape_step_counter = sd.get("_escape_step_counter", 0)
-        self._cooldown_counter = sd.get("_cooldown_counter", 0)
-        self._surface_counter = sd.get("_surface_counter", 0)
-        self._velocity_norm = sd.get("_velocity_norm", 0.0)
-        self._integral_Z = sd.get("_integral_Z", 0.0)
-        self._grad_norm_history = sd.get("_grad_norm_history", [])
-        self._escape_events = sd.get("_escape_events", 0)
-        self._noise_count = sd.get("_noise_count", 0)
-        self.a_eff = sd.get("a_eff", self.a0)

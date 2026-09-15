@@ -1,0 +1,27 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V8
+implementation_revision: EV8_20260914_native_evidence
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+weight_decay: 0.0005
+input_recipe: "source-balanced .5 global/.25 coarse/.25 fine, same as V7; no learned guide"
+checkpoint: "best_mask.pt=mask AP50-95; best_mask50.pt=mask AP50; best.pt retains original fitness"
+evaluation: "EV6Validator common input/2 GT; paired original-image coarse/fine evaluations, unchanged NMS/budget"
+fixed_head: "SegmentCitrusEV7 without P2/DCN/PMCE; inherited phase or explicitly numbered dense decoder"
+factors:
+  B: "replace C4 stage6 with EV8ContextStage; shallow C2/C3 and existing deep8 retained"
+  N: "replace P3-down/concat/CSP reconstruction with P4td/C4/C3 discrepancy reconciliation; retain top-down refiners"
+  G: "existing visible-mask boundary .5 plus neighbor .25; no circle/convex/amodal prior"
+  CP: "copy_paste .3, mode flip; other arms zero; not exact original paper augmentation"
+  D: "V8_09 only, dense stride2 decoder versus phase stride2; same GT grid"
+comparison_warning: "single seed and changed initialization coverage; no statistical superiority or target-GPU speed claim"
+final_protocol: "selected control and method: seeds42/43/44 on confirmed grouped_dedup; locked held-out test"

@@ -1,0 +1,123 @@
+{
+  "torch": "2.8.0+cpu",
+  "threads": 2,
+  "device": "cpu",
+  "models": [
+    {
+      "name": "V4R00_control",
+      "params": 2323380,
+      "thop_gflops640": 10.097305599999999,
+      "initialization_equal_fraction": 0.9779614182785424,
+      "cpu_batch1_forward_ms": 100.96220000000056
+    },
+    {
+      "name": "V4R01_deep8",
+      "params": 2217396,
+      "thop_gflops640": 10.0121088,
+      "initialization_equal_fraction": 0.9429655325435782,
+      "cpu_batch1_forward_ms": 96.2215000000004
+    },
+    {
+      "name": "V4R02_detail",
+      "params": 2323540,
+      "thop_gflops640": 10.1054976,
+      "initialization_equal_fraction": 0.9778940754194031,
+      "cpu_batch1_forward_ms": 98.51619999999971
+    },
+    {
+      "name": "V4R03_quality",
+      "params": 2332231,
+      "thop_gflops640": 10.130188800000003,
+      "initialization_equal_fraction": 0.9742499778109458,
+      "cpu_batch1_forward_ms": 96.07510000000019
+    },
+    {
+      "name": "V4R04_deep_detail",
+      "params": 2217556,
+      "thop_gflops640": 10.0203008,
+      "initialization_equal_fraction": 0.9428974961624419,
+      "cpu_batch1_forward_ms": 96.7570000000002
+    },
+    {
+      "name": "V4R05_deep_quality",
+      "params": 2226247,
+      "thop_gflops640": 10.044991999999999,
+      "initialization_equal_fraction": 0.9392165379672606,
+      "cpu_batch1_forward_ms": 110.09650000000093
+    },
+    {
+      "name": "V4R06_detail_quality",
+      "params": 2332391,
+      "thop_gflops640": 10.1383808,
+      "initialization_equal_fraction": 0.974183145107317,
+      "cpu_batch1_forward_ms": 99.04709999999994
+    },
+    {
+      "name": "V4R07_full",
+      "params": 2226407,
+      "thop_gflops640": 10.053184,
+      "initialization_equal_fraction": 0.9391490414825322,
+      "cpu_batch1_forward_ms": 99.15250000000064
+    }
+  ],
+  "warning": "THOP omits some functional operators. CPU diagnostic timing is not GPU speed evidence.",
+  "smoke": [
+    {
+      "name": "V4R00_control",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev4r_20260910_r1\\SMOKE_RUNS_NOT_FORMAL\\V4R00_control\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0,
+        "metrics/recall(B)": 0,
+        "metrics/mAP50(B)": 0,
+        "metrics/mAP50-95(B)": 0,
+        "metrics/precision(M)": 0,
+        "metrics/recall(M)": 0,
+        "metrics/mAP50(M)": 0,
+        "metrics/mAP50-95(M)": 0,
+        "fitness": 0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V4R07_full",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev4r_20260910_r1\\SMOKE_RUNS_NOT_FORMAL\\V4R07_full\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0,
+        "metrics/recall(B)": 0,
+        "metrics/mAP50(B)": 0,
+        "metrics/mAP50-95(B)": 0,
+        "metrics/precision(M)": 0,
+        "metrics/recall(M)": 0,
+        "metrics/mAP50(M)": 0,
+        "metrics/mAP50-95(M)": 0,
+        "fitness": 0
+      },
+      "formal_accuracy": false
+    }
+  ],
+  "regression_tests": {
+    "passed": 108,
+    "command": "python -m pytest tests/test_citrus_e_v4r.py tests/test_citrus_e_v3.py tests/test_citrus_e_v4_review.py -q --disable-warnings --maxfail=1",
+    "warnings": 4
+  },
+  "foreground_dry_run": {
+    "success": true,
+    "all_eight_built": true,
+    "device": "cpu",
+    "entry": "RUN_CITRUS_E_V4.py",
+    "physical_gpu_occupancy_guard": false
+  },
+  "syntax_check": {
+    "python_feature_version": "3.8",
+    "files": 7,
+    "executed_runtime": "3.9.13",
+    "not_executed_on_server": true
+  },
+  "artifacts": {
+    "original_smoke_audit": "E:/mastercode/_work/citrus_ev4r_20260910_r1/audit.json",
+    "calibration_probe": "E:/mastercode/_work/citrus_ev4r_calibration_probe_20260910/calibration_summary.json",
+    "calibration_limit": 16
+  }
+}

@@ -1,0 +1,22 @@
+protocol_id: citrus_e_v4r_evidence_reconstruction_20260910
+base_training: citrus_paper1_formal_v2_ram.yaml
+base_input: citrus_e_slicing_v3.yaml
+fixed: {epochs: 300, seed: 42, imgsz: 640, batch: 16, workers: 4, amp: false, cache: true}
+input: {tile_probability: 0.5, tile_fraction: 0.6, source_balanced: true, guided: false}
+optimizer: {name: AdamW, lr0: 0.001, momentum: 0.937, weight_decay: 0.0005}
+initialization: same yolo11n-seg.pt; preserve graph indices; measure exact parameter matches before updates
+selection: best_mask.pt selected by whole-image validation Mask AP50-95; retain official best.pt
+factors:
+  deep8: replace only layer 8 C3k2 inner blocks with existing EV3DeepStage; retain layer 6 and the full E30 neck
+  detail: bounded zero-initialized DW3 high-pass residual on semantic-conditioned 16-channel P2 refiner
+  quality: inherited detached mask IoU supervision; class score multiplied by 0.5 + 0.5 * predicted quality
+loss: {quality_gain: 1.0, boundary_gain: 0.0, neighbor_gain: 0.0}
+calibration_check: evaluate the same trained weights with quality_floor 0, 0.5 and 1; compare R at P90
+evaluation: unchanged global/fixed-box/crossmask/trustedmask; conf .001; NMS .7; max_det 300
+limits:
+  - Eight factorial arms are tests, not eight established improvements. Training seed is the replicate unit.
+  - No new PID optimizer, full-resolution dense P2 head, custom CUDA, FFT, or recurrent backbone.
+  - A bounded residual is not a stability proof or evidence of improved camouflage recognition.
+  - Score rescaling cannot recover absent proposals; fixed-threshold recall is not sufficient evidence.
+  - Official stride-4 mask AP and paired long-edge-640 mask AP must be reported separately.
+  - Final selection needs three training seeds, held-out evaluation and measured GPU latency.

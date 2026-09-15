@@ -1,0 +1,132 @@
+[
+  {
+    "name": "V8_00_phase_control_seed42",
+    "global_fn": 214,
+    "global_tiny_fn": 129,
+    "global_rmax": 0.894184938036225,
+    "fine_rmax": 0.9637750238322211,
+    "fine_errors": {
+      "tp": 931,
+      "duplicates": 25,
+      "mask_or_localization": 9,
+      "background": 405
+    }
+  },
+  {
+    "name": "V8_01_geometry_seed42",
+    "global_fn": 230,
+    "global_tiny_fn": 132,
+    "global_rmax": 0.8970448045757865,
+    "fine_rmax": 0.9590085795996187,
+    "fine_errors": {
+      "tp": 908,
+      "duplicates": 17,
+      "mask_or_localization": 11,
+      "background": 325
+    }
+  },
+  {
+    "name": "V8_02_copy_paste_seed42",
+    "global_fn": 215,
+    "global_tiny_fn": 124,
+    "global_rmax": 0.9075309818875119,
+    "fine_rmax": 0.9647283126787417,
+    "fine_errors": {
+      "tp": 925,
+      "duplicates": 19,
+      "mask_or_localization": 9,
+      "background": 408
+    }
+  },
+  {
+    "name": "V8_03_geometry_cp_seed42",
+    "global_fn": 207,
+    "global_tiny_fn": 125,
+    "global_rmax": 0.9142040038131554,
+    "fine_rmax": 0.9628217349857007,
+    "fine_errors": {
+      "tp": 939,
+      "duplicates": 21,
+      "mask_or_localization": 6,
+      "background": 406
+    }
+  },
+  {
+    "name": "V8_04_context_backbone_seed42",
+    "global_fn": 207,
+    "global_tiny_fn": 122,
+    "global_rmax": 0.9027645376549094,
+    "fine_rmax": 0.9628217349857007,
+    "fine_errors": {
+      "tp": 936,
+      "duplicates": 31,
+      "mask_or_localization": 11,
+      "background": 480
+    }
+  },
+  {
+    "name": "V8_05_native_neck_seed42",
+    "global_fn": 223,
+    "global_tiny_fn": 134,
+    "global_rmax": 0.8970448045757865,
+    "fine_rmax": 0.9590085795996187,
+    "fine_errors": {
+      "tp": 927,
+      "duplicates": 48,
+      "mask_or_localization": 12,
+      "background": 408
+    }
+  },
+  {
+    "name": "V8_06_structure_pair_seed42",
+    "global_fn": 223,
+    "global_tiny_fn": 131,
+    "global_rmax": 0.8970448045757865,
+    "fine_rmax": 0.9551954242135366,
+    "fine_errors": {
+      "tp": 926,
+      "duplicates": 37,
+      "mask_or_localization": 13,
+      "background": 448
+    }
+  },
+  {
+    "name": "V8_07_structure_geometry_seed42",
+    "global_fn": 218,
+    "global_tiny_fn": 127,
+    "global_rmax": 0.9018112488083889,
+    "fine_rmax": 0.9647283126787417,
+    "fine_errors": {
+      "tp": 930,
+      "duplicates": 39,
+      "mask_or_localization": 10,
+      "background": 443
+    }
+  },
+  {
+    "name": "V8_08_structure_complete_seed42",
+    "global_fn": 216,
+    "global_tiny_fn": 125,
+    "global_rmax": 0.899904671115348,
+    "fine_rmax": 0.9590085795996187,
+    "fine_errors": {
+      "tp": 919,
+      "duplicates": 21,
+      "mask_or_localization": 12,
+      "background": 393
+    }
+  },
+  {
+    "name": "V8_09_dense_complete_seed42",
+    "global_fn": 216,
+    "global_tiny_fn": 127,
+    "global_rmax": 0.9075309818875119,
+    "fine_rmax": 0.9590085795996187,
+    "fine_errors": {
+      "tp": 931,
+      "duplicates": 28,
+      "mask_or_localization": 8,
+      "background": 411
+    }
+  }
+]

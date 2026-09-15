@@ -131,6 +131,22 @@ desktop.ini
 *.sqlite-wal
 
 # ------------------------------------------------------------------------------
+# 6.5 Local work artifacts, tool deps & render output (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+# Transferred-back experiment artifacts (~GB of smoke/view images)
+_work/
+# Vendored tool dependencies and agent scratch dirs
+.codex_deps/
+.workbuddy/
+# Windows junk from bad shell redirects
+nul
+/C*audit_utf8.txt
+# Manim render output and QA frame dumps
+2_catoon/**/media/
+2_catoon/**/_qa*/
+2_catoon/**/_smoke/
+
+# ------------------------------------------------------------------------------
 # 7. Exceptions (Explicitly keep documentation figures & icons)
 # ------------------------------------------------------------------------------
 !**/figures/*.png

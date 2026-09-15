@@ -1,0 +1,29 @@
+version: 2
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V6
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+optimizer: AdamW
+lr0: 0.001
+weight_decay: 0.0005
+factors:
+  fine_mask: "stride-2 proto refinement; P1 stem detail gated by refined P2 estimate; implies mask_ratio=2"
+  nwd: "nwd_ratio .5 size-gated CIoU/NWD regression blend; isolated from the legacy full bundle"
+  copy_paste: "copy_paste .3 flip mode; same-image flipped instances pasted where box IoA<0.3"
+  mr2_probe: "V6_01 isolates mask_ratio 4->2 with the unchanged control architecture"
+  phase: "V6_08/09: same fine output, stem phases gated at P2 then subpixel decoding; compares to V6_02/05"
+input_recipe: "all ten arms reuse the V5_01 multi-scale views (.5 global/.25 coarse/.25 fine)"
+quality: {gain: 1.0, score_floor: 0.5}
+checkpoint: "best_mask.pt selected by mask AP50-95; separate best_mask50.pt by mask AP50"
+evaluation: "each arm global+coarse, global+fine; same original validation; report latency and raster"
+epoch_validation: "EV6TrainingTrainer + EV6Validator: fresh GT input/2 for ALL arms; proto logits aligned before threshold"
+metric_warning: "Input/2 epoch AP is not directly comparable to historical input/4 epoch AP; paired long-edge640 stays unchanged"
+quality_target: "V6 only: interpolate detached proto to training GT grid, identical to main mask loss grid"
+learned_crop_guide: false
+geometry_prior: "visible foreground only; no convex hull/circle/morphological closing"
+limits: "single-seed screening; final control/method require three seeds. Performance unproven."

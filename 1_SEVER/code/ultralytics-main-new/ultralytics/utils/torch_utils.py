@@ -457,12 +457,15 @@ def get_flops(model, imgsz=640):
         try:
             # Method 1: Use stride-based input tensor
             stride = max(int(model.stride.max()), 32) if hasattr(model, "stride") else 32  # max stride
-            im = torch.empty((1, p.shape[1], stride, stride), device=p.device, dtype=p.dtype)  # input image in BCHW
+            # Never profile data-dependent sampling with uninitialized memory.
+            # Deterministic mode can fill empty() with NaNs, producing invalid
+            # deformable offsets and even a native operator access violation.
+            im = torch.zeros((1, p.shape[1], stride, stride), device=p.device, dtype=p.dtype)
             flops = thop.profile(deepcopy(model), inputs=[im], verbose=False)[0] / 1e9 * 2  # stride GFLOPs
             return flops * imgsz[0] / stride * imgsz[1] / stride  # imgsz GFLOPs
         except Exception:
             # Method 2: Use actual image size (required for RTDETR models)
-            im = torch.empty((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)  # input image in BCHW format
+            im = torch.zeros((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)
             return thop.profile(deepcopy(model), inputs=[im], verbose=False)[0] / 1e9 * 2  # imgsz GFLOPs
     except Exception:
         return 0.0

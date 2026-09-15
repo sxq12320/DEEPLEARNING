@@ -1,0 +1,75 @@
+{
+  "records": [
+    {
+      "name": "E30_control",
+      "parameters": 2323380,
+      "gflops640": 10.097305599999999,
+      "forward_loss_backward_median_ms": 749.4536999999992,
+      "fused_forward_median_ms": 182.99550000000053
+    },
+    {
+      "name": "E31_native_neck",
+      "parameters": 2302902,
+      "gflops640": 10.0317696,
+      "forward_loss_backward_median_ms": 716.607100000001,
+      "fused_forward_median_ms": 190.49240000000012
+    },
+    {
+      "name": "E32_deep_partial",
+      "parameters": 2190772,
+      "gflops640": 9.9260928,
+      "forward_loss_backward_median_ms": 688.3084000000003,
+      "fused_forward_median_ms": 182.82439999999767
+    },
+    {
+      "name": "E33_mask_quality",
+      "parameters": 2332231,
+      "gflops640": 10.130188800000003,
+      "forward_loss_backward_median_ms": 741.8531999999977,
+      "fused_forward_median_ms": 192.9122000000021
+    },
+    {
+      "name": "E34_deep_neck",
+      "parameters": 2170294,
+      "gflops640": 9.8605568,
+      "forward_loss_backward_median_ms": 707.7911000000015,
+      "fused_forward_median_ms": 185.07819999999953
+    },
+    {
+      "name": "E35_neck_quality",
+      "parameters": 2311753,
+      "gflops640": 10.064652800000001,
+      "forward_loss_backward_median_ms": 820.5647999999997,
+      "fused_forward_median_ms": 212.43450000000053
+    },
+    {
+      "name": "E36_deep_quality",
+      "parameters": 2199623,
+      "gflops640": 9.958976,
+      "forward_loss_backward_median_ms": 693.7033999999969,
+      "fused_forward_median_ms": 183.8442000000029
+    },
+    {
+      "name": "E37_full",
+      "parameters": 2179145,
+      "gflops640": 9.89344,
+      "forward_loss_backward_median_ms": 697.3739000000023,
+      "fused_forward_median_ms": 184.21580000000404
+    }
+  ],
+  "module_sha256": "a59ade173b8a2fa397a213920c4074191fed131b4b33c32afbedfece9cc841de",
+  "protocol": {
+    "batch": 2,
+    "imgsz": 640,
+    "threads": 2,
+    "warmup": 3,
+    "iterations": 5,
+    "amp": false,
+    "dtype": "float32",
+    "device": "cpu",
+    "physical_device": "cpu",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "torch": "2.8.0+cpu"
+  },
+  "limits": "Synthetic batch, no optimizer/data-loader/augmentation/NMS. CPU is not a GPU speed guarantee. Measure whole-image plus crop passes and fusion separately; repeated identical architectures expose timing noise."
+}

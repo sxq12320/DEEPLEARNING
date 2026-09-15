@@ -35,6 +35,54 @@ class RunnerSpec:
 
 
 RUNNERS: Dict[str, RunnerSpec] = {
+    "CITRUS_E_V9": RunnerSpec(
+        "20260915_citrus_e_v9_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "losses", "control"),
+        ("E_V9", "EV9"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V8": RunnerSpec(
+        "20260914_citrus_e_v8_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "combined", "control"),
+        ("E_V8", "EV8"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V7": RunnerSpec(
+        "20260912_citrus_e_v7_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "combined", "control"),
+        ("E_V7", "EV7"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V6": RunnerSpec(
+        "20260911_citrus_e_v6_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "combined", "control"),
+        ("E_V6", "EV6"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V5": RunnerSpec(
+        "20260911_citrus_e_v5_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "combined", "control"),
+        ("E_V5", "EV5"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V4R": RunnerSpec(
+        "20260910_citrus_e_v4r_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "combined", "control"),
+        ("E_V4R", "EV4R"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V3": RunnerSpec(
+        "20260909_citrus_e_v3_batch.py",
+        ("smoke", "screen", "structure", "all", "control", "priority", "combined"),
+        ("E_V3", "EV3"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_E_V2": RunnerSpec(
+        "20260908_citrus_e_v2_batch.py",
+        ("smoke", "screen", "structure", "all", "control", "priority", "guided"),
+        ("E_V2", "EV2"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
     "CITRUS_E": RunnerSpec(
         "20260907_citrus_e_batch.py",
         ("smoke", "screen", "structure", "all", "control", "priority", "guided"),

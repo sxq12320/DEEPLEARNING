@@ -1,0 +1,23 @@
+protocol_id: citrus_e_v3_native_scale_quality
+base_training: citrus_paper1_formal_v2_ram.yaml
+base_input: citrus_e_slicing_v3.yaml
+fixed: {epochs: 300, seed: 42, imgsz: 640, batch: 16, workers: 4, amp: false, cache: true}
+input: {tile_probability: 0.5, tile_fraction: 0.6, source_balanced: true, guided: false}
+initialization: same yolo11n-seg.pt for all; record exact matched parameters before training
+selection: best_mask.pt selected on whole-image validation mask AP50-95; also retain official best.pt
+factors:
+  deep: PConv inner stages 6 and 8 only; preserve stem, C2/C3, SPPF, C2PSA and all projection dimensions
+  neck: phase-down P3 and native-C4 bypass to P4; keep progressive top-down and spatial C3k2 refinement
+  quality: detached dense mask quality observer; MSE target IoU uses predicted boxes; score=class_score*quality
+quality:
+  gain: 1.0
+  max_positive_anchors_per_image: 64
+  ignores_empty_raster_masks_in_auxiliary_only: true
+  score_calibration_can_be_disabled_for_same_weight_evaluation: true
+evaluation: unchanged eval_citrus_e_v2.py whole/fixed-box/crossmask/trustedmask; conf=.001; NMS=.7; max_det=300
+limits:
+  - 2x2x2 factorial arms test interactions, not eight claimed improvements.
+  - Fixed-conf recall is not directly comparable when score calibration changes; report R at matched precision.
+  - Neither PConv nor pixel rearrangement guarantees speed or preserves information after projection.
+  - No claim of solving colour camouflage without labelled or clearly defined low-contrast subset evidence.
+  - No custom CUDA, FFT, Mamba, grid_sample, full-resolution P2 detection tower, guide training or iterative inference.

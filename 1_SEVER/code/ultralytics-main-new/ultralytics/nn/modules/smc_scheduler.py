@@ -23,8 +23,10 @@ V3 关键修复（解决训练效果差、val loss 震荡、metrics 暴跌问题
 import math
 import torch
 
+from .smc_utils import ControllerNumerics
 
-class SMCScheduler:
+
+class SMCScheduler(ControllerNumerics):
     """
     滑模控制调度器 V3。
 
@@ -57,16 +59,16 @@ class SMCScheduler:
         c=0.5,
         warmup_steps=100,
         min_lr_ratio=0.01,
-        surface_threshold=0.05,      # V3: 更严格，0.1→0.05
-        surface_patience=100,        # V3: 更保守，50→100
-        lr_boost=1.05,               # V3: 更温和，1.2→1.05
-        noise_scale=0.001,           # V3: 更低，0.003→0.001
-        noise_max_steps=10,          # V3: 新增，单次 escape 最多注入 10 步噪声
-        noise_decay=0.9,             # V3: 新增，噪声随 escape 步数衰减
-        escape_cooldown=100,         # V3: 新增，escape 后冷却 100 步
-        escape_max_duration=20,      # V3: 新增，单次 escape 最长 20 步
+        surface_threshold=0.05,  # V3: 更严格，0.1→0.05
+        surface_patience=100,  # V3: 更保守，50→100
+        lr_boost=1.05,  # V3: 更温和，1.2→1.05
+        noise_scale=0.001,  # V3: 更低，0.003→0.001
+        noise_max_steps=10,  # V3: 新增，单次 escape 最多注入 10 步噪声
+        noise_decay=0.9,  # V3: 新增，噪声随 escape 步数衰减
+        escape_cooldown=100,  # V3: 新增，escape 后冷却 100 步
+        escape_max_duration=20,  # V3: 新增，单次 escape 最长 20 步
         beta1_default=0.9,
-        beta1_low=0.88,              # V3: 变化更小，0.85→0.88
+        beta1_low=0.88,  # V3: 变化更小，0.85→0.88
         beta2_default=0.999,
         verbose=True,
     ):
@@ -113,19 +115,12 @@ class SMCScheduler:
         self._noise_count: int = 0
         self._escape_events: int = 0
 
-    def _compute_grad_norm(self):
-        """计算所有参数梯度的全局 L2 范数"""
-        total_sq = 0.0
-        for pg in self.optimizer.param_groups:
-            for p in pg["params"]:
-                if p.grad is not None:
-                    total_sq += p.grad.data.norm(2).item() ** 2
-        return math.sqrt(total_sq)
-
     def _get_cosine_lr(self, step):
+        if hasattr(self, "_external_lrs"):
+            return 1.0
         if step < self.warmup_steps:
             return step / max(self.warmup_steps, 1)
-        progress = (step - self.warmup_steps) / max(self.total_steps - self.warmup_steps, 1)
+        progress = min(max((step - self.warmup_steps) / max(self.total_steps - self.warmup_steps, 1), 0.0), 1.0)
         return self.min_lr_ratio + 0.5 * (1.0 - self.min_lr_ratio) * (1.0 + math.cos(math.pi * progress))
 
     def _compute_sliding_surface(self, grad_norm):
@@ -145,30 +140,30 @@ class SMCScheduler:
 
     def observe_gradients(self):
         """optimizer.step() 之前：计算滑模面 + 注入噪声（escape 时）"""
-        if self.step_count < self.warmup_steps:
+        if self._warming_up():
             return
 
         gn = self._compute_grad_norm()
+        if not math.isfinite(gn):
+            return
         s_t = self._compute_sliding_surface(gn)
         self._update_sliding_surface_stats(abs(s_t))
 
         # SMC Escape：注入相对梯度噪声（仅在 escape 激活且未超过 max_steps 时）
         if self._in_escape and self._escape_step_counter < self.noise_max_steps and gn > 1e-12:
             # 噪声随 escape 持续衰减，避免后期噪声累积破坏特征
-            current_noise_scale = self.noise_scale * (self.noise_decay ** self._escape_step_counter)
+            current_noise_scale = self.noise_scale * (self.noise_decay**self._escape_step_counter)
             for pg in self.optimizer.param_groups:
                 for p in pg["params"]:
                     if p.grad is not None:
-                        grad_norm = p.grad.data.norm(2).item()
-                        noise_std = current_noise_scale * max(grad_norm, 1e-8)
-                        noise = torch.randn_like(p.grad.data) * noise_std
-                        p.grad.data.add_(noise)
+                        self._add_relative_noise(p.grad, torch.randn_like(p.grad), current_noise_scale)
             self._noise_count += 1
-            self._escape_step_counter += 1
 
     def step(self, loss_value=None):
         """optimizer.step() 之后"""
         self.step_count += 1
+        if self._in_escape:
+            self._escape_step_counter += 1
 
         # 记录 loss 但不用于 step 级 plateau 检测（minibatch 波动太大，误触发率高）
         if loss_value is not None:
@@ -178,9 +173,9 @@ class SMCScheduler:
         cos_factor = self._get_cosine_lr(self.step_count)
 
         # Warmup 期间不做任何 SMC 逻辑
-        if self.step_count < self.warmup_steps:
-            for i, pg in enumerate(self.optimizer.param_groups):
-                pg["lr"] = self.initial_lrs[i] * cos_factor
+        if self._warming_up():
+            self._apply_lrs(cos_factor)
+            for pg in self.optimizer.param_groups:
                 pg["betas"] = (self.beta1_default, self.beta2_default)
             self.mode = "warmup"
             return
@@ -206,10 +201,7 @@ class SMCScheduler:
         # 触发条件：纯滑模面停滞 + 不在冷却期
         # V3: 移除 step 级 loss plateau 的 OR 条件，避免 minibatch 波动误触发
         #     loss plateau 仅通过 on_train_epoch_end 进行 epoch 级检测（宏观、稳定）
-        should_escape = (
-            self._surface_counter >= self.surface_patience
-            and self._cooldown_counter == 0
-        )
+        should_escape = self._surface_counter >= self.surface_patience and self._cooldown_counter == 0
 
         # 激活/停用 escape
         if should_escape and not self._in_escape:
@@ -217,8 +209,10 @@ class SMCScheduler:
             self._escape_events += 1
             self._escape_step_counter = 0
             if self.verbose:
-                print(f"[SMC] step={self.step_count}: escape triggered "
-                      f"(surface_stall={self._surface_counter}, ratio={surface_ratio:.4f})")
+                print(
+                    f"[SMC] step={self.step_count}: escape triggered "
+                    f"(surface_stall={self._surface_counter}, ratio={surface_ratio:.4f})"
+                )
 
         elif self._in_escape:
             # 停用条件：滑模面恢复 或 超过最大持续时间
@@ -226,16 +220,18 @@ class SMCScheduler:
                 self._in_escape = False
                 self._cooldown_counter = self.escape_cooldown
                 if self.verbose:
-                    print(f"[SMC] step={self.step_count}: escape deactivated "
-                          f"(duration={self._escape_step_counter}, cooldown={self.escape_cooldown})")
+                    print(
+                        f"[SMC] step={self.step_count}: escape deactivated "
+                        f"(duration={self._escape_step_counter}, cooldown={self.escape_cooldown})"
+                    )
 
         # 连续控制：escape 时适度调整参数（V3 更温和）
         ctrl = 1.0 if self._in_escape else 0.0
         lr_factor = cos_factor * (1.0 + (self.lr_boost - 1.0) * ctrl)
         b1 = self.beta1_default - (self.beta1_default - self.beta1_low) * ctrl
 
-        for i, pg in enumerate(self.optimizer.param_groups):
-            pg["lr"] = self.initial_lrs[i] * lr_factor
+        self._apply_lrs(lr_factor)
+        for pg in self.optimizer.param_groups:
             pg["betas"] = (b1, self.beta2_default)
 
         self.mode = "escape" if self._in_escape else "normal"
@@ -255,37 +251,8 @@ class SMCScheduler:
             "avg_lr_ratio": self._lr_sum / max(self.step_count, 1),
             "noise_injections": self._noise_count,
             "escape_events": self._escape_events,
-            "surface_ratio": (abs(self.s_t) / self.s_t_peak
-                              if self.s_t is not None and self.s_t_peak > 1e-12 else 0.0),
+            "surface_ratio": (abs(self.s_t) / self.s_t_peak if self.s_t is not None and self.s_t_peak > 1e-12 else 0.0),
             "s_t_peak": self.s_t_peak,
             "in_escape": self._in_escape,
             "cooldown_counter": self._cooldown_counter,
         }
-
-    def state_dict(self):
-        return {
-            "step_count": self.step_count,
-            "prev_grad_norm": self.prev_grad_norm,
-            "s_t": self.s_t,
-            "s_t_peak": self.s_t_peak,
-            "initial_lrs": self.initial_lrs,
-            "_best_loss": self._best_loss,
-            "_loss_plateau_count": self._loss_plateau_count,
-            "_in_escape": self._in_escape,
-            "_escape_step_counter": self._escape_step_counter,
-            "_cooldown_counter": self._cooldown_counter,
-            "_surface_counter": self._surface_counter,
-        }
-
-    def load_state_dict(self, sd):
-        self.step_count = sd["step_count"]
-        self.prev_grad_norm = sd.get("prev_grad_norm")
-        self.s_t = sd.get("s_t")
-        self.s_t_peak = sd.get("s_t_peak", 0.0)
-        self.initial_lrs = sd["initial_lrs"]
-        self._best_loss = sd.get("_best_loss")
-        self._loss_plateau_count = sd.get("_loss_plateau_count", 0)
-        self._in_escape = sd.get("_in_escape", False)
-        self._escape_step_counter = sd.get("_escape_step_counter", 0)
-        self._cooldown_counter = sd.get("_cooldown_counter", 0)
-        self._surface_counter = sd.get("_surface_counter", 0)

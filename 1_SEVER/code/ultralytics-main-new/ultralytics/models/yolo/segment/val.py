@@ -45,6 +45,11 @@ class SegmentationValidator(DetectionValidator):
         """
         super().__init__(dataloader, save_dir, args, _callbacks)
         self.process = None
+        self.proto_stride = 4
+        # Optional common metric raster, independent of a head's prototype stride.
+        # Series-specific validators must also rasterize GT at this ratio.
+        self.evaluation_mask_ratio = None
+        self.input_shape = None
         self.args.task = "segment"
         self.metrics = SegmentMetrics()
 
@@ -58,6 +63,7 @@ class SegmentationValidator(DetectionValidator):
             (dict[str, Any]): Preprocessed batch.
         """
         batch = super().preprocess(batch)
+        self.input_shape = tuple(batch["img"].shape[-2:])
         batch["masks"] = batch["masks"].float()
         return batch
 
@@ -72,6 +78,12 @@ class SegmentationValidator(DetectionValidator):
             check_requirements("faster-coco-eval>=1.6.7")
         # More accurate vs faster
         self.process = ops.process_mask_native if self.args.save_json or self.args.save_txt else ops.process_mask
+        # Heads may emit prototypes at input/4 (standard) or finer; honor the declared stride.
+        # Wrapper depth differs (AutoBackend vs raw model), so locate the Detect head by type.
+        from ultralytics.nn.modules.head import Detect
+
+        head = next((m for m in reversed(list(model.modules())) if isinstance(m, Detect)), None)
+        self.proto_stride = int(getattr(head, "proto_stride", 4))
 
     def get_desc(self) -> str:
         """Return a formatted description of evaluation metrics."""
@@ -100,7 +112,15 @@ class SegmentationValidator(DetectionValidator):
         """
         proto = preds[0][1] if isinstance(preds[0], tuple) else preds[1]
         preds = super().postprocess(preds[0])
-        imgsz = [4 * x for x in proto.shape[2:]]  # get image size from proto
+        # Read actual input geometry: AutoBackend does not always expose its
+        # wrapped head through modules(), especially during final checkpoint val.
+        imgsz = list(self.input_shape) if self.input_shape else [x * self.proto_stride for x in proto.shape[2:]]
+        if self.input_shape:
+            self.proto_stride = imgsz[0] // proto.shape[-2]
+        if self.evaluation_mask_ratio and self.process is not ops.process_mask_native:
+            size = [s // self.evaluation_mask_ratio for s in imgsz]
+            if list(proto.shape[-2:]) != size:
+                proto = F.interpolate(proto, size, mode="bilinear", align_corners=False)
         for i, pred in enumerate(preds):
             coefficient = pred.pop("extra")
             pred["masks"] = (
@@ -133,7 +153,10 @@ class SegmentationValidator(DetectionValidator):
         else:
             masks = batch["masks"][batch["batch_idx"] == si]
         if nl:
-            mask_size = [s if self.process is ops.process_mask_native else s // 4 for s in prepared_batch["imgsz"]]
+            mask_size = [
+                s if self.process is ops.process_mask_native else s // (self.evaluation_mask_ratio or self.proto_stride)
+                for s in prepared_batch["imgsz"]
+            ]
             if masks.shape[1:] != mask_size:
                 masks = F.interpolate(masks[None], mask_size, mode="bilinear", align_corners=False)[0]
                 masks = masks.gt_(0.5)

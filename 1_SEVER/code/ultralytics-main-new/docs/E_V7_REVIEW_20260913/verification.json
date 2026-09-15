@@ -1,0 +1,124 @@
+{
+  "torch": "2.8.0+cpu",
+  "threads": 2,
+  "device": "cpu",
+  "models": [
+    {
+      "name": "V7_00_control",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 133.22199999999995,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_01_p2",
+      "params": 2248818,
+      "thop_gflops640": 11.224639999999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.929789782899283,
+      "cpu_batch1_forward_ms": 160.63509999999948,
+      "candidates640": 34000,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_02_deform",
+      "params": 2235844,
+      "thop_gflops640": 10.417728,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9351851023595564,
+      "cpu_batch1_forward_ms": 197.14860000000022,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.1179648
+    },
+    {
+      "name": "V7_03_pmce",
+      "params": 2265410,
+      "thop_gflops640": 10.39712,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9229799462348979,
+      "cpu_batch1_forward_ms": 153.50090000000094,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_04_boundary",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 136.16129999999947,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_05_cp",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 134.3785000000004,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_06_p2_pmce",
+      "params": 2286837,
+      "thop_gflops640": 11.507353600000002,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9143318916039928,
+      "cpu_batch1_forward_ms": 179.78160000000008,
+      "candidates640": 34000,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V7_07_full",
+      "params": 2293073,
+      "thop_gflops640": 11.7064192,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.911845370818984,
+      "cpu_batch1_forward_ms": 230.74420000000018,
+      "candidates640": 34000,
+      "untraced_dcn_conv_gflops640": 0.1179648
+    }
+  ],
+  "warning": "THOP omits some functional operators. CPU diagnostic timing is not GPU speed evidence.",
+  "smoke": [
+    {
+      "name": "V7_00_control",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev7_from_v6_20260913\\verification\\SMOKE_RUNS_NOT_FORMAL\\V7_00_control\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V7_07_full",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev7_from_v6_20260913\\verification\\SMOKE_RUNS_NOT_FORMAL\\V7_07_full\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    }
+  ]
+}

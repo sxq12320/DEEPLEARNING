@@ -12,6 +12,34 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    SegmentCitrusEV9,
+    EV8ContextStage,
+    EV8P4Reconcile,
+    EV3DeepStage,
+    EV3DetailDown,
+    EV3NativeFusion,
+    SegmentCitrusEV3Quality,
+    SegmentCitrusEV4Detail,
+    SegmentCitrusEV4Quality,
+    SegmentCitrusEV5,
+    SegmentCitrusEV6,
+    SegmentCitrusEV7,
+    EV4CascadeRefine,
+    EV4ChromaFront,
+    EV4FilterFuse,
+    EV4IntegralContext,
+    EV4LapFront,
+    EV4ObserverGate,
+    EV4PhaseLead,
+    EV4PIDFusion,
+    EV4RadialVote,
+    EV4ReverseRefine,
+    EV4ScaleSpace,
+    EV2RepStage,
+    EV2Down,
+    EV2ContextHub,
+    EV2ContextInject,
+    SegmentCitrusEV2,
     CitrusSAGEBoundedP3,
     SAGEGatedStage,
     SegmentCitrusSAGEV4,
@@ -460,7 +488,12 @@ class BaseModel(torch.nn.Module):
         # V6's semantic layers move in the graph. Remap the original initializer,
         # but never remap an already-adapted V6 model during trainer reconstruction.
         mapping_family = getattr(self, "yaml", {}).get("pretrained_map_family")
-        if mapping_family and getattr(model, "yaml", {}).get("pretrained_map_family") == mapping_family:
+        source_yaml = getattr(model, "yaml", {})
+        same_graph = all(
+            self.yaml.get(key) is not None and self.yaml.get(key) == source_yaml.get(key)
+            for key in ("backbone", "head")
+        )
+        if mapping_family and (source_yaml.get("pretrained_map_family") == mapping_family or same_graph):
             layer_map = {}
         if layer_map:
             target_state = self.state_dict()
@@ -468,6 +501,11 @@ class BaseModel(torch.nn.Module):
             for target_index, source_index in layer_map.items():
                 source_prefix = f"model.{int(source_index)}."
                 target_prefix = f"model.{int(target_index)}."
+                # Explicit graph mappings supersede accidental same-index/shape
+                # matches. -1 denotes a genuinely new, randomly initialized layer.
+                updated_csd = {k: v for k, v in updated_csd.items() if not k.startswith(target_prefix)}
+                if int(source_index) < 0:
+                    continue
                 for key, value in csd.items():
                     if not key.startswith(source_prefix):
                         continue
@@ -480,7 +518,7 @@ class BaseModel(torch.nn.Module):
         first_conv = "model.0.conv.weight"  # hard-coded to yolo models for now
         # mostly used to boost multi-channel training
         state_dict = self.state_dict()
-        if first_conv not in updated_csd and first_conv in state_dict:
+        if first_conv not in updated_csd and first_conv in state_dict and first_conv in csd:
             c1, c2, h, w = state_dict[first_conv].shape
             cc1, cc2, ch, cw = csd[first_conv].shape
             if ch == h and cw == w:
@@ -751,6 +789,26 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusEV9):
+            from ultralytics.utils.citrus_e_v9_loss import EV9SegmentationLoss
+
+            return EV9SegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusEV7):
+            from ultralytics.utils.citrus_e_v7_loss import EV7SegmentationLoss
+
+            return EV7SegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusEV6):
+            from ultralytics.utils.citrus_e_v6_loss import EV6SegmentationLoss
+
+            return EV6SegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusEV5):
+            from ultralytics.utils.citrus_e_v5_loss import EV5SegmentationLoss
+
+            return EV5SegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusEV3Quality):
+            from ultralytics.utils.citrus_e_v3_loss import EV3SegmentationLoss
+
+            return EV3SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusSAGEV4R):
             from ultralytics.utils.sage_v4r_loss import SAGEV4RSegmentationLoss
 
@@ -1852,6 +1910,11 @@ def parse_model(d, ch, verbose=True):
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
+            EV8ContextStage,
+            EV3DeepStage,
+            EV3DetailDown,
+            EV2RepStage,
+            EV2Down,
             SAGEV8PhaseStem,
             SAGEV6Stage,
             Classify,
@@ -1917,6 +1980,9 @@ def parse_model(d, ch, verbose=True):
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
         {
+            EV8ContextStage,
+            EV3DeepStage,
+            EV2RepStage,
             SAGEV6Stage,
             BottleneckCSP,
             C1,
@@ -1974,7 +2040,7 @@ def parse_model(d, ch, verbose=True):
                 legacy = False
                 if scale in "mlx":
                     args[3] = True
-            if m in {CitrusLightStage, SAGEV6Stage}:
+            if m in {CitrusLightStage, SAGEV6Stage, EV2RepStage}:
                 # The Light backbone is a current YOLO11-style replacement. Without this flag a model that removes
                 # every C3k2 block silently falls back to the older, substantially heavier Detect class branch.
                 legacy = False
@@ -2067,8 +2133,8 @@ def parse_model(d, ch, verbose=True):
             else:
                 c2 = ch[f]
                 args = [c2, c2]
-        elif m in {HVIEnhance, LCE, TGP}:
-            # HVI low-light enhancement front-end: 3-ch image in, 3-ch enhanced image out.
+        elif m in {HVIEnhance, LCE, TGP, EV4ChromaFront, EV4LapFront}:
+            # Image front-ends: 3-ch image in, 3-ch out.
             # NOT width-scaled — must preserve exactly 3 channels for the backbone stem.
             c1 = ch[f]
             c2 = c1
@@ -2142,6 +2208,11 @@ def parse_model(d, ch, verbose=True):
             output_channels = [make_divisible(min(value, max_channels) * width, 8) for value in args[0]]
             c2 = [*output_channels, 1]
             args = [[ch[index] for index in f], output_channels, *args[1:]]
+        elif m is EV8P4Reconcile:
+            if not isinstance(f, list) or len(f) != 3:
+                raise ValueError("EV8P4Reconcile needs [P4td, C4, C3]")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[x] for x in f], c2, *args[1:]]
         elif m is SAGEV6Exchange:
             if not isinstance(f, list) or len(f) != 2:
                 raise ValueError("SAGEV6Exchange needs [anchor, source] inputs")
@@ -2210,6 +2281,14 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV7R,
                 SegmentCitrusSAGEV8,
                 SegmentCitrusQualityLite,
+                SegmentCitrusEV2,
+                SegmentCitrusEV3Quality,
+                SegmentCitrusEV4Detail,
+                SegmentCitrusEV4Quality,
+    SegmentCitrusEV5,
+                SegmentCitrusEV6,
+                SegmentCitrusEV7,
+                SegmentCitrusEV9,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2243,6 +2322,14 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV7R,
                 SegmentCitrusSAGEV8,
                 SegmentCitrusQualityLite,
+                SegmentCitrusEV2,
+                SegmentCitrusEV3Quality,
+                SegmentCitrusEV4Detail,
+                SegmentCitrusEV4Quality,
+    SegmentCitrusEV5,
+                SegmentCitrusEV6,
+                SegmentCitrusEV7,
+                SegmentCitrusEV9,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2264,11 +2351,34 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusSAGEV7,
                 SegmentCitrusSAGEV7R,
                 SegmentCitrusSAGEV8,
+                SegmentCitrusEV2,
+                SegmentCitrusEV3Quality,
+                SegmentCitrusEV4Detail,
+                SegmentCitrusEV4Quality,
+    SegmentCitrusEV5,
+                SegmentCitrusEV6,
+                SegmentCitrusEV7,
+                SegmentCitrusEV9,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
             }:
                 m.legacy = legacy
+        elif m is EV3NativeFusion:
+            if len(f) != 3 or ch[f[1]] != ch[f[2]]:
+                raise ValueError("EV3NativeFusion requires fine, semantic, native with equal latter widths")
+            c2 = ch[f[0]] + ch[f[1]]
+        elif m in {EV4PIDFusion, EV4ObserverGate, EV4FilterFuse, EV4CascadeRefine, EV4ReverseRefine}:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError(f"{m.__name__} requires exactly two feature indices [fine, semantic]")
+            c2 = ch[f[0]]  # output keeps the fine-stream channels
+            args = [[ch[x] for x in f], *args]
+        elif m in {EV4PhaseLead, EV4IntegralContext, EV4RadialVote, EV4ScaleSpace}:
+            c2 = ch[f]  # channel-preserving single-input correction
+            args = [c2, *args]
+        elif m in {EV2ContextHub, EV2ContextInject}:
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[x] for x in f], c2, *args[1:]]
         elif m is SemanticSegment:
             args.append([ch[x] for x in f])  # nc, ch tuple
         elif m is v10Detect:

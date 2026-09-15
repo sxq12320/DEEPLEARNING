@@ -336,7 +336,10 @@ class BaseTrainer:
         """Initialize training learning rate scheduler."""
         # SMC / SMCAO 模式：内建 cosine schedule，跳过 LambdaLR
         if self.args.optimizer.upper() in {"SMC", "SMCAO"}:
-            self.lf = lambda x: 1.0  # no-op，Scheduler 自行管理 LR
+            # Keep the same base LR protocol as AdamW. The controller adds only
+            # its explicit perturbation; it must not run a second warmup clock.
+            self.lf = (one_cycle(1, self.args.lrf, self.epochs) if self.args.cos_lr else
+                       lambda x: max(1 - x / self.epochs, 0) * (1 - self.args.lrf) + self.args.lrf)
             self.scheduler = None
             return
         if self.args.cos_lr:
@@ -393,6 +396,8 @@ class BaseTrainer:
                 self.optimizer,
                 total_steps=iterations,
                 c=0.5,
+                beta1_default=self.args.momentum,
+                min_lr_ratio=self.args.lrf,
                 surface_threshold=getattr(self.args, 'smc_surface_threshold', 0.05),
                 surface_patience=getattr(self.args, 'smc_surface_patience', 100),
                 lr_boost=getattr(self.args, 'smc_lr_boost', 1.05),
@@ -414,6 +419,8 @@ class BaseTrainer:
                 self.optimizer,
                 total_steps=iterations,
                 c0=0.5,
+                beta1_default=self.args.momentum,
+                min_lr_ratio=self.args.lrf,
                 # 停滞检测
                 surface_threshold=getattr(self.args, 'smc_surface_threshold', 0.05),
                 surface_patience=getattr(self.args, 'smc_surface_patience', 80),
@@ -640,13 +647,13 @@ class BaseTrainer:
                     self.optimizer.zero_grad()
                     break  # restart epoch loop with reduced batch size
                 if ni - last_opt_step >= self.accumulate:
-                    # SMC: 在 optimizer.step 之前注入滑模扰动
                     if self.smc_scheduler is not None:
-                        self.smc_scheduler.observe_gradients()
+                        base_lrs = [
+                            x["lr"] if ni <= nw else x["initial_lr"] * self.lf(epoch)
+                            for x in self.optimizer.param_groups
+                        ]
+                        self.smc_scheduler.set_training_context(base_lrs, warmup_active=ni <= nw)
                     self.optimizer_step()
-                    # SMC: 在 optimizer.step 之后更新控制信号
-                    if self.smc_scheduler is not None:
-                        self.smc_scheduler.step(self.loss.item())
                     last_opt_step = ni
 
                     # Timed stopping
@@ -695,7 +702,7 @@ class BaseTrainer:
 
             # SMC: epoch 结束时通知调度器
             if self.smc_scheduler is not None and self.tloss is not None:
-                epoch_loss = self.tloss.mean().item() if isinstance(self.tloss, torch.Tensor) else float(self.tloss)
+                epoch_loss = self.tloss.sum().item() if isinstance(self.tloss, torch.Tensor) else float(self.tloss)
                 self.smc_scheduler.on_train_epoch_end(epoch_loss)
 
             if RANK in {-1, 0}:
@@ -834,6 +841,7 @@ class BaseTrainer:
                 "updates": self.ema.updates,
                 "optimizer": convert_optimizer_state_dict_to_fp16(deepcopy(self.optimizer.state_dict())),
                 "scaler": self.scaler.state_dict(),
+                "smc_scheduler": self.smc_scheduler.state_dict() if self.smc_scheduler is not None else None,
                 "train_args": vars(self.args),  # save as dict
                 "train_metrics": {**self.metrics, **{"fitness": self.fitness}},
                 "train_results": self.read_results_csv(),
@@ -916,9 +924,17 @@ class BaseTrainer:
     def optimizer_step(self):
         """Perform a single step of the training optimizer with gradient clipping and EMA update."""
         self.scaler.unscale_(self.optimizer)  # unscale gradients
+        if self.smc_scheduler is not None:
+            # Observe physical FP32 gradients, not AMP-scaled gradients. Clipping
+            # below also bounds injected perturbations. No per-tensor .item().
+            self.smc_scheduler.observe_gradients()
+        old_scale = self.scaler.get_scale() if self.smc_scheduler is not None else None
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0)
         self.scaler.step(self.optimizer)
         self.scaler.update()
+        if self.smc_scheduler is not None and self.scaler.get_scale() >= old_scale:
+            # Same units as epoch loss, independent of batch size and DDP multiplier.
+            self.smc_scheduler.step(self.loss_items.detach().sum().item())
         self.optimizer.zero_grad()
         if self.ema:
             self.ema.update(self.model)
@@ -1089,6 +1105,11 @@ class BaseTrainer:
             self.optimizer.load_state_dict(ckpt["optimizer"])
         if ckpt.get("scaler") is not None:
             self.scaler.load_state_dict(ckpt["scaler"])
+        if self.smc_scheduler is not None:
+            if ckpt.get("smc_scheduler") is not None:
+                self.smc_scheduler.load_state_dict(ckpt["smc_scheduler"])
+            else:
+                LOGGER.warning("Checkpoint has no SMC controller state; controller history starts fresh.")
         if self.ema and ckpt.get("ema"):
             self.ema = ModelEMA(self.model)  # validation with EMA creates inference tensors that can't be updated
             self.ema.ema.load_state_dict(ckpt["ema"].float().state_dict())

@@ -1,0 +1,182 @@
+[
+  {
+    "name": "V8_00_phase_control_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "C3k2",
+    "neck19": "C3k2",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.0,
+    "neighbor_gain": 0.0,
+    "params": 2229608,
+    "checkpoint_epoch": 266,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_01_geometry_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "C3k2",
+    "neck19": "C3k2",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.5,
+    "neighbor_gain": 0.25,
+    "params": 2229608,
+    "checkpoint_epoch": 288,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_02_copy_paste_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "C3k2",
+    "neck19": "C3k2",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.0,
+    "neighbor_gain": 0.0,
+    "params": 2229608,
+    "checkpoint_epoch": 271,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_03_geometry_cp_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "C3k2",
+    "neck19": "C3k2",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.5,
+    "neighbor_gain": 0.25,
+    "params": 2229608,
+    "checkpoint_epoch": 288,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_04_context_backbone_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "EV8ContextStage",
+    "neck19": "C3k2",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.0,
+    "neighbor_gain": 0.0,
+    "params": 2218856,
+    "checkpoint_epoch": 232,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_05_native_neck_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "C3k2",
+    "neck19": "EV8P4Reconcile",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.0,
+    "neighbor_gain": 0.0,
+    "params": 2132330,
+    "checkpoint_epoch": 271,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_06_structure_pair_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "EV8ContextStage",
+    "neck19": "EV8P4Reconcile",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.0,
+    "neighbor_gain": 0.0,
+    "params": 2121578,
+    "checkpoint_epoch": 260,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_07_structure_geometry_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "EV8ContextStage",
+    "neck19": "EV8P4Reconcile",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.5,
+    "neighbor_gain": 0.25,
+    "params": 2121578,
+    "checkpoint_epoch": 255,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_08_structure_complete_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "EV8ContextStage",
+    "neck19": "EV8P4Reconcile",
+    "fine_mode": "phase",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.5,
+    "neighbor_gain": 0.25,
+    "params": 2121578,
+    "checkpoint_epoch": 286,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  },
+  {
+    "name": "V8_09_dense_complete_seed42",
+    "available": true,
+    "head": "SegmentCitrusEV7",
+    "stage6": "EV8ContextStage",
+    "neck19": "EV8P4Reconcile",
+    "fine_mode": "dense",
+    "strides": [
+      8.0,
+      16.0,
+      32.0
+    ],
+    "boundary_gain": 0.5,
+    "neighbor_gain": 0.25,
+    "params": 2119274,
+    "checkpoint_epoch": 288,
+    "task": "Current classes used to deserialize historical checkpoint; not historical Python provenance"
+  }
+]

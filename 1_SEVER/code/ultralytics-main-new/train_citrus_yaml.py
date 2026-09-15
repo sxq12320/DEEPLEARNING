@@ -52,6 +52,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--citrus-topology", type=float, default=None)
     parser.add_argument("--citrus-vfl", type=float, default=None)
     parser.add_argument("--nwd-ratio", type=float, default=None)
+    parser.add_argument("--optimizer", choices=("AdamW", "SMC", "SMCAO"), default="AdamW",
+                        help="Explicit optimizer ablation; all other protocol settings remain fixed.")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
@@ -112,8 +114,10 @@ def custom_loss_overrides(args: argparse.Namespace, head_name: str, sdr_stage: i
         overrides.setdefault("citrus_contrast", 0.05)
         overrides.setdefault("citrus_boundary", 0.10)
         overrides.setdefault("citrus_topology", 0.05)
-    if any(value < 0 for value in overrides.values()):
-        raise ValueError(f"Custom loss gains must be non-negative: {overrides}")
+    if any(not np.isfinite(value) or value < 0 for value in overrides.values()):
+        raise ValueError(f"Custom loss gains must be finite and non-negative: {overrides}")
+    if any(overrides.get(name, 0) > 1 for name in ("nwd_ratio", "citrus_vfl")):
+        raise ValueError("nwd_ratio and citrus_vfl are mixture ratios and must be in [0, 1]")
     return overrides
 
 
@@ -159,9 +163,16 @@ def main() -> None:
     head = model.model.model[-1]
     head_name = head.__class__.__name__
     loss_overrides = custom_loss_overrides(args, head_name, int(getattr(head, "sdr_stage", 1)))
+    if str(model.model.yaml.get("pretrained_map_family", "")).startswith("ev4_"):
+        # E52 is the structural control. E60/E61/E62 explicitly switch on each
+        # supervision term; historical topology-head defaults must not leak in.
+        for key in ("citrus_boundary", "citrus_query"):
+            if getattr(args, key) is None:
+                loss_overrides[key] = 0.0
 
     if args.dry_run:
         model.info(detailed=False, verbose=True, imgsz=args.imgsz)
+        print(f"Optimizer: {args.optimizer}; explicit method losses: {loss_overrides}")
         print(f"Model build passed: {model_path}")
         return
 
@@ -178,6 +189,7 @@ def main() -> None:
         epochs=args.epochs,
         device=args.device,
         seed=args.seed,
+        optimizer=args.optimizer,
         exist_ok=False,
         **loss_overrides,
     )

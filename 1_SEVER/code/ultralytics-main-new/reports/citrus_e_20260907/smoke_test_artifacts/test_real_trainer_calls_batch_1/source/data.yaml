@@ -1,5 +1,0 @@
-names:
-  0: fruit
-path: E:\mastercode\1_SEVER\code\ultralytics-main-new\reports\citrus_e_20260907\smoke_test_artifacts\test_real_trainer_calls_batch_1\source
-train: train/images
-val: val/images

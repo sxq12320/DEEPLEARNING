@@ -1,0 +1,756 @@
+{
+  "A2C2f": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1872,
+      "end": 1951,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "ADown": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1017,
+      "end": 1039,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "BiFPNConcat": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 765,
+      "end": 783,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C2MANO": [
+    {
+      "path": "ultralytics\\nn\\modules\\mano.py",
+      "line": 171,
+      "end": 198,
+      "sha256": "30582dfa9f4a8d41bd33380171d50cc2e41952b9ea15fb941341d540837cc1c1"
+    }
+  ],
+  "C2PSA": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1513,
+      "end": 1565,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "C2f": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 365,
+      "end": 396,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "C3k2": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1146,
+      "end": 1183,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "C3k2SAGEShape": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage.py",
+      "line": 138,
+      "end": 212,
+      "sha256": "119b9f49c2c111f8cf9a8672f6811c445abfa76eac323b3d089a84445116d105"
+    }
+  ],
+  "C3k2_DWR": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 601,
+      "end": 606,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C3k2_Faster": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 546,
+      "end": 551,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C3k2_LS": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 754,
+      "end": 759,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C3k2_MoCE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 690,
+      "end": 695,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C3k2_SXQ": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 642,
+      "end": 647,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "C3k2_WT": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 593,
+      "end": 598,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "CAA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 401,
+      "end": 419,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "CARAFE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 204,
+      "end": 232,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "CBAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 583,
+      "end": 613,
+      "sha256": "c802f36ea1596d8910f2b651d57877b50a4960857b97cbb5a20d44a1dbbaa774"
+    }
+  ],
+  "CSFG": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 870,
+      "end": 896,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "CitrusBilateralExchange": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 96,
+      "end": 161,
+      "sha256": "3eecd13f36b22b3d535f87860b4f2592fdda41c6d82f4674f00eea5efa8912bb"
+    }
+  ],
+  "CitrusFrequencyAlignedConcat": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 164,
+      "end": 220,
+      "sha256": "3eecd13f36b22b3d535f87860b4f2592fdda41c6d82f4674f00eea5efa8912bb"
+    }
+  ],
+  "CitrusRepMixerStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 74,
+      "end": 93,
+      "sha256": "3eecd13f36b22b3d535f87860b4f2592fdda41c6d82f4674f00eea5efa8912bb"
+    }
+  ],
+  "CitrusSAGEInnovationPyramid": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage.py",
+      "line": 233,
+      "end": 322,
+      "sha256": "119b9f49c2c111f8cf9a8672f6811c445abfa76eac323b3d089a84445116d105"
+    }
+  ],
+  "CitrusScaleFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 175,
+      "end": 201,
+      "sha256": "605db8e66eb20eb6550b7e283ef65533668ca2f0d54386fae2b30caac26ced20"
+    }
+  ],
+  "CitrusShapeFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 154,
+      "end": 188,
+      "sha256": "7052ec9f56ace2e5b783c107ea5d7cb60de549a1bcab6da4c32dc67d441a2bf0"
+    }
+  ],
+  "CitrusShapeStream": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 101,
+      "end": 151,
+      "sha256": "7052ec9f56ace2e5b783c107ea5d7cb60de549a1bcab6da4c32dc67d441a2bf0"
+    }
+  ],
+  "CitrusStructureStem": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 75,
+      "end": 98,
+      "sha256": "7052ec9f56ace2e5b783c107ea5d7cb60de549a1bcab6da4c32dc67d441a2bf0"
+    }
+  ],
+  "Concat": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 616,
+      "end": 641,
+      "sha256": "c802f36ea1596d8910f2b651d57877b50a4960857b97cbb5a20d44a1dbbaa774"
+    }
+  ],
+  "Conv": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 39,
+      "end": 89,
+      "sha256": "c802f36ea1596d8910f2b651d57877b50a4960857b97cbb5a20d44a1dbbaa774"
+    }
+  ],
+  "CoordAtt": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 352,
+      "end": 376,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "DFEM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 789,
+      "end": 839,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "ELA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 379,
+      "end": 398,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "EMA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 295,
+      "end": 329,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "EV2ContextHub": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 74,
+      "end": 86,
+      "sha256": "44b47bced84a71b1b67e0b3055b04f4772cb219ada6692e636b00d1c99e06a9d"
+    }
+  ],
+  "EV2ContextInject": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 89,
+      "end": 105,
+      "sha256": "44b47bced84a71b1b67e0b3055b04f4772cb219ada6692e636b00d1c99e06a9d"
+    }
+  ],
+  "EV2Down": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 51,
+      "end": 60,
+      "sha256": "44b47bced84a71b1b67e0b3055b04f4772cb219ada6692e636b00d1c99e06a9d"
+    }
+  ],
+  "EV2RepStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 39,
+      "end": 48,
+      "sha256": "44b47bced84a71b1b67e0b3055b04f4772cb219ada6692e636b00d1c99e06a9d"
+    }
+  ],
+  "EV3DeepStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 22,
+      "end": 27,
+      "sha256": "3fd6831f228e09156115459b6c2d0baea15ae79e09e39c11be4d151247dff635"
+    }
+  ],
+  "EV3DetailDown": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 30,
+      "end": 38,
+      "sha256": "3fd6831f228e09156115459b6c2d0baea15ae79e09e39c11be4d151247dff635"
+    }
+  ],
+  "EV3NativeFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 41,
+      "end": 56,
+      "sha256": "3fd6831f228e09156115459b6c2d0baea15ae79e09e39c11be4d151247dff635"
+    }
+  ],
+  "EV8ContextStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v8.py",
+      "line": 39,
+      "end": 48,
+      "sha256": "a1dbab90b9a3e0986367820eaa5f7f7a30c68e531f5e563e4877842eda66b659"
+    }
+  ],
+  "EV8P4Reconcile": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v8.py",
+      "line": 51,
+      "end": 86,
+      "sha256": "a1dbab90b9a3e0986367820eaa5f7f7a30c68e531f5e563e4877842eda66b659"
+    }
+  ],
+  "FarFormer": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1055,
+      "end": 1063,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "HCO": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1379,
+      "end": 1398,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "HSF": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1312,
+      "end": 1333,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "HVIEnhance": [
+    {
+      "path": "ultralytics\\nn\\modules\\hvi_enhance.py",
+      "line": 176,
+      "end": 245,
+      "sha256": "2656865c0682784b30709d8342cd8136467c790b498872a7e58e1af25746673d"
+    }
+  ],
+  "HWDown": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 145,
+      "end": 160,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "HyperACE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1435,
+      "end": 1466,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "HyperRes": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 698,
+      "end": 730,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "Index": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 644,
+      "end": 669,
+      "sha256": "c802f36ea1596d8910f2b651d57877b50a4960857b97cbb5a20d44a1dbbaa774"
+    }
+  ],
+  "LCE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1249,
+      "end": 1279,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "LIAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 842,
+      "end": 867,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "LumiFormer": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1155,
+      "end": 1163,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "MWCA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1169,
+      "end": 1218,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "MobileNetV4Stage": [
+    {
+      "path": "ultralytics\\nn\\modules\\mobilenetv4_rgb.py",
+      "line": 338,
+      "end": 401,
+      "sha256": "b8a2968274352ab858780c32288ae064f141cd9847f5946831a5b8edd8f98984"
+    }
+  ],
+  "MobileNetV4Stem_RGB": [
+    {
+      "path": "ultralytics\\nn\\modules\\mobilenetv4_rgb.py",
+      "line": 318,
+      "end": 335,
+      "sha256": "b8a2968274352ab858780c32288ae064f141cd9847f5946831a5b8edd8f98984"
+    }
+  ],
+  "PCFA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1282,
+      "end": 1309,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "RFB": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 425,
+      "end": 444,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "RepNCSPELAN4": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 945,
+      "end": 975,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "SAGEGatedStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v4.py",
+      "line": 87,
+      "end": 103,
+      "sha256": "040c9dbdc7484ae1f0560ca556243a6a47b05ae019aebeb340815be29bf86519"
+    }
+  ],
+  "SAGEV6Exchange": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v6.py",
+      "line": 47,
+      "end": 81,
+      "sha256": "8a8bdb943fa41425cb1d2201790a73300fda4e44228db0f6087c7c792bab9043"
+    }
+  ],
+  "SAGEV6Stage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v6.py",
+      "line": 35,
+      "end": 44,
+      "sha256": "8a8bdb943fa41425cb1d2201790a73300fda4e44228db0f6087c7c792bab9043"
+    }
+  ],
+  "SAGEV8PhaseStem": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v8.py",
+      "line": 23,
+      "end": 58,
+      "sha256": "ae1a7e6ca8741d549aca939590114ecdf376e76e71e9f350b8b4a228763a7ba0"
+    }
+  ],
+  "SPDConv": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 126,
+      "end": 142,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "SPPELAN": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1042,
+      "end": 1066,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "SPPF": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 285,
+      "end": 314,
+      "sha256": "1dff0bdc400cab2ee0c919e47d59f2a5305b70fff31ae638628b3ee65f9b3968"
+    }
+  ],
+  "SPPFLSKAResidual": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 102,
+      "end": 119,
+      "sha256": "605db8e66eb20eb6550b7e283ef65533668ca2f0d54386fae2b30caac26ced20"
+    }
+  ],
+  "SPPFRepContext": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 122,
+      "end": 139,
+      "sha256": "605db8e66eb20eb6550b7e283ef65533668ca2f0d54386fae2b30caac26ced20"
+    }
+  ],
+  "SPPF_LSKA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 467,
+      "end": 485,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "Segment": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 285,
+      "end": 386,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "Segment26": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1280,
+      "end": 1336,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusAux": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 592,
+      "end": 628,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusBLite": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1027,
+      "end": 1067,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusDualProto": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1070,
+      "end": 1106,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusEV2": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 133,
+      "end": 153,
+      "sha256": "44b47bced84a71b1b67e0b3055b04f4772cb219ada6692e636b00d1c99e06a9d"
+    }
+  ],
+  "SegmentCitrusEV3Quality": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 59,
+      "end": 102,
+      "sha256": "3fd6831f228e09156115459b6c2d0baea15ae79e09e39c11be4d151247dff635"
+    }
+  ],
+  "SegmentCitrusEV4Detail": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v4r.py",
+      "line": 45,
+      "end": 50,
+      "sha256": "cdbf5128876289faa9d21e61cd2e59c3e708e13b14cb36ee950468b822b92341"
+    }
+  ],
+  "SegmentCitrusEV4Quality": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v4r.py",
+      "line": 53,
+      "end": 104,
+      "sha256": "cdbf5128876289faa9d21e61cd2e59c3e708e13b14cb36ee950468b822b92341"
+    }
+  ],
+  "SegmentCitrusEV5": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v5.py",
+      "line": 22,
+      "end": 82,
+      "sha256": "fd3d7443997e37214bfa7e0f2b828bf6e0f7bac37b097562c557d36627887aea"
+    }
+  ],
+  "SegmentCitrusEV6": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v6.py",
+      "line": 50,
+      "end": 135,
+      "sha256": "b703c47665926ee004f5e6feeed774a323e208c79a97994561aefe3a1e05f892"
+    }
+  ],
+  "SegmentCitrusEV7": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v7.py",
+      "line": 99,
+      "end": 211,
+      "sha256": "18c27df2ddffbb2172d9e4e1824ee7162d9ee518b1f74825657f699c5cf3b795"
+    }
+  ],
+  "SegmentCitrusLite": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 631,
+      "end": 667,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusLiteBQ": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 989,
+      "end": 1024,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusSAGEV2": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 833,
+      "end": 890,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentCitrusSAGEV4R": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v4r.py",
+      "line": 60,
+      "end": 104,
+      "sha256": "bd1b4e8ae2a67de9c91e323168e7e4349083eafd10e94ef1611c27cab1145c82"
+    }
+  ],
+  "SegmentCitrusSAGEV5": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v5.py",
+      "line": 42,
+      "end": 94,
+      "sha256": "5058ef3cde307009d05c3d71b3331cf762308a292faf719fd158b5abd2ba5ad8"
+    }
+  ],
+  "SegmentCitrusSAGEV7": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v7.py",
+      "line": 40,
+      "end": 111,
+      "sha256": "118bd3d2c67fb8bf84af679600c3bab1a862a3936010b0ca571c40ec8eee9ceb"
+    }
+  ],
+  "SegmentCitrusSAGEV7R": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v7r.py",
+      "line": 73,
+      "end": 144,
+      "sha256": "30d40f1e27d56250dc72e2f3e2c71554b2927ccb1263562afced8a676a9999c3"
+    }
+  ],
+  "SegmentCitrusSAGEV8": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v8.py",
+      "line": 61,
+      "end": 116,
+      "sha256": "ae1a7e6ca8741d549aca939590114ecdf376e76e71e9f350b8b4a228763a7ba0"
+    }
+  ],
+  "SegmentCitrusTopo": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 554,
+      "end": 589,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SegmentP2Boundary": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 389,
+      "end": 439,
+      "sha256": "261e08f32473994f15ee1cfb3cab691ac29554966f7b641e426f8f446812bdd2"
+    }
+  ],
+  "SimAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 332,
+      "end": 349,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "StarNetBackbone": [
+    {
+      "path": "ultralytics\\nn\\modules\\starnet.py",
+      "line": 119,
+      "end": 197,
+      "sha256": "7bc4547c6b845ff96c60967939578b18d970d996e909d4814996b103bbaaaf5a"
+    }
+  ],
+  "TDAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1221,
+      "end": 1246,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "TGP": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1336,
+      "end": 1373,
+      "sha256": "746fb383a2d4046db673dcd07814ed7ce58dc896db631bd8a3b51a01e862dd8d"
+    }
+  ],
+  "nn.Identity": [],
+  "nn.Upsample": []
+}

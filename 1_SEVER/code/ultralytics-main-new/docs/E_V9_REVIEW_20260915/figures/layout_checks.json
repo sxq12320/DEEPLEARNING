@@ -1,0 +1,24 @@
+[
+  {
+    "figure": "E_V9_architecture",
+    "text_outside_nodes": [],
+    "minimum_node_font_pt": 7.5,
+    "vector_formats": [
+      "SVG editable text",
+      "PDF embedded fonts"
+    ],
+    "png_dpi": 300,
+    "palette": "Okabe-Ito-inspired dark blue/orange/green; labeled nodes do not rely on colour"
+  },
+  {
+    "figure": "E_V9_modules",
+    "text_outside_nodes": [],
+    "minimum_node_font_pt": 7.2,
+    "vector_formats": [
+      "SVG editable text",
+      "PDF embedded fonts"
+    ],
+    "png_dpi": 300,
+    "palette": "Okabe-Ito-inspired dark blue/orange/green; labeled nodes do not rely on colour"
+  }
+]

@@ -1,0 +1,32 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V9
+implementation_revision: EV9_20260915_decoupled_mask
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+input_recipe: ".5 global/.25 coarse/.25 fine; source-balanced uniform views, unchanged from V8"
+fixed_backbone: "C2/C3/C4 C3k2; C5 EV3DeepStage; SPPF+C2PSA; inherited hybrid backbone"
+fixed_detector: "original asymmetric P3/P4/C5 neck and P3-down/concat/C3k2 P4 reconstruction retained"
+fixed_head: "8400 anchors at640, stride2 phase masks, quality_floor=.5; no P2 tower/DCN/PMCE"
+fixed_geometry: "all except00: boundary=.5, neighbor=.25, copy_paste=.3 flip"
+factors:
+  N: "mask-only C4/C5 semantic discrepancy and local residual band, 16 channels"
+  C: "replace wide Proto with narrow P3-to-P2 mask-basis decoder, width32"
+  T: "tiny visible-instance Dice .25; area<256 input pixels, mean coefficients per GT; baseline BCE unchanged"
+  Q: "negative mask-quality MSE .1; up to32 hard negatives outside ALL GT boxes expanded8 pixels"
+  O: "09 ONLY: cosine decay instead of linear; same AdamW and LR endpoints, no warm restart"
+checkpoint: "best_mask.pt=mask AP50-95; best_mask50.pt=mask AP50; official best.pt unchanged"
+evaluation: "EV6Validator common input/2 GT; fixed original-image640 global/coarse/fine, conf=.001, same merge budget"
+limitations: "Single-seed screen, no promised gain. Current local code cannot prove full historical server Python identity."
+formal: "select first, then run control/final with42,43,44 on grouped_dedup; do not tune on test"

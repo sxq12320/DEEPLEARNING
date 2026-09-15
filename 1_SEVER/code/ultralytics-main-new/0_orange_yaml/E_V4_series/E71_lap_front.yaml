@@ -1,0 +1,37 @@
+# E71: input-side restructuring. A Laplacian-pyramid frontend injects explicit
+# band-pass detail at the stem input (FEDER, CVPR 2023: camouflage similarity
+# lives in the low-frequency chroma band; fruit identity - oil-gland texture,
+# rim curvature - lives in the band-pass structure). Identity-initialised gate.
+nc: 80
+pretrained_map_family: ev4_E71_lap_front
+# Explicit target -> COCO YOLO11-seg layer map; -1 keeps a new layer random.
+pretrained_layer_map: {0: -1, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 19: 18, 20: 19, 21: 23}
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  - [-1, 1, EV4LapFront, []]                  # 0  Laplacian band-pass injection, 3->3
+  - [-1, 1, SAGEV8PhaseStem, [64, 3, 2]]      # 1
+  - [-1, 1, Conv, [128, 3, 2]]                # 2
+  - [-1, 2, C3k2, [256, false, 0.25]]         # 3
+  - [-1, 1, Conv, [256, 3, 2]]                # 4
+  - [-1, 2, C3k2_Faster, [512, false, 0.25]]  # 5  (C3)
+  - [-1, 1, Conv, [512, 3, 2]]                # 6
+  - [-1, 2, C3k2_Faster, [512, true]]         # 7  (C4)
+  - [-1, 1, Conv, [1024, 3, 2]]               # 8
+  - [-1, 2, C3k2_WT, [1024, true]]            # 9
+  - [-1, 1, SPPF_LSKA, [1024, 5]]             # 10
+  - [-1, 2, C2PSA, [1024]]                    # 11 (P5)
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, nearest]]  # 12
+  - [[-1, 7], 1, Concat, [1]]                 # 13
+  - [-1, 2, C3k2, [512, false]]               # 14
+  - [-1, 1, nn.Upsample, [None, 2, nearest]]  # 15
+  - [[-1, 5], 1, Concat, [1]]                 # 16
+  - [-1, 2, C3k2, [256, false]]               # 17 (P3/8-small)
+  - [-1, 1, Conv, [256, 3, 2]]                # 18
+  - [[-1, 14], 1, Concat, [1]]                # 19
+  - [-1, 2, C3k2, [512, false]]               # 20 (P4/16-medium)
+  - [[17, 20, 11, 3], 1, SegmentCitrusSAGEV5, [nc, 32, 256, 16, true, false, 0, 0]]  # 21

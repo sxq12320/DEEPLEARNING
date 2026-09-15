@@ -1,0 +1,24 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V5
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+optimizer: AdamW
+lr0: 0.001
+weight_decay: 0.0005
+factors:
+  fine_input: "p(global/coarse .6/fine .4) = .5/.25/.25; control .5/.5/0"
+  mask_route: "16-channel mask-only context adapter; candidate relay unchanged"
+  region_loss: "gain .05: balanced foreground/background BCE + .5 ring BCE + .1 regional contrast"
+regional_contrast: {embedding_dim: 8, queries_per_class: 128, temperature: 0.2, ring_kernel: 5}
+quality: {gain: 1.0, score_floor: 0.5}
+checkpoint: "best_mask.pt selected by mask AP50-95; separate best_mask50.pt by mask AP50"
+evaluation: "each arm global+coarse, global+fine; same original validation; report latency and raster"
+learned_crop_guide: false
+geometry_prior: "visible foreground only; no convex hull/circle/morphological closing"
+limits: "single-seed screening; final control/method require three seeds. Performance unproven."

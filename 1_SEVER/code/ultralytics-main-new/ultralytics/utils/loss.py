@@ -115,6 +115,8 @@ class BboxLoss(nn.Module):
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
         self.nwd_ratio = float(getattr(hyp, "nwd_ratio", 0.0)) if hyp is not None else 0.0
+        if not 0.0 <= self.nwd_ratio <= 1.0:
+            raise ValueError("nwd_ratio must be finite and in [0, 1]")
 
     def forward(
         self,
@@ -136,7 +138,7 @@ class BboxLoss(nn.Module):
         regression_loss = 1.0 - iou
         if self.nwd_ratio > 0:
             # NWD is defined in image-pixel coordinates. It is blended only for
-            # small targets, where a one-pixel shift makes IoU discontinuous.
+            # small targets, where a one-pixel shift changes IoU disproportionately.
             positive_stride = stride.view(1, -1, 1).expand(pred_bboxes.shape[0], -1, -1)[fg_mask]
             pred_pixels = positive_pred * positive_stride
             target_pixels = positive_target * positive_stride
@@ -146,7 +148,11 @@ class BboxLoss(nn.Module):
             target_size = target_pixels[:, 2:] - target_pixels[:, :2]
             wasserstein = (pred_center - target_center).square().sum(-1, keepdim=True)
             wasserstein += (pred_size - target_size).square().sum(-1, keepdim=True) * 0.25
-            nwd_loss = 1.0 - torch.exp(-wasserstein.clamp_min(0).sqrt() / 12.8)
+            # sqrt(0) has an infinite derivative: exact box matches previously
+            # produced NaN gradients (0 * inf). Preserve zero loss with a smooth
+            # finite-gradient distance; expm1 also avoids cancellation near zero.
+            distance = (wasserstein.float().clamp_min(0) + 1e-8).sqrt() - 1e-4
+            nwd_loss = -torch.expm1(-distance / 12.8)
             target_scale = target_size.clamp_min(0).prod(-1, keepdim=True).sqrt()
             small_gate = torch.sigmoid((32.0 - target_scale) / 4.0)
             blend = (self.nwd_ratio * small_gate).clamp(0.0, 1.0)
@@ -366,6 +372,8 @@ class v8DetectionLoss:
         self.bce = nn.BCEWithLogitsLoss(reduction="none")
         self.hyp = h
         self.citrus_vfl = float(getattr(h, "citrus_vfl", 0.0))
+        if not 0.0 <= self.citrus_vfl <= 1.0:
+            raise ValueError("citrus_vfl must be finite and in [0, 1]")
         self.stride = m.stride  # model strides
         self.nc = m.nc  # number of classes
         self.no = m.nc + m.reg_max * 4
@@ -596,7 +604,8 @@ class v8SegmentationLoss(v8DetectionLoss):
             boundary_logits = preds.get("citrus_boundary")
             if boundary_logits is not None:
                 boundary_target, concavity_band = self.build_boundary_targets(
-                    masks, batch["batch_idx"].view(-1), batch_size, boundary_logits.shape[-2:]
+                    masks, batch["batch_idx"].view(-1), batch_size, boundary_logits.shape[-2:],
+                    compute_concavity=self.citrus_concavity_gain > 0,
                 )
                 if self.citrus_boundary_gain > 0:
                     loss[1] += self.citrus_boundary_gain * self.boundary_bce_dice(boundary_logits, boundary_target)
@@ -688,7 +697,7 @@ class v8SegmentationLoss(v8DetectionLoss):
             instance_ids = instance_ids[instance_ids > 0]
             if not len(instance_ids):
                 return masks.new_zeros((0, *size))
-            instances = torch.stack([mask_map == instance_id for instance_id in instance_ids]).float()
+            instances = (mask_map[None] == instance_ids[:, None, None]).float()
         else:
             instances = masks[batch_idx == image_index]
             if instances.ndim == 4 and instances.shape[1] == 1:
@@ -705,6 +714,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         batch_idx: torch.Tensor,
         batch_size: int,
         size: tuple[int, int],
+        compute_concavity: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Build per-instance boundary union and morphology-derived concave-notch bands."""
         boundary_targets = masks.new_zeros((batch_size, 1, *size))
@@ -719,6 +729,8 @@ class v8SegmentationLoss(v8DetectionLoss):
             boundaries = (dilated - eroded).clamp_(0, 1)
             boundary_targets[image_index] = boundaries.amax(dim=0)
 
+            if not compute_concavity:
+                continue  # Boundary-only supervision needs no expensive notch morphology.
             # Closing fills narrow inward notches while leaving convex outer boundaries mostly unchanged.
             closed = F.max_pool2d(instances, 7, stride=1, padding=3)
             closed = 1.0 - F.max_pool2d(1.0 - closed, 7, stride=1, padding=3)
@@ -759,17 +771,20 @@ class v8SegmentationLoss(v8DetectionLoss):
         targets = masks.new_zeros((batch_size, 1, *size))
         for image_index in range(batch_size):
             instances = self.image_instance_masks(masks, batch_idx, image_index, size)
-            for instance in instances:
-                # The query branch is P2/4; 32x32 input pixels correspond to 64 query pixels.
-                if instance.sum() >= 64:
-                    continue
-                coordinates = torch.nonzero(instance > 0, as_tuple=False)
-                if not len(coordinates):
-                    continue
-                center_y, center_x = coordinates.float().mean(dim=0).round().long()
-                y0, y1 = max(int(center_y) - 1, 0), min(int(center_y) + 2, size[0])
-                x0, x1 = max(int(center_x) - 1, 0), min(int(center_x) + 2, size[1])
-                targets[image_index, 0, y0:y1, x0:x1] = 1.0
+            if not len(instances):
+                continue
+            # Same P2/4 <64-pixel rule and rounded 3x3 centroid as before,
+            # but no instance-by-instance GPU -> Python scalar transfers.
+            area = instances.sum((1, 2))
+            active = (area > 0) & (area < 64)
+            yy = torch.arange(size[0], device=masks.device, dtype=instances.dtype)
+            xx = torch.arange(size[1], device=masks.device, dtype=instances.dtype)
+            cy = ((instances.sum(2) * yy).sum(1) / area.clamp_min(1)).round().long()[active]
+            cx = ((instances.sum(1) * xx).sum(1) / area.clamp_min(1)).round().long()[active]
+            offset = torch.arange(-1, 2, device=masks.device)
+            y = (cy[:, None, None] + offset[None, :, None]).expand(-1, 3, 3).clamp(0, size[0] - 1)
+            x = (cx[:, None, None] + offset[None, None, :]).expand(-1, 3, 3).clamp(0, size[1] - 1)
+            targets[image_index, 0, y.flatten(), x.flatten()] = 1.0
         return targets
 
     def build_contrast_ring_targets(

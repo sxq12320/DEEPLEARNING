@@ -17,6 +17,8 @@ Examples:
     >>> subprocess.run(f"onnxslim {f} {f} && open {f}", shell=True, check=True)  # pip install onnxslim
 """
 
+from .citrus_e_v8 import EV8ContextStage, EV8P4Reconcile
+from .citrus_e_v2 import EV2ContextHub, EV2ContextInject, EV2Down, EV2RepStage, SegmentCitrusEV2
 from .block import (
     C1,
     C2,
@@ -276,6 +278,39 @@ from .citrus_far import (
 )
 
 __all__ = (
+    "EV9MaskNeck",
+    "EV9CompactProto",
+    "SegmentCitrusEV9",
+    "EV8ContextStage",
+    "EV8P4Reconcile",
+    "EV3DeepStage",
+    "EV3DetailDown",
+    "EV3NativeFusion",
+    "SegmentCitrusEV3Quality",
+    "SegmentCitrusEV4Detail",
+    "SegmentCitrusEV4Quality",
+    "SegmentCitrusEV5",
+    "SegmentCitrusEV6",
+    "SegmentCitrusEV7",
+    "EV6FineDetail",
+    "EV7DeformBlock",
+    "EV7PMCE",
+    "EV4PIDFusion",
+    "EV4ObserverGate",
+    "EV4PhaseLead",
+    "EV4IntegralContext",
+    "EV4FilterFuse",
+    "EV4CascadeRefine",
+    "EV4ChromaFront",
+    "EV4LapFront",
+    "EV4ReverseRefine",
+    "EV4RadialVote",
+    "EV4ScaleSpace",
+    "EV2RepStage",
+    "EV2Down",
+    "EV2ContextHub",
+    "EV2ContextInject",
+    "SegmentCitrusEV2",
     "CitrusSAGEBoundedP3",
     "SAGEGatedStage",
     "SegmentCitrusSAGEV4",
@@ -521,3 +556,23 @@ __all__ = (
     "IELBlock",
     "RGBHVI",
 )
+
+from .citrus_e_v3 import EV3DeepStage, EV3DetailDown, EV3NativeFusion, SegmentCitrusEV3Quality
+from .citrus_e_v9 import EV9MaskNeck, EV9CompactProto, SegmentCitrusEV9
+from .citrus_e_v4 import (
+    EV4CascadeRefine,
+    EV4ChromaFront,
+    EV4FilterFuse,
+    EV4IntegralContext,
+    EV4LapFront,
+    EV4ObserverGate,
+    EV4PhaseLead,
+    EV4PIDFusion,
+    EV4RadialVote,
+    EV4ReverseRefine,
+    EV4ScaleSpace,
+)
+from .citrus_e_v4r import SegmentCitrusEV4Detail, SegmentCitrusEV4Quality
+from .citrus_e_v5 import SegmentCitrusEV5
+from .citrus_e_v6 import EV6FineDetail, SegmentCitrusEV6
+from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7

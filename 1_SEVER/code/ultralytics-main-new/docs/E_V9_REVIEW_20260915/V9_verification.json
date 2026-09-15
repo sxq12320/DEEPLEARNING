@@ -1,0 +1,161 @@
+{
+  "torch": "2.8.0+cpu",
+  "threads": 2,
+  "device": "cpu",
+  "models": [
+    {
+      "name": "V9_00_phase_control",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 140.80650000000006,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_01_geometry_cp_anchor",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 139.00610000000046,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_02_mask_neck",
+      "params": 2238442,
+      "thop_gflops640": 10.251891200000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9340996997018461,
+      "cpu_batch1_forward_ms": 136.6183999999997,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_03_compact_basis",
+      "params": 2141704,
+      "thop_gflops640": 7.059827200000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9330813221621662,
+      "cpu_batch1_forward_ms": 117.42139999999957,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_04_dual_route",
+      "params": 2150538,
+      "thop_gflops640": 7.093056,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9292484020277717,
+      "cpu_batch1_forward_ms": 123.12410000000007,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_05_tiny_overlap",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 128.02210000000082,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_06_dual_tiny",
+      "params": 2150538,
+      "thop_gflops640": 7.093056,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9292484020277717,
+      "cpu_batch1_forward_ms": 132.0775999999988,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_07_background_quality",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 131.80619999999976,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_08_complete",
+      "params": 2150538,
+      "thop_gflops640": 7.093056,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9292484020277717,
+      "cpu_batch1_forward_ms": 121.49510000000063,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V9_09_complete_cosine",
+      "params": 2150538,
+      "thop_gflops640": 7.093056,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9292484020277717,
+      "cpu_batch1_forward_ms": 133.17580000000007,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    }
+  ],
+  "warning": "THOP omits some functional operators. CPU diagnostic timing is not GPU speed evidence.",
+  "smoke": [
+    {
+      "name": "V9_00_phase_control",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev9_20260915\\verification\\SMOKE_RUNS_NOT_FORMAL\\V9_00_phase_control\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V9_08_complete",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev9_20260915\\verification\\SMOKE_RUNS_NOT_FORMAL\\V9_08_complete\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V9_09_complete_cosine",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev9_20260915\\verification\\SMOKE_RUNS_NOT_FORMAL\\V9_09_complete_cosine\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    }
+  ]
+}

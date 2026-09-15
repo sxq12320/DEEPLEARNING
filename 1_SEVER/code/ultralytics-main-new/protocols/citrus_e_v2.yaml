@@ -1,0 +1,35 @@
+protocol_id: citrus_e_v2_context_contrast
+base_training: citrus_paper1_formal_v2_ram.yaml
+base_input: citrus_e_slicing_v3.yaml
+initialization: same yolo11n-seg.pt source; actual inherited fraction recorded; replaced stages start random
+selection: best_mask.pt on original whole-image validation mask AP50-95
+fixed: {epochs: 300, seed: 42, imgsz: 640, batch: 16, workers: 4, amp: false, cache: true}
+input:
+  E20_E25: source-balanced global .5 / fixed local .5
+  E26: whole image only
+  E27: source-balanced global .5 / guided local .5; train-only guide fixed 20 epochs
+architecture:
+  E20: exact E01 architecture and input control
+  E21: E20 with contrast detail refiner shared by candidates/prototypes
+  E22: E20 with shared C4 context hub and three parallel injection branches
+  E23: E20 with CSP stages replaced by Rep mixers and separated downsampling
+  E24: Rep backbone and context hub
+  E25: E24 plus contrast detail refiner
+  E26_E27: exact E25 segmentation architecture, distinct input controls
+post_evaluation:
+  E20_E26: global, fixed-box, cross-view mask suppression, internal-border score prior
+  E25_E27_when_guide_present: additional guided-box/guided-crossmask/guided-trustedmask; identical merge rules
+  confidence: 0.001
+  box_nms_iou: 0.7
+  cross_view_mask_iou: 0.5
+  border_fragment_ios: 0.8
+  internal_border_width_pixels_at640: 2
+  internal_border_score_weight: 0.5
+  max_det: 300
+  mask_raster: common whole-image long side 640; not historical stride4 AP
+limits:
+  - Single-seed architecture screening; no validated gain claims before training.
+  - Standard YOLO(yaml) constructs all models; sliced data sampling requires the supplied trainer.
+  - Guide is optional, not established necessary by E08 results.
+  - Extra sliced inference compute is included in latency, not hidden in single-pass GFLOPs.
+  - Colour confusion needs image/label-defined hard subsets; background FP alone is not proof.

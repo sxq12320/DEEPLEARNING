@@ -1,0 +1,1418 @@
+{
+  "data": "E:\\mastercode\\data\\orange_yolo\\data.yaml",
+  "local_train_images": 676,
+  "local_instances": 4324,
+  "images_with_invalid_polygons": 61,
+  "invalid_instances": 90,
+  "reasons": {
+    "Ring Self-intersection": 53,
+    "Self-intersection": 37
+  },
+  "issues": [
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0000.txt",
+      "instances": [
+        {
+          "instance_index": 41,
+          "reason": "Ring Self-intersection[0.974609 0.67041]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0001.txt",
+      "instances": [
+        {
+          "instance_index": 12,
+          "reason": "Self-intersection[0.196777 0.288574]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0003.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.153971 0.484701]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.317708 0.476888]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0007.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.355469 0.546549]"
+        },
+        {
+          "instance_index": 3,
+          "reason": "Ring Self-intersection[0.313151 0.75651]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0009.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Self-intersection[0.456746682201674 0.334024723884258]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0010.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Self-intersection[0.598451913622397 0.435365913622397]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0027.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.638997 0.571615]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0031.txt",
+      "instances": [
+        {
+          "instance_index": 3,
+          "reason": "Ring Self-intersection[0.08431 0.309896]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0035.txt",
+      "instances": [
+        {
+          "instance_index": 6,
+          "reason": "Ring Self-intersection[0.433594 0.346354]"
+        },
+        {
+          "instance_index": 7,
+          "reason": "Ring Self-intersection[0.151367 0.218424]"
+        },
+        {
+          "instance_index": 8,
+          "reason": "Ring Self-intersection[0.111328 0.199544]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0036.txt",
+      "instances": [
+        {
+          "instance_index": 3,
+          "reason": "Ring Self-intersection[0.25293 0.579753]"
+        },
+        {
+          "instance_index": 5,
+          "reason": "Ring Self-intersection[0.163086 0.43457]"
+        },
+        {
+          "instance_index": 6,
+          "reason": "Ring Self-intersection[0.164062 0.536784]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0037.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.943685 0.675456]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0039.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.636719 0.476888]"
+        },
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.7112635 0.5003255]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0042.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.431696469618439 0.316365242397141]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Self-intersection[0.713202682609727 0.417032020859627]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0047.txt",
+      "instances": [
+        {
+          "instance_index": 6,
+          "reason": "Self-intersection[0.276693 0.033529]"
+        },
+        {
+          "instance_index": 10,
+          "reason": "Ring Self-intersection[0.498372 0.028646]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0061.txt",
+      "instances": [
+        {
+          "instance_index": 7,
+          "reason": "Self-intersection[0.529948 0.639648]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0062.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Self-intersection[0.712993878033953 0.289542396066316]"
+        },
+        {
+          "instance_index": 7,
+          "reason": "Self-intersection[0.372020266156146 0.922451361036181]"
+        },
+        {
+          "instance_index": 8,
+          "reason": "Ring Self-intersection[0.325521 0.939128]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0065.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Ring Self-intersection[0.851888 0.32194]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0070.txt",
+      "instances": [
+        {
+          "instance_index": 15,
+          "reason": "Self-intersection[0.218888264373992 0.401730066093498]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0072.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Ring Self-intersection[0.126302 0.403646]"
+        },
+        {
+          "instance_index": 5,
+          "reason": "Self-intersection[0.6927902 0.448824143920596]"
+        },
+        {
+          "instance_index": 9,
+          "reason": "Self-intersection[0.491244927379865 0.275540965962545]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0073.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Ring Self-intersection[0.393555 0.547852]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.39681 0.651693]"
+        },
+        {
+          "instance_index": 6,
+          "reason": "Self-intersection[0.751302 0.650391]"
+        },
+        {
+          "instance_index": 10,
+          "reason": "Ring Self-intersection[0.186198 0.162435]"
+        },
+        {
+          "instance_index": 11,
+          "reason": "Ring Self-intersection[0.244792 0.178385]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0074.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Self-intersection[0.353841 0.022135]"
+        },
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.009766 0.588216]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0076.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.425456 0.360352]"
+        },
+        {
+          "instance_index": 5,
+          "reason": "Ring Self-intersection[0.163737 0.423503]"
+        },
+        {
+          "instance_index": 6,
+          "reason": "Ring Self-intersection[0.778971 0.479167]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0077.txt",
+      "instances": [
+        {
+          "instance_index": 3,
+          "reason": "Ring Self-intersection[0.729167 0.380534]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0080.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.842230666666667 0.601996666666667]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0084.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.59375 0.475911]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0085.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.449153480024585 0.923177]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0087.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Ring Self-intersection[0.640299 0.426107]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0091.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.648438 0.264974]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0106.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.735677 0.526042]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.532878 0.292643]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0113.txt",
+      "instances": [
+        {
+          "instance_index": 5,
+          "reason": "Ring Self-intersection[0.65625 0.391276]"
+        },
+        {
+          "instance_index": 6,
+          "reason": "Ring Self-intersection[0.653646 0.381836]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0118.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.287869 0.590386333333333]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0333.txt",
+      "instances": [
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.372721 0.642578]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0455.txt",
+      "instances": [
+        {
+          "instance_index": 5,
+          "reason": "Ring Self-intersection[0.757487 0.933268]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0462.txt",
+      "instances": [
+        {
+          "instance_index": 3,
+          "reason": "Self-intersection[0.48622157948718 0.206324884102564]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0493.txt",
+      "instances": [
+        {
+          "instance_index": 4,
+          "reason": "Self-intersection[0.41569 0.523438]"
+        },
+        {
+          "instance_index": 10,
+          "reason": "Ring Self-intersection[0.036784 0.348633]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0543.txt",
+      "instances": [
+        {
+          "instance_index": 10,
+          "reason": "Self-intersection[0.754557 0.513346]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0547.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.970378 0.243164]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0557.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Ring Self-intersection[0.682617 0.664062]"
+        },
+        {
+          "instance_index": 5,
+          "reason": "Self-intersection[0.560547 0.463216]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0571.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.680664 0.308919]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0575.txt",
+      "instances": [
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.36263 0.059245]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0577.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Ring Self-intersection[0.588216 0.194987]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0578.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.316406 0.468424]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0579.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Ring Self-intersection[0.619141 0.052083]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.37207 0.513672]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0580.txt",
+      "instances": [
+        {
+          "instance_index": 0,
+          "reason": "Self-intersection[0.452474 0.253581]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0608.txt",
+      "instances": [
+        {
+          "instance_index": 9,
+          "reason": "Self-intersection[0.439453 0.833659]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0630.txt",
+      "instances": [
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.361003 0.720378]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0631.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.519151416794675 0.420979916730572]"
+        },
+        {
+          "instance_index": 3,
+          "reason": "Ring Self-intersection[0.097656 0.855794]"
+        },
+        {
+          "instance_index": 4,
+          "reason": "Ring Self-intersection[0.191081 0.908854]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0679.txt",
+      "instances": [
+        {
+          "instance_index": 7,
+          "reason": "Self-intersection[0.697591 0.264323]"
+        },
+        {
+          "instance_index": 8,
+          "reason": "Self-intersection[0.572917 0.253906]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0694.txt",
+      "instances": [
+        {
+          "instance_index": 1,
+          "reason": "Self-intersection[0.900391 0.716797]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0708.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.485352 0.423503]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0722.txt",
+      "instances": [
+        {
+          "instance_index": 2,
+          "reason": "Self-intersection[0.337565 0.338216]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0806.txt",
+      "instances": [
+        {
+          "instance_index": 8,
+          "reason": "Ring Self-intersection[0.218099 0.108073]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0811.txt",
+      "instances": [
+        {
+          "instance_index": 4,
+          "reason": "Self-intersection[0.857422 0.511393]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0825.txt",
+      "instances": [
+        {
+          "instance_index": 3,
+          "reason": "Self-intersection[0.632812 0.692593]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0828.txt",
+      "instances": [
+        {
+          "instance_index": 8,
+          "reason": "Self-intersection[0.052604 0.778704]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0830.txt",
+      "instances": [
+        {
+          "instance_index": 18,
+          "reason": "Ring Self-intersection[0.227604 0.587037]"
+        },
+        {
+          "instance_index": 25,
+          "reason": "Ring Self-intersection[0.253646 0.278704]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0837.txt",
+      "instances": [
+        {
+          "instance_index": 22,
+          "reason": "Ring Self-intersection[0.806771 0.134259]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0868.txt",
+      "instances": [
+        {
+          "instance_index": 12,
+          "reason": "Ring Self-intersection[0.778971 0.915771]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0875.txt",
+      "instances": [
+        {
+          "instance_index": 12,
+          "reason": "Ring Self-intersection[0.462891 0.049072]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0912.txt",
+      "instances": [
+        {
+          "instance_index": 17,
+          "reason": "Self-intersection[0.544922 0.489258]"
+        }
+      ]
+    },
+    {
+      "label": "E:\\mastercode\\data\\orange_yolo\\train\\labels\\IMG_0927.txt",
+      "instances": [
+        {
+          "instance_index": 37,
+          "reason": "Self-intersection[0.736328 0.360352]"
+        }
+      ]
+    }
+  ],
+  "original_data_modified": false,
+  "caveat": "Local files only: equality to server label contents has not been established.",
+  "sizes": {
+    "V4R00_control_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 1
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 28
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 210
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 587
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 16
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 51
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 234
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 593
+      }
+    ],
+    "V4R01_deep8_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 30
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 216
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 587
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 17
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 62
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 236
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 591
+      }
+    ],
+    "V4R02_detail_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 1
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 27
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 206
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 585
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 17
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 45
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 238
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 590
+      }
+    ],
+    "V4R03_quality_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 28
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 210
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 585
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 16
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 47
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 232
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 594
+      }
+    ],
+    "V4R04_deep_detail_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 31
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 208
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 587
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 17
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 57
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 236
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 591
+      }
+    ],
+    "V4R05_deep_quality_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 25
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 206
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 584
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 16
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 55
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 235
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 592
+      }
+    ],
+    "V4R06_detail_quality_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 30
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 216
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 588
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 17
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 51
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 243
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 592
+      }
+    ],
+    "V4R07_full_seed42": [
+      {
+        "mode": "global",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 1
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 27
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 210
+      },
+      {
+        "mode": "global",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 587
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          0,
+          16
+        ],
+        "n": 4,
+        "matched": 0
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          16,
+          64
+        ],
+        "n": 55,
+        "matched": 15
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          64,
+          256
+        ],
+        "n": 102,
+        "matched": 57
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          256,
+          1024
+        ],
+        "n": 286,
+        "matched": 240
+      },
+      {
+        "mode": "trustedmask",
+        "area_range": [
+          1024,
+          100000000
+        ],
+        "n": 602,
+        "matched": 589
+      }
+    ]
+  }
+}

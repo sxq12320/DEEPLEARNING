@@ -1,0 +1,270 @@
+{
+  "torch": "2.8.0+cpu",
+  "device": "cpu",
+  "threads": 2,
+  "note": "Old shape matches can include WRONG layers. THOP omits some functional operations; CPU microbenchmarks do not predict CUDA epoch time. No new trained accuracy results.",
+  "models": [
+    {
+      "model": "E40_control",
+      "nc": 1,
+      "params": 2479668,
+      "thop_gflops_estimate_640": 10.363,
+      "old_same_index_shape_match_pct": 56.65,
+      "explicit_semantic_mapping_pct": 82.45
+    },
+    {
+      "model": "E41_pid_fusion",
+      "nc": 1,
+      "params": 2556980,
+      "thop_gflops_estimate_640": 11.024,
+      "old_same_index_shape_match_pct": 52.38,
+      "explicit_semantic_mapping_pct": 77.39
+    },
+    {
+      "model": "E42_observer",
+      "nc": 1,
+      "params": 2504436,
+      "thop_gflops_estimate_640": 10.481,
+      "old_same_index_shape_match_pct": 51.15,
+      "explicit_semantic_mapping_pct": 81.63
+    },
+    {
+      "model": "E43_phase_lead",
+      "nc": 1,
+      "params": 2480308,
+      "thop_gflops_estimate_640": 10.371,
+      "old_same_index_shape_match_pct": 51.65,
+      "explicit_semantic_mapping_pct": 82.42
+    },
+    {
+      "model": "E44_integral_context",
+      "nc": 1,
+      "params": 2676532,
+      "thop_gflops_estimate_640": 10.367,
+      "old_same_index_shape_match_pct": 33.17,
+      "explicit_semantic_mapping_pct": 76.38
+    },
+    {
+      "model": "E45_filter_fuse",
+      "nc": 1,
+      "params": 2521908,
+      "thop_gflops_estimate_640": 10.496,
+      "old_same_index_shape_match_pct": 45.11,
+      "explicit_semantic_mapping_pct": 78.47
+    },
+    {
+      "model": "E46_cascade",
+      "nc": 1,
+      "params": 2488692,
+      "thop_gflops_estimate_640": 10.397,
+      "old_same_index_shape_match_pct": 51.48,
+      "explicit_semantic_mapping_pct": 82.15
+    },
+    {
+      "model": "E47_pid_observer",
+      "nc": 1,
+      "params": 2581748,
+      "thop_gflops_estimate_640": 11.143,
+      "old_same_index_shape_match_pct": 47.08,
+      "explicit_semantic_mapping_pct": 76.65
+    },
+    {
+      "model": "E48_full",
+      "nc": 1,
+      "params": 2582388,
+      "thop_gflops_estimate_640": 11.151,
+      "old_same_index_shape_match_pct": 47.07,
+      "explicit_semantic_mapping_pct": 76.63
+    },
+    {
+      "model": "E49_lite",
+      "nc": 1,
+      "params": 2516244,
+      "thop_gflops_estimate_640": 10.852,
+      "old_same_index_shape_match_pct": 49.91,
+      "explicit_semantic_mapping_pct": 75.33
+    },
+    {
+      "model": "E50_hwdown_backbone",
+      "nc": 1,
+      "params": 2213428,
+      "thop_gflops_estimate_640": 9.707,
+      "old_same_index_shape_match_pct": 41.77,
+      "explicit_semantic_mapping_pct": 70.67
+    },
+    {
+      "model": "E51_moce_deep",
+      "nc": 1,
+      "params": 2435832,
+      "thop_gflops_estimate_640": 10.317,
+      "old_same_index_shape_match_pct": 57.33,
+      "explicit_semantic_mapping_pct": 83.59
+    },
+    {
+      "model": "E52_topo_head",
+      "nc": 1,
+      "params": 2487157,
+      "thop_gflops_estimate_640": 10.568,
+      "old_same_index_shape_match_pct": 56.48,
+      "explicit_semantic_mapping_pct": 82.2
+    },
+    {
+      "model": "E53_quality_head",
+      "nc": 1,
+      "params": 2565831,
+      "thop_gflops_estimate_640": 11.057,
+      "old_same_index_shape_match_pct": 52.19,
+      "explicit_semantic_mapping_pct": 77.12
+    },
+    {
+      "model": "E54_detail32",
+      "nc": 1,
+      "params": 2486612,
+      "thop_gflops_estimate_640": 10.524,
+      "old_same_index_shape_match_pct": 56.49,
+      "explicit_semantic_mapping_pct": 82.21
+    },
+    {
+      "model": "E55_dysample",
+      "nc": 1,
+      "params": 2504372,
+      "thop_gflops_estimate_640": 10.399,
+      "old_same_index_shape_match_pct": 56.09,
+      "explicit_semantic_mapping_pct": 81.63
+    },
+    {
+      "model": "E56_carafe",
+      "nc": 1,
+      "params": 2620100,
+      "thop_gflops_estimate_640": 10.632,
+      "old_same_index_shape_match_pct": 53.62,
+      "explicit_semantic_mapping_pct": 78.03
+    },
+    {
+      "model": "E57_slim_proto",
+      "nc": 1,
+      "params": 2420116,
+      "thop_gflops_estimate_640": 8.021,
+      "old_same_index_shape_match_pct": 58.05,
+      "explicit_semantic_mapping_pct": 80.65
+    },
+    {
+      "model": "E70_chroma_front",
+      "nc": 1,
+      "params": 2479701,
+      "thop_gflops_estimate_640": 10.359,
+      "old_same_index_shape_match_pct": 0.04,
+      "explicit_semantic_mapping_pct": 82.44
+    },
+    {
+      "model": "E71_lap_front",
+      "nc": 1,
+      "params": 2479689,
+      "thop_gflops_estimate_640": 10.382,
+      "old_same_index_shape_match_pct": 0.04,
+      "explicit_semantic_mapping_pct": 82.44
+    },
+    {
+      "model": "E72_reverse_refine",
+      "nc": 1,
+      "params": 2484790,
+      "thop_gflops_estimate_640": 10.426,
+      "old_same_index_shape_match_pct": 51.56,
+      "explicit_semantic_mapping_pct": 82.28
+    },
+    {
+      "model": "E73_radial_vote",
+      "nc": 1,
+      "params": 2487924,
+      "thop_gflops_estimate_640": 10.469,
+      "old_same_index_shape_match_pct": 51.49,
+      "explicit_semantic_mapping_pct": 82.17
+    },
+    {
+      "model": "E74_scale_space",
+      "nc": 1,
+      "params": 2496116,
+      "thop_gflops_estimate_640": 10.575,
+      "old_same_index_shape_match_pct": 51.32,
+      "explicit_semantic_mapping_pct": 81.9
+    },
+    {
+      "model": "E75_chroma_reverse",
+      "nc": 1,
+      "params": 2484823,
+      "thop_gflops_estimate_640": 10.426,
+      "old_same_index_shape_match_pct": 0.04,
+      "explicit_semantic_mapping_pct": 82.27
+    },
+    {
+      "model": "E76_camouflage_full",
+      "nc": 1,
+      "params": 2493079,
+      "thop_gflops_estimate_640": 10.532,
+      "old_same_index_shape_match_pct": 25.7,
+      "explicit_semantic_mapping_pct": 82
+    },
+    {
+      "model": "E77_lap_scale",
+      "nc": 1,
+      "params": 2496137,
+      "thop_gflops_estimate_640": 10.594,
+      "old_same_index_shape_match_pct": 0.04,
+      "explicit_semantic_mapping_pct": 81.9
+    }
+  ],
+  "microbenchmarks": {
+    "chroma": {
+      "shape": [
+        2,
+        3,
+        640,
+        640
+      ],
+      "before_cpu_forward_backward_ms": 156.67,
+      "after_cpu_forward_backward_ms": 159.136
+    },
+    "carafe": {
+      "shape": [
+        2,
+        128,
+        40,
+        40
+      ],
+      "before_cpu_forward_backward_ms": 555.23,
+      "after_cpu_forward_backward_ms": 142.126
+    },
+    "integral_context": {
+      "shape": [
+        2,
+        256,
+        20,
+        20
+      ],
+      "before_cpu_forward_backward_ms": 8.898,
+      "after_cpu_forward_backward_ms": 4.728
+    }
+  },
+  "smoke": [
+    {
+      "model": "E40_control",
+      "optimizer": "SMC",
+      "checkpoint_state": [
+        {
+          "steps": 2,
+          "mode": "normal"
+        }
+      ]
+    },
+    {
+      "model": "E52_topo_head",
+      "optimizer": "SMCAO",
+      "checkpoint_state": [
+        {
+          "steps": 2,
+          "mode": "normal"
+        }
+      ]
+    }
+  ]
+}

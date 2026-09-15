@@ -1,0 +1,35 @@
+# E V4 control: proven hybrid backbone (PhaseStem + Faster + WT + SPPF-LSKA) with the
+# standard concat neck. Every E V4 ablation changes exactly ONE neck component vs this file.
+nc: 80
+pretrained_map_family: ev4_E40_control
+# Explicit target -> COCO YOLO11-seg layer map; -1 keeps a new layer random.
+pretrained_layer_map: {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14, 15: 15, 16: 16, 17: 17, 18: 18, 19: 19, 20: 23}
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, SAGEV8PhaseStem, [64, 3, 2]]      # 0  stride 2
+  - [-1, 1, Conv, [128, 3, 2]]                # 1  stride 4
+  - [-1, 2, C3k2, [256, false, 0.25]]         # 2  stride 4  (detail relay source)
+  - [-1, 1, Conv, [256, 3, 2]]                # 3  stride 8
+  - [-1, 2, C3k2_Faster, [512, false, 0.25]]  # 4  stride 8  (C3)
+  - [-1, 1, Conv, [512, 3, 2]]                # 5  stride 16
+  - [-1, 2, C3k2_Faster, [512, true]]         # 6  stride 16 (C4)
+  - [-1, 1, Conv, [1024, 3, 2]]               # 7  stride 32
+  - [-1, 2, C3k2_WT, [1024, true]]            # 8  stride 32
+  - [-1, 1, SPPF_LSKA, [1024, 5]]             # 9  stripe-occlusion context (F14 winner)
+  - [-1, 2, C2PSA, [1024]]                    # 10 (P5)
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, nearest]]  # 11
+  - [[-1, 6], 1, Concat, [1]]                 # 12 cat backbone C4
+  - [-1, 2, C3k2, [512, false]]               # 13
+  - [-1, 1, nn.Upsample, [None, 2, nearest]]  # 14
+  - [[-1, 4], 1, Concat, [1]]                 # 15 cat backbone C3
+  - [-1, 2, C3k2, [256, false]]               # 16 (P3/8-small)
+  - [-1, 1, Conv, [256, 3, 2]]                # 17
+  - [[-1, 13], 1, Concat, [1]]                # 18 cat head P4
+  - [-1, 2, C3k2, [512, false]]               # 19 (P4/16-medium)
+  - [[16, 19, 10, 2], 1, SegmentCitrusSAGEV5, [nc, 32, 256, 16, true, false, 0, 0]]  # 20

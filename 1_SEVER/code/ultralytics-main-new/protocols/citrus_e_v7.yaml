@@ -1,0 +1,32 @@
+version: 3
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V7
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+optimizer: AdamW
+lr0: 0.001
+weight_decay: 0.0005
+factors:
+  base: "V6 phase-fine candidate on every arm (fine_mask=phase, stride-2 proto, mask_ratio=2); V7_00 matches V6_08 graph; not proven best for tiny recall"
+  p2_head: "appended stride-4 detection scale; n-scale P2 width 32 (original 64); inherited towers unchanged"
+  deform_detail: "single DCNv2-style local deformable block on the 16ch mask-detail stream; bounded residual, zero-init offsets"
+  pmce: "bounded parallel multi-scale channel enhancement on PAN-fused detection features (P3/P4, +P2 when present)"
+  boundary: "SAGEV4R geometry supervision activated: boundary_gain .5, neighbor_gain .25; zero inference cost"
+measured_out_v6: "NWD gains mixed across decoders/budgets; disabled without statistical equivalence claim. Existing quality rescoring retained. Existing TAL expansion does not rule out candidate competition."
+assignment: "EV7SegmentationLoss sorts only TAL scale metadata; appended-P2 tower/anchor order remains [8,16,32,4]; non-P2 behavior unchanged"
+arm_allocation: "error decomposition: ~20% GT unmatched at conf.25 (57-62% tiny), mask_or_loc 3-16, bg 113-184, dup/merge 15-29 -> two recall levers (p2_head, copy_paste on V7_05_cp) + p2_pmce dominant-error pair; other pairs deferred, full excludes cp"
+input_recipe: "all eight arms reuse the V5_01 multi-scale views (.5 global/.25 coarse/.25 fine) with mask_ratio=2 GT supervision from the adopted fine base"
+quality: {gain: 1.0, score_floor: 0.5}
+checkpoint: "best_mask.pt selected by mask AP50-95; separate best_mask50.pt by mask AP50"
+evaluation: "each arm global+coarse, global+fine; same original validation; report latency and raster"
+epoch_validation: "EV6TrainingTrainer/EV6Validator: common input/2 GT for all V7 arms, matching revised V6"
+metric_warning: "Not directly comparable to old input/4 epoch AP; cross-history use identical paired long-edge640"
+implementation_revision: "EV7R2_20260913: phase base retained after V6 audit; P2 assignment scale-order fix; copy-paste-only arm; corrected evidence and new output directory"
+learned_crop_guide: false
+geometry_prior: "visible foreground only; no convex hull/circle/morphological closing; boundary/neighbor regions derived from GT masks"
+limits: "single-seed screening; final control/method require three seeds. Performance unproven."
