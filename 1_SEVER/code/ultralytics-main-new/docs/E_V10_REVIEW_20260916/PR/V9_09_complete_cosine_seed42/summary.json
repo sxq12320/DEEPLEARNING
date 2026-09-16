@@ -1,0 +1,52 @@
+[
+  {
+    "mode": "global",
+    "cls": "0",
+    "targets": 1049,
+    "observed_rmax": 0.9027645376549094,
+    "last_observed_precision": 0.07853707082434898,
+    "operating_raw": {
+      "0.85": {
+        "recall": 0.786463298379409,
+        "precision": 0.8540372670807453,
+        "confidence": 0.26311808824539185
+      },
+      "0.9": {
+        "recall": 0.7597712106768351,
+        "precision": 0.9046538024971623,
+        "confidence": 0.4067515730857849
+      },
+      "0.95": {
+        "recall": 0.7330791229742613,
+        "precision": 0.9505562422744128,
+        "confidence": 0.559505045413971
+      }
+    },
+    "warning": "Retained raw points; legacy reports may subsample thresholds. No new AP."
+  },
+  {
+    "mode": "trustedmask",
+    "cls": "0",
+    "targets": 1049,
+    "observed_rmax": 0.9628217349857007,
+    "last_observed_precision": 0.03411701121470072,
+    "operating_raw": {
+      "0.85": {
+        "recall": 0.8417540514775977,
+        "precision": 0.8514946962391514,
+        "confidence": 0.4530268609523773
+      },
+      "0.9": {
+        "recall": 0.7988560533841754,
+        "precision": 0.911860718171926,
+        "confidence": 0.6484379172325134
+      },
+      "0.95": {
+        "recall": 0.7292659675881792,
+        "precision": 0.95625,
+        "confidence": 0.7691308259963989
+      }
+    },
+    "warning": "Retained raw points; legacy reports may subsample thresholds. No new AP."
+  }
+]

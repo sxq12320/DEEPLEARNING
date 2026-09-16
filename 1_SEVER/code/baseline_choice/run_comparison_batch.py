@@ -15,6 +15,10 @@ Examples:
     python run_comparison_batch.py --suite eval --skip-completed
     python run_comparison_batch.py --suite report
 
+Each family can run under its own conda environment: pass --python-mmdet
+/path/to/env/bin/python (or set CITRUS_BL_PYTHON_MMDET) so one queue can drive
+several environments sequentially; --python sets the shared fallback.
+
 No shell, nohup, background queue or concurrent model training is used.
 """
 
@@ -30,6 +34,12 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+SUITE_ROOT = Path(__file__).resolve().parent
+SCRIPTS = SUITE_ROOT / "scripts"
+REGISTRY_PATH = SUITE_ROOT / "configs" / "baselines.yaml"
+sys.path.insert(0, str(SCRIPTS))
+from baseline_common import get_baseline  # noqa: E402
 
 # =============================================================================
 # USER SETTINGS: edit this block only
@@ -62,11 +72,6 @@ WORKERS = 4
 # END USER SETTINGS
 # =============================================================================
 
-SUITE_ROOT = Path(__file__).resolve().parent
-SCRIPTS = SUITE_ROOT / "scripts"
-REGISTRY_PATH = SUITE_ROOT / "configs" / "baselines.yaml"
-
-
 @dataclass(frozen=True)
 class Experiment:
     """One controlled baseline run (one model, one seed)."""
@@ -90,6 +95,8 @@ EXPERIMENTS = (
     Experiment("B6", "yolo11s_seg", "yolo", "optional", "same-family accuracy ceiling"),
     Experiment("B1b", "yolo12n_seg", "yolo", "optional", "extra YOLO generation reference"),
     Experiment("B3b", "mask_rcnn_r50", "mmdet", "optional", "MMDetection Mask R-CNN cross-check"),
+    Experiment("S1", "deeplabv3plus", "unet", "optional", "optional DeepLabV3+ semantic-to-instance reference"),
+    Experiment("S2", "segformer_b0", "unet", "optional", "optional SegFormer-B0 semantic-to-instance reference"),
 )
 
 TIER_ORDER = {"core": 0, "journal": 1, "aux": 2, "optional": 3}
@@ -99,7 +106,7 @@ SUITE_TIERS = {
     "screen": ("core",),
     "formal": ("core", "journal", "aux"),
     "eval": ("core", "journal", "aux", "optional"),
-    "all": ("core", "journal", "aux"),
+    "all": ("core", "journal", "aux", "optional"),
     "report": ("core", "journal", "aux", "optional"),
 }
 
@@ -148,27 +155,55 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=WORKERS)
     parser.add_argument("--order-seed", type=int, default=20260909, help="Seed for the queue shuffle.")
     parser.add_argument("--split", choices=("val", "test"), default=None, help="Eval split; default val for smoke/screen, test otherwise.")
+    parser.add_argument("--python", default=None, help="Fallback interpreter for all workers (default: this Python).")
+    for family in FAMILY_TRAIN_SCRIPT:
+        parser.add_argument(
+            f"--python-{family}",
+            default=None,
+            help=f"Interpreter for {family} workers; env CITRUS_BL_PYTHON_{family.upper()} wins over --python.",
+        )
+    parser.add_argument("--source", type=Path, default=None, help="Override the read-only source YOLO dataset root.")
+    parser.add_argument("--prepared", type=Path, default=None, help="Override the prepared multi-format dataset root.")
+    parser.add_argument("--workspace", type=Path, default=None, help="Override the output workspace root.")
+    parser.add_argument("--mmdet-root", type=Path, default=None, help="Override the cloned MMDetection repo root.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-completed", action="store_true")
     parser.add_argument("--fail-fast", action="store_true")
     return parser.parse_args()
 
 
-def platform_paths() -> dict[str, Path]:
-    """Select Windows or Linux paths automatically."""
+def platform_paths(args: argparse.Namespace) -> dict[str, Path]:
+    """Select Windows or Linux paths automatically, then apply CLI overrides."""
     if os.name == "nt":
-        return {
+        paths = {
             "source": WINDOWS_SOURCE_DATASET,
             "prepared": WINDOWS_PREPARED_DATASET,
             "workspace": WINDOWS_WORKSPACE,
             "mmdet_root": WINDOWS_MMDET_ROOT,
         }
-    return {
-        "source": SERVER_SOURCE_DATASET,
-        "prepared": SERVER_PREPARED_DATASET,
-        "workspace": SERVER_WORKSPACE,
-        "mmdet_root": SERVER_MMDET_ROOT,
-    }
+    else:
+        paths = {
+            "source": SERVER_SOURCE_DATASET,
+            "prepared": SERVER_PREPARED_DATASET,
+            "workspace": SERVER_WORKSPACE,
+            "mmdet_root": SERVER_MMDET_ROOT,
+        }
+    for key in ("source", "prepared", "workspace", "mmdet_root"):
+        override = getattr(args, key, None)
+        if override is not None:
+            paths[key] = Path(override)
+    return paths
+
+
+def family_python(args: argparse.Namespace, family: str) -> str:
+    """Resolve the interpreter for one family: CLI flag, then env var, then --python, then self."""
+    flag = getattr(args, f"python_{family}", None)
+    if flag:
+        return str(Path(flag))
+    env_value = os.environ.get(f"CITRUS_BL_PYTHON_{family.upper()}")
+    if env_value:
+        return env_value
+    return str(args.python or sys.executable)
 
 
 def run_name(experiment: Experiment, seed: int, prefix: str) -> str:
@@ -198,12 +233,30 @@ def find_weights(paths: dict[str, Path], experiment: Experiment, name: str) -> P
                 return candidate
         candidates = sorted(run_dir.glob("*.pth"), key=lambda p: p.stat().st_mtime, reverse=True)
         return candidates[0] if candidates else None
+    # mmdet: prefer best_*.pth, then the last_checkpoint marker, then periodic epoch_*.pth
     candidates = sorted(run_dir.glob("best_*.pth"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if candidates:
+        return candidates[0]
+    last_file = run_dir / "last_checkpoint"
+    if last_file.is_file():
+        value = last_file.read_text(encoding="utf-8").strip()
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            candidate = run_dir / candidate
+        if candidate.is_file():
+            return candidate
+    candidates = sorted(run_dir.glob("epoch_*.pth"), key=lambda p: p.stat().st_mtime, reverse=True)
     return candidates[0] if candidates else None
 
 
 def train_completed(paths: dict[str, Path], experiment: Experiment, name: str) -> bool:
     return find_weights(paths, experiment, name) is not None
+
+
+def resolve_mmdet_checkpoint(mmdet_root: Path, pattern: str) -> Path | None:
+    """Resolve the newest official checkpoint matching the registry glob under mmdet_root."""
+    candidates = sorted(mmdet_root.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0] if candidates else None
 
 
 def eval_metrics_path(paths: dict[str, Path], name: str, split: str) -> Path:
@@ -227,13 +280,25 @@ def build_train_command(
             "--patience", "100", "--seed", str(seed), "--no-amp",
         ]
     if experiment.family == "mmdet":
-        return [
+        command = [
             str(script), "--baseline", experiment.baseline, "--dataset", str(prepared),
             "--name", name, "--mmdet-root", str(paths["mmdet_root"]),
             "--output-root", str(output_root(paths, experiment)),
             "--epochs", str(epochs), "--batch", str(batch), "--workers", str(args.workers),
             "--seed", str(seed), "--val-interval", "5",
         ]
+        entry = get_baseline(experiment.baseline)
+        pattern = entry.get("checkpoint_glob")
+        checkpoint = resolve_mmdet_checkpoint(paths["mmdet_root"], pattern) if pattern else None
+        if checkpoint is not None:
+            command += ["--checkpoint", str(checkpoint)]
+        elif pattern:
+            print(
+                f"    ! no pretrained checkpoint under {paths['mmdet_root']} matching '{pattern}'; "
+                "using the official config's default init (run setup/fetch_mmdet_checkpoints.py first)",
+                flush=True,
+            )
+        return command
     if experiment.family == "torchvision":
         return [
             str(script), "--dataset", str(prepared), "--name", name,
@@ -252,10 +317,13 @@ def build_train_command(
             "--workers", str(args.workers), "--device", "cuda", "--seed", str(seed),
             "--lr", "1e-4", "--lr-encoder", "1.5e-4", "--weight-decay", "1e-4",
         ]
+    entry = get_baseline(experiment.baseline)
     return [
         str(script), "--dataset", str(prepared), "--name", name,
         "--output-root", str(output_root(paths, experiment)),
-        "--encoder", "resnet18", "--encoder-weights", "imagenet",
+        "--architecture", str(entry.get("architecture", "Unet")),
+        "--encoder", str(entry.get("encoder", "resnet18")),
+        "--encoder-weights", str(entry.get("encoder_weights", "imagenet")),
         "--epochs", str(epochs), "--batch", str(batch), "--workers", str(args.workers),
         "--lr", "0.0003", "--weight-decay", "0.0001", "--imgsz", "640",
         "--val-interval", "5", "--seed", str(seed), "--device", "auto",
@@ -278,7 +346,8 @@ def build_eval_command(
     if experiment.family == "mmdet":
         return [
             str(script), "--weights", str(weights), "--dataset", str(prepared),
-            "--split", split, "--output", str(output), "--device", f"cuda:{args.device}",
+            "--split", split, "--output", str(output),
+            "--device", "cpu" if args.device == "cpu" else "cuda:0",
             "--score-threshold", "0.001",
         ]
     if experiment.family == "torchvision":
@@ -300,15 +369,15 @@ def build_eval_command(
     ]
 
 
-def run_worker(command: list[str], experiment: Experiment, device: str) -> None:
+def run_worker(command: list[str], experiment: Experiment, device: str, executable: str | None = None) -> None:
     """Run one worker sequentially; non-YOLO frameworks get the visibility mask."""
     env = dict(os.environ)
     if experiment.family != "yolo" and device != "cpu":
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         env["CUDA_VISIBLE_DEVICES"] = str(device)
-    printable = subprocess.list2cmdline([sys.executable, *command])
+    printable = subprocess.list2cmdline([executable or sys.executable, *command])
     print(f"    $ {printable}", flush=True)
-    subprocess.run([sys.executable, *command], cwd=SUITE_ROOT, env=env, check=True)
+    subprocess.run([executable or sys.executable, *command], cwd=SUITE_ROOT, env=env, check=True)
 
 
 def append_event(path: Path, event: dict) -> None:
@@ -355,7 +424,7 @@ def prepared_dataset_exists(path: Path) -> bool:
     )
 
 
-def ensure_prepared(paths: dict[str, Path], dry_run: bool) -> None:
+def ensure_prepared(paths: dict[str, Path], dry_run: bool, executable: str | None = None) -> None:
     """Convert the source polygons once if the prepared dataset is absent."""
     if prepared_dataset_exists(paths["prepared"]):
         return
@@ -371,6 +440,7 @@ def ensure_prepared(paths: dict[str, Path], dry_run: bool) -> None:
         ],
         Experiment("PP", "prepare", "yolo", "aux", "dataset preparation"),
         device="cpu",
+        executable=executable,
     )
 
 
@@ -380,17 +450,18 @@ def select_experiments(args: argparse.Namespace) -> list[Experiment]:
     experiments = [exp for exp in EXPERIMENTS if exp.tier in tiers]
     if args.only:
         requested = {item.strip() for item in args.only.split(",") if item.strip()}
-        experiments = [exp for exp in experiments if exp.baseline in requested or exp.eid in requested]
+        pool = list(EXPERIMENTS)  # --only may reach optional-tier experiments outside the suite
+        experiments = [exp for exp in pool if exp.baseline in requested or exp.eid in requested]
         missing = requested - {exp.baseline for exp in experiments} - {exp.eid for exp in experiments}
         if missing:
-            raise ValueError(f"Unknown or out-of-suite experiments: {sorted(missing)}")
+            raise ValueError(f"Unknown experiments: {sorted(missing)}")
     return experiments
 
 
 def main() -> None:
     """Run the selected suite sequentially on one device."""
     args = parse_args()
-    paths = platform_paths()
+    paths = platform_paths(args)
     paths["workspace"].mkdir(parents=True, exist_ok=True)
     protocol_dir = paths["workspace"] / "_protocol"
     ledger = protocol_dir / "ledger.jsonl"
@@ -402,7 +473,10 @@ def main() -> None:
             str(SCRIPTS / "report_comparison.py"), "--evaluation", str(paths["workspace"] / "evaluation"),
             "--registry", str(REGISTRY_PATH),
         ]
-        run_worker(command, Experiment("RP", "report", "yolo", "aux", "aggregate report"), device="cpu")
+        run_worker(
+            command, Experiment("RP", "report", "yolo", "aux", "aggregate report"),
+            device="cpu", executable=str(args.python or sys.executable),
+        )
         return
 
     seeds = [int(value) for value in args.seeds.split(",") if value.strip()]
@@ -424,7 +498,10 @@ def main() -> None:
         random.Random(args.order_seed + seed).shuffle(ordered)
         queue.extend((exp, seed) for exp in ordered)
 
+    interpreters = {exp.family: family_python(args, exp.family) for exp in experiments}
     print(f"Python: {sys.executable}\nWorkspace: {paths['workspace']}\nPrepared: {paths['prepared']}", flush=True)
+    for family, executable in sorted(interpreters.items()):
+        print(f"Interpreter[{family}]: {executable}", flush=True)
     print(f"Suite={args.suite} epochs={epochs} split={split} seeds={seeds} snapshot={digest}", flush=True)
     print(f"Queue ({len(queue)} runs):", flush=True)
     for exp, seed in queue:
@@ -433,28 +510,33 @@ def main() -> None:
         ledger,
         {
             "status": "queue", "suite": args.suite, "queue": [(exp.eid, exp.baseline, seed) for exp, seed in queue],
-            "epochs": epochs, "split": split, "order_seed": args.order_seed,
+            "epochs": epochs, "split": split, "order_seed": args.order_seed, "interpreters": interpreters,
             "snapshot": digest, "git": repo, "command": sys.argv, "time": time.time(),
         },
     )
     if args.dry_run:
         print("DRY RUN ONLY: no training.", flush=True)
-        ensure_prepared(paths, dry_run=True)
+        ensure_prepared(paths, dry_run=True, executable=str(args.python or sys.executable))
         return
     if args.device == "cpu":
         raise ValueError("--device cpu is only meaningful for --dry-run; training requires one physical GPU")
 
-    ensure_prepared(paths, dry_run=False)
+    ensure_prepared(paths, dry_run=False, executable=str(args.python or sys.executable))
     failures: list[str] = []
     for index, (exp, seed) in enumerate(queue, 1):
         name = run_name(exp, seed, prefix)
         event = {
             "eid": exp.eid, "experiment": asdict(exp), "seed": seed, "name": name,
             "suite": args.suite, "epochs": epochs, "split": split, "snapshot": digest,
+            "python": interpreters[exp.family],
         }
         weights = find_weights(paths, exp, name)
         need_train = args.suite in ("smoke", "screen", "formal", "all")
-        need_eval = args.suite in ("eval", "all")
+        need_eval = args.suite in ("eval", "all") and (args.suite != "eval" or weights is not None)
+        if args.suite == "eval" and weights is None:
+            print(f"[{index}/{len(queue)}] SKIP no weights: {name}", flush=True)
+            append_event(ledger, {**event, "status": "skip_no_weights", "time": time.time()})
+            continue
         if need_train and train_completed(paths, exp, name):
             if not args.skip_completed:
                 raise FileExistsError(f"Run already complete (use --skip-completed to reuse): {name}")
@@ -474,7 +556,7 @@ def main() -> None:
             if need_train:
                 print(f"[{index}/{len(queue)}] TRAIN {name} ({epochs} epochs)", flush=True)
                 command = build_train_command(paths, exp, name, epochs, seed, args)
-                run_worker(command, exp, args.device)
+                run_worker(command, exp, args.device, executable=interpreters[exp.family])
                 weights = find_weights(paths, exp, name)
                 if weights is None:
                     raise FileNotFoundError(f"Training finished but no checkpoint was found for {name}")
@@ -486,7 +568,7 @@ def main() -> None:
                     )
                 print(f"[{index}/{len(queue)}] EVAL {name} split={split}", flush=True)
                 command = build_eval_command(paths, exp, name, weights, split, args)
-                run_worker(command, exp, args.device)
+                run_worker(command, exp, args.device, executable=interpreters[exp.family])
                 if not eval_metrics_path(paths, name, split).is_file():
                     raise FileNotFoundError(f"Evaluation finished but metrics.json is missing for {name}")
                 append_event(ledger, {**event, "status": "completed", "time": time.time()})

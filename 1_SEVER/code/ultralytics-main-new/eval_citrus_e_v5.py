@@ -97,7 +97,7 @@ def merge_views(candidates, shape, border_weight=1.0, mask_iou=0.5, fragment_ios
     )
 
 
-def empirical_mask_pr(stats):
+def empirical_mask_pr(stats, max_points=1000):
     """Observed score-threshold points at IoU .5; no envelope or endpoint padding."""
     curves = {}
     for cls in np.unique(stats["target_cls"]):
@@ -112,8 +112,8 @@ def empirical_mask_pr(stats):
         precision, recall = tp / np.arange(1, len(idx) + 1), tp / count
         # End of each tied score group = all detections included at that threshold.
         keep = np.r_[np.flatnonzero(scores[:-1] != scores[1:]), len(idx) - 1]
-        if len(keep) > 1000:
-            keep = keep[np.linspace(0, len(keep) - 1, 1000).astype(int)]
+        if max_points is not None and len(keep) > max_points:
+            keep = keep[np.linspace(0, len(keep) - 1, max_points).astype(int)]
         curves[str(int(cls))] = dict(
             targets=count,
             rmax=float(recall[-1]),
@@ -167,7 +167,10 @@ def evaluate(
     quality_calibration=None,
     quality_floor=None,
     tile_fraction=0.6,
+    raw_pr_max_points=1000,
 ):
+    if raw_pr_max_points is not None and raw_pr_max_points < 2:
+        raise ValueError("raw_pr_max_points must be None or >=2")
     if tile_fraction not in (0.4, 0.6):
         raise ValueError("E V5 compares preregistered fractions .4 and .6 only")
     if quality_floor is not None and not 0 <= quality_floor <= 1:
@@ -319,7 +322,7 @@ def evaluate(
         summary, raw_pr = {}, {}
         for mode, metric in metrics.items():
             stats = metric.process(plot=False)
-            raw_pr[mode] = empirical_mask_pr(stats)
+            raw_pr[mode] = empirical_mask_pr(stats, max_points=raw_pr_max_points)
             rr = [r for r in records if r["mode"] == mode]
             tiny = [r for r in rr if r["area640"] < 256]
             summary[mode] = dict(

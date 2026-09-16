@@ -12,6 +12,8 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    EV10ContrastStem,
+    SegmentCitrusEV10,
     SegmentCitrusEV9,
     EV8ContextStage,
     EV8P4Reconcile,
@@ -789,6 +791,10 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusEV10):
+            from ultralytics.utils.citrus_e_v10_loss import EV10SegmentationLoss
+
+            return EV10SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusEV9):
             from ultralytics.utils.citrus_e_v9_loss import EV9SegmentationLoss
 
@@ -1910,6 +1916,7 @@ def parse_model(d, ch, verbose=True):
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
+            EV10ContrastStem,
             EV8ContextStage,
             EV3DeepStage,
             EV3DetailDown,
@@ -2289,6 +2296,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV6,
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
+                SegmentCitrusEV10,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2330,6 +2338,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV6,
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
+                SegmentCitrusEV10,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2359,6 +2368,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV6,
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
+                SegmentCitrusEV10,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

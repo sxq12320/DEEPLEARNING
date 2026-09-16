@@ -216,24 +216,37 @@ def collate_semantic_batch(batch):
     return torch.stack(images), torch.stack(masks), list(metadata)
 
 
-def build_unet(
+def build_semantic_model(
+    architecture: str = "Unet",
     encoder_name: str = "resnet18",
     encoder_weights: str | None = "imagenet",
 ):
-    """Build a one-channel segmentation_models_pytorch U-Net."""
+    """Build a one-channel segmentation_models_pytorch binary model."""
     try:
         import segmentation_models_pytorch as smp
     except ImportError as exc:
         raise RuntimeError(
             "segmentation_models_pytorch is required. Install requirements-unet.txt."
         ) from exc
-    return smp.Unet(
+    model_class = getattr(smp, architecture, None)
+    if model_class is None:
+        choices = ", ".join(name for name in ("Unet", "DeepLabV3Plus", "Segformer") if hasattr(smp, name))
+        raise ValueError(f"Unknown SMP architecture '{architecture}'. Available: {choices}")
+    return model_class(
         encoder_name=encoder_name,
         encoder_weights=encoder_weights,
         in_channels=3,
         classes=1,
         activation=None,
     )
+
+
+def build_unet(
+    encoder_name: str = "resnet18",
+    encoder_weights: str | None = "imagenet",
+):
+    """Build the default one-channel U-Net; kept for callers written before --architecture."""
+    return build_semantic_model("Unet", encoder_name, encoder_weights)
 
 
 def bce_dice_loss(logits, targets, dice_weight: float = 1.0):

@@ -11,7 +11,7 @@ from coco_utils import save_predictions
 from train_unet import resolve_device
 from unet_common import (
     CitrusSemanticDataset,
-    build_unet,
+    build_semantic_model,
     collate_semantic_batch,
     evaluate_model,
     semantic_split_paths,
@@ -51,6 +51,7 @@ def main() -> None:
     device = resolve_device(args.device)
     checkpoint = torch.load(weights, map_location=device, weights_only=False)
     config = checkpoint.get("config", {})
+    architecture = str(config.get("architecture", "Unet"))
     encoder = str(config.get("encoder", "resnet18"))
     imgsz = int(config.get("image_size", 640))
     probability_threshold = (
@@ -73,7 +74,7 @@ def main() -> None:
         if args.max_instances is not None
         else int(config.get("max_instances", 50))
     )
-    model = build_unet(encoder, None).to(device)
+    model = build_semantic_model(architecture, encoder, None).to(device)
     model.load_state_dict(checkpoint["model"])
     total_parameters = sum(parameter.numel() for parameter in model.parameters())
     dataset = CitrusSemanticDataset(dataset_root, args.split, imgsz, train=False)

@@ -1,0 +1,402 @@
+[
+  {
+    "name": "V9_00_phase_control_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.897998093422307,
+    "last_precision": 0.07737166324435318,
+    "fn25": 207,
+    "tiny_fn25": 127,
+    "errors25": {
+      "tp": 842,
+      "duplicates": 23,
+      "mask_or_localization": 6,
+      "background": 176
+    },
+    "operating_p90": {
+      "confidence": 0.46446446446446443,
+      "precision": 0.9017206056112421,
+      "recall": 0.7673975214489991
+    }
+  },
+  {
+    "name": "V9_00_phase_control_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9571020019065777,
+    "last_precision": 0.029136074755506544,
+    "fn25": 110,
+    "tiny_fn25": 63,
+    "errors25": {
+      "tp": 939,
+      "duplicates": 24,
+      "mask_or_localization": 5,
+      "background": 465
+    },
+    "operating_p90": {
+      "confidence": 0.6806806806806807,
+      "precision": 0.9008143812982519,
+      "recall": 0.8055290753098189
+    }
+  },
+  {
+    "name": "V9_01_geometry_cp_anchor_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9046711153479504,
+    "last_precision": 0.08319452967476111,
+    "fn25": 222,
+    "tiny_fn25": 131,
+    "errors25": {
+      "tp": 827,
+      "duplicates": 19,
+      "mask_or_localization": 6,
+      "background": 120
+    },
+    "operating_p90": {
+      "confidence": 0.37237237237237236,
+      "precision": 0.9000416719781296,
+      "recall": 0.771210676835081
+    }
+  },
+  {
+    "name": "V9_01_geometry_cp_anchor_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9656816015252622,
+    "last_precision": 0.0316078504789541,
+    "fn25": 126,
+    "tiny_fn25": 68,
+    "errors25": {
+      "tp": 923,
+      "duplicates": 23,
+      "mask_or_localization": 9,
+      "background": 337
+    },
+    "operating_p90": {
+      "confidence": 0.6236236236236237,
+      "precision": 0.9004200481390651,
+      "recall": 0.8102622912704152
+    }
+  },
+  {
+    "name": "V9_02_mask_neck_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.897998093422307,
+    "last_precision": 0.077048912154425,
+    "fn25": 217,
+    "tiny_fn25": 127,
+    "errors25": {
+      "tp": 832,
+      "duplicates": 22,
+      "mask_or_localization": 10,
+      "background": 149
+    },
+    "operating_p90": {
+      "confidence": 0.43743743743743746,
+      "precision": 0.9001946104721303,
+      "recall": 0.7616777883698761
+    }
+  },
+  {
+    "name": "V9_02_mask_neck_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9551954242135366,
+    "last_precision": 0.029295675817910708,
+    "fn25": 125,
+    "tiny_fn25": 68,
+    "errors25": {
+      "tp": 924,
+      "duplicates": 18,
+      "mask_or_localization": 8,
+      "background": 423
+    },
+    "operating_p90": {
+      "confidence": 0.6616616616616616,
+      "precision": 0.9002124861667559,
+      "recall": 0.8055290753098189
+    }
+  },
+  {
+    "name": "V9_03_compact_basis_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9018112488083889,
+    "last_precision": 0.07422518634758729,
+    "fn25": 211,
+    "tiny_fn25": 130,
+    "errors25": {
+      "tp": 838,
+      "duplicates": 18,
+      "mask_or_localization": 12,
+      "background": 131
+    },
+    "operating_p90": {
+      "confidence": 0.3883883883883884,
+      "precision": 0.9003886179357745,
+      "recall": 0.775023832221163
+    }
+  },
+  {
+    "name": "V9_03_compact_basis_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9599618684461392,
+    "last_precision": 0.030069575084356058,
+    "fn25": 119,
+    "tiny_fn25": 71,
+    "errors25": {
+      "tp": 930,
+      "duplicates": 20,
+      "mask_or_localization": 10,
+      "background": 377
+    },
+    "operating_p90": {
+      "confidence": 0.6286286286286287,
+      "precision": 0.9002394417530801,
+      "recall": 0.8102955195424214
+    }
+  },
+  {
+    "name": "V9_04_dual_route_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9056244041944709,
+    "last_precision": 0.07271335629544584,
+    "fn25": 211,
+    "tiny_fn25": 128,
+    "errors25": {
+      "tp": 838,
+      "duplicates": 21,
+      "mask_or_localization": 11,
+      "background": 138
+    },
+    "operating_p90": {
+      "confidence": 0.45145145145145144,
+      "precision": 0.9005418919537524,
+      "recall": 0.7626310772163966
+    }
+  },
+  {
+    "name": "V9_04_dual_route_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9628217349857007,
+    "last_precision": 0.029476141835692398,
+    "fn25": 122,
+    "tiny_fn25": 66,
+    "errors25": {
+      "tp": 927,
+      "duplicates": 23,
+      "mask_or_localization": 12,
+      "background": 369
+    },
+    "operating_p90": {
+      "confidence": 0.6846846846846847,
+      "precision": 0.9000731699541632,
+      "recall": 0.7950428979980935
+    }
+  },
+  {
+    "name": "V9_05_tiny_overlap_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9065776930409915,
+    "last_precision": 0.08120570403893775,
+    "fn25": 211,
+    "tiny_fn25": 126,
+    "errors25": {
+      "tp": 838,
+      "duplicates": 15,
+      "mask_or_localization": 8,
+      "background": 136
+    },
+    "operating_p90": {
+      "confidence": 0.4074074074074074,
+      "precision": 0.9010692817209007,
+      "recall": 0.765490943755958
+    }
+  },
+  {
+    "name": "V9_05_tiny_overlap_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9637750238322211,
+    "last_precision": 0.030008014009676176,
+    "fn25": 112,
+    "tiny_fn25": 61,
+    "errors25": {
+      "tp": 937,
+      "duplicates": 21,
+      "mask_or_localization": 9,
+      "background": 369
+    },
+    "operating_p90": {
+      "confidence": 0.6376376376376376,
+      "precision": 0.9003506060369784,
+      "recall": 0.8064823641563393
+    }
+  },
+  {
+    "name": "V9_06_dual_tiny_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9027645376549094,
+    "last_precision": 0.06892285298398836,
+    "fn25": 219,
+    "tiny_fn25": 131,
+    "errors25": {
+      "tp": 830,
+      "duplicates": 16,
+      "mask_or_localization": 11,
+      "background": 147
+    },
+    "operating_p90": {
+      "confidence": 0.43243243243243246,
+      "precision": 0.900290521735319,
+      "recall": 0.7616777883698761
+    }
+  },
+  {
+    "name": "V9_06_dual_tiny_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9675881792183031,
+    "last_precision": 0.025077827741265997,
+    "fn25": 117,
+    "tiny_fn25": 67,
+    "errors25": {
+      "tp": 932,
+      "duplicates": 19,
+      "mask_or_localization": 14,
+      "background": 429
+    },
+    "operating_p90": {
+      "confidence": 0.6846846846846847,
+      "precision": 0.9010469115541214,
+      "recall": 0.7836034318398475
+    }
+  },
+  {
+    "name": "V9_07_background_quality_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9075309818875119,
+    "last_precision": 0.07779048864193495,
+    "fn25": 221,
+    "tiny_fn25": 129,
+    "errors25": {
+      "tp": 828,
+      "duplicates": 13,
+      "mask_or_localization": 9,
+      "background": 116
+    },
+    "operating_p90": {
+      "confidence": 0.3533533533533533,
+      "precision": 0.9000337149098151,
+      "recall": 0.76930409914204
+    }
+  },
+  {
+    "name": "V9_07_background_quality_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9590085795996187,
+    "last_precision": 0.03223429139030408,
+    "fn25": 133,
+    "tiny_fn25": 72,
+    "errors25": {
+      "tp": 916,
+      "duplicates": 16,
+      "mask_or_localization": 9,
+      "background": 326
+    },
+    "operating_p90": {
+      "confidence": 0.6106106106106106,
+      "precision": 0.900061552271363,
+      "recall": 0.7998093422306959
+    }
+  },
+  {
+    "name": "V9_08_complete_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.899904671115348,
+    "last_precision": 0.07799719077914567,
+    "fn25": 226,
+    "tiny_fn25": 132,
+    "errors25": {
+      "tp": 823,
+      "duplicates": 17,
+      "mask_or_localization": 7,
+      "background": 111
+    },
+    "operating_p90": {
+      "confidence": 0.38238238238238237,
+      "precision": 0.9001846178971813,
+      "recall": 0.7651538558432169
+    }
+  },
+  {
+    "name": "V9_08_complete_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9628217349857007,
+    "last_precision": 0.03193776878320263,
+    "fn25": 125,
+    "tiny_fn25": 73,
+    "errors25": {
+      "tp": 924,
+      "duplicates": 23,
+      "mask_or_localization": 6,
+      "background": 328
+    },
+    "operating_p90": {
+      "confidence": 0.6276276276276276,
+      "precision": 0.900426018571924,
+      "recall": 0.8016958491546802
+    }
+  },
+  {
+    "name": "V9_09_complete_cosine_seed42",
+    "mode": "global",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9027645376549094,
+    "last_precision": 0.07853707082434898,
+    "fn25": 224,
+    "tiny_fn25": 129,
+    "errors25": {
+      "tp": 825,
+      "duplicates": 20,
+      "mask_or_localization": 7,
+      "background": 121
+    },
+    "operating_p90": {
+      "confidence": 0.3923923923923924,
+      "precision": 0.9002105238744147,
+      "recall": 0.7653743905990331
+    }
+  },
+  {
+    "name": "V9_09_complete_cosine_seed42",
+    "mode": "trustedmask",
+    "targets": 1049,
+    "maximum_observed_recall": 0.9628217349857007,
+    "last_precision": 0.03411701121470072,
+    "fn25": 126,
+    "tiny_fn25": 69,
+    "errors25": {
+      "tp": 923,
+      "duplicates": 18,
+      "mask_or_localization": 6,
+      "background": 300
+    },
+    "operating_p90": {
+      "confidence": 0.6026026026026026,
+      "precision": 0.9001556369122751,
+      "recall": 0.8122020972354623
+    }
+  }
+]

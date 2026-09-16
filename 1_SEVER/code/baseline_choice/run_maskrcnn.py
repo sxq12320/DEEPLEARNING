@@ -31,7 +31,7 @@ WINDOWS_EVALUATION_ROOT = Path(r"E:\mastercode\4_baseline_choice\runs\evaluation
 # Linux server paths. The source dataset is read-only; converted COCO data
 # and outputs are written under results/002_retrain.
 SERVER_SOURCE_DATASET = Path("/data/sxq/datasets/orange_yolo")
-SERVER_PREPARED_DATASET = Path("/data/sxq/datasets/citrus_prepared")
+SERVER_PREPARED_DATASET = Path("/data/sxq/results/002_retrain/_prepared/citrus_prepared")
 SERVER_OUTPUT_ROOT = Path("/data/sxq/results/002_retrain/maskrcnn")
 SERVER_EVALUATION_ROOT = Path("/data/sxq/results/002_retrain/evaluation")
 

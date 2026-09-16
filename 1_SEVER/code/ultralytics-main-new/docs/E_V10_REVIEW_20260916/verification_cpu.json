@@ -1,0 +1,161 @@
+{
+  "torch": "2.8.0+cpu",
+  "threads": 2,
+  "device": "cpu",
+  "models": [
+    {
+      "name": "V10_00_geometry_anchor",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 157.04959999999969,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_01_tiny_anchor",
+      "params": 2229608,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9378007255086993,
+      "cpu_batch1_forward_ms": 166.30110000000008,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_02_balanced_decoder",
+      "params": 2180968,
+      "thop_gflops640": 8.9931392,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9162830449598527,
+      "cpu_batch1_forward_ms": 151.2740999999984,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_03_contrast_stem",
+      "params": 2229800,
+      "thop_gflops640": 10.2612608,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.93771997488564,
+      "cpu_batch1_forward_ms": 193.19660000000027,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_04_detail_transport",
+      "params": 2234152,
+      "thop_gflops640": 10.380249599999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358933501391132,
+      "cpu_batch1_forward_ms": 192.96319999999946,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_05_structure_pair",
+      "params": 2234344,
+      "thop_gflops640": 10.422848,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358129276422968,
+      "cpu_batch1_forward_ms": 220.88039999999864,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_06_structure_balanced",
+      "params": 2185704,
+      "thop_gflops640": 9.1973248,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9142976359104436,
+      "cpu_batch1_forward_ms": 227.42679999999993,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_07_visibility_supervision",
+      "params": 2229625,
+      "thop_gflops640": 10.2186624,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9377935751527723,
+      "cpu_batch1_forward_ms": 177.23259999999996,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_08_complete",
+      "params": 2185721,
+      "thop_gflops640": 9.1973248,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9142905247284534,
+      "cpu_batch1_forward_ms": 221.1053000000014,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    },
+    {
+      "name": "V10_09_complete_cosine",
+      "params": 2185721,
+      "thop_gflops640": 9.1973248,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9142905247284534,
+      "cpu_batch1_forward_ms": 238.4814999999989,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0.0
+    }
+  ],
+  "warning": "THOP omits some functional operators. CPU diagnostic timing is not GPU speed evidence.",
+  "smoke": [
+    {
+      "name": "V10_00_geometry_anchor",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev10_20260916\\verification_r2\\SMOKE_RUNS_NOT_FORMAL\\V10_00_geometry_anchor\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V10_08_complete",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev10_20260916\\verification_r2\\SMOKE_RUNS_NOT_FORMAL\\V10_08_complete\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V10_09_complete_cosine",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev10_20260916\\verification_r2\\SMOKE_RUNS_NOT_FORMAL\\V10_09_complete_cosine\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0.0,
+        "metrics/recall(B)": 0.0,
+        "metrics/mAP50(B)": 0.0,
+        "metrics/mAP50-95(B)": 0.0,
+        "metrics/precision(M)": 0.0,
+        "metrics/recall(M)": 0.0,
+        "metrics/mAP50(M)": 0.0,
+        "metrics/mAP50-95(M)": 0.0,
+        "fitness": 0.0
+      },
+      "formal_accuracy": false
+    }
+  ]
+}

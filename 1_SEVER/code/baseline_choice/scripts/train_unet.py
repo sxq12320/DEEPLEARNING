@@ -23,7 +23,7 @@ from baseline_common import (
 from coco_utils import save_predictions
 from unet_common import (
     CitrusSemanticDataset,
-    build_unet,
+    build_semantic_model,
     collate_semantic_batch,
     evaluate_model,
     semantic_split_paths,
@@ -42,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--name", default="E_unet_r18_watershed_seed42")
+    parser.add_argument("--architecture", default="Unet", help="SMP architecture: Unet, DeepLabV3Plus, Segformer, ...")
     parser.add_argument("--encoder", default="resnet18")
     parser.add_argument("--encoder-weights", default="imagenet")
     parser.add_argument("--epochs", type=int, default=300)
@@ -198,7 +199,7 @@ def main() -> None:
     encoder_weights = None if checkpoint else args.encoder_weights
     if isinstance(encoder_weights, str) and encoder_weights.lower() == "none":
         encoder_weights = None
-    model = build_unet(args.encoder, encoder_weights).to(device)
+    model = build_semantic_model(args.architecture, args.encoder, encoder_weights).to(device)
     if checkpoint:
         model.load_state_dict(checkpoint["model"])
     trainable_parameters = sum(
@@ -217,7 +218,8 @@ def main() -> None:
         scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled)
 
     config: Dict[str, Any] = {
-        "model": "segmentation_models_pytorch.Unet",
+        "model": f"segmentation_models_pytorch.{args.architecture}",
+        "architecture": args.architecture,
         "encoder": args.encoder,
         "encoder_weights": args.encoder_weights,
         "dataset_root": str(dataset_root),

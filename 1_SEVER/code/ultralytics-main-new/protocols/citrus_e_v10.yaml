@@ -1,0 +1,29 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V10
+implementation_revision: EV10_20260916_structure_visibility
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+input_recipe: '.5 global/.25 coarse/.25 fine source-balanced uniform views; unchanged from V9'
+fixed: 'CP=.3 boundary=.5 neighbor=.25; NWD=0 negative-quality=0; P3/P4/C5 detector; phase stride2 masks'
+control: '00 exact V9_01; 01 exact V9_05 graph and objective, not official YOLO baselines'
+factors:
+  stem: 'RGB-preserving zero-start luminance local contrast; no added dataset channels'
+  transport: 'stem-to-P2 16ch bypass before detection relay, C4 spatial gate, one update'
+  decoder: '64ch ordinary spatial decoder, not failed V9 32ch depthwise basis'
+  tiny: '.25 per-instance tiny overlap, all except00'
+  visibility: '.1 training-only instance-area-balanced P2 foreground, independent of TAL'
+  schedule: '09 only cosine; all other optimizer and training hyperparameters fixed'
+evaluation: 'unchanged original640 paired global/coarse/fine; observed PR/R90 diagnostics; never modify AP'
+formal: 'single seed screen; control/final three seeds42/43/44; held-out test not for tuning'

@@ -278,6 +278,10 @@ from .citrus_far import (
 )
 
 __all__ = (
+    "EV10ContrastStem",
+    "EV10DetailTransport",
+    "EV10BalancedProto",
+    "SegmentCitrusEV10",
     "EV9MaskNeck",
     "EV9CompactProto",
     "SegmentCitrusEV9",
@@ -559,6 +563,7 @@ __all__ = (
 
 from .citrus_e_v3 import EV3DeepStage, EV3DetailDown, EV3NativeFusion, SegmentCitrusEV3Quality
 from .citrus_e_v9 import EV9MaskNeck, EV9CompactProto, SegmentCitrusEV9
+from .citrus_e_v10 import EV10ContrastStem, EV10DetailTransport, EV10BalancedProto, SegmentCitrusEV10
 from .citrus_e_v4 import (
     EV4CascadeRefine,
     EV4ChromaFront,

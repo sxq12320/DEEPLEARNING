@@ -1,0 +1,42 @@
+[
+  {
+    "name": "V9_00_phase_control_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_01_geometry_cp_anchor_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_02_mask_neck_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_03_compact_basis_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_04_dual_route_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_05_tiny_overlap_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_06_dual_tiny_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_07_background_quality_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_08_complete_seed42",
+    "head": "SegmentCitrusEV9"
+  },
+  {
+    "name": "V9_09_complete_cosine_seed42",
+    "head": "SegmentCitrusEV9"
+  }
+]

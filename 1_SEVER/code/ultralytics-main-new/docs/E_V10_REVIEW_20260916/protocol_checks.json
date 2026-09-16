@@ -1,0 +1,94 @@
+{
+  "total_csv": 256,
+  "unique_csv": 242,
+  "errors": [],
+  "mapped": 256,
+  "epochs": {
+    "V9_00_phase_control_seed42": 300,
+    "V9_01_geometry_cp_anchor_seed42": 300,
+    "V9_02_mask_neck_seed42": 300,
+    "V9_03_compact_basis_seed42": 300,
+    "V9_04_dual_route_seed42": 300,
+    "V9_05_tiny_overlap_seed42": 300,
+    "V9_06_dual_tiny_seed42": 300,
+    "V9_07_background_quality_seed42": 300,
+    "V9_08_complete_seed42": 300,
+    "V9_09_complete_cosine_seed42": 300
+  },
+  "args_differences": {
+    "model": [
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_00_phase_control.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_01_geometry_cp_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_02_mask_neck.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_03_compact_basis.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_04_dual_route.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_05_tiny_overlap.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_06_dual_tiny.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_07_background_quality.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_08_complete.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V9_series/V9_09_complete_cosine.yaml"
+    ],
+    "name": [
+      "V9_00_phase_control_seed42",
+      "V9_01_geometry_cp_anchor_seed42",
+      "V9_02_mask_neck_seed42",
+      "V9_03_compact_basis_seed42",
+      "V9_04_dual_route_seed42",
+      "V9_05_tiny_overlap_seed42",
+      "V9_06_dual_tiny_seed42",
+      "V9_07_background_quality_seed42",
+      "V9_08_complete_seed42",
+      "V9_09_complete_cosine_seed42"
+    ],
+    "cos_lr": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "copy_paste": [
+      0.0,
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3
+    ],
+    "save_dir": [
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_00_phase_control_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_01_geometry_cp_anchor_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_02_mask_neck_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_03_compact_basis_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_04_dual_route_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_05_tiny_overlap_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_06_dual_tiny_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_07_background_quality_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_08_complete_seed42",
+      "/data/sxq/results/E_V9/CITRUS_EV9_ALL_300EP/V9_09_complete_cosine_seed42"
+    ]
+  },
+  "train_lists": 1,
+  "val_lists": 1,
+  "yaml_hash_match": {
+    "V9_00_phase_control_seed42": true,
+    "V9_01_geometry_cp_anchor_seed42": true,
+    "V9_02_mask_neck_seed42": true,
+    "V9_03_compact_basis_seed42": true,
+    "V9_04_dual_route_seed42": true,
+    "V9_05_tiny_overlap_seed42": true,
+    "V9_06_dual_tiny_seed42": true,
+    "V9_07_background_quality_seed42": true,
+    "V9_08_complete_seed42": true,
+    "V9_09_complete_cosine_seed42": true
+  }
+}
