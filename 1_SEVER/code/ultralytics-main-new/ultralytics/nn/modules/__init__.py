@@ -278,6 +278,13 @@ from .citrus_far import (
 )
 
 __all__ = (
+    "EV11RepStage",
+    "EV11ContextStage",
+    "EV11DetailSeed",
+    "EV11DetailExchange",
+    "EV11DetailInject",
+    "EV11NativeFusion",
+    "SegmentCitrusEV11",
     "EV10ContrastStem",
     "EV10DetailTransport",
     "EV10BalancedProto",
@@ -581,3 +588,13 @@ from .citrus_e_v4r import SegmentCitrusEV4Detail, SegmentCitrusEV4Quality
 from .citrus_e_v5 import SegmentCitrusEV5
 from .citrus_e_v6 import EV6FineDetail, SegmentCitrusEV6
 from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7
+
+from .citrus_e_v11 import (
+    EV11ContextStage,
+    EV11DetailExchange,
+    EV11DetailInject,
+    EV11DetailSeed,
+    EV11NativeFusion,
+    EV11RepStage,
+    SegmentCitrusEV11,
+)

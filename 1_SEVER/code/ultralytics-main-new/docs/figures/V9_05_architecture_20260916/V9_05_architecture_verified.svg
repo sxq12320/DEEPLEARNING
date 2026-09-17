@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1240" viewBox="0 0 1800 1240"><title>V9_05 citrus instance segmentation architecture</title><desc>Source-checked diagram with hybrid deep partial convolution backbone, asymmetric pyramid, shared semantic detail and phase-aware mask prototypes.</desc><defs><marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#344a64"/></marker><marker id="teal" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#118a83"/></marker></defs><rect width="1800" height="1240" fill="white"/><g font-family="Arial,Helvetica,sans-serif"><rect x="60" y="160" width="330" height="620" rx="12" fill="#f3f7fc" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="430" y="160" width="310" height="620" rx="12" fill="#f0f8fc" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="790" y="160" width="400" height="620" rx="12" fill="#eefaf7" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="1240" y="160" width="500" height="620" rx="12" fill="#f7f3fc" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="60" y="845" width="490" height="295" rx="12" fill="#eefaf7" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="575" y="845" width="705" height="295" rx="12" fill="#f7f3fc" stroke="#c5cfdb" stroke-width="1.5"/>
+<rect x="1305" y="845" width="435" height="295" rx="12" fill="#fff9ee" stroke="#c5cfdb" stroke-width="1.5"/><polyline points="225,256 225,282" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="225,337 225,372" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="225,427 225,462" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="225,517 225,552" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="225,607 225,642" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="390,500 450,500" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="350,398 402,398 402,238 930,238 930,308" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="720,415 775,415 775,355 830,355" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="775,415 775,550 967,550" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="985,400 985,440" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="985,498 985,532" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="985,568 985,604" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="1072,631 1210,631 1210,315 1260,315" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="1210,631 1260,631" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="1140,355 1170,355 1170,516 1320,516 1320,543" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="350,309 410,309 410,798 1470,798 1470,700" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="720,585 753,585 753,761 1224,761 1224,388 1260,388" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1552,315 1580,315" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1650,330 1730,330 1730,694 1690,694 1690,710" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1552,383 1640,383 1640,609" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1552,627 1622,627" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1640,645 1640,710" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="175,948 175,975" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="405,948 405,975" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="305,1021 305,1050" fill="none" stroke="#118a83" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#teal)"/>
+<polyline points="734,931 763,931" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="901,931 930,931" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1090,959 1090,997" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="747,1045 747,1090 915,1090" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/>
+<polyline points="1090,1045 1090,1090 951,1090" fill="none" stroke="#344a64" stroke-width="2.2" stroke-linejoin="round"  marker-end="url(#arrow)"/><text x="60" y="55" font-size="35" fill="#172943" text-anchor="start" font-weight="700">V9_05  |  Detail-guided citrus instance segmentation</text>
+<text x="60" y="92" font-size="20" fill="#51647b" text-anchor="start" font-weight="400">Source-checked architecture • Hybrid deep stage • Shared detail relay • Fine mask prototypes</text>
+<text x="60" y="132" font-size="23" fill="#172943" text-anchor="start" font-weight="700">(a) Network overview</text>
+<text x="80" y="190" font-size="21" fill="#172943" text-anchor="start" font-weight="700">Hybrid backbone</text>
+<text x="450" y="190" font-size="21" fill="#172943" text-anchor="start" font-weight="700">Asymmetric pyramid</text>
+<text x="810" y="190" font-size="21" fill="#172943" text-anchor="start" font-weight="700">Shared detail pathway</text>
+<text x="1260" y="190" font-size="21" fill="#172943" text-anchor="start" font-weight="700">Instance segmentation</text>
+<rect x="85" y="210" width="280" height="46" rx="8" fill="#fff" stroke="#7899bc" stroke-width="1.5"/>
+<text x="225" y="239.65" font-size="19" fill="#20324c" text-anchor="middle" font-weight="600">RGB image / 640 × 640</text>
+<rect x="100" y="282" width="250" height="55" rx="8" fill="#dfecfc" stroke="#6e98c6" stroke-width="1.5"/>
+<text x="225" y="303.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">Stem /2 · 16 channels</text>
+<text x="225" y="326.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">3×3 convolution</text>
+<rect x="100" y="372" width="250" height="55" rx="8" fill="#dfecfc" stroke="#6e98c6" stroke-width="1.5"/>
+<text x="225" y="393.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">C2 /4 · 64 channels</text>
+<text x="225" y="416.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Conv + C3k2</text>
+<rect x="100" y="462" width="250" height="55" rx="8" fill="#dfecfc" stroke="#6e98c6" stroke-width="1.5"/>
+<text x="225" y="483.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">C3 /8 · 128 channels</text>
+<text x="225" y="506.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Conv + C3k2</text>
+<rect x="100" y="552" width="250" height="55" rx="8" fill="#dfecfc" stroke="#6e98c6" stroke-width="1.5"/>
+<text x="225" y="573.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">C4 /16 · 128 channels</text>
+<text x="225" y="596.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Conv + C3k2</text>
+<rect x="100" y="642" width="250" height="100" rx="8" fill="#d4e6fa" stroke="#487aa9" stroke-width="1.5"/>
+<text x="225" y="674.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">C5 /32 · 256 channels</text>
+<text x="225" y="697.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Conv → EV3DeepStage</text>
+<text x="225" y="720.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">SPPF → C2PSA</text>
+<text x="225" y="765" font-size="13" fill="#51647b" text-anchor="middle" font-weight="400">EV3DeepStage: partial-convolution mixers</text>
+<rect x="450" y="308" width="270" height="322" rx="8" fill="#e2f1f9" stroke="#71a3bc" stroke-width="1.5"/>
+<text x="585" y="415.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="600">Top-down fusion</text>
+<text x="585" y="439.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">↑C5 + C4 → N4</text>
+<text x="585" y="463.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">↑N4 + C3 → P3</text>
+<text x="585" y="487.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">Bottom-up fusion</text>
+<text x="585" y="511.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">↓P3 + N4 → P4</text>
+<text x="585" y="535.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">C5 passes directly to head</text>
+<text x="585" y="667" font-size="14" fill="#51647b" text-anchor="middle" font-weight="400">↑ / ↓ resize or stride convolution</text>
+<text x="585" y="692" font-size="14" fill="#51647b" text-anchor="middle" font-weight="400">+ denotes concat, then C3k2</text>
+<text x="415" y="484" font-size="12" fill="#51647b" text-anchor="middle" font-weight="400">C3–C5</text>
+<rect x="830" y="308" width="310" height="92" rx="8" fill="#d8f1ea" stroke="#57a99b" stroke-width="1.5"/>
+<text x="985" y="336.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="600">Semantic-guided detail D</text>
+<text x="985" y="360.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">C2 texture + P3 semantics</text>
+<text x="985" y="384.3" font-size="18" fill="#20324c" text-anchor="middle" font-weight="400">16 channels / stride 4 · (b)</text>
+<rect x="900" y="440" width="170" height="58" rx="8" fill="#e1f6f0" stroke="#57a99b" stroke-width="1.5"/>
+<text x="985" y="463.6" font-size="16" fill="#20324c" text-anchor="middle" font-weight="600">PixelUnshuffle ×2</text>
+<text x="985" y="485.6" font-size="16" fill="#20324c" text-anchor="middle" font-weight="400">1×1 projection</text>
+<circle cx="985" cy="550" r="18" fill="white" stroke="#344a64" stroke-width="2"/>
+<text x="985" y="558" font-size="27" fill="#20324c" text-anchor="middle" font-weight="400">+</text>
+<rect x="908" y="604" width="164" height="55" rx="8" fill="#d8f1ea" stroke="#57a99b" stroke-width="1.5"/>
+<text x="990" y="637.8" font-size="18" fill="#20324c" text-anchor="middle" font-weight="600">P3* /8 · 64 ch</text>
+<text x="635" y="229" font-size="16" fill="#118a83" text-anchor="middle" font-weight="400">C2: shallow detail</text>
+<circle cx="775" cy="415" r="4" fill="#344a64"/>
+<text x="827" y="541" font-size="16" fill="#20324c" text-anchor="start" font-weight="400">P3</text>
+<text x="985" y="700" font-size="16" fill="#118a83" text-anchor="middle" font-weight="400">P3* = P3 + tanh(α) · relay(D)</text>
+<text x="985" y="736" font-size="15" fill="#51647b" text-anchor="middle" font-weight="400">One detail estimate, two consumers</text>
+<rect x="1260" y="288" width="292" height="128" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="1406" y="323.45" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">Prediction towers</text>
+<text x="1406" y="346.45" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">P3* /8 · P4 /16 · C5 /32</text>
+<text x="1406" y="369.45" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Boxes / classes</text>
+<text x="1406" y="392.45" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">32 mask coefficients per candidate</text>
+<rect x="1580" y="235" width="140" height="95" rx="8" fill="#fff1d7" stroke="#c69e54" stroke-width="1.5"/>
+<text x="1650" y="277.4" font-size="14" fill="#20324c" text-anchor="middle" font-weight="600">Quality ranking</text>
+<text x="1650" y="297.4" font-size="14" fill="#20324c" text-anchor="middle" font-weight="400">p × (0.5+0.5q)</text>
+<rect x="1260" y="543" width="292" height="157" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="1406" y="592.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">Prototype decoder</text>
+<text x="1406" y="615.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Proto(P3*) + projected D</text>
+<text x="1406" y="638.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">Phase refinement from Stem + D</text>
+<text x="1406" y="661.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="400">32 bases / stride 2 · (c)</text>
+<circle cx="1640" cy="627" r="18" fill="white" stroke="#344a64" stroke-width="2"/>
+<text x="1640" y="635" font-size="27" fill="#20324c" text-anchor="middle" font-weight="400">×</text>
+<rect x="1568" y="710" width="158" height="50" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="1647" y="740.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">Instance masks</text>
+<circle cx="1210" cy="631" r="4" fill="#344a64"/>
+<text x="1200" y="494" font-size="14" fill="#118a83" text-anchor="end" font-weight="400">P3*</text>
+<text x="1320" y="504" font-size="16" fill="#118a83" text-anchor="middle" font-weight="400">D</text>
+<text x="980" y="811" font-size="16" fill="#118a83" text-anchor="middle" font-weight="400">Stem /2 → phase-aware mask refinement</text>
+<text x="1150" y="751" font-size="15" fill="#344a64" text-anchor="middle" font-weight="400">P4 + direct C5</text>
+<text x="1650" y="353" font-size="13" fill="#916b20" text-anchor="middle" font-weight="400">Boxes +</text>
+<text x="1650" y="371" font-size="13" fill="#916b20" text-anchor="middle" font-weight="400">calibrated scores</text>
+<text x="1648" y="470" font-size="14" fill="#725394" text-anchor="start" font-weight="400">Coefficients</text>
+<text x="1580" y="614" font-size="13" fill="#725394" text-anchor="middle" font-weight="400">Bases</text>
+<text x="1648" y="685" font-size="14" fill="#725394" text-anchor="start" font-weight="400">Mask logits</text>
+<text x="80" y="875" font-size="21" fill="#172943" text-anchor="start" font-weight="700">(b) Semantic-guided detail</text>
+<text x="595" y="875" font-size="21" fill="#172943" text-anchor="start" font-weight="700">(c) Phase-aware fine masks</text>
+<text x="1325" y="875" font-size="21" fill="#172943" text-anchor="start" font-weight="700">(d) Training objectives</text>
+<rect x="85" y="895" width="180" height="53" rx="8" fill="#d8f1ea" stroke="#57a99b" stroke-width="1.5"/>
+<text x="175" y="916.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="600">C2 → 1×1 + DWConv</text>
+<text x="175" y="937.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="400">detail d</text>
+<rect x="290" y="895" width="235" height="53" rx="8" fill="#d8f1ea" stroke="#57a99b" stroke-width="1.5"/>
+<text x="407.5" y="916.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="600">P3 → 1×1 → upsample</text>
+<text x="407.5" y="937.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="400">semantic estimate s</text>
+<rect x="105" y="975" width="400" height="46" rx="8" fill="#fff" stroke="#57a99b" stroke-width="1.5"/>
+<text x="305" y="1003.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">g = sigmoid(Conv([d, s, |d − s|]))</text>
+<rect x="105" y="1050" width="400" height="48" rx="8" fill="#d8f1ea" stroke="#57a99b" stroke-width="1.5"/>
+<text x="305" y="1082.05" font-size="23" fill="#20324c" text-anchor="middle" font-weight="600">D = s + g ⊙ (d − s)</text>
+<text x="305" y="1122" font-size="16" fill="#118a83" text-anchor="middle" font-weight="400">D → candidate relay and prototype detail</text>
+<rect x="598" y="904" width="136" height="55" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="666" y="926.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="600">Stem /2</text>
+<text x="666" y="947.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="400">Unshuffle ×2</text>
+<rect x="763" y="904" width="138" height="55" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="832" y="926.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="600">1×1 + DWConv</text>
+<text x="832" y="947.25" font-size="15" fill="#20324c" text-anchor="middle" font-weight="400">fine evidence f</text>
+<rect x="930" y="904" width="316" height="55" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="1088" y="926.1" font-size="16" fill="#20324c" text-anchor="middle" font-weight="600">D + gated fine evidence</text>
+<text x="1088" y="948.1" font-size="16" fill="#20324c" text-anchor="middle" font-weight="400">D + g₂ ⊙ (f − D)</text>
+<rect x="950" y="997" width="280" height="48" rx="8" fill="#eadffa" stroke="#9975bf" stroke-width="1.5"/>
+<text x="1090" y="1026.95" font-size="17" fill="#20324c" text-anchor="middle" font-weight="600">1×1 to 4K → Shuffle ×2</text>
+<rect x="598" y="997" width="298" height="48" rx="8" fill="#fff" stroke="#9975bf" stroke-width="1.5"/>
+<text x="747" y="1026.6" font-size="16" fill="#20324c" text-anchor="middle" font-weight="600">Bilinear ↑2 of coarse bases</text>
+<circle cx="933" cy="1090" r="18" fill="white" stroke="#344a64" stroke-width="2"/>
+<text x="933" y="1098" font-size="27" fill="#20324c" text-anchor="middle" font-weight="400">+</text>
+<text x="933" y="1124" font-size="15" fill="#725394" text-anchor="middle" font-weight="400">Fine bases: K=32, stride 2; bounded residual update</text>
+<text x="1325" y="905" font-size="16" fill="#765619" text-anchor="start" font-weight="400">Detection + mask BCE</text>
+<text x="1325" y="943" font-size="16" fill="#765619" text-anchor="start" font-weight="400">Visible-boundary constraint · 0.50</text>
+<text x="1325" y="981" font-size="16" fill="#765619" text-anchor="start" font-weight="400">Neighbor exclusion · 0.25</text>
+<text x="1325" y="1019" font-size="16" fill="#765619" text-anchor="start" font-weight="400">Tiny-instance Dice · 0.25</text>
+<text x="1325" y="1057" font-size="16" fill="#765619" text-anchor="start" font-weight="400">Positive mask-quality supervision</text>
+<text x="1325" y="1113" font-size="14" fill="#916b20" text-anchor="start" font-weight="400">Tiny Dice: matched, nonempty GT only</text>
+<text x="60" y="1180" font-size="20" fill="#172943" text-anchor="start" font-weight="600">V9 selection: Mask AP50 84.91%  ·  AP50–95 71.92%  |  2.23M parameters  ·  10.22 GFLOPs / 640 view</text>
+<text x="60" y="1214" font-size="16" fill="#51647b" text-anchor="start" font-weight="400">Single-seed training-validation metrics. Tiled inference is external to the network. This figure does not depict the untrained V10.</text></g></svg>

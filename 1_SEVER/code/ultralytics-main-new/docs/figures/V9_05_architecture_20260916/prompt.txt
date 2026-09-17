@@ -1,0 +1,70 @@
+Create a polished, technically accurate academic neural-network architecture figure, like a carefully typeset CVPR/ICCV methods figure, for an existing RGB immature citrus instance segmentation model. This is an engineering schematic, not a marketing poster. Landscape 3:2 canvas, high resolution, pure white background, very crisp readable English typography, restrained pastel navy/blue for backbone, teal for detail, violet for mask decoder, pale amber for training objectives. Thin orthogonal connectors with unambiguous arrowheads and enough whitespace. Use small tensor slabs sparingly. No flashy shadows, no watermark. Render exact supplied module names correctly.
+
+Title: "V9_05: Detail-Guided Citrus Instance Segmentation"
+Subtitle small: "Implementation-faithful overview • RGB input • 3 detection scales • stride-2 mask prototypes"
+
+LAYOUT: main overview occupies upper ~60%; lower ~32% contains three clearly labeled detail inset panels (b),(c),(d). Footer has a short legend and metrics with protocol qualifier. The whole figure should feel like one coherent publication architecture diagram, not pages of text.
+
+(a) Main architecture:
+Left-to-right RGB input -> Hybrid backbone -> Asymmetric feature pyramid -> Instance prediction and prototype decoder -> instance masks.
+Input: a small schematic thumbnail with several green circular fruits among elongated green leaves, label "RGB / 640 × 640". A smaller matching final thumbnail uses thin colored visible-mask outlines with distinct instance colors. Label output "Instance masks (schematic)" so it is not represented as an experimental prediction.
+
+Backbone vertically stack actual features from fine to coarse:
+"Stem /2 · 16 ch" (3×3 stride2 Conv)
+"C2 /4 · 64 ch" (Conv + C3k2)
+"C3 /8 · 128 ch" (Conv + C3k2)
+"C4 /16 · 128 ch" (Conv + C3k2)
+"C5 /32 · 256 ch" ("Conv → EV3DeepStage → SPPF → C2PSA")
+Downward arrows between these five stages. Highlight EV3DeepStage with an outline and a small note "deep PConv mixers". This is a HYBRID YOLO-derived backbone, NOT HRNet, NOT Mamba, no LSKA claim. Shallow C3k2 stages really remain.
+
+Next column Asymmetric feature pyramid:
+C5 -> upsample ×2 + concat C4 -> C3k2 -> N4 (/16).
+N4 -> upsample ×2 + concat C3 -> C3k2 -> P3 (/8,64ch).
+P3 -> 3×3 stride2 Conv + concat N4 -> C3k2 -> P4 (/16,128ch).
+Direct C5 (/32) goes to the prediction head as third scale. NO bottom-up P4-to-P5 reconstruction, NO P2 detector.
+Can simplify these in overview into three clearly connected boxes N4, P3, P4 with "↑2 + concat + C3k2" on top-down links, "↓2 + concat + C3k2" on P3 to P4 link.
+Keep edge crossings minimal and connectors visibly terminate at their true destination.
+
+Teal shared detail box adjacent to pyramid:
+"C2 + P3 → Semantic-guided detail D"
+subtitle "16 ch / stride 4 · see (b)"
+Takes actual C2 and original P3 as inputs.
+D -> "PixelUnshuffle ×2 + 1×1" -> residual plus with P3 -> "P3*".
+P3*, P4, C5 all feed "Box / class / mask-coefficient towers".
+D also routes to prototype decoder. These are TWO consumers of one detail branch, not two independent CNN trunks.
+
+Prototype decoder:
+P3* -> "Proto + projected D" -> "Phase refinement · see (c)" -> "32 mask bases / stride 2".
+Phase refinement also gets direct Stem feature and D, shown using a neat long teal skip route.
+Prediction towers produce "Mask coefficients" and "Boxes + class scores". Coefficients and 32 mask bases meet at a small matrix multiplication symbol to form "Instance mask logits" -> output. It must be clear that coefficients combine prototypes; masks are not the box predictions.
+Small quality box beside prediction towers: "Mask-quality ranking" with formula "score = p_cls (0.5 + 0.5q)". This calibrates scores, not mask pixels; connect it to scores/output selection only.
+Do not add V10 contrast stem, auxiliary foreground head, EV10 transport, V9 mask-neck, compact decoder, DCN or window attention.
+
+(b) "Semantic-guided detail relay" lower left inset:
+C2 -> "1×1 + DW 3×3" -> d
+P3 -> "1×1 + ↑2" -> s
+concat[d,s,|d−s|] -> "1×1 + sigmoid" -> g
+formula prominently: "D = s + g ⊙ (d − s)"
+D splits to "P3 residual relay" and "Prototype detail".
+One-step feature fusion, NO recurrent arrow, NO PID claim. Can use concise diagram plus formula instead of too many boxes.
+
+(c) "Phase-aware fine masks" lower middle inset:
+"Stem /2" -> "PixelUnshuffle ×2" -> "Project + DWConv" -> f at stride4
+D and f -> "Gated refinement" -> "1×1 to 4K" -> "PixelShuffle ×2" -> residual plus with "Bilinear ↑2 (coarse bases)" -> "Fine bases /2"
+Show K=32 in small text.
+Short note "Rearrangement preserves phases; projection is learned."
+This phase pathway acts on mask bases, NOT a new dense P2 detection branch.
+
+(d) "Training objectives" lower right inset (amber fill, dashed border):
+"Detection + mask BCE"
+"Visible-boundary constraint · 0.50"
+"Neighbor exclusion · 0.25"
+"Tiny-instance Dice · 0.25"
+"Positive mask-quality supervision"
+Small footnote "Tiny Dice applies to matched, nonempty GT masks."
+Dashed arrows denote supervision only. Do not imply ground truth used at inference.
+
+BOTTOM small legend: "Solid: inference feature flow   Dashed: training supervision   ⊕: residual sum"
+Small metrics text: "V9 validation selection: Mask AP50 84.91% · AP50–95 71.92% | ~2.23M parameters · ~10.22 GFLOPs / 640 view"
+Smallest qualifier: "Single-seed training-validation metrics; not held-out test results. Optional tiled inference is an external evaluation pipeline."
+No exaggerated novelty claims or fabricated superiority. Prioritize clean correct arrows and legible labels over decorative objects.

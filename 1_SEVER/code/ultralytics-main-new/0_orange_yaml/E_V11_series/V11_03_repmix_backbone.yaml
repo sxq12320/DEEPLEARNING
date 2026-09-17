@@ -1,0 +1,199 @@
+# E V11: fixed recipe in citrus_e_v11_suite.py
+nc: 80
+scale: n
+scales:
+  n:
+  - 0.5
+  - 0.25
+  - 1024
+backbone:
+- - -1
+  - 1
+  - Conv
+  - - 64
+    - 3
+    - 2
+- - -1
+  - 1
+  - Conv
+  - - 128
+    - 3
+    - 2
+- - -1
+  - 2
+  - C3k2
+  - - 256
+    - false
+    - 0.25
+- - - 2
+    - 0
+  - 1
+  - EV11DetailSeed
+  - - 16
+- - 2
+  - 1
+  - Conv
+  - - 256
+    - 3
+    - 2
+- - -1
+  - 2
+  - EV11RepStage
+  - - 512
+    - false
+    - 0.25
+- - - 3
+    - 5
+  - 1
+  - EV11DetailExchange
+  - []
+- - 5
+  - 1
+  - Conv
+  - - 512
+    - 3
+    - 2
+- - -1
+  - 2
+  - EV11RepStage
+  - - 512
+    - true
+- - - 6
+    - 8
+  - 1
+  - EV11DetailExchange
+  - []
+- - - 8
+    - 9
+  - 1
+  - EV11DetailInject
+  - []
+- - 10
+  - 1
+  - Conv
+  - - 1024
+    - 3
+    - 2
+- - -1
+  - 2
+  - EV11RepStage
+  - - 1024
+    - true
+- - -1
+  - 1
+  - SPPF
+  - - 1024
+    - 5
+- - -1
+  - 2
+  - C2PSA
+  - - 1024
+head:
+- - -1
+  - 1
+  - nn.Upsample
+  - - null
+    - 2
+    - nearest
+- - - -1
+    - 10
+  - 1
+  - Concat
+  - - 1
+- - -1
+  - 2
+  - C3k2
+  - - 512
+    - false
+- - -1
+  - 1
+  - nn.Upsample
+  - - null
+    - 2
+    - nearest
+- - - -1
+    - 5
+  - 1
+  - Concat
+  - - 1
+- - -1
+  - 2
+  - C3k2
+  - - 256
+    - false
+- - -1
+  - 1
+  - Conv
+  - - 256
+    - 3
+    - 2
+- - - -1
+    - 17
+  - 1
+  - Concat
+  - - 1
+- - -1
+  - 2
+  - C3k2
+  - - 512
+    - false
+- - -1
+  - 1
+  - nn.Identity
+  - []
+- - -1
+  - 1
+  - nn.Identity
+  - []
+- - -1
+  - 1
+  - nn.Identity
+  - []
+- - - 20
+    - 23
+    - 14
+    - 2
+    - 0
+    - 10
+    - 9
+  - 1
+  - SegmentCitrusEV11
+  - - nc
+    - 32
+    - 256
+    - 16
+    - true
+    - false
+    - false
+    - 0.0
+    - 0.0
+    - 0.25
+    - 0.5
+    - 0.25
+pretrained_map_family: citrus_ev11_s0_h1_r1_n0_q0
+pretrained_layer_map:
+  3: -1
+  4: 3
+  5: 4
+  6: -1
+  7: 5
+  8: 6
+  9: -1
+  10: -1
+  11: 7
+  12: 8
+  13: 9
+  14: 10
+  15: 11
+  16: 12
+  17: 13
+  18: 14
+  19: 15
+  20: 16
+  21: 17
+  22: -1
+  23: 19
+  24: -1
+  25: -1
+  26: -1
+  27: 23

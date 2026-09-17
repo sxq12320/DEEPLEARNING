@@ -1,0 +1,155 @@
+{
+  "date": "2026-09-17",
+  "environment": {
+    "python": "3.9.13",
+    "torch": "2.8.0+cpu",
+    "device": "cpu",
+    "threads": 2
+  },
+  "models": [
+    {
+      "name": "V11_00_v10_structure_anchor",
+      "params": 2234344,
+      "thop_gflops640": 10.422848,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358129276422968,
+      "cpu_batch1_forward_ms": 160.8451999999998,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_01_v10_tiny_reference",
+      "params": 2234152,
+      "thop_gflops640": 10.380249599999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358933501391132,
+      "cpu_batch1_forward_ms": 153.35590000000022,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_02_persistent_detail",
+      "params": 2269804,
+      "thop_gflops640": 10.537536000000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.921193195535826,
+      "cpu_batch1_forward_ms": 143.85979999999955,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_03_repmix_backbone",
+      "params": 2230604,
+      "thop_gflops640": 10.390694400000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9127787809938475,
+      "cpu_batch1_forward_ms": 146.668,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_04_native_neck",
+      "params": 2235918,
+      "thop_gflops640": 10.408,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9106094230647099,
+      "cpu_batch1_forward_ms": 165.15350000000063,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_05_tiny_assignment",
+      "params": 2234152,
+      "thop_gflops640": 10.380249599999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358933501391132,
+      "cpu_batch1_forward_ms": 169.19780000000094,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_06_integrated",
+      "params": 2011470,
+      "thop_gflops640": 9.6926336,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8837397525193018,
+      "cpu_batch1_forward_ms": 145.7487999999998,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_07_factorized_box_tower",
+      "params": 2011470,
+      "thop_gflops640": 9.6926336,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8837397525193018,
+      "cpu_batch1_forward_ms": 141.5620000000004,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_08_local_mask_contrast",
+      "params": 2011470,
+      "thop_gflops640": 9.6926336,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8837397525193018,
+      "cpu_batch1_forward_ms": 145.83560000000162,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_09_contrast_complete",
+      "params": 2011662,
+      "thop_gflops640": 9.735232,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.883655405331512,
+      "cpu_batch1_forward_ms": 156.91269999999946,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_10_gap_context_control",
+      "params": 1976654,
+      "thop_gflops640": 9.663859200000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8733384800779499,
+      "cpu_batch1_forward_ms": 152.6329000000004,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V11_11_selective_context",
+      "params": 1976654,
+      "thop_gflops640": 9.663859200000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8733384800779499,
+      "cpu_batch1_forward_ms": 150.63689999999852,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    }
+  ],
+  "smoke": [
+    {
+      "name": "V11_00_v10_structure_anchor",
+      "success": true,
+      "formal_accuracy": false
+    },
+    {
+      "name": "V11_06_integrated",
+      "success": true,
+      "formal_accuracy": false
+    },
+    {
+      "name": "V11_08_local_mask_contrast",
+      "success": true,
+      "formal_accuracy": false
+    },
+    {
+      "name": "V11_11_selective_context",
+      "success": true,
+      "formal_accuracy": false
+    }
+  ],
+  "smoke_scope": "4 training RGB originals/2 validation originals; 17 derived views; 128 input; 1 epoch; not formal training",
+  "limits": "CPU verification only; GPU/Python3.8/Torch1.13 runtime, accuracy gains and ONNX/TensorRT export remain unverified. THOP omits FFT/Top-K and functional operators."
+}

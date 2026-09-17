@@ -1,0 +1,683 @@
+{
+  "Conv": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 39,
+      "end": 89
+    }
+  ],
+  "C2f": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 365,
+      "end": 396
+    }
+  ],
+  "SPPF": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 285,
+      "end": 314
+    }
+  ],
+  "nn.Upsample": [],
+  "Concat": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 616,
+      "end": 641
+    }
+  ],
+  "Segment": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 285,
+      "end": 386
+    }
+  ],
+  "RepNCSPELAN4": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 945,
+      "end": 975
+    }
+  ],
+  "ADown": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1017,
+      "end": 1039
+    }
+  ],
+  "SPPELAN": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1042,
+      "end": 1066
+    }
+  ],
+  "C3k2": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1146,
+      "end": 1183
+    }
+  ],
+  "C2PSA": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1513,
+      "end": 1565
+    }
+  ],
+  "A2C2f": [
+    {
+      "path": "ultralytics\\nn\\modules\\block.py",
+      "line": 1872,
+      "end": 1951
+    }
+  ],
+  "Segment26": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1280,
+      "end": 1336
+    }
+  ],
+  "StarNetBackbone": [
+    {
+      "path": "ultralytics\\nn\\modules\\starnet.py",
+      "line": 119,
+      "end": 197
+    }
+  ],
+  "Index": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 644,
+      "end": 669
+    }
+  ],
+  "MobileNetV4Stem_RGB": [
+    {
+      "path": "ultralytics\\nn\\modules\\mobilenetv4_rgb.py",
+      "line": 318,
+      "end": 335
+    }
+  ],
+  "MobileNetV4Stage": [
+    {
+      "path": "ultralytics\\nn\\modules\\mobilenetv4_rgb.py",
+      "line": 338,
+      "end": 401
+    }
+  ],
+  "C2MANO": [
+    {
+      "path": "ultralytics\\nn\\modules\\mano.py",
+      "line": 171,
+      "end": 198
+    }
+  ],
+  "SPPFRepContext": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 122,
+      "end": 139
+    }
+  ],
+  "CitrusScaleFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 175,
+      "end": 201
+    }
+  ],
+  "SegmentCitrusLiteBQ": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 989,
+      "end": 1024
+    }
+  ],
+  "SegmentCitrusLite": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 631,
+      "end": 667
+    }
+  ],
+  "SegmentCitrusBLite": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1027,
+      "end": 1067
+    }
+  ],
+  "SPPFLSKAResidual": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_topo.py",
+      "line": 102,
+      "end": 119
+    }
+  ],
+  "SegmentCitrusTopo": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 554,
+      "end": 589
+    }
+  ],
+  "CitrusBilateralExchange": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 96,
+      "end": 161
+    }
+  ],
+  "C3k2_Faster": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 546,
+      "end": 551
+    }
+  ],
+  "C3k2_WT": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 593,
+      "end": 598
+    }
+  ],
+  "SPPF_LSKA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 467,
+      "end": 485
+    }
+  ],
+  "CARAFE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 204,
+      "end": 232
+    }
+  ],
+  "BiFPNConcat": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 765,
+      "end": 783
+    }
+  ],
+  "SegmentP2Boundary": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 389,
+      "end": 439
+    }
+  ],
+  "C3k2_MoCE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 690,
+      "end": 695
+    }
+  ],
+  "CitrusStructureStem": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 75,
+      "end": 98
+    }
+  ],
+  "CitrusShapeStream": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 101,
+      "end": 151
+    }
+  ],
+  "CitrusShapeFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_d.py",
+      "line": 154,
+      "end": 188
+    }
+  ],
+  "SegmentCitrusAux": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 592,
+      "end": 628
+    }
+  ],
+  "HCO": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1379,
+      "end": 1398
+    }
+  ],
+  "nn.Identity": [],
+  "SegmentCitrusSAGEV4R": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v4r.py",
+      "line": 60,
+      "end": 104
+    }
+  ],
+  "SAGEGatedStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v4.py",
+      "line": 87,
+      "end": 103
+    }
+  ],
+  "SegmentCitrusSAGEV5": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v5.py",
+      "line": 42,
+      "end": 94
+    }
+  ],
+  "SAGEV8PhaseStem": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v8.py",
+      "line": 23,
+      "end": 58
+    }
+  ],
+  "EV3DeepStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 22,
+      "end": 27
+    }
+  ],
+  "SegmentCitrusEV10": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v10.py",
+      "line": 106,
+      "end": 178
+    }
+  ],
+  "EV10ContrastStem": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v10.py",
+      "line": 23,
+      "end": 51
+    }
+  ],
+  "SegmentCitrusEV2": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 133,
+      "end": 153
+    }
+  ],
+  "EV2ContextHub": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 74,
+      "end": 86
+    }
+  ],
+  "EV2ContextInject": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 89,
+      "end": 105
+    }
+  ],
+  "EV2RepStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 39,
+      "end": 48
+    }
+  ],
+  "EV2Down": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v2.py",
+      "line": 51,
+      "end": 60
+    }
+  ],
+  "EV3DetailDown": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 30,
+      "end": 38
+    }
+  ],
+  "EV3NativeFusion": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 41,
+      "end": 56
+    }
+  ],
+  "SegmentCitrusEV3Quality": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v3.py",
+      "line": 59,
+      "end": 102
+    }
+  ],
+  "SegmentCitrusEV4Detail": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v4r.py",
+      "line": 45,
+      "end": 50
+    }
+  ],
+  "SegmentCitrusEV4Quality": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v4r.py",
+      "line": 53,
+      "end": 104
+    }
+  ],
+  "SegmentCitrusEV5": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v5.py",
+      "line": 22,
+      "end": 82
+    }
+  ],
+  "SegmentCitrusEV6": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v6.py",
+      "line": 50,
+      "end": 135
+    }
+  ],
+  "SegmentCitrusEV7": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v7.py",
+      "line": 99,
+      "end": 211
+    }
+  ],
+  "EV8ContextStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v8.py",
+      "line": 39,
+      "end": 48
+    }
+  ],
+  "EV8P4Reconcile": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v8.py",
+      "line": 51,
+      "end": 86
+    }
+  ],
+  "SegmentCitrusEV9": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_e_v9.py",
+      "line": 77,
+      "end": 150
+    }
+  ],
+  "SPDConv": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 126,
+      "end": 142
+    }
+  ],
+  "HWDown": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 145,
+      "end": 160
+    }
+  ],
+  "C3k2_DWR": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 601,
+      "end": 606
+    }
+  ],
+  "EMA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 295,
+      "end": 329
+    }
+  ],
+  "SimAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 332,
+      "end": 349
+    }
+  ],
+  "CBAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\conv.py",
+      "line": 583,
+      "end": 613
+    }
+  ],
+  "CoordAtt": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 352,
+      "end": 376
+    }
+  ],
+  "ELA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 379,
+      "end": 398
+    }
+  ],
+  "CAA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 401,
+      "end": 419
+    }
+  ],
+  "RFB": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 425,
+      "end": 444
+    }
+  ],
+  "DFEM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 789,
+      "end": 839
+    }
+  ],
+  "LIAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 842,
+      "end": 867
+    }
+  ],
+  "CSFG": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 870,
+      "end": 896
+    }
+  ],
+  "HVIEnhance": [
+    {
+      "path": "ultralytics\\nn\\modules\\hvi_enhance.py",
+      "line": 176,
+      "end": 245
+    }
+  ],
+  "FarFormer": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1055,
+      "end": 1063
+    }
+  ],
+  "LumiFormer": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1155,
+      "end": 1163
+    }
+  ],
+  "TDAM": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1221,
+      "end": 1246
+    }
+  ],
+  "LCE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1249,
+      "end": 1279
+    }
+  ],
+  "MWCA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1169,
+      "end": 1218
+    }
+  ],
+  "HyperACE": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1435,
+      "end": 1466
+    }
+  ],
+  "C3k2_LS": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 754,
+      "end": 759
+    }
+  ],
+  "TGP": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1336,
+      "end": 1373
+    }
+  ],
+  "HSF": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1312,
+      "end": 1333
+    }
+  ],
+  "C3k2_SXQ": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 642,
+      "end": 647
+    }
+  ],
+  "HyperRes": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 698,
+      "end": 730
+    }
+  ],
+  "CitrusFrequencyAlignedConcat": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 164,
+      "end": 220
+    }
+  ],
+  "CitrusRepMixerStage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_g0830.py",
+      "line": 74,
+      "end": 93
+    }
+  ],
+  "C3k2SAGEShape": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage.py",
+      "line": 138,
+      "end": 212
+    }
+  ],
+  "CitrusSAGEInnovationPyramid": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage.py",
+      "line": 233,
+      "end": 322
+    }
+  ],
+  "SegmentCitrusSAGEV2": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 833,
+      "end": 890
+    }
+  ],
+  "SAGEV6Exchange": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v6.py",
+      "line": 47,
+      "end": 81
+    }
+  ],
+  "SAGEV6Stage": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v6.py",
+      "line": 35,
+      "end": 44
+    }
+  ],
+  "SegmentCitrusSAGEV7": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v7.py",
+      "line": 40,
+      "end": 111
+    }
+  ],
+  "SegmentCitrusSAGEV7R": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v7r.py",
+      "line": 73,
+      "end": 144
+    }
+  ],
+  "SegmentCitrusSAGEV8": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_sage_v8.py",
+      "line": 61,
+      "end": 116
+    }
+  ],
+  "PCFA": [
+    {
+      "path": "ultralytics\\nn\\modules\\citrus_far.py",
+      "line": 1282,
+      "end": 1309
+    }
+  ],
+  "SegmentCitrusDualProto": [
+    {
+      "path": "ultralytics\\nn\\modules\\head.py",
+      "line": 1070,
+      "end": 1106
+    }
+  ]
+}

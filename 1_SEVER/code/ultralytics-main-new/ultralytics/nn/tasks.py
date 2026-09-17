@@ -12,6 +12,13 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    EV11RepStage,
+    EV11ContextStage,
+    EV11DetailSeed,
+    EV11DetailExchange,
+    EV11DetailInject,
+    EV11NativeFusion,
+    SegmentCitrusEV11,
     EV10ContrastStem,
     SegmentCitrusEV10,
     SegmentCitrusEV9,
@@ -791,6 +798,10 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusEV11):
+            from ultralytics.utils.citrus_e_v11_loss import EV11SegmentationLoss
+
+            return EV11SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusEV10):
             from ultralytics.utils.citrus_e_v10_loss import EV10SegmentationLoss
 
@@ -1919,6 +1930,8 @@ def parse_model(d, ch, verbose=True):
             EV10ContrastStem,
             EV8ContextStage,
             EV3DeepStage,
+            EV11RepStage,
+            EV11ContextStage,
             EV3DetailDown,
             EV2RepStage,
             EV2Down,
@@ -1989,6 +2002,8 @@ def parse_model(d, ch, verbose=True):
         {
             EV8ContextStage,
             EV3DeepStage,
+            EV11RepStage,
+            EV11ContextStage,
             EV2RepStage,
             SAGEV6Stage,
             BottleneckCSP,
@@ -2297,6 +2312,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
                 SegmentCitrusEV10,
+                SegmentCitrusEV11,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2339,6 +2355,7 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
                 SegmentCitrusEV10,
+                SegmentCitrusEV11,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2369,11 +2386,23 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV7,
                 SegmentCitrusEV9,
                 SegmentCitrusEV10,
+                SegmentCitrusEV11,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26
             }:
                 m.legacy = legacy
+        elif m is EV11DetailSeed:
+            c2 = int(args[0])
+            args = [[ch[x] for x in f], *args]
+        elif m in {EV11DetailExchange, EV11DetailInject}:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError(f"{m.__name__} needs two feature inputs")
+            c2 = ch[f[0]]
+            args = [[ch[x] for x in f], *args]
+        elif m is EV11NativeFusion:
+            c2 = ch[f[0]] + ch[f[1]]
+            args = [[ch[x] for x in f], *args]
         elif m is EV3NativeFusion:
             if len(f) != 3 or ch[f[1]] != ch[f[2]]:
                 raise ValueError("EV3NativeFusion requires fine, semantic, native with equal latter widths")

@@ -1,0 +1,83 @@
+{
+  "csv_count": 266,
+  "unique_csv": 252,
+  "read_errors": [],
+  "yaml_mapped": 266,
+  "epochs": {
+    "V10_00_geometry_anchor_seed42": 300,
+    "V10_01_tiny_anchor_seed42": 300,
+    "V10_02_balanced_decoder_seed42": 300,
+    "V10_03_contrast_stem_seed42": 300,
+    "V10_04_detail_transport_seed42": 300,
+    "V10_05_structure_pair_seed42": 300,
+    "V10_06_structure_balanced_seed42": 300,
+    "V10_07_visibility_supervision_seed42": 300,
+    "V10_08_complete_seed42": 300,
+    "V10_09_complete_cosine_seed42": 300
+  },
+  "yaml_hash_match": {
+    "V10_00_geometry_anchor_seed42": true,
+    "V10_01_tiny_anchor_seed42": true,
+    "V10_02_balanced_decoder_seed42": true,
+    "V10_03_contrast_stem_seed42": true,
+    "V10_04_detail_transport_seed42": true,
+    "V10_05_structure_pair_seed42": true,
+    "V10_06_structure_balanced_seed42": true,
+    "V10_07_visibility_supervision_seed42": true,
+    "V10_08_complete_seed42": true,
+    "V10_09_complete_cosine_seed42": true
+  },
+  "train_lists": 1,
+  "val_lists": 1,
+  "args_differences": {
+    "model": [
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_00_geometry_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_01_tiny_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_02_balanced_decoder.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_03_contrast_stem.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_04_detail_transport.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_05_structure_pair.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_06_structure_balanced.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_07_visibility_supervision.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_08_complete.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V10_series/V10_09_complete_cosine.yaml"
+    ],
+    "name": [
+      "V10_00_geometry_anchor_seed42",
+      "V10_01_tiny_anchor_seed42",
+      "V10_02_balanced_decoder_seed42",
+      "V10_03_contrast_stem_seed42",
+      "V10_04_detail_transport_seed42",
+      "V10_05_structure_pair_seed42",
+      "V10_06_structure_balanced_seed42",
+      "V10_07_visibility_supervision_seed42",
+      "V10_08_complete_seed42",
+      "V10_09_complete_cosine_seed42"
+    ],
+    "cos_lr": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "save_dir": [
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_00_geometry_anchor_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_01_tiny_anchor_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_02_balanced_decoder_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_03_contrast_stem_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_04_detail_transport_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_05_structure_pair_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_06_structure_balanced_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_07_visibility_supervision_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_08_complete_seed42",
+      "/data/sxq/results/E/E_V10/CITRUS_EV10_ALL_300EP/V10_09_complete_cosine_seed42"
+    ]
+  },
+  "limitation": "Single seed validation screening; current source is not proof of identical historical Python."
+}
