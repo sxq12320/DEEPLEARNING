@@ -1,0 +1,32 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: E_V12
+implementation_revision: EV12_20260918_task_routed_recognition
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+copy_paste: 0.3
+cos_lr: false
+input_recipe: '.5 global/.25 coarse/.25 fine source-balanced uniform views; unchanged V9-V11'
+fixed: 'standard TAL; NWD=0; ring=0; boundary=.5 neighbor=.25; original wide mask decoder; phase stride2 masks'
+control: '00/01/02 exact V11_00/01/02 architectures and losses; NOT official YOLO baselines'
+factors:
+  recognition: '03 bounded zero-start semantic discrepancy -> P3/P4 classification only'
+  shared_control: '04 same correction -> box/class/mask coefficient/quality towers; prototype unchanged'
+  lite_box: '05 factors first box convolution only; not the unsuccessful V11 combined backbone'
+  contrast: '06 contrast stem on03'
+  head_detail: '07 legacy head-only detail transport instead of persistent P2'
+  sum_control: '08 same correction parameter count, sum reference instead of discrepancy'
+  loss: '09 removes tiny Dice only; .25 on every other arm'
+evaluation: 'same original640 paired global/coarse/fine; full empirical PR/R90/tiny matches; no AP/GT edits'
+formal: 'single-seed screening; select by mask AP50-95/AP50/Recall at P>=.9 and actual latency; final three seeds42/43/44'

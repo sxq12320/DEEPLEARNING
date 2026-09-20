@@ -1,0 +1,152 @@
+{
+  "torch": "2.8.0+cpu",
+  "threads": 2,
+  "device": "cpu",
+  "models": [
+    {
+      "name": "V12_00_contrast_anchor",
+      "params": 2234344,
+      "thop_gflops640": 10.422848,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358129276422968,
+      "cpu_batch1_forward_ms": 157.47420000000022,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_01_detail_anchor",
+      "params": 2234152,
+      "thop_gflops640": 10.380249599999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9358933501391132,
+      "cpu_batch1_forward_ms": 137.76420000000033,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_02_persistent_anchor",
+      "params": 2269804,
+      "thop_gflops640": 10.537536000000001,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.921193195535826,
+      "cpu_batch1_forward_ms": 139.72620000000012,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_03_recognition_route",
+      "params": 2283950,
+      "thop_gflops640": 10.60128,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.915487642023687,
+      "cpu_batch1_forward_ms": 141.5392999999998,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_04_shared_route_control",
+      "params": 2283950,
+      "thop_gflops640": 10.60128,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.915487642023687,
+      "cpu_batch1_forward_ms": 146.45100000000076,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_05_recognition_lite_box",
+      "params": 2059502,
+      "thop_gflops640": 9.8859136,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.8897762663012709,
+      "cpu_batch1_forward_ms": 144.64960000000104,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_06_recognition_contrast",
+      "params": 2284142,
+      "thop_gflops640": 10.6438784,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9154106881270955,
+      "cpu_batch1_forward_ms": 161.97589999999985,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_07_head_detail_route",
+      "params": 2248298,
+      "thop_gflops640": 10.443993599999999,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.9300048303205358,
+      "cpu_batch1_forward_ms": 146.21149999999972,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_08_sum_evidence_control",
+      "params": 2283950,
+      "thop_gflops640": 10.60128,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.915487642023687,
+      "cpu_batch1_forward_ms": 145.95730000000094,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    },
+    {
+      "name": "V12_09_without_tiny_dice",
+      "params": 2283950,
+      "thop_gflops640": 10.60128,
+      "proto_stride": 2,
+      "initialization_equal_fraction": 0.915487642023687,
+      "cpu_batch1_forward_ms": 144.9633999999982,
+      "candidates640": 8400,
+      "untraced_dcn_conv_gflops640": 0
+    }
+  ],
+  "warning": "THOP omits some functional operators. CPU diagnostic timing is not GPU speed evidence.",
+  "smoke": [
+    {
+      "name": "V12_03_recognition_route",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev12_20260918\\verification_smoke\\SMOKE_RUNS_NOT_FORMAL\\V12_03_recognition_route\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0,
+        "metrics/recall(B)": 0,
+        "metrics/mAP50(B)": 0,
+        "metrics/mAP50-95(B)": 0,
+        "metrics/precision(M)": 0,
+        "metrics/recall(M)": 0,
+        "metrics/mAP50(M)": 0,
+        "metrics/mAP50-95(M)": 0,
+        "fitness": 0
+      },
+      "formal_accuracy": false
+    },
+    {
+      "name": "V12_05_recognition_lite_box",
+      "checkpoint": "E:\\mastercode\\_work\\citrus_ev12_20260918\\verification_smoke\\SMOKE_RUNS_NOT_FORMAL\\V12_05_recognition_lite_box\\weights\\best.pt",
+      "success": true,
+      "metrics": {
+        "metrics/precision(B)": 0,
+        "metrics/recall(B)": 0,
+        "metrics/mAP50(B)": 0,
+        "metrics/mAP50-95(B)": 0,
+        "metrics/precision(M)": 0,
+        "metrics/recall(M)": 0,
+        "metrics/mAP50(M)": 0,
+        "metrics/mAP50-95(M)": 0,
+        "fitness": 0
+      },
+      "formal_accuracy": false
+    }
+  ],
+  "tests": {
+    "regression_passed": 128,
+    "runner_checks_passed": 3,
+    "scope": "V10/V11/V12 + added membership record; CPU only",
+    "junit": "E:/mastercode/_work/citrus_ev12_20260918/tests.xml"
+  },
+  "dry_run_all": true,
+  "formal_v12_results": false
+}

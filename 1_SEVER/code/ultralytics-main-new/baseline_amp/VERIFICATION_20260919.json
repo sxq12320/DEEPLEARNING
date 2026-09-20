@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-19",
+  "scope": "Foreground paired-AMP baseline suite; no historical model changes",
+  "baselines": 7,
+  "default_jobs": 14,
+  "default_epochs": 300,
+  "default_seeds": [42],
+  "tests": {"passed": 18, "skipped": 0, "cuda_training_executed": false},
+  "checks": ["Python compilation", "Ruff critical checks", "14-job dry-run", "official MMDetection three-config load and adaptation", "dataset source preservation and class mapping", "common COCO perfect/empty prediction", "foreground subprocess logging and failure", "official RF-DETR source audit"],
+  "local_runtime": "Python 3.9.13; Torch 2.8 CPU; lightweight config-only MMEngine/MMDetection dependencies isolated in workspace",
+  "server_installation_executed": false,
+  "local_clean_data_readonly": {
+    "path": "E:/mastercode/data/orange_yolo_grouped_dedup_20260820/data.yaml",
+    "train": {"images": 676, "instances": 4120},
+    "val": {"images": 193, "instances": 1181},
+    "test": {"images": 96, "instances": 589}
+  },
+  "important_contracts": [
+    "AMP0/AMP1 pairs use identical recipes except precision; no automatic batch/AMP fallback",
+    "Official RF-DETR 1.4 AMP is BF16, YOLO and MMDetection AMP are FP16",
+    "RF-DETR derived labels are zero-based; common COCO labels are one-based",
+    "RF-DETR input 624 keeps native positional parameter grid 26 and uses upstream interpolation",
+    "RF-DETR test loader requires real held-out test, but run_test is false",
+    "No source dataset or completed result overwritten",
+    "Full GPU correctness, performance and dependency installation still require server preflight and 1-3 epoch smoke"
+  ]
+}

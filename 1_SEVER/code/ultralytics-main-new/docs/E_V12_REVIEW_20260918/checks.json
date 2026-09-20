@@ -1,0 +1,66 @@
+{
+  "csv_count": 278,
+  "unique": 264,
+  "errors": [],
+  "yaml_mapped": 278,
+  "train_lists": 1,
+  "val_lists": 1,
+  "yaml_hash_match": {
+    "V11_00_v10_structure_anchor_seed42": true,
+    "V11_01_v10_tiny_reference_seed42": true,
+    "V11_02_persistent_detail_seed42": true,
+    "V11_03_repmix_backbone_seed42": true,
+    "V11_04_native_neck_seed42": true,
+    "V11_05_tiny_assignment_seed42": null,
+    "V11_06_integrated_seed42": true,
+    "V11_07_factorized_box_tower_seed42": true,
+    "V11_08_local_mask_contrast_seed42": true,
+    "V11_09_contrast_complete_seed42": true,
+    "V11_10_gap_context_control_seed42": true,
+    "V11_11_selective_context_seed42": true
+  },
+  "args_differences": {
+    "model": [
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_00_v10_structure_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_01_v10_tiny_reference.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_02_persistent_detail.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_03_repmix_backbone.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_04_native_neck.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_05_tiny_assignment.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_06_integrated.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_07_factorized_box_tower.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_08_local_mask_contrast.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_09_contrast_complete.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_10_gap_context_control.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V11_series/V11_11_selective_context.yaml"
+    ],
+    "name": [
+      "V11_00_v10_structure_anchor_seed42",
+      "V11_01_v10_tiny_reference_seed42",
+      "V11_02_persistent_detail_seed42",
+      "V11_03_repmix_backbone_seed42",
+      "V11_04_native_neck_seed42",
+      "V11_05_tiny_assignment_seed42",
+      "V11_06_integrated_seed42",
+      "V11_07_factorized_box_tower_seed42",
+      "V11_08_local_mask_contrast_seed42",
+      "V11_09_contrast_complete_seed42",
+      "V11_10_gap_context_control_seed42",
+      "V11_11_selective_context_seed42"
+    ],
+    "save_dir": [
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_00_v10_structure_anchor_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_01_v10_tiny_reference_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_02_persistent_detail_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_03_repmix_backbone_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_04_native_neck_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_05_tiny_assignment_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_06_integrated_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_07_factorized_box_tower_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_08_local_mask_contrast_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_09_contrast_complete_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_10_gap_context_control_seed42",
+      "/data/sxq/results/E/E_V11/CITRUS_EV11_ALL_300EP/V11_11_selective_context_seed42"
+    ]
+  }
+}

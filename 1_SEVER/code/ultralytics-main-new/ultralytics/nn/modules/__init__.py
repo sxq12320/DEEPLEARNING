@@ -285,6 +285,8 @@ __all__ = (
     "EV11DetailInject",
     "EV11NativeFusion",
     "SegmentCitrusEV11",
+    "SegmentCitrusEV12",
+    "EV12RecognitionCorrection",
     "EV10ContrastStem",
     "EV10DetailTransport",
     "EV10BalancedProto",
@@ -589,6 +591,7 @@ from .citrus_e_v5 import SegmentCitrusEV5
 from .citrus_e_v6 import EV6FineDetail, SegmentCitrusEV6
 from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7
 
+from .citrus_e_v12 import EV12RecognitionCorrection, SegmentCitrusEV12
 from .citrus_e_v11 import (
     EV11ContextStage,
     EV11DetailExchange,

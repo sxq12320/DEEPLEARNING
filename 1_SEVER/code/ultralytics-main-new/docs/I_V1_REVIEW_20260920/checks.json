@@ -1,0 +1,42 @@
+{
+  "csv_count": 284,
+  "unique": 270,
+  "errors": [],
+  "yaml_mapped": 284,
+  "train_lists": 1,
+  "val_lists": 1,
+  "yaml_hash_match": {
+    "V12_00_contrast_anchor_seed42": true,
+    "V12_01_detail_anchor_seed42": true,
+    "V12_02_persistent_anchor_seed42": true,
+    "V12_03_recognition_route_seed42": true,
+    "V12_04_shared_route_control_seed42": true,
+    "V12_05_recognition_lite_box_seed42": true
+  },
+  "args_differences": {
+    "model": [
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_00_contrast_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_01_detail_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_02_persistent_anchor.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_03_recognition_route.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_04_shared_route_control.yaml",
+      "/data/sxq/code/ultralytics-main-new/0_orange_yaml/E_V12_series/V12_05_recognition_lite_box.yaml"
+    ],
+    "name": [
+      "V12_00_contrast_anchor_seed42",
+      "V12_01_detail_anchor_seed42",
+      "V12_02_persistent_anchor_seed42",
+      "V12_03_recognition_route_seed42",
+      "V12_04_shared_route_control_seed42",
+      "V12_05_recognition_lite_box_seed42"
+    ],
+    "save_dir": [
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_00_contrast_anchor_seed42",
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_01_detail_anchor_seed42",
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_02_persistent_anchor_seed42",
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_03_recognition_route_seed42",
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_04_shared_route_control_seed42",
+      "/data/sxq/results/E/E_V12/CITRUS_EV12_PRIORITY_300EP/V12_05_recognition_lite_box_seed42"
+    ]
+  }
+}
