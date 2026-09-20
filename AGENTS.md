@@ -7,7 +7,7 @@
 # Workspace
 
 - 主代码：`ultralytics-main-new/`；模型 YAML：`0_orange_yaml/`；驱动：`train_citrus_seg.py`、`eval_citrus_seg.py`；结果：`1_results/`（后三者相对主代码目录）。**最新主工作副本是 `1_SEVER/code/ultralytics-main-new/`**（整体上传服务器跑实验，0_orange_yaml 按字母系列目录组织并登记 MODEL_INDEX.csv；根目录副本约停留在 2026-08 下旬）。课题相关：`1_SEVER/`（实验汇总+审计）、`4_baseline_choice/`（全基线工作台）、`_work/`（回传产物）、`3_研究生/`（计划与定稿）；`2_catoon/`、`5_novels/` 等为无关个人项目，不做关联重构。
-- 主线现状：SAGE→E 系列（切片混合输入+控制论零初始化），最优 mask mAP50-95≈0.682（E30）vs 新协议锚点 G00 0.67031（`3_研究生/paper1_finalization_20260830/`）。历史 orange_yolo 划分有 123/303 组跨 split 泄漏（`1_SEVER/review_20260908/`），多数旧指标仅为验证集峰值、跨协议不可比；正式结论须在 grouped_dedup 上三 seed 复跑。
+- 主线现状：SAGE→E(V1–V12)→I_V1。E 系列=切片混合输入+任务分流+零初始化有界修正；V12 内部最优 fine 栅格 mask AP50-95≈78.3%（V12_04，旧验证集口径，仅内部可比），三审（`1_SEVER/code/ultralytics-main-new/docs/I_V1_REVIEW_20260920/`）一致判定未达投稿成熟度——服务器 val 成员与 grouped_dedup 不一致、单 seed、缺同协议基线。I_V1=同步双原型掩膜解码（`docs/I_V1_DESIGN_20260920.md`），10 臂含 2 个 V12 精确重放锚点，已实现并通过契约测试，待服务器筛选。历史 orange_yolo 划分有 123/303 组跨 split 泄漏（`1_SEVER/review_20260908/`），多数旧指标仅为验证集峰值、跨协议不可比；正式结论须在 grouped_dedup 上三 seed 复跑。
 - 数据：仓库根 `data/`。`orange_wuxi/` 存原始标注 JSON；`orange_yolo/` 为早期划分，不用于正式实验；正式数据是 `orange_yolo_grouped_dedup_20260820/`（按组划分+去重：train/val/test = 676/193/96 张，共 965 图、5,890 实例，单类 `orange_immature`，划分审计见其 `audit/` 与 `group_split_manifest.csv`）。train/eval 脚本默认指向它，勿改回旧划分。
 
 # Experiments

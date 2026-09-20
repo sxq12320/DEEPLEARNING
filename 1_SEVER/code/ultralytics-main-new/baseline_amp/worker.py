@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.metadata
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from common import save_json, seed_everything, sha256, snapshot
+from common import save_json, seed_everything, sha256, snapshot, state_sha256
 from registry import MODELS, YOLO_TRAIN
 
 
@@ -57,7 +58,7 @@ def preflight(families, cpu=False):
             raise RuntimeError("Imported the modified project Ultralytics. Install the official wheel in a NEW env.")
         print("Official YOLO:", ultralytics.__file__)
     if "rfdetr" in families:
-        require_version("rfdetr", "1.4.0")
+        require_version("rfdetr", "1.4.0.post0")
         from rfdetr import RFDETRSegNano  # noqa: F401
         from rfdetr.config import RFDETRSegNanoConfig
 
@@ -75,7 +76,6 @@ def preflight(families, cpu=False):
         for recipe in MODELS.values():
             if recipe["family"] == "mmdet":
                 Config.fromfile(str(root / recipe["config"]))
-                model_zoo_weight(root, recipe["config"])
         if not cpu:
             nms(torch.tensor([[0.0, 0.0, 4.0, 4.0]], device="cuda"), torch.ones(1, device="cuda"), 0.5)
     if not cpu:
@@ -94,17 +94,12 @@ def preflight(families, cpu=False):
 def train_yolo(job, prepared, run_dir):
     import torch
     from ultralytics import YOLO
-    from ultralytics.utils.downloads import attempt_download_asset
-
-    checkpoint = Path(attempt_download_asset(job["recipe"]["weights"])).resolve()
-    save_json(run_dir / "initialization.json", dict(weights=str(checkpoint), sha256=sha256(checkpoint)))
     seed_everything(job["seed"])
-    model = YOLO(str(checkpoint))
+    model = YOLO(job["recipe"]["yaml"], task="segment")
     options = dict(YOLO_TRAIN)
     options.update(
         data=str(prepared / "yolo/data.yaml"),
         epochs=job["epochs"],
-        patience=job["epochs"] + 1,
         batch=job["recipe"]["batch"],
         workers=job["workers"],
         seed=job["seed"],
@@ -119,6 +114,10 @@ def train_yolo(job, prepared, run_dir):
     save_json(run_dir / "effective_train.json", options)
 
     def verify_amp(trainer):
+        save_json(run_dir / "initialization.json", dict(
+            mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(trainer.model),
+            stage="after trainer initialization, before first optimizer step",
+        ))
         actual = bool(trainer.amp)
         save_json(
             run_dir / "amp_actual.json",
@@ -157,12 +156,16 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
         checkpoint,
         val_interval=1,
     )
-    original_batch = cfg.get("auto_scale_lr", {}).get("base_batch_size", 16)
-    original_lr = cfg.optim_wrapper.optimizer.lr
-    cfg.optim_wrapper.optimizer.lr = original_lr * job["recipe"]["batch"] / original_batch
-    cfg.optim_wrapper.type = "AmpOptimWrapper" if job["amp"] else "OptimWrapper"
-    cfg.optim_wrapper.pop("loss_scale", None)
-    cfg.optim_wrapper.pop("dtype", None)
+    from mmdet_common import remove_pretraining
+
+    remove_pretraining(cfg.model)
+    cfg.load_from = None
+    cfg.optim_wrapper = dict(
+        type="AmpOptimWrapper" if job["amp"] else "OptimWrapper",
+        optimizer=dict(type="AdamW", lr=0.001, betas=(0.937, 0.999), weight_decay=0.0005),
+        paramwise_cfg=dict(norm_decay_mult=0.0, bias_decay_mult=0.0),
+        clip_grad=dict(max_norm=10.0, norm_type=2),
+    )
     if job["amp"]:
         cfg.optim_wrapper.loss_scale = "dynamic"
         cfg.optim_wrapper.dtype = "float16"
@@ -189,6 +192,8 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
             if mapping.get("type") == "CocoDataset":
                 mapping["pipeline"] = pipeline
     cfg.custom_hooks = [hook for hook in cfg.get("custom_hooks", []) if hook["type"] != "PipelineSwitchHook"]
+    cfg.custom_hooks.append(dict(type="EarlyStoppingHook", monitor="coco/segm_mAP", rule="greater",
+                                 patience=100, min_delta=0.0, strict=True))
     cfg.train_cfg.pop("dynamic_intervals", None)
     if "batch_augments" in cfg.model.data_preprocessor:
         cfg.model.data_preprocessor.batch_augments = None
@@ -201,22 +206,12 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
         if "max_per_img" in mapping:
             mapping["max_per_img"] = 300
     epochs = job["epochs"]
-    if job["model"] == "rtmdet_ins_tiny":
-        cfg.param_scheduler = [
-            dict(
-                type="CosineAnnealingLR",
-                T_max=epochs,
-                by_epoch=True,
-                begin=0,
-                end=epochs,
-                eta_min=cfg.optim_wrapper.optimizer.lr * 0.05,
-            )
-        ]
-    else:
-        milestones = sorted({int(epochs * ratio) for ratio in (2 / 3, 8 / 9)} - {0, epochs})
-        cfg.param_scheduler = [
-            dict(type="MultiStepLR", by_epoch=True, begin=0, end=epochs, milestones=milestones, gamma=0.1)
-        ]
+    warmup = min(3, epochs)
+    cfg.param_scheduler = [dict(type="LinearLR", start_factor=0.001, end_factor=1.0,
+                               begin=0, end=warmup, by_epoch=True, convert_to_iter_based=True)]
+    if epochs > warmup:
+        cfg.param_scheduler.append(dict(type="LinearLR", start_factor=1.0, end_factor=0.01,
+                                        begin=warmup, end=epochs, by_epoch=True))
     cfg.env_cfg.cudnn_benchmark = False
     cfg.launcher = "none"
     cfg.default_hooks.logger.interval = 20
@@ -228,12 +223,7 @@ def train_mmdet(job, prepared, run_dir):
     import torch
     from mmengine.runner import Runner
 
-    url = model_zoo_weight(official_mmdet_root(), job["recipe"]["config"])
-    checkpoint = Path.cwd() / Path(url).name
-    if not checkpoint.exists():
-        torch.hub.download_url_to_file(url, str(checkpoint))
-    save_json(run_dir / "initialization.json", dict(url=url, weights=str(checkpoint), sha256=sha256(checkpoint)))
-    cfg = mmdet_config(job, prepared, run_dir, checkpoint)
+    cfg = mmdet_config(job, prepared, run_dir, None)
     cfg.dump(str(run_dir / "effective_config.py"))
     seed_everything(job["seed"])
     runner = Runner.from_cfg(cfg)
@@ -245,6 +235,10 @@ def train_mmdet(job, prepared, run_dir):
             from mmengine.optim import AmpOptimWrapper
 
             actual = isinstance(runner.optim_wrapper, AmpOptimWrapper)
+            save_json(run_dir / "initialization.json", dict(
+                mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(runner.model),
+                stage="after init_weights, before first optimizer step",
+            ))
             save_json(
                 run_dir / "amp_actual.json",
                 dict(
@@ -271,10 +265,18 @@ def train_rfdetr(job, prepared, run_dir):
     from rfdetr import RFDETRSegNano
 
     seed_everything(job["seed"])
-    model = RFDETRSegNano(resolution=job["recipe"]["imgsz"], positional_encoding_size=26, device="cuda", amp=job["amp"])
-    # Model construction loads COCO weights; then train() reinitializes the task head using this same seed.
-    weights = Path(model.model_config.pretrain_weights).resolve()
-    save_json(run_dir / "initialization.json", dict(weights=str(weights), sha256=sha256(weights)))
+    nc = len(json.loads((prepared / "summary.json").read_text(encoding="utf-8"))["names"])
+    model = RFDETRSegNano(pretrain_weights=None, num_classes=nc, resolution=job["recipe"]["imgsz"],
+                         positional_encoding_size=26, device="cuda", amp=job["amp"])
+    # Pinned 1.4.0.post0: patch_size=12 disables DINOv2 weight loading in DinoV2.__init__.
+    # force_no_pretrain is NOT forwarded by that version's build_backbone, so do not rely on it.
+    if model.model_config.pretrain_weights is not None or model.model_config.patch_size != 12:
+        raise RuntimeError("RF-DETR scratch contract requires no checkpoint and the verified Nano patch_size=12 path")
+    save_json(run_dir / "initialization.json", dict(
+        mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(model.model.model),
+        stage="random Nano with dataset class count; train head resize preserves existing entries",
+        encoder="patch_size=12 disables DINOv2 pretrained loading in pinned package",
+    ))
     seed_everything(job["seed"])
     actual = bool(model.model_config.amp)
     if actual != job["amp"]:
@@ -296,12 +298,17 @@ def train_rfdetr(job, prepared, run_dir):
         grad_accum_steps=job["recipe"]["grad_accum_steps"],
         num_workers=job["workers"],
         seed=job["seed"],
-        lr=1e-4,
-        lr_encoder=1.5e-4,
-        weight_decay=1e-4,
+        lr=0.001,
+        lr_encoder=0.001,
+        lr_vit_layer_decay=1.0,
+        lr_component_decay=1.0,
+        weight_decay=0.0005,
+        warmup_epochs=3.0,
         lr_drop=max(1, int(job["epochs"] * 0.8)),
         checkpoint_interval=10,
-        early_stopping=False,
+        early_stopping=True,
+        early_stopping_patience=100,
+        early_stopping_min_delta=0.0,
         use_ema=True,
         multi_scale=False,
         expanded_scales=False,
@@ -329,7 +336,23 @@ def evaluate(job, prepared, run_dir, checkpoint):
     family = job["recipe"]["family"]
     if family == "yolo":
         from ultralytics import YOLO
+        from ultralytics.utils import ops
 
+        decode_full = ops.process_mask_native
+
+        def decode_chunked(protos, masks_in, bboxes, shape):
+            """Bound the N x H x W FP32 peak of process_mask_native; per-detection math is unchanged."""
+            step = 16
+            if masks_in.shape[0] <= step:
+                return decode_full(protos, masks_in, bboxes, shape)
+            return torch.cat(
+                [
+                    decode_full(protos, masks_in[start : start + step], bboxes[start : start + step], shape)
+                    for start in range(0, masks_in.shape[0], step)
+                ]
+            )
+
+        ops.process_mask_native = decode_chunked
         model = YOLO(str(checkpoint))
     elif family == "mmdet":
         from mmdet.apis import init_detector, inference_detector
@@ -379,8 +402,10 @@ def evaluate(job, prepared, run_dir, checkpoint):
                     result = model.predict(image.convert("RGB"), threshold=0.001)
                 if result.mask is None:
                     continue
-                masks, scores, labels = result.mask, result.confidence, result.class_id + 1
-                # RF-DETR's derived view is 0-based. Convert exactly ONCE to canonical COCO 1..N.
+                masks, scores, labels = result.mask, result.confidence, result.class_id
+                # post0 uses canonical foreground IDs 1..N; output 0 is unused, never remap it to fruit.
+                keep = labels != 0
+                masks, scores, labels = masks[keep], scores[keep], labels[keep]
             for mask, score, label in zip(masks, scores, labels):
                 if score < 0.001:
                     continue
@@ -445,13 +470,11 @@ def main():
     functions = {"yolo": train_yolo, "mmdet": train_mmdet, "rfdetr": train_rfdetr}
     checkpoint = functions[job["recipe"]["family"]](job, prepared, run_dir)
     save_json(run_dir / "trained.json", dict(checkpoint=str(checkpoint)))
-    import gc
-    import torch
-
-    gc.collect()
-    torch.cuda.empty_cache()
-    metrics = evaluate(job, prepared, run_dir, checkpoint)
-    save_json(run_dir / "complete.json", dict(job=job, metrics=metrics))
+    # Evaluate in a fresh interpreter: training leaves multi-GiB CUDA allocations reachable through
+    # trainer internals, and original-resolution mask decode needs nearly the whole card. The child
+    # hits the trained.json resume path above and writes complete.json itself.
+    code = subprocess.call([sys.executable, "-I", "-u", str(Path(__file__).resolve()), "--job", str(args.job)])
+    raise SystemExit(code)
 
 
 if __name__ == "__main__":

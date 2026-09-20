@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from .common import save_json
-from .registry import make_queue
+from .registry import PROTOCOL_ID, make_queue
 
 HERE = Path(__file__).resolve().parent
 
@@ -84,6 +84,8 @@ def summarize(project):
         rows.append(
             dict(
                 model=job["model"],
+                protocol=job.get("protocol", "previous_pretrained_recipe"),
+                initialization=job.get("initialization", "pretrained"),
                 seed=job["seed"],
                 amp=int(job["amp"]),
                 epochs=job["epochs"],
@@ -112,7 +114,7 @@ def summarize(project):
         pair = {row["amp"]: row for row in rows if (row["model"], row["seed"], row["epochs"]) == (model, seed, epochs)}
         if set(pair) != {0, 1}:
             continue
-        if any(pair[0][key] != pair[1][key] for key in ("batch", "imgsz")):
+        if any(pair[0][key] != pair[1][key] for key in ("batch", "imgsz", "protocol", "initialization")):
             raise RuntimeError(f"Mismatched AMP pair: {model}")
         for filename, key in (("initialization.json", "sha256"), ("dataset.json", "signature")):
             records = [Path(pair[amp]["run"]) / filename for amp in (0, 1)]
@@ -147,7 +149,8 @@ def main(settings):
         summarize(project)
         return
     queue = make_queue(
-        settings["SUITE"], settings["SEEDS"], settings["EPOCHS"], settings["WORKERS"], settings["BATCHES"]
+        settings["SUITE"], settings["SEEDS"], settings["EPOCHS"], settings["WORKERS"], settings["BATCHES"],
+        settings.get("AMP_MODES", [1]),
     )
     device = str(settings["DEVICE"])
     if not device.isdigit():
@@ -172,6 +175,8 @@ def main(settings):
         job.update(run_dir=str(project / job["name"]), prepared=str(prepared))
     print(f"FOREGROUND BASELINES | {len(queue)} jobs | GPU physical {device} -> logical cuda:0")
     print("Data:", settings["DATA"], "\nProject:", project)
+    print("Protocol:", PROTOCOL_ID, "| SCRATCH initialization | AdamW lr=0.001 | patience=100")
+    print("YOLO exactly maps legacy training knobs; cross-framework exceptions are documented in baseline_amp/README.")
     for i, job in enumerate(queue, 1):
         print(f"{i:02d}. {job['name']} | batch={job['recipe']['batch']} | size={job['recipe']['imgsz']}")
     if args.dry_run:
@@ -191,6 +196,8 @@ def main(settings):
     protocol = {
         key: settings[key] for key in ("DATA", "SUITE", "SEEDS", "EPOCHS", "WORKERS", "BATCHES", "DEVICE", "PYTHONS")
     }
+    protocol["protocol_id"] = PROTOCOL_ID
+    protocol["AMP_MODES"] = settings.get("AMP_MODES", [1])
     digest = hashlib.sha256()
     for source_file in sorted(HERE.glob("*.py")) + sorted(HERE.glob("requirements*.txt")):
         if source_file.name.startswith("test_"):

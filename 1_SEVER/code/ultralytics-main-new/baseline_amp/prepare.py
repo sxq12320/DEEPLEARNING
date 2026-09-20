@@ -163,13 +163,9 @@ def prepare(data, output):
                 dict(split=split, image_id=image_id, source=str(image), label=str(label), derived=file_name)
             )
         save_json(output / "coco/annotations" / f"instances_{split}.json", coco)
-        # RF-DETR 1.4 train_from_config reinitializes the classifier to N outputs (IDs 0..N-1).
-        # Keep canonical COCO 1-based; remap ONLY this framework's derived view, then invert on prediction export.
+        # Keep all derived COCO views 1-based; post0 reserves classifier output 0.
         rf_coco = copy.deepcopy(coco)
-        for category in rf_coco["categories"]:
-            category["id"] -= 1
-        for annotation in rf_coco["annotations"]:
-            annotation["category_id"] -= 1
+        # RF-DETR 1.4.0.post0 reserves output 0; foreground uses canonical COCO IDs 1..N.
         save_json(output / "rfdetr" / rf_split / "_annotations.coco.json", rf_coco)
         summary["splits"][split] = dict(images=len(coco["images"]), instances=len(coco["annotations"]))
     yolo = dict(path=str(output / "yolo"), names=names)

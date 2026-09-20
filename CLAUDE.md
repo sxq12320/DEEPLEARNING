@@ -9,7 +9,7 @@ This is a monorepo centered on a **master's thesis on vision for citrus bagging*
 Cross-cutting facts that will bite you:
 - **Scripts and dataset YAMLs use hardcoded absolute paths** — `E:\mastercode\...` on this machine, `/data/sxq/...` in server-side code. They must be edited if the repo moves.
 - **Weights and data are untracked.** `.gitignore` excludes `*.pt`/`*.pth`/`*.onnx`, `/data/`, `runs/`, archives, and videos. Datasets live under `data/` locally only.
-- **The YOLO fork exists in two copies**: `ultralytics-main-new/` (local dev tree) and `1_SEVER/code/ultralytics-main-new/` (server code mirror — **newer**, holds the F-series configs). See the 1_SEVER section before touching either. (`1.coding/` and `9_archive/` mentioned by older docs no longer exist.)
+- **The YOLO fork exists in two copies**: `ultralytics-main-new/` (local dev tree — **stale, ~2026-08**) and `1_SEVER/code/ultralytics-main-new/` (server code mirror — **the active codebase**, holds all SAGE/E/I-series configs). All new work happens in the 1_SEVER copy and is re-uploaded to the server. (`1.coding/` and `9_archive/` mentioned by older docs no longer exist.)
 
 ## Current research priority (short form of AGENTS.md)
 
@@ -19,8 +19,9 @@ Two connected papers: (1) **lightweight, high-accuracy RGB instance segmentation
 
 | Path | What it is | How to run |
 |------|-----------|-----------|
-| `ultralytics-main-new/` | **Customized Ultralytics fork — active citrus seg code** | `pip install -e .`, then `train_citrus_seg.py` / `eval_citrus_seg.py` (below) |
-| `1_SEVER/code/` | **Server code mirror** (newer fork copy + `baseline_choice/` deploy copy) — read-mostly | see below |
+| `ultralytics-main-new/` | Customized Ultralytics fork — **local dev copy, stale since ~2026-08** | legacy reference only |
+| `1_SEVER/code/ultralytics-main-new/` | **The active citrus seg codebase** (server mirror, SAGE→E→I_V1) | `pip install -e .` there; `RUN_CITRUS_<series>.py` / `*_batch.py` / `pytest tests` |
+| `1_SEVER/code/` | Server mirror root (also holds `baseline_choice/` deploy copy) | see below |
 | `4_baseline_choice/` | Cross-framework baseline comparison project (local full-dev copy) | `run_*.py` + `configs/baselines.yaml` — see its guides |
 | `2_catoon/` | Manim teaching animations (`0_Learning`, `1_LeNet`, `3_mech_course` L01–L10) | `manim -pql <file>.py <SceneClass>` |
 | `3_研究生/` | Research plans, literature surveys, historical archive | — |
@@ -29,9 +30,18 @@ Two connected papers: (1) **lightweight, high-accuracy RGB instance segmentation
 
 Root-level scratch files (`aisheer.py`, `niuq.py`, `test.py`, `PAT_ch_prime.png`) are standalone one-off experiments (Escher-spiral image transforms, a matplotlib diagram), not part of any sub-project.
 
-## `ultralytics-main-new/` — the active citrus line
+## `ultralytics-main-new/` — legacy local dev copy (stale)
 
-**Install editable first**: `cd ultralytics-main-new && pip install -e .` so `from ultralytics import YOLO` resolves to this fork. Tests: `pytest tests`.
+This root-level fork froze around 2026-08 and no longer receives work. The active codebase is
+`1_SEVER/code/ultralytics-main-new/` — same layout, plus all SAGE/E/I-series modules, `protocols/`,
+`docs/`, per-series `*_batch.py` runners, `citrus_foreground.py` (`RUNNERS` registry) and
+`RUN_CITRUS_<series>.py` foreground entries. The notes below describe the shared conventions that
+still apply to the active copy: `train_citrus_seg.py`/`eval_citrus_seg.py` drivers, the
+`0_orange_yaml/` ablation ladder, and the 4-file module-registration mechanism
+(`ultralytics/nn/modules/` → `__init__.py` → `tasks.py` imports → `parse_model()` sets).
+In the active copy, series suites additionally live in `citrus_*_suite.py`, YAML generators in
+`scripts/generate_citrus_*_yaml.py`, fixed training args in `citrus_protocol.py` + `protocols/`,
+and contract tests in `tests/test_citrus_*.py`.
 
 ### Drivers and the fixed protocol
 
@@ -53,7 +63,7 @@ Gotchas:
 
 ### Dataset
 
-Current dataset: **`data/orange_yolo/`** — 965 RGB images (train 676 / val 193 / test 96), single class `orange_immature`, with a **group-aware split** (`group_split_manifest.csv`, `group_edges.csv`, `split_audit_report.json` keep same-burst frames together). `data/orange_yolo_cleaned_min4px/` is a cleaned variant. The older 941-image `data/test/` split referenced in `AGENTS.md`/`README.md` had burst-sequence leakage across splits and is no longer on disk.
+Formal dataset: **`data/orange_yolo_grouped_dedup_20260820/`** — 965 RGB images (train 676 / val 193 / test 96; 5,890 instances), single class `orange_immature`, group-aware split + dedup (`audit/`, `group_split_manifest.csv`). The older `data/orange_yolo/` (same 965 images, different split) has **123/303 groups crossing splits** — never use it for formal claims. Note the E V11/V12 server runs used yet another val membership (193 images / 1,049 instances vs grouped_dedup's 1,181); their rankings are screening evidence only — formal conclusions need grouped_dedup reruns at three seeds.
 
 ### Model YAMLs and custom modules
 
@@ -69,13 +79,13 @@ Forgetting step 3 or 4 produces a YAML-parse error, not a clear "unknown module"
 
 Custom optimizers beyond stock Ultralytics (`engine/trainer.py`): **PIDAO**, **MuSGD** (`ultralytics/optim/muon.py`), **SMCAO** (`smcao_v22_scheduler.py`) — select via `optimizer="PIDAO"`.
 
-## `1_SEVER/` — server code mirror (read-mostly)
+## `1_SEVER/` — server code mirror (the active codebase)
 
 `1_SEVER/code/` is a copy-back of the Linux server's `/data/sxq/` code. Two subtrees:
-- `1_SEVER/code/ultralytics-main-new/` — **newer than the local fork**. Adds the 73-config F-series ladder + SXQNet V1–V10 family (`0_orange_yaml/1_far_small/F01…F73`), `verify_far_yamls.py` (build/forward/params/GFLOPs self-check of all 73 YAMLs), `tests/test_citrus_far.py` (56 tests), `BASELINES.md`, extended `train_citrus_seg.py` CLI flags (`--iou-type/--inner-ratio/--nwd-ratio/--slide` losses, `--tal-metric/--tal-min-pos` GA-TAL assigner, `--freq-loss`, `--aug-preset`, `--optimizer Lion`), and `1_batch/` (server batch-run ledger: `batch_ledger.json` + `logs/`; run names `<yamlstem>_<epochs>ep`). Its drivers hardcode server paths — data `/data/sxq/datasets/orange_yolo`, results `/data/sxq/results/000_anyothers/`.
+- `1_SEVER/code/ultralytics-main-new/` — **the active codebase**. Beyond the historical ladders it now holds the SAGE V4R–V8 and E V1–V12 families plus the current **I_V1** series (`0_orange_yaml/<Series>_series/`, 423 YAMLs, indexed in `MODEL_INDEX.csv`). Workflow conventions: `citrus_<series>_suite.py` (NAMES/FACTORS/SUITES), `scripts/generate_citrus_*_yaml.py` (refuse to overwrite), `protocols/citrus_paper1_formal_v2_ram.yaml` (fixed protocol), `citrus_foreground.py` `RUNNERS` + `RUN_CITRUS_<series>.py` (VS Code ▶ foreground sequential training), `tests/test_citrus_*.py` contract tests, `docs/` design+review docs. Latest: `docs/I_V1_DESIGN_20260920.md`, `docs/I_V1_REVIEW_20260920/reviewer{1,2,3}.md`. Its drivers hardcode server paths — data `/data/sxq/datasets/...`, results `/data/sxq/results/<SERIES>/...`.
 - `1_SEVER/code/baseline_choice/` — server deploy copy of the baseline suite (same code as `4_baseline_choice/`; `platform_paths()` switches Windows↔Linux paths by `os.name`).
 
-**Rules:** it is a mirror. When logic edits are needed (to copy back to the server), change logic only — **never modify the `SERVER_*` constants or any `/data/sxq/...` path**, never "fix" them to Windows paths, and keep the relative layout intact. Root `README_改进总览.md` is the master copy of the F-series design doc (the one inside 1_SEVER is its synced server-side twin).
+**Rules:** it is a mirror. When logic edits are needed (to copy back to the server), change logic only — **never modify the `SERVER_*` constants or any `/data/sxq/...` path**, never "fix" them to Windows paths, and keep the relative layout intact.
 
 ## `4_baseline_choice/` — cross-family baseline suite
 

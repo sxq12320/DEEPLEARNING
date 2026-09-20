@@ -1,5 +1,8 @@
 # 柑橘幼果实例分割改进总览（F 系列完整说明书）
 
+> **状态（2026-09-20）：F 系列时代的历史文档。** 主线已演进为 SAGE→E(V1–V12)→I_V1；
+> 最新状态见 `README.md` 与 `1_SEVER/code/ultralytics-main-new/docs/`。
+
 > 📍 本文件为**正本**（`E:\mastercode\README_改进总览.md`）；fork 内 `1_SEVER/code/ultralytics-main-new/README_改进总览.md` 为同步副本（服务器上看这份）。
 > 除非另有标注，本文所有相对路径均相对 fork 根目录 `1_SEVER/code/ultralytics-main-new/`。
 

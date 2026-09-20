@@ -6,14 +6,17 @@
 
 ```text
 ultralytics-main-new/
-├── 0_orange_yaml/       # 234 个模型 YAML，按系列存放
+├── 0_orange_yaml/       # 423 个模型 YAML，按系列存放（MODEL_INDEX.csv 登记）
 ├── 1_results/           # 本地审计、诊断和兼容性输出
-├── figures/             # 网络结构图和复杂度/延迟表
+├── docs/                # 各系列设计/重建文档与 I_V1 三审报告
 ├── protocols/           # 固定训练超参数，正式实验唯一来源
-├── sources/             # 论文、代码仓库和设计证据记录
-├── tests/               # 模型集成与回归测试
+├── scripts/             # 各系列 YAML 生成器（拒绝覆盖已有 YAML）
+├── tests/               # 模型契约与回归测试（test_citrus_*.py）
 ├── ultralytics/         # 修改后的框架源码
-├── *_batch.py           # 各系列顺序批量训练入口
+├── citrus_*_suite.py    # 各系列 NAMES/FACTORS/SUITES 定义
+├── citrus_foreground.py # RUNNERS 注册表 + 前台串行训练
+├── RUN_CITRUS_*.py      # 各系列 VS Code ▶ 前台入口
+├── *_batch.py           # 各系列顺序批量训练脚本
 ├── train_citrus_yaml.py # 通用单模型训练入口
 └── yolo11n-seg.pt       # YOLO11n-seg 初始化权重
 ```
@@ -22,47 +25,43 @@ ultralytics-main-new/
 
 ## 当前优先级
 
-1. `SAGE_series/`：当前 SAGE-v3 结构系列；SAGE20 单独改 P4/P5 形状主干，SAGE21--22 单独验证创新融合与拓扑监督，SAGE23 是联合核心，SAGE24--26 分别验证颜色统计、PR 排序和遮挡拓扑损失。SAGE00--17 保留用于复现。
-2. `ORCHID_series/`：候选区域条件化、检测/掩膜分流，并包含单画布颈部对照。
-3. `A_baselines/current/001_yolo11-seg.yaml`：正式 YOLO11n-seg 控制。
-4. `Light_series/`：已完成的轻量主干/AFPN探索；根据当前观察不再作为首选路线。
-5. `G_0830_series/`、`G_0839_series/`：结构重构研究，但速度较慢。
-6. `T_series/`：跨历史系列的统一复核组，已有结果不能替代完整基线。
-7. B/C/D/F/G/H/L/N/S/SXQ：历史实验或消融库；保留用于复现，不建议无选择地全部重跑。
+1. **`I_V1_series/`（当前）**：同步双原型掩膜解码。I00/I01 是 V12_03/04 精确重放锚点；
+   I04 是主假设（逐位置门控）；其余臂隔离上下文块、差异反馈、初始化偏向、语义替换、无分类路由。
+   设计与停止判据 `docs/I_V1_DESIGN_20260920.md`；前置审查 `docs/I_V1_REVIEW_20260920/`。
+2. **`E_V12_series/`**：V12 六臂已完成 300ep 筛选；三审判定未达投稿成熟度
+   （val 成员与 grouped_dedup 不一致、单 seed、缺同协议基线）。排序证据保留。
+3. **`A_baselines/current/001_yolo11-seg.yaml`**：正式 YOLO11n-seg 主消融基线。
+4. **E_V9–V11**：持久 P2 细节、识别路由的前身；重建文档 `docs/E_V9..V12_RECONSTRUCTION.md`。
+5. **SAGE/E_V1–V8/ORCHID/Light/G/B/C/D/F/H/L/N/S/SXQ/T**：历史消融库，保留复现，不建议全量重跑。
 
 所有模型路径、头部和状态均登记在 `0_orange_yaml/MODEL_INDEX.csv`。
-
-SAGE 在长训练前必须运行 `benchmark_citrus_sage.py`。SAGE-v3 服务器命令见
-`20260902_CITRUS_SAGE_V3_SERVER.md`，结构、证据与算子预算见 `20260902_CITRUS_SAGE_V3_DESIGN.md`。
 
 ## 标准单模型用法
 
 ```python
 from ultralytics import YOLO
 
-model = YOLO("0_orange_yaml/SAGE_series/SAGE23_joint_core_v3.yaml", task="segment")
+model = YOLO("0_orange_yaml/I_V1_series/I04_sync_msca.yaml", task="segment")
 model.load("yolo11n-seg.pt")
 model.train(data="/data/sxq/datasets/orange_yolo/data.yaml", epochs=300, imgsz=640)
 ```
 
-ORCHID 入口已经逐 YAML 完成构建、官方权重加载、真实前向、关键损失反传和 GFLOPs 验证。
-
-## ORCHID 批量入口
+## 批量入口（推荐）
 
 ```bash
-python 20260901_citrus_orchid_batch.py \
+python 20260920_citrus_i_v1_batch.py \
   --data /data/sxq/datasets/orange_yolo/data.yaml \
   --suite all \
   --dry-run
 ```
 
-完整命令见 `20260901_CITRUS_ORCHID_SERVER.md`。正式实验参数来自
-`protocols/citrus_paper1_formal_v1.yaml`，不得在不同模型之间静默改变 AMP、优化器、学习率、dropout、增强或图像尺寸。
+或直接改 `RUN_CITRUS_I_V1.py` 顶部配置后点 VS Code ▶（SUITE="priority" 先跑 I00/I01/I04/I05）。
+完整系列清单见 `FOREGROUND_TRAINING_README.md` 与 `citrus_foreground.py`。
+正式实验参数来自 `protocols/citrus_paper1_formal_v2_ram.yaml`，不得在不同模型之间静默改变
+AMP、优化器、学习率、dropout、增强或图像尺寸。
 
-## YAML 兼容结论
+## 正式数据提醒
 
-- 索引：234/234，无缺项、无失效路径、无重复索引行。
-- 历史 203 个 YAML 的兼容结论见旧报告；新增 ORCHID 7/7 已独立完成构建、真实前向和权重加载验证。
-- Light 索引中 4 个后续 YAML 已补录，路径一致性测试通过。
-
-详见 `0_orange_yaml/_archive_metadata/YAML_COMPATIBILITY_20260830.md`。
+正式数据集是 `orange_yolo_grouped_dedup_20260820`（676/193/96，5,890 实例）。
+V11/V12 服务器运行的 val 成员（193 图/1,049 实例）与 grouped_dedup（1,181 实例）不一致：
+其结果仅作内部排序证据；论文结论必须在 grouped_dedup 上以三 seed（42/43/44）复跑。

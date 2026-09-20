@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+PROTOCOL_ID = "legacy78_scratch_v1_20260920"
 MODELS = {
-    "yolo11n_seg": dict(family="yolo", environment="modern", weights="yolo11n-seg.pt", batch=16, imgsz=640),
-    "yolov8n_seg": dict(family="yolo", environment="modern", weights="yolov8n-seg.pt", batch=16, imgsz=640),
-    "yolo26n_seg": dict(family="yolo", environment="modern", weights="yolo26n-seg.pt", batch=16, imgsz=640),
+    "yolo11n_seg": dict(family="yolo", environment="modern", yaml="yolo11n-seg.yaml", batch=16, imgsz=640),
+    "yolov8n_seg": dict(family="yolo", environment="modern", yaml="yolov8n-seg.yaml", batch=16, imgsz=640),
+    "yolo26n_seg": dict(family="yolo", environment="modern", yaml="yolo26n-seg.yaml", batch=16, imgsz=640),
     "rtmdet_ins_tiny": dict(
         family="mmdet",
         environment="mmdet",
@@ -53,7 +54,8 @@ YOLO_TRAIN = dict(
     close_mosaic=10,
     overlap_mask=True,
     mask_ratio=4,
-    dropout=0.0,
+    dropout=0.1,
+    patience=100,
     deterministic=True,
     rect=False,
     cos_lr=False,
@@ -78,17 +80,20 @@ YOLO_TRAIN = dict(
     copy_paste=0.0,
     copy_paste_mode="flip",
     cache=True,
-    pretrained=True,
+    # Boolean True in the historical YAML run did not load a checkpoint. Make scratch explicit.
+    pretrained=False,
     max_det=300,
 )
 
 
-def make_queue(suite, seeds, epochs, workers, batches=None):
+def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0)):
     """Keep pairs adjacent, alternate AMP order by model/seed to reduce order confounding."""
     if suite not in SUITES or not seeds or epochs < 1 or workers < 0:
         raise ValueError("Invalid suite, seeds, epochs or workers")
     if len(set(seeds)) != len(seeds):
         raise ValueError("Seeds must be unique")
+    if not amp_modes or len(set(amp_modes)) != len(amp_modes) or any(x not in (0, 1) for x in amp_modes):
+        raise ValueError("AMP_MODES must be [1], [0], [1, 0] or [0, 1]")
     batches = batches or {}
     unknown = set(batches) - set(MODELS)
     if unknown:
@@ -96,7 +101,9 @@ def make_queue(suite, seeds, epochs, workers, batches=None):
     queue = []
     for seed_index, seed in enumerate(seeds):
         for model_index, model in enumerate(SUITES[suite]):
-            order = (0, 1) if (seed_index + model_index) % 2 == 0 else (1, 0)
+            order = tuple(amp_modes)
+            if (seed_index + model_index) % 2:
+                order = order[::-1]
             for amp in order:
                 recipe = dict(MODELS[model])
                 recipe["batch"] = int(batches.get(model, recipe["batch"]))
@@ -105,6 +112,8 @@ def make_queue(suite, seeds, epochs, workers, batches=None):
                 queue.append(
                     dict(
                         model=model,
+                        protocol=PROTOCOL_ID,
+                        initialization="scratch",
                         seed=int(seed),
                         amp=bool(amp),
                         epochs=epochs,

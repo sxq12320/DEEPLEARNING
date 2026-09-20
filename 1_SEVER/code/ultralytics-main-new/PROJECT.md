@@ -1,5 +1,9 @@
 # Project: 自动控制理论驱动的柑橘幼果实例分割网络规划方案 (Citrus Control Backbone Design)
 
+> **状态（2026-09-20）：2026-09-02 控制骨架设计方案的历史档案。** 其"有界零初始化修正"思想已沉淀进
+> E V9–V12 与 I_V1 主线；最新设计/审查见 `docs/I_V1_DESIGN_20260920.md`、`docs/I_V1_REVIEW_20260920/`。
+> 注意：本方案中"PID 式空间-语义-梯度调节"仅是设计类比，实现中不声称 PID 控制器或稳定性证明。
+
 ## Architecture
 A publication-grade deep learning architecture bridging classical control theory (closed-loop feedback, state observer, PID-style spatial-semantic-gradient regulation, Lyapunov-bounded residual stability) with YOLO11 instance segmentation. The architecture integrates proven high-efficiency components:
 - Control-inspired Backbone (`C3k2Ctrl` / `ObserverBlock`) with closed-loop error correction and state estimation.

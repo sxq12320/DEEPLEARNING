@@ -1,128 +1,45 @@
-# YOLO11-RGBD: Apple Amodal Detection
+# Ultralytics 定制分支 — 未成熟柑橘 RGB 实例分割（活跃主线）
 
-基于 Ultralytics YOLO11 的 RGB-D 苹果遮挡检测模型。采用纯 CNN + 频域 + 动态门控机制，不依赖 Transformer 或 Mamba。
+> 更新时间：2026-09-20。本目录是**当前唯一活跃代码库**（服务器 `/data/sxq/` 的回传副本）。
+> 根目录 `ultralytics-main-new/` 是 2026-08 的旧开发副本，勿再使用。
+> 仓库导航见 `00_START_HERE.md`；最新设计与审查见 `docs/`。
 
-## 自定义模块
+## 当前任务
 
-### SFM (Strip-Freq Mixer)
+论文一：**轻量、高精度 RGB 未成熟柑橘实例分割**（单类 `orange_immature`）。
+难点：极小果、单图极端尺度跨度、绿果/绿叶混淆、条带状枝叶遮挡造成的深凹可见掩膜、接触实例分离。
+范围限定 RGB；不加 RGB-D、amodal、OBB、控制部署或多任务姿态头。
 
-**用途**: 替换 Backbone 中的 `C3k2` / `C2f`
+## 系列演进（0_orange_yaml/，423 个 YAML）
 
-SFM 采用双分支并行架构，融合条带感知与全局频域建模：
+- **历史消融库**：B/C/D/F/G/H/L/N/S/SXQ/T、G_0830/0839、Light、ORCHID、SAGE V2–V8、E V1–V8
+- **E V9–V12**：持久 P2 细节通路 + 识别/定位任务分流 + 零初始化有界修正。
+  V12 内部最优 fine 栅格 mask AP50-95≈78.3%（V12_04）；V12_03 背景误报最少。
+  三审一致判定**未达投稿成熟度**（`docs/I_V1_REVIEW_20260920/reviewer{1,2,3}.md`）。
+- **I_V1（当前）**：同步双原型掩膜解码——P4 语义原型与已验证细节原型由逐位置门控仲裁，
+  全部零初始化、逐参数等价 V12 父模型起步。10 臂含 2 个精确重放锚点。
+  设计与停止判据：`docs/I_V1_DESIGN_20260920.md`。
 
-| 分支 | 机制 | 说明 |
-|------|------|------|
-| **Branch A** (条带感知) | 正交条形深度卷积 (`1×K` + `K×1`) | 捕获长程依赖，匹配果园枝条/叶片形状 |
-| **Branch B** (全局频域) | 2D-FFT → 实部/虚部分离 → Conv → IFFT | 全局上下文建模 |
-
-**融合方式**: Concat(A, B) → 1×1 Conv + 残差连接
-
-**FFT 安全处理流程**:
-1. `rfft2` 获取频域表示
-2. 分离实部/虚部，沿通道维度拼接
-3. 通过标准 `nn.Conv2d` 处理
-4. 重组复数张量，`irfft2` 还原空间域
-
----
-
-### WCAF (Wavelet-Cross-Attention Fusion)
-
-**用途**: 替换 Neck 中 RGB 与 Depth 特征交汇处的 `Concat`
-
-WCAF 利用深度信息的几何先验来抑制 RGB 光照/阴影噪声：
-
-1. 对 RGB 和 Depth 特征分别进行 2D Haar 小波变换 (DWT)
-2. 用 Depth 的低频子带 (LL) 生成空间注意力图 (`1×1 Conv` + `Sigmoid`)
-3. 用该注意力图对 RGB 的高频子带 (LH, HL, HH) 进行门控
-4. 逆小波变换 (IDWT) 重建增强后的特征
-
-**小波实现**: 手写 Haar DWT/IDWT（纯 PyTorch 张量切片），无外部依赖，兼容 ONNX 导出。
-
----
-
-### DGFFN (Dilated-Gated FFN)
-
-**用途**: 替换标准 YOLO FFN（两个 1×1 Conv）
-
-DGFFN 通过多尺度膨胀卷积 + 通道注意力 + GLU 门控增强特征表达：
-
-1. **1×1 Conv** 通道扩展
-2. **多尺度膨胀 DWConv**: 通道对半拆分，分别使用 `3×3 DWConv (dilation=1)` 和 `5×5 DWConv (dilation=2)`
-3. **通道注意力 (CA)**: 全局平均池化 → 1×1 Conv → Sigmoid → 逐通道加权
-4. **GLU (门控线性单元)**: 通道对半拆分，一半乘以另一半的 Sigmoid
-5. **1×1 Conv** 通道投影 + 残差连接
-
----
-
-## 文件结构
-
-```
-ultralytics/
-├── nn/
-│   └── modules/
-│       ├── custom_blocks.py    # SFM, WCAF, DGFFN, HaarDWT, HaarIDWT
-│       ├── __init__.py         # 模块导出
-│       └── ...
-│   └── tasks.py                # parse_model 解析逻辑
-├── cfg/
-│   └── models/
-│       └── 11/
-│           └── yolo11-rgbd.yaml  # 模型配置文件
-└── data/
-    └── base.py                 # 4通道 (RGBD) 图像读取支持
-```
-
-## 模型配置
-
-YAML 配置文件: `ultralytics/cfg/models/11/yolo11-rgbd.yaml`
-
-```yaml
-backbone:
-  - [-1, 1, Conv, [64, 3, 2]]        # P1/2
-  - [-1, 1, Conv, [128, 3, 2]]       # P2/4
-  - [-1, 2, SFM, [256]]              # SFM 替换 C3k2
-  - [-1, 1, Conv, [256, 3, 2]]       # P3/8
-  - [-1, 2, SFM, [512]]              # SFM 替换 C3k2
-  # ...
-
-neck:
-  - [[-1, 6], 1, WCAF, []]           # WCAF 替换 Concat (RGB+Depth 融合)
-  - [-1, 2, DGFFN, [512]]            # DGFFN 替换 C3k2 FFN
-  # ...
-```
-
-## 使用方法
-
-### CLI
+## 训练入口
 
 ```bash
-yolo task=detect mode=train model=yolo11-rgbd.yaml data=your_dataset.yaml epochs=100 imgsz=640
+pip install -e .                                  # 必须本目录 editable 安装
+pytest -q tests/test_citrus_i_v1.py               # 42 项契约测试
+python 20260920_citrus_i_v1_batch.py --data /data/sxq/datasets/orange_yolo/data.yaml --suite all --dry-run
 ```
 
-### Python
+批量训练用 `RUN_CITRUS_<系列>.py` 前台入口（VS Code ▶），改顶部 DATA/DEVICE/SUITE/EPOCHS；
+系列与 suite 清单见 `citrus_foreground.py` 的 `RUNNERS` 和 `FOREGROUND_TRAINING_README.md`。
 
-```python
-from ultralytics import YOLO
+## 固定协议
 
-model = YOLO("yolo11-rgbd.yaml")
-model.info()
-results = model.train(data="your_dataset.yaml", epochs=100, imgsz=640)
-```
+正式实验唯一超参来源：`protocols/citrus_paper1_formal_v2_ram.yaml`
+（AdamW、lr0=0.001、batch=16、imgsz=640、amp=false、workers=4、cache=ram）。
+E/I 系列输入配方：`.5 global/.25 coarse/.25 fine` 源均衡均匀视图；
+训练后统一 coarse(0.6)/fine(0.4) 配对栅格评估 + PR 诊断。
+数据正式版：grouped_dedup（676/193/96）；V11/V12 服务器 val 成员与之不同，仅内部可比。
 
-## 模型规模
+## 历史遗留
 
-| 规模 | depth | width | max_channels | 参数量 (约) |
-|------|-------|-------|-------------|------------|
-| n    | 0.50  | 0.25  | 1024        | 3.4M       |
-| s    | 0.50  | 0.50  | 1024        | -          |
-| m    | 0.50  | 1.00  | 512         | -          |
-| l    | 1.00  | 1.00  | 512         | -          |
-| x    | 1.00  | 1.50  | 512         | -          |
-
-## 设计约束
-
-- **禁止** Transformer / Mamba 架构
-- 纯 CNN + 频域 (FFT/小波) + 动态门控
-- FFT 复数张量安全处理：实部/虚部分离后通过标准 Conv2d
-- 小波变换：手写 Haar DWT/IDWT，无外部依赖，兼容 ONNX 导出
-- 输入通道: 4 (RGB-D)
+README 之前的 RGB-D 苹果遮挡内容（SFM/WCAF/DGFFN、`channels: 4`、`206_Apple_Amodal.yaml`）
+为休眠支线，模块仍在 `ultralytics/nn/modules/custom_blocks.py` 等文件中注册，勿与主线混淆。

@@ -29,6 +29,18 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def state_sha256(model):
+    """Hash actual initialized tensors, not a seed string; used to verify scratch AMP pairs."""
+    import torch
+
+    digest = hashlib.sha256()
+    for name, tensor in sorted(model.state_dict().items()):
+        value = tensor.detach().cpu().contiguous()
+        digest.update(f"{name}|{value.dtype}|{tuple(value.shape)}".encode())
+        digest.update(value.reshape(-1).view(torch.uint8).numpy().tobytes())
+    return digest.hexdigest()
+
+
 def seed_everything(seed):
     import numpy as np
     import torch

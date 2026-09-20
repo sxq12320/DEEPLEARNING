@@ -70,8 +70,8 @@ def test_conversion_preserves_source_and_counts(tmp_path):
     assert coco["annotations"][0]["area"] == 144
     assert coco["categories"][0]["id"] == 1
     rf_coco = json.loads((output / "rfdetr/valid/_annotations.coco.json").read_text())
-    assert rf_coco["categories"][0]["id"] == 0
-    assert rf_coco["annotations"][0]["category_id"] == 0
+    assert rf_coco["categories"][0]["id"] == 1
+    assert rf_coco["annotations"][0]["category_id"] == 1
 
 
 def test_source_change_rejected(tmp_path):
@@ -177,10 +177,50 @@ def test_official_mmdet_config_if_available(tmp_path, monkeypatch, model):
         cfg = worker.mmdet_config(job, prepared, tmp_path / job["name"], tmp_path / "pretrained.pth")
         assert cfg.optim_wrapper.type == ("AmpOptimWrapper" if job["amp"] else "OptimWrapper")
         assert cfg.train_cfg.max_epochs == 300
+        assert cfg.load_from is None
+        assert cfg.optim_wrapper.optimizer.type == "AdamW"
+        assert cfg.optim_wrapper.optimizer.lr == 0.001
+        assert cfg.optim_wrapper.optimizer.betas == (0.937, 0.999)
+        assert not any(mapping.get("type") == "Pretrained" for mapping in _walk_mappings(cfg.model))
+        assert not any(mapping.get("pretrained") for mapping in _walk_mappings(cfg.model))
+        assert not any(mapping.get("frozen_stages", -1) >= 0 for mapping in _walk_mappings(cfg.model))
+        assert any(hook["type"] == "EarlyStoppingHook" and hook["patience"] == 100 for hook in cfg.custom_hooks)
         assert cfg.train_dataloader.dataset.filter_cfg.filter_empty_gt is False
         assert all(mapping["num_classes"] == 1 for mapping in _walk_mappings(cfg.model) if "num_classes" in mapping)
         assert not any(mapping.get("type") == "SyncBN" for mapping in _walk_mappings(cfg.model))
         cfg.dump(str(tmp_path / f"{job['name']}.py"))
+
+
+def test_chunked_mask_decode_matches_full():
+    """OOM fix: chunked process_mask_native must be bitwise-identical to one-shot decode."""
+    pytest.importorskip("ultralytics")
+    import torch
+    from ultralytics.utils import ops
+
+    torch.manual_seed(0)
+    protos = torch.randn(32, 24, 24)
+    masks_in = torch.randn(60, 32)
+    bboxes = torch.tensor([[i % 30.0, (i * 7) % 20.0, 0.0, 0.0] for i in range(60)])
+    bboxes[:, 2] = bboxes[:, 0] + 5 + torch.arange(60) % 10
+    bboxes[:, 3] = bboxes[:, 1] + 5 + torch.arange(60) % 8
+    shape = (36, 48)
+    full = ops.process_mask_native(protos, masks_in, bboxes, shape)
+    step = 16
+    chunked = torch.cat(
+        [
+            ops.process_mask_native(protos, masks_in[start : start + step], bboxes[start : start + step], shape)
+            for start in range(0, masks_in.shape[0], step)
+        ]
+    )
+    assert torch.equal(chunked, full)
+
+
+def test_worker_eval_resumes_in_fresh_interpreter():
+    """The train->eval OOM fix relies on evaluate() running in a clean CUDA context."""
+    source = (HERE / "worker.py").read_text(encoding="utf-8")
+    assert "ops.process_mask_native = decode_chunked" in source
+    assert 'sys.executable, "-I", "-u"' in source or 'sys.executable, "-I", "-u",' in source.replace("'", '"')
+    assert "subprocess.call(" in source
 
 
 def test_foreground_child_logs_and_failure(tmp_path):
@@ -191,3 +231,110 @@ def test_foreground_child_logs_and_failure(tmp_path):
     assert "visible child output" in log.read_text()
     with pytest.raises(RuntimeError, match="Queue stopped"):
         run_visible([sys.executable, "-c", "raise SystemExit(3)"], tmp_path, os.environ.copy(), log)
+
+
+def test_legacy78_yolo_training_settings_match_saved_args():
+    import yaml
+    from registry import YOLO_TRAIN
+
+    source = HERE.parents[2] / "results/A_baselines/old_data_runs/001_3_yolo11-seg_adamw/args.yaml"
+    if not source.is_file():
+        pytest.skip("Historical result not included in this server code upload")
+    old = yaml.safe_load(source.read_text(encoding="utf-8"))
+    for key, value in YOLO_TRAIN.items():
+        if key != "pretrained":
+            assert old[key] == value, key
+    assert YOLO_TRAIN["pretrained"] is False
+    assert all(v["yaml"].endswith(".yaml") and "weights" not in v for v in MODELS.values() if v["family"] == "yolo")
+
+
+def test_amp_single_mode_and_invalid_modes():
+    jobs = make_queue("all", [42], 300, 4, amp_modes=[1])
+    assert len(jobs) == 7 and all(j["amp"] and j["initialization"] == "scratch" for j in jobs)
+    for value in ([], [2], [1, 1]):
+        with pytest.raises(ValueError, match="AMP_MODES"):
+            make_queue("all", [42], 300, 4, amp_modes=value)
+
+
+def test_scratch_hash_tracks_actual_initial_state():
+    torch = pytest.importorskip("torch")
+    from common import state_sha256
+
+    torch.manual_seed(42)
+    a = torch.nn.Linear(2, 3)
+    torch.manual_seed(42)
+    b = torch.nn.Linear(2, 3)
+    assert state_sha256(a) == state_sha256(b)
+    with torch.no_grad():
+        b.weight[0, 0] += 1
+    assert state_sha256(a) != state_sha256(b)
+
+
+def test_recursive_checkpoint_removal_keeps_random_initializers():
+    from mmdet_common import remove_pretraining
+
+    cfg = dict(backbone=dict(init_cfg=[dict(type="Pretrained", checkpoint="x"), dict(type="Kaiming")],
+                             frozen_stages=1, norm_eval=True, norm_cfg=dict(type="BN", requires_grad=False)),
+               neck=dict(pretrained="x"))
+    remove_pretraining(cfg)
+    assert cfg["backbone"]["init_cfg"] == [dict(type="Kaiming")]
+    assert cfg["backbone"]["frozen_stages"] == -1
+    assert cfg["backbone"]["norm_cfg"]["requires_grad"] is True
+    assert cfg["neck"]["pretrained"] is None
+
+
+def test_yolo_worker_uses_yaml_without_pretrained_download(tmp_path, monkeypatch):
+    import types
+    import torch
+    import worker
+
+    captured = {}
+
+    class FakeYOLO:
+        def __init__(self, path, task):
+            assert path == "yolo11n-seg.yaml" and task == "segment"
+        def add_callback(self, event, callback):
+            self.callback = callback
+        def train(self, **options):
+            captured.update(options)
+            self.trainer = types.SimpleNamespace(
+                model=torch.nn.Linear(2, 1), amp=True,
+                scaler=types.SimpleNamespace(is_enabled=lambda: True), best=tmp_path / "best.pt")
+            self.callback(self.trainer)
+
+    monkeypatch.setitem(sys.modules, "ultralytics", types.SimpleNamespace(YOLO=FakeYOLO))
+    job = make_queue("yolo", [42], 300, 4, amp_modes=[1])[0]
+    worker.train_yolo(job, tmp_path, tmp_path)
+    assert captured["pretrained"] is False and captured["patience"] == 100
+    assert captured["dropout"] == 0.1 and captured["cache"] is True
+    initialization = json.loads((tmp_path / "initialization.json").read_text())
+    assert initialization["weights"] is None and len(initialization["sha256"]) == 64
+
+
+def test_rf_worker_scratch_and_mapped_hyperparameters(tmp_path, monkeypatch):
+    import types
+    import torch
+    import worker
+
+    captured = {}
+    (tmp_path / "summary.json").write_text(json.dumps(dict(names=["orange_immature"])))
+    (tmp_path / "train").mkdir()
+    (tmp_path / "train/checkpoint_best_total.pth").touch()
+
+    class FakeRF:
+        def __init__(self, **kwargs):
+            captured["model"] = kwargs
+            self.model_config = types.SimpleNamespace(**kwargs, patch_size=12,
+                                                     model_dump=lambda: dict(kwargs, patch_size=12))
+            self.model = types.SimpleNamespace(model=torch.nn.Linear(2, 2))
+        def train(self, **kwargs):
+            captured["train"] = kwargs
+
+    monkeypatch.setitem(sys.modules, "rfdetr", types.SimpleNamespace(RFDETRSegNano=FakeRF))
+    job = make_queue("rfdetr", [42], 300, 4, amp_modes=[1])[0]
+    worker.train_rfdetr(job, tmp_path, tmp_path)
+    assert captured["model"]["pretrain_weights"] is None
+    assert captured["model"]["num_classes"] == 1
+    assert captured["train"]["lr"] == captured["train"]["lr_encoder"] == 0.001
+    assert captured["train"]["weight_decay"] == 0.0005
+    assert captured["train"]["early_stopping_patience"] == 100

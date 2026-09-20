@@ -35,6 +35,12 @@ class RunnerSpec:
 
 
 RUNNERS: Dict[str, RunnerSpec] = {
+    "CITRUS_I_V1": RunnerSpec(
+        "20260920_citrus_i_v1_batch.py",
+        ("all", "screen", "structure", "smoke", "priority", "losses", "control"),
+        ("I_V1", "IV1"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
     "CITRUS_E_V12": RunnerSpec(
         "20260918_citrus_e_v12_batch.py",
         ("all", "screen", "structure", "smoke", "priority", "losses", "control"),

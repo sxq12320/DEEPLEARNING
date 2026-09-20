@@ -1,5 +1,11 @@
 # 柑橘论文一正式训练协议 v1
 
+> **更新（2026-09-20）**：当前生效版本为 **v2**——机器可读源文件
+> `protocols/citrus_paper1_formal_v2_ram.yaml`（RAM cache 版，E V9 起使用），各系列再派生
+> `protocols/citrus_<系列>.yaml`（如 `citrus_i_v1.yaml`）。E/I 系列额外固定输入配方
+> `.5 global/.25 coarse/.25 fine` 源均衡均匀视图与训练后 coarse(0.6)/fine(0.4) 配对栅格评估。
+> 下表为 v1 基线参数；若与 v2/系列派生文件冲突，以 YAML 快照与 `_protocol/` 目录记录为准。
+
 机器可读源文件：`protocols/citrus_paper1_formal_v1.yaml`  
 协议 ID：`citrus_paper1_rgb_groupaware_v1`
 

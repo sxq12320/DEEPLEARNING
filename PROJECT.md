@@ -1,5 +1,10 @@
 # Project: Immature Citrus Lightweight Instance Segmentation Architecture Search (CitrusB-Seg)
 
+> **状态（2026-09-20）：已完成交付物的历史档案。** 本项目是 2026-08-27 的架构检索任务（交付物在
+> `3_研究生/architecture_search_20260827/`）。后续主线演进为 SAGE→E(V1–V12)→I_V1，当前工作副本与最新
+> 设计/审查文档在 `1_SEVER/code/ultralytics-main-new/`（`docs/I_V1_DESIGN_20260920.md`、
+> `docs/I_V1_REVIEW_20260920/`）。本文件内容仅作历史追溯。
+
 ## Architecture
 - Task: RGB immature citrus fruit instance segmentation for robotic bagging vision.
 - Target Model: CitrusB-Seg (Candidate B, B09), Pareto-optimal lightweight nano-scale model.

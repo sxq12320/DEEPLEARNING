@@ -1,0 +1,21 @@
+{
+  "protocol": "legacy78_scratch_v1_20260920",
+  "source": "results/A_baselines/old_data_runs/001_3_yolo11-seg_adamw/args.yaml",
+  "scope": "RUN_CITRUS_BASELINES_AMP.py and baseline_amp package, all seven registered models",
+  "tests_passed": 26,
+  "syntax_check": "passed",
+  "default_queue": {"jobs": 7, "amp_modes": [1], "initialization": "scratch"},
+  "optional_paired_queue": {"jobs": 14, "amp_modes": [1, 0]},
+  "yolo_legacy_args": "all YOLO_TRAIN values checked against saved args; pretrained=False explicitly enforces scratch",
+  "rfdetr_dependency": "1.4.0.post0 (1.4.0 withdrawn upstream for training failure)",
+  "rfdetr_source_check": "downloaded both published wheels; post0 changes Roboflow class count by +1; Nano patch_size=12 disables DINOv2 loading",
+  "gpu_training": "not executed",
+  "installation": "no existing environment modified",
+  "preserved": ["original data", "historical results", "unrelated custom networks", "independent 4_baseline_choice workbench"],
+  "limitations": [
+    "Cross-framework loss, augmentation, batch, RF resolution/scheduler/betas are not identical to historical YOLO",
+    "Modern official library versions are not historical server code snapshots",
+    "No guarantee of reproducing 78 percent",
+    "Pretrained improved models require matched-initialization controls before architectural claims"
+  ]
+}

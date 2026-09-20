@@ -287,6 +287,11 @@ __all__ = (
     "SegmentCitrusEV11",
     "SegmentCitrusEV12",
     "EV12RecognitionCorrection",
+    "IV1AnchorContext",
+    "IV1ProtoSync",
+    "IV1SemanticProto",
+    "IV1StripContext",
+    "SegmentCitrusIV1",
     "EV10ContrastStem",
     "EV10DetailTransport",
     "EV10BalancedProto",
@@ -592,6 +597,13 @@ from .citrus_e_v6 import EV6FineDetail, SegmentCitrusEV6
 from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7
 
 from .citrus_e_v12 import EV12RecognitionCorrection, SegmentCitrusEV12
+from .citrus_i_v1 import (
+    IV1AnchorContext,
+    IV1ProtoSync,
+    IV1SemanticProto,
+    IV1StripContext,
+    SegmentCitrusIV1,
+)
 from .citrus_e_v11 import (
     EV11ContextStage,
     EV11DetailExchange,

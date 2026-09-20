@@ -1,0 +1,31 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: I_V1
+implementation_revision: IV1_20260920_synchronized_dual_prototypes
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+copy_paste: 0.3
+cos_lr: false
+input_recipe: '.5 global/.25 coarse/.25 fine source-balanced uniform views; unchanged V9-V12'
+fixed: 'standard TAL; NWD=0; ring=0; boundary=.5 neighbor=.25; tiny Dice=.25; V12 detail proto + persistent P2'
+control: '00/01 exact V12_03/V12_04 replays under SegmentCitrusIV1; NOT official YOLO baselines'
+factors:
+  dual_proto: '02..08 second P4 semantic prototype; scalar or gated mixture with the detail prototype'
+  context: '0=plain projection 1=strip MSCA-adapted 2=anchor CAA-adapted; adaptations, not author blocks'
+  feedback: '06 bounded depthwise term on the prototype discrepancy; zero start, not a PID controller'
+  lead: '07 mixture scalar initialized +1 toward semantic; deliberate biased start, counted as a hypothesis'
+  semantic_only: '08 detail prototype fully substituted; expected to hurt tiny objects, kept as evidence'
+  no_recog: '09 gated sync with classification route off; tests decoder/context independence'
+evaluation: 'same original640 paired global/coarse/fine; full empirical PR/R90/tiny matches; no AP/GT edits'
+formal: 'single-seed screening; select by mask AP50-95/AP50/Recall at P>=.9 and actual latency; final three seeds42/43/44 on grouped_dedup'

@@ -50,6 +50,25 @@ def set_num_classes(model: MutableMapping[str, Any], num_classes: int) -> None:
         raise ValueError("The MMDetection model config does not contain a num_classes field.")
 
 
+def remove_pretraining(model: MutableMapping[str, Any]) -> None:
+    """Remove checkpoint initializers at every level, retaining normal random initializers."""
+    for mapping in _walk_mappings(model):
+        if "pretrained" in mapping:
+            mapping["pretrained"] = None
+        init = mapping.get("init_cfg")
+        if isinstance(init, MutableMapping) and init.get("type") == "Pretrained":
+            mapping["init_cfg"] = None
+        elif isinstance(init, list):
+            mapping["init_cfg"] = [x for x in init if not (
+                isinstance(x, MutableMapping) and x.get("type") == "Pretrained")]
+        if "frozen_stages" in mapping:
+            mapping["frozen_stages"] = -1
+        if "norm_eval" in mapping:
+            mapping["norm_eval"] = False
+        if mapping.get("type") in ("BN", "SyncBN", "GN") and "requires_grad" in mapping:
+            mapping["requires_grad"] = True
+
+
 def configure_dataset(
     dataset_cfg: MutableMapping[str, Any],
     annotation_path: Path,
