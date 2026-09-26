@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from .common import save_json
-from .registry import PROTOCOL_ID, make_queue
+from .registry import PROTOCOL_ID, SUITES, make_queue
 
 HERE = Path(__file__).resolve().parent
 
@@ -143,7 +143,14 @@ def main(settings):
     parser.add_argument("--dry-run", action="store_true", help="Print the queue only; no imports/downloads/training")
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--summarize-only", action="store_true")
+    parser.add_argument("--suite", choices=tuple(SUITES), help="Override the model queue; non_yolo skips all YOLO jobs")
+    parser.add_argument("--project", help="Override output directory without changing your DATA/PYTHONS settings")
     args = parser.parse_args()
+    settings = dict(settings)
+    if args.suite is not None:
+        settings["SUITE"] = args.suite
+    if args.project is not None:
+        settings["PROJECT"] = args.project
     project = Path(settings["PROJECT"]).expanduser().resolve()
     if args.summarize_only:
         summarize(project)

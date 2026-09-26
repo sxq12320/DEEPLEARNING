@@ -1,0 +1,29 @@
+version: 1
+inherits: citrus_paper1_formal_v2_ram.yaml
+series: I_V2
+implementation_revision: IV2_20260922_correctness_first_p2_recovery
+epochs: 300
+seeds: [42]
+amp: false
+cache: true
+batch: 16
+imgsz: 640
+workers: 4
+mask_ratio: 2
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+copy_paste: 0.3
+cos_lr: false
+input_recipe: '.5 global/.25 coarse/.25 fine source-balanced uniform views; unchanged V9-V12'
+fixed: 'same-stride tiny-size TAL predicate; NWD=0 except I29 mix=.2; ring=0; boundary=.5 neighbor=.25; tiny Dice=.25; V12 detail proto + persistent P2'
+control: 'I20 corrected three-scale V12 shared-route anchor; I21 same with recognition route off'
+factors:
+  p2: 'I22 raw; I23 semantic filtered; I24 broad-semantic plus local aggregation; appended after P3/P4/P5'
+  backbone: 'I25 replaces C3 mixer only; I26 replaces C3+C4; ordinary depthwise/pointwise convolutions'
+  combined: 'I27 only after isolated P2/backbone arms; I28 isolates recognition route; I29 isolates tiny assignment'
+  correctness: 'tiny-size TAL predicate uses the same per-level stride as its replacement, matching upstream semantics'
+evaluation: 'same original640 paired global/coarse/fine; full empirical PR/R90/tiny matches; no AP/GT edits'
+formal: 'single-seed screening; select by mask AP50-95/AP50/Recall at P>=.9 and actual latency; final three seeds42/43/44 on grouped_dedup'

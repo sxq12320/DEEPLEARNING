@@ -1,0 +1,8 @@
+# I52 plus fixed luminance gradients as an optional non-color cue, fused into stride-2 detail.
+nc: 1
+depth_multiple: 1.0
+width_multiple: 1.0
+backbone:
+  - [-1, 1, nn.Identity, []]
+head:
+  - [-1, 1, CitrusNativeSegment, [40, True, True, 16, True, True]]

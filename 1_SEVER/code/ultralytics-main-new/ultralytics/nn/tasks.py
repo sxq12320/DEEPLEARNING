@@ -21,6 +21,13 @@ from ultralytics.nn.modules import (
     SegmentCitrusEV11,
     SegmentCitrusEV12,
     SegmentCitrusIV1,
+    IV2LargeSmallStage,
+    IV2P2Candidate,
+    SegmentCitrusIV2,
+    SegmentCitrusIV4,
+    CitrusNativeSegment,
+    IV3AsymGrayFuse,
+    IV3InputTwin,
     EV10ContrastStem,
     SegmentCitrusEV10,
     SegmentCitrusEV9,
@@ -800,6 +807,14 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], CitrusNativeSegment):
+            from ultralytics.utils.citrus_native_loss import CitrusNativeLoss
+
+            return CitrusNativeLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusIV4):
+            from ultralytics.utils.citrus_i_v4_loss import IV4SegmentationLoss
+
+            return IV4SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusEV11):
             from ultralytics.utils.citrus_e_v11_loss import EV11SegmentationLoss
 
@@ -1933,6 +1948,7 @@ def parse_model(d, ch, verbose=True):
             EV8ContextStage,
             EV3DeepStage,
             EV11RepStage,
+            IV2LargeSmallStage,
             EV11ContextStage,
             EV3DetailDown,
             EV2RepStage,
@@ -2005,6 +2021,7 @@ def parse_model(d, ch, verbose=True):
             EV8ContextStage,
             EV3DeepStage,
             EV11RepStage,
+            IV2LargeSmallStage,
             EV11ContextStage,
             EV2RepStage,
             SAGEV6Stage,
@@ -2048,7 +2065,12 @@ def parse_model(d, ch, verbose=True):
                 with contextlib.suppress(ValueError):
                     args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
-        if m in base_modules:
+        if m is CitrusNativeSegment:
+            if f != -1 or n != 1 or i != 1:
+                raise ValueError("CitrusNativeSegment requires only an nn.Identity input layer")
+            c2 = ch[f]
+            args = [ch[f], *args]
+        elif m in base_modules:
             c1, c2 = ch[f], args[0]
             if c2 != nc:  # if c2 != nc (e.g., Classify() output)
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
@@ -2256,6 +2278,18 @@ def parse_model(d, ch, verbose=True):
                 raise ValueError("CitrusSAGEFuse requires C2/C3/C4/C5/PAN-P3 feature indices")
             c2 = ch[f[4]]
             args = [[ch[index] for index in f], *args]
+        elif m is IV2P2Candidate:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("IV2P2Candidate needs [persistent_detail, P3] inputs")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[index] for index in f], c2, *args[1:]]
+        elif m is IV3InputTwin:
+            c2 = ch[f]  # Index layers declare the two actual branch widths.
+        elif m is IV3AsymGrayFuse:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("IV3AsymGrayFuse needs [RGB, achromatic] inputs")
+            c2 = ch[f[0]]
+            args = [[ch[index] for index in f], *args]
         elif m is CitrusSAGEPyramid:
             if not isinstance(f, list) or len(f) not in {4, 7}:
                 raise ValueError("CitrusSAGEPyramid requires C2/C3/C4/C5 and optional PAN-P3/P4/P5 indices")
@@ -2317,6 +2351,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusIV1,
+                SegmentCitrusIV2,
+                SegmentCitrusIV4,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2362,6 +2398,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusIV1,
+                SegmentCitrusIV2,
+                SegmentCitrusIV4,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2395,6 +2433,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusIV1,
+                SegmentCitrusIV2,
+                SegmentCitrusIV4,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

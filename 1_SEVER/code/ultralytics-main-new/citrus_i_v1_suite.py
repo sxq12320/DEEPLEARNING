@@ -37,7 +37,9 @@ SUITES = {s: tuple(NAMES) for s in ("all", "screen", "structure", "smoke")}
 SUITES.update(
     priority=tuple(NAMES[i] for i in (0, 1, 4, 5)),
     control=tuple(NAMES[:2]),
-    losses=tuple(NAMES[i] for i in (4, 6)),
+    mechanism=tuple(NAMES[i] for i in (0, 1, 2, 3, 4)),  # replay -> plain -> context -> gate
+    feedback=tuple(NAMES[i] for i in (4, 6)),
+    losses=tuple(NAMES[i] for i in (4, 6)),  # historical alias; NOT a loss-function ablation
 )
 
 

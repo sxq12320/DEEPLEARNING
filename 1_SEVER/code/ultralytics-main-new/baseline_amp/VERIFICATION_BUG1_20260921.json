@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-21",
+  "scope": "baseline bug1 runtime dependency repair; I1 evidence/ablation corrections",
+  "local_platform": "Windows CPU, Python 3.9, Torch 2.8 CPU with isolated local dependency paths",
+  "tests": {
+    "baseline_amp/test_environment_check.py + baseline_amp/test_baseline_amp.py": {"passed": 31},
+    "tests/test_citrus_i_v1.py": {"passed": 44, "warnings": "4 pre-existing THOP distutils deprecations"},
+    "tests/test_citrus_foreground.py": {"passed": 37}
+  },
+  "total_passed": 112,
+  "other_checks": [
+    "repair entry dry-run",
+    "MMDetection installer dry-run",
+    "compileall of new repair/check scripts",
+    "git diff --check",
+    "credential-pattern scan of new review artifacts (no match)"
+  ],
+  "typesafe": {
+    "remote_review_completed": true,
+    "successful_requests": 1,
+    "questions": 7,
+    "model_requested": "jev-latest",
+    "payload_approved_by_user": true,
+    "request_and_response_directory": "E:/mastercode/_work/20260921_baseline_i1",
+    "credential_saved": false
+  },
+  "not_verified": [
+    "actual Linux Torch 2.1 CUDA / MMCV environment after repair",
+    "server smoke training",
+    "I1 dataset-level accuracy or runtime gains"
+  ],
+  "preserved": ["original data", "completed results", "10 I1 YAML files", "I1 forward formulas", "training hyperparameters"]
+}

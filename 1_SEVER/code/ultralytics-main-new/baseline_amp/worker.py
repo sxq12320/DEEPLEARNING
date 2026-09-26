@@ -13,8 +13,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from common import save_json, seed_everything, sha256, snapshot, state_sha256
-from registry import MODELS, YOLO_TRAIN
+from common import save_json, seed_everything, snapshot, state_sha256  # noqa: E402
+from registry import MODELS, YOLO_TRAIN  # noqa: E402
 
 
 def official_mmdet_root():
@@ -40,10 +40,16 @@ def model_zoo_weight(root, config):
 def require_version(package, version):
     actual = importlib.metadata.version(package)
     if actual != version:
+        if package == "rfdetr" and actual == "1.4.0" and version == "1.4.0.post0":
+            raise RuntimeError(
+                "Installed rfdetr==1.4.0 is the yanked release whose training fails after startup. "
+                "Do not bypass this check. From the project root run: "
+                f"{sys.executable} REPAIR_CITRUS_MODERN_ENV.py --python {sys.executable}"
+            )
         raise RuntimeError(f"Expected {package}=={version}, found {actual}. Use the new baseline environment.")
 
 
-def preflight(families, cpu=False):
+def preflight(families, cpu=False, model_name=None, training_smoke=True):
     import torch
     import pycocotools.mask  # noqa: F401
     import yaml  # noqa: F401
@@ -69,13 +75,49 @@ def preflight(families, cpu=False):
     if "mmdet" in families:
         require_version("mmdet", "3.3.0")
         require_version("mmcv", "2.1.0")
+        from environment_check import check_mmdet_environment
+
+        print("MMDetection runtime environment:", check_mmdet_environment(), flush=True)
         from mmcv.ops import nms
         from mmengine.config import Config
+        from mmengine.optim import build_optim_wrapper
+        from mmdet.registry import MODELS as MMDET_MODELS
+        from mmdet.utils import register_all_modules
+        from mmdet_common import (audit_optimizer_parameters, make_optim_wrapper_config,
+                                 configure_mask_preprocessor, remove_pretraining, set_num_classes, _walk_mappings)
+        from mmdet_smoke import check_mask_padding, check_training_step, check_prediction_step, check_large_mask_decode
+        from mmdet_memory import install_memory_safe_rtmdet
 
+        register_all_modules(init_default_scope=True)
+        print("MASK MEMORY ADAPTER:", install_memory_safe_rtmdet(), flush=True)
+        if not cpu and training_smoke:
+            print("LARGE MASK DECODE PREFLIGHT OK:", check_large_mask_decode(), flush=True)
         root = official_mmdet_root()
-        for recipe in MODELS.values():
-            if recipe["family"] == "mmdet":
-                Config.fromfile(str(root / recipe["config"]))
+        for checked_name, recipe in MODELS.items():
+            if recipe["family"] == "mmdet" and (model_name is None or checked_name == model_name):
+                cfg = Config.fromfile(str(root / recipe["config"]))
+                remove_pretraining(cfg.model)
+                set_num_classes(cfg.model, 1)
+                configure_mask_preprocessor(cfg.model)
+                for mapping in _walk_mappings(cfg.model):
+                    if mapping.get("type") == "SyncBN":
+                        mapping["type"] = "BN"
+                model = MMDET_MODELS.build(cfg.model)
+                wrapper = build_optim_wrapper(model, make_optim_wrapper_config(False))
+                print("OPTIMIZER PREFLIGHT OK:", checked_name, audit_optimizer_parameters(model, wrapper), flush=True)
+                print("MASK PADDING PREFLIGHT OK:", checked_name,
+                      check_mask_padding(model.data_preprocessor), flush=True)
+                if not cpu and training_smoke:
+                    model.init_weights()
+                    model.cuda()
+                    # Test the actual loss/backward path, not just import/build.
+                    for amp in (False, True):
+                        print("TRAIN STEP PREFLIGHT OK:", checked_name, "AMP=", int(amp),
+                              check_training_step(model, amp), flush=True)
+                    print("PREDICTION PREFLIGHT OK:", checked_name, check_prediction_step(model), flush=True)
+                del wrapper, model
+                if not cpu:
+                    torch.cuda.empty_cache()
         if not cpu:
             nms(torch.tensor([[0.0, 0.0, 4.0, 4.0]], device="cuda"), torch.ones(1, device="cuda"), 0.5)
     if not cpu:
@@ -156,19 +198,16 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
         checkpoint,
         val_interval=1,
     )
-    from mmdet_common import remove_pretraining
+    from mmdet_common import configure_mask_preprocessor, make_optim_wrapper_config, remove_pretraining
 
     remove_pretraining(cfg.model)
     cfg.load_from = None
-    cfg.optim_wrapper = dict(
-        type="AmpOptimWrapper" if job["amp"] else "OptimWrapper",
-        optimizer=dict(type="AdamW", lr=0.001, betas=(0.937, 0.999), weight_decay=0.0005),
-        paramwise_cfg=dict(norm_decay_mult=0.0, bias_decay_mult=0.0),
-        clip_grad=dict(max_norm=10.0, norm_type=2),
-    )
-    if job["amp"]:
-        cfg.optim_wrapper.loss_scale = "dynamic"
-        cfg.optim_wrapper.dtype = "float16"
+    cfg.optim_wrapper = make_optim_wrapper_config(job["amp"])
+    configure_mask_preprocessor(cfg.model)
+    # Full-resolution instance masks can be large even after float decoding is
+    # chunked. Do not hold five high-resolution images' masks simultaneously.
+    cfg.val_dataloader.batch_size = 1
+    cfg.test_dataloader.batch_size = 1
     # Declared citrus adaptation: fixed 640 resize, no crop/filter that removes tiny instances.
     train_pipeline = [
         dict(type="LoadImageFromFile"),
@@ -195,8 +234,6 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
     cfg.custom_hooks.append(dict(type="EarlyStoppingHook", monitor="coco/segm_mAP", rule="greater",
                                  patience=100, min_delta=0.0, strict=True))
     cfg.train_cfg.pop("dynamic_intervals", None)
-    if "batch_augments" in cfg.model.data_preprocessor:
-        cfg.model.data_preprocessor.batch_augments = None
     for mapping in _walk_mappings(cfg.model):
         if mapping.get("type") == "SyncBN":
             mapping["type"] = "BN"
@@ -222,7 +259,9 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
 def train_mmdet(job, prepared, run_dir):
     import torch
     from mmengine.runner import Runner
+    from mmdet_memory import install_memory_safe_rtmdet
 
+    save_json(run_dir / "inference_memory.json", install_memory_safe_rtmdet())
     cfg = mmdet_config(job, prepared, run_dir, None)
     cfg.dump(str(run_dir / "effective_config.py"))
     seed_everything(job["seed"])
@@ -231,10 +270,16 @@ def train_mmdet(job, prepared, run_dir):
     from mmengine.hooks import Hook
 
     class VerifyAMP(Hook):
+        def __init__(self):
+            self.scale_decreases = 0
+            self.checked_iterations = 0
+
         def before_train(self, runner):
             from mmengine.optim import AmpOptimWrapper
+            from mmdet_common import audit_optimizer_parameters
 
             actual = isinstance(runner.optim_wrapper, AmpOptimWrapper)
+            save_json(run_dir / "optimizer_parameters.json", audit_optimizer_parameters(runner.model, runner.optim_wrapper))
             save_json(run_dir / "initialization.json", dict(
                 mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(runner.model),
                 stage="after init_weights, before first optimizer step",
@@ -252,6 +297,24 @@ def train_mmdet(job, prepared, run_dir):
                 raise RuntimeError("MMDetection optimizer wrapper does not match requested AMP")
             torch.backends.cuda.matmul.allow_tf32 = False
             torch.backends.cudnn.allow_tf32 = False
+
+        def before_train_iter(self, runner, batch_idx, data_batch=None):
+            scaler = getattr(runner.optim_wrapper, "loss_scaler", None)
+            self.scale_before = scaler.get_scale() if scaler is not None else None
+
+        def after_train_iter(self, runner, batch_idx, data_batch=None, outputs=None):
+            scaler = getattr(runner.optim_wrapper, "loss_scaler", None)
+            if scaler is not None:
+                self.checked_iterations += 1
+                self.scale_decreases += int(scaler.get_scale() < self.scale_before)
+
+        def after_train_epoch(self, runner):
+            scaler = getattr(runner.optim_wrapper, "loss_scaler", None)
+            save_json(run_dir / "amp_runtime.json", dict(
+                checked_iterations=self.checked_iterations, scale_decreases=self.scale_decreases,
+                current_scale=scaler.get_scale() if scaler is not None else None,
+                note="Scale decreases indicate AMP overflow/backoff; not a claim that every update succeeded.",
+            ))
 
     runner.register_hook(VerifyAMP(), priority="VERY_HIGH")
     runner.train()
@@ -356,7 +419,9 @@ def evaluate(job, prepared, run_dir, checkpoint):
         model = YOLO(str(checkpoint))
     elif family == "mmdet":
         from mmdet.apis import init_detector, inference_detector
+        from mmdet_memory import install_memory_safe_rtmdet
 
+        install_memory_safe_rtmdet()
         model = init_detector(str(run_dir / "effective_config.py"), str(checkpoint), device="cuda:0")
     else:
         from rfdetr import RFDETRSegNano
@@ -451,7 +516,9 @@ def main():
     if not args.job:
         parser.error("Expected --check, --prepare or --job")
     job = json.loads(args.job.read_text(encoding="utf-8"))
-    preflight([job["recipe"]["family"]])
+    # Full synthetic training was checked once at batch startup. Per-job checks
+    # retain environment/config/padding checks without repeating all six steps.
+    preflight([job["recipe"]["family"]], model_name=job["model"], training_smoke=False)
     run_dir = Path(job["run_dir"])
     trained = run_dir / "trained.json"
     if trained.is_file() and not (run_dir / "complete.json").exists():

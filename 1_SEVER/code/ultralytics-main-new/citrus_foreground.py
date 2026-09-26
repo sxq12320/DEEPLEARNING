@@ -35,9 +35,27 @@ class RunnerSpec:
 
 
 RUNNERS: Dict[str, RunnerSpec] = {
+    "CITRUS_I_V4": RunnerSpec(
+        "20260925_citrus_i_v4_batch.py",
+        ("all", "screen", "smoke", "priority", "control", "mechanism"),
+        ("I_V4", "IV4"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_I_V3": RunnerSpec(
+        "20260923_citrus_i_v3_batch.py",
+        ("all", "screen", "smoke", "priority", "control", "losses", "recognition"),
+        ("I_V3", "IV3"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
+    "CITRUS_I_V2": RunnerSpec(
+        "20260922_citrus_i_v2_batch.py",
+        ("all", "screen", "smoke", "priority", "control", "p2", "backbone", "combined", "assignment"),
+        ("I_V2", "IV2"),
+        supports_cache=True, supports_amp=True, supports_skip_completed=True,
+    ),
     "CITRUS_I_V1": RunnerSpec(
         "20260920_citrus_i_v1_batch.py",
-        ("all", "screen", "structure", "smoke", "priority", "losses", "control"),
+        ("all", "screen", "structure", "smoke", "priority", "losses", "control", "mechanism", "feedback"),
         ("I_V1", "IV1"),
         supports_cache=True, supports_amp=True, supports_skip_completed=True,
     ),

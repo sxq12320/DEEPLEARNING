@@ -46,6 +46,13 @@ def commands(environment, conda):
             ]
         )
     steps.append([str(python), "-m", "pip", "check"])
+    if not modern:
+        steps.append([str(python), "-I", str(ROOT / "baseline_amp/environment_check.py")])
+    else:
+        steps.append(
+            [str(python), "-I", "-u", str(ROOT / "baseline_amp/worker.py"),
+             "--check", "yolo", "rfdetr", "--cpu-check"]
+        )
     return prefix, steps
 
 

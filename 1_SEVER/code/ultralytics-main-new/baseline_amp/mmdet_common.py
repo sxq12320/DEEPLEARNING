@@ -9,6 +9,46 @@ from typing import Any, Dict, Iterable, MutableMapping, Sequence
 from common import resolve_path
 
 
+def configure_mask_preprocessor(model):
+    """Align image and instance-mask canvases after aspect-preserving resize."""
+    preprocessor = model["data_preprocessor"]
+    if preprocessor.get("type") != "DetDataPreprocessor":
+        raise ValueError("Expected DetDataPreprocessor for the registered MMDetection baselines")
+    # The official RTMDet pipeline pads to 640; our no-crop pipeline instead
+    # pads to this batch's maximum dimensions. Both images AND masks must pad.
+    preprocessor.update(pad_mask=True, mask_pad_value=0, batch_augments=None)
+    preprocessor["pad_size_divisor"] = 32
+
+
+def make_optim_wrapper_config(amp=False):
+    """Build the fixed recipe while retaining RTMDet's shared-parameter de-duplication."""
+    cfg = dict(
+        type="AmpOptimWrapper" if amp else "OptimWrapper",
+        optimizer=dict(type="AdamW", lr=0.001, betas=(0.937, 0.999), weight_decay=0.0005),
+        # RTMDet shares convolutions across feature levels. The official config
+        # also enables this; otherwise MMEngine registers one tensor repeatedly.
+        paramwise_cfg=dict(norm_decay_mult=0.0, bias_decay_mult=0.0, bypass_duplicate=True),
+        clip_grad=dict(max_norm=10.0, norm_type=2),
+    )
+    if amp:
+        cfg.update(loss_scale="dynamic", dtype="float16")
+    return cfg
+
+
+def audit_optimizer_parameters(model, wrapper):
+    """Ensure each trainable tensor is optimized once, with no missing or foreign tensors."""
+    model_ids = {id(parameter) for parameter in model.parameters()}
+    trainable = {id(parameter) for parameter in model.parameters() if parameter.requires_grad}
+    entries = [parameter for group in wrapper.optimizer.param_groups for parameter in group["params"]]
+    ids = [id(parameter) for parameter in entries]
+    actual = set(ids)
+    if len(ids) != len(actual) or trainable - actual or actual - model_ids:
+        raise RuntimeError("Optimizer parameter groups contain duplicate, missing, or foreign model parameters")
+    return dict(parameter_tensors=len(ids), trainable_tensors=len(trainable),
+                parameter_elements=sum(parameter.numel() for parameter in entries),
+                duplicate_tensors=0, missing_trainable_tensors=0)
+
+
 def require_mmdet() -> Any:
     """Import MMEngine after the caller activates the MMDetection environment."""
     try:

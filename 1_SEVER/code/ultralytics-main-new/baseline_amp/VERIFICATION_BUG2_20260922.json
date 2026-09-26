@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-22",
+  "failure": "modern baseline preflight found rfdetr 1.4.0 instead of 1.4.0.post0",
+  "root_cause": "server retained the yanked RF-DETR 1.4.0 wheel; PyPI states that detection and segmentation training fail after startup",
+  "repair": [
+    "verify the target is the isolated Torch 2.5.1 and Ultralytics 8.4.60 environment",
+    "force-reinstall rfdetr 1.4.0.post0 without changing other dependencies",
+    "run pip check",
+    "run the real YOLO/RF-DETR worker API preflight"
+  ],
+  "local_verification": {
+    "baseline_contract_tests": "30 passed, 3 skipped because local MMDetection packages are absent",
+    "repair_dry_run": "passed",
+    "baseline_queue_dry_run": "passed, 7 jobs",
+    "ruff": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed"
+  },
+  "not_claimed": [
+    "server package repair execution",
+    "server CUDA preflight",
+    "baseline smoke training"
+  ],
+  "preserved": [
+    "training hyperparameters",
+    "AMP mode",
+    "model definitions",
+    "datasets",
+    "completed results",
+    "sxq environment",
+    "citrus_mmdet environment"
+  ]
+}

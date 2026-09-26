@@ -1,0 +1,11 @@
+version: 1
+series: I_V4
+inherits: citrus_i_v3.yaml
+purpose: supervised scene layering and parallel multi-scale neck, not a claimed breakthrough
+control: I40 repeats I20/I30 with nc explicitly 1
+fixed: same multi-scale input, AdamW lr0=0.001, mask_ratio=2, copy_paste=0.3, cos_lr=false
+runtime: imgsz=640, batch=16, workers=4, cache=true, amp=false
+initialization: official yolo11n-seg.pt with layer mapping; not legacy78 scratch baseline
+evaluation: original and paired coarse/fine, identical budgets; AP50/AP50-95 and recall at precision>=0.9
+data: use explicit user DATA path, no manifest confirmation gate; record membership
+selection: 50 epochs screening, three seeds and matched-protocol baseline before final conclusions

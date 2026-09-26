@@ -11,8 +11,10 @@ Context choices are independent task adaptations of SegNeXt's decomposed
 multi-scale convolutional attention (NeurIPS22) and PKINet's context-anchor
 attention (CVPR24). They are NOT the authors' complete blocks, no CAA pretrained
 weights are reused, and no colour-invariance or leaf-discrimination proof is
-implied. Every added term is bounded and starts near zero so the parent's decode
-function is preserved at initialization. This is not a PID controller, not a
+implied. Mixture coefficients are bounded; feature magnitudes and convolution
+operator norms are not. Zero-lead additive arms preserve the parent's decode
+function at initialization (not the semantic-only or nonzero-lead arms).
+This is not a PID controller, not a
 recurrent state, and carries no stability guarantee; accuracy and latency must
 be measured, matching the reviewer-frozen protocol in docs/I_V1_REVIEW_20260920.
 """
@@ -36,7 +38,7 @@ class IV1StripContext(nn.Module):
     One 5x5 local term plus two 1xK/Kx1 decomposed larger kernels are summed and
     used as a convolutional attention factor on the reduced feature. Kernels are
     kept at 7 and 11 (not the author's full set) because P4 is only 40x40 at 640
-    and the widest strip adds little at this resolution. Attention multiplies
+    as a compute-budget choice, not an experimentally proven optimal cutoff. Attention multiplies
     the feature; it does not remove positions or claim foreground separation.
     """
 
@@ -84,8 +86,8 @@ class IV1SemanticProto(nn.Module):
 
     The semantic basis answers "where does fruit evidence persist at context
     scale"; it never replaces the detail basis inside this module. `context=0`
-    keeps a parameter-matched plain projection so ablations can separate the
-    context block from the mere existence of a second prototype.
+    keeps a same-width plain projection (NOT parameter-matched), separating
+    the second-prototype hypothesis from the additional context operators.
     """
 
     def __init__(self, c_p4, nm=32, width=64, context=1):
@@ -106,7 +108,8 @@ class IV1SemanticProto(nn.Module):
 
     def forward(self, p4, size):
         # All convolutions stay at P4 resolution; only the nm basis channels are
-        # upsampled, which keeps the second prototype nearly free at stride-2 protos.
+        # upsampled. This limits convolution cost, but upsampling/gate memory
+        # traffic still needs an end-to-end latency measurement.
         semantic = self.basis(self.spatial(self.context(p4)))
         return F.interpolate(semantic, size, mode="bilinear", align_corners=False)
 
@@ -115,7 +118,10 @@ class IV1ProtoSync(nn.Module):
     """Per-position gate field arbitrating between detail and semantic protos.
 
     The gate observes compressed views of both prototypes and the live detail
-    stream, including their pointwise discrepancy. A spatial softmax was
+    stream, including their pointwise discrepancy. Independently learned basis
+    channels are not guaranteed to be semantically aligned: this discrepancy
+    is a learned feature cue, not a supervised semantic or control error.
+    A spatial softmax was
     considered and rejected: positions should not compete with each other, so a
     sigmoid field per channel is returned. The scalar mixture gain lives in the
     head, keeping this module a pure direction field.
@@ -154,7 +160,8 @@ class SegmentCitrusIV1(SegmentCitrusEV12):
     `dual` selects the prototype recipe: 0 replays the parent exactly (anchors);
     1 mixes the semantic basis with one learned scalar; 2 adds the per-position
     arbitration gate; 3 substitutes the detail prototype entirely. `feedback`
-    adds a bounded depthwise term on the prototype discrepancy. `lead` sets the
+    adds a bounded-gain depthwise term (not a bounded output) on the prototype
+    discrepancy. `lead` sets the
     initial scalar mixture so direction-biased arms start away from the parent
     deliberately, which the protocol counts as a hypothesis, not free accuracy.
     Detection towers, anchors, the persistent detail path and every loss gain

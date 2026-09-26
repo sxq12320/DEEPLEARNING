@@ -181,6 +181,17 @@ def test_official_mmdet_config_if_available(tmp_path, monkeypatch, model):
         assert cfg.optim_wrapper.optimizer.type == "AdamW"
         assert cfg.optim_wrapper.optimizer.lr == 0.001
         assert cfg.optim_wrapper.optimizer.betas == (0.937, 0.999)
+        assert cfg.optim_wrapper.paramwise_cfg.bypass_duplicate is True
+        assert cfg.model.data_preprocessor.pad_mask is True
+        assert cfg.model.data_preprocessor.mask_pad_value == 0
+        assert cfg.model.data_preprocessor.pad_size_divisor == 32
+        assert cfg.model.data_preprocessor.batch_augments is None
+        assert cfg.val_dataloader.batch_size == cfg.test_dataloader.batch_size == 1
+        for mapping in _walk_mappings(cfg.train_dataloader.dataset):
+            if mapping.get("type") == "CocoDataset":
+                transforms = mapping["pipeline"]
+                assert next(t for t in transforms if t["type"] == "Resize")["keep_ratio"] is True
+                assert not any(t["type"] in ("RandomCrop", "FilterAnnotations") for t in transforms)
         assert not any(mapping.get("type") == "Pretrained" for mapping in _walk_mappings(cfg.model))
         assert not any(mapping.get("pretrained") for mapping in _walk_mappings(cfg.model))
         assert not any(mapping.get("frozen_stages", -1) >= 0 for mapping in _walk_mappings(cfg.model))

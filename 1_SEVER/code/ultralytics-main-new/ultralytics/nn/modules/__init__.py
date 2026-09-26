@@ -292,6 +292,9 @@ __all__ = (
     "IV1SemanticProto",
     "IV1StripContext",
     "SegmentCitrusIV1",
+    "IV2LargeSmallStage",
+    "IV2P2Candidate",
+    "SegmentCitrusIV2",
     "EV10ContrastStem",
     "EV10DetailTransport",
     "EV10BalancedProto",
@@ -604,6 +607,14 @@ from .citrus_i_v1 import (
     IV1StripContext,
     SegmentCitrusIV1,
 )
+from .citrus_i_v2 import IV2LargeSmallStage, IV2P2Candidate, SegmentCitrusIV2
+from .citrus_i_v3 import IV3AsymGrayFuse, IV3InputTwin
+
+__all__ += ("IV3AsymGrayFuse", "IV3InputTwin")
+from .citrus_i_v4 import SegmentCitrusIV4
+from .citrus_native_segment import CitrusNativeSegment
+
+__all__ += ("SegmentCitrusIV4", "CitrusNativeSegment")
 from .citrus_e_v11 import (
     EV11ContextStage,
     EV11DetailExchange,

@@ -30,6 +30,7 @@ MODELS = {
 
 SUITES = {
     "all": list(MODELS),
+    "non_yolo": [name for name, cfg in MODELS.items() if cfg["family"] != "yolo"],
     "yolo": list(MODELS)[:3],
     "mmdet": [name for name, cfg in MODELS.items() if cfg["family"] == "mmdet"],
     "rfdetr": ["rfdetr_seg_nano"],

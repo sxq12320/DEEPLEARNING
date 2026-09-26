@@ -1,0 +1,14 @@
+version: 1
+series: I_V3
+inherits: citrus_i_v2.yaml
+purpose: controlled asymmetric RGB-achromatic backbone ablations
+recommended_data: orange_yolo_grouped_dedup_20260820; runner uses the DATA path directly
+input: paired luminance/contrast/gradient computed from the same augmented RGB tensor
+architecture: narrow stride-4 achromatic branch, optional stride-8 continuation, bounded gated fusion
+control: I30 is exactly I20; I31-I35 isolate view, level and fusion type
+loss_ablation: I36 NWD ratio 0.1; I37 tiny Dice 0.40; I38 assignment mix 0.2
+recognition_ablation: I39 disables recognition routing
+fixed: same V2 multiscale inputs, mask_ratio 2, AdamW and hyperparameters, 640, AMP false
+screening: 50 epochs one seed; then shortlisted three seeds at 300 epochs
+evaluation: paired global/coarse/fine; compare mask AP50-95, AP50, Recall at P>=0.9, tiny recall and latency
+warning: achromatic branch is RGB-derived, not an independent imaging modality; gains unproven

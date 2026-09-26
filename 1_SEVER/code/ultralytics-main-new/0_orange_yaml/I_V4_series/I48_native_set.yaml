@@ -1,0 +1,8 @@
+# Independent I_V4 control: learned object set, no YOLO backbone/head/PAN/TAL/DFL.
+nc: 1
+depth_multiple: 1.0
+width_multiple: 1.0
+backbone:
+  - [-1, 1, nn.Identity, []]
+head:
+  - [-1, 1, CitrusNativeSegment, [40, False, False, 0, False]]

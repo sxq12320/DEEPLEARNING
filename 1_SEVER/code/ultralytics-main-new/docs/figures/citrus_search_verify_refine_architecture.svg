@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" role="img" aria-labelledby="figtitle figdesc">
+  <title id="figtitle">Proposed Citrus Search–Verify–Refine Architecture</title>
+  <desc id="figdesc">A proposed but untrained lightweight RGB instance segmentation architecture. One shared encoder supplies a narrow stride-four tiny-fruit scout and P3 to P5 regular proposals. Sparse candidates are compared with their local surroundings and softly supported by semantics. Verified instances use a shared mask prototype. An optional native-resolution recheck is separate from the base network.</desc>
+  <rect x="0" y="0" width="1800" height="1000" fill="#FFFFFF"/>
+  <rect x="45" y="35" width="7" height="62" rx="3" fill="#0072B2"/>
+  <text x="72" y="66" font-family="Arial" font-size="32" font-weight="bold" fill="#17354D">Citrus Search–Verify–Refine Network</text>
+  <text x="73" y="95" font-family="Arial" font-size="17" fill="#587084">A lightweight RGB instance-segmentation hypothesis for tiny immature fruits under leaf camouflage</text>
+  <rect x="1480" y="35" width="273" height="42" rx="21" fill="#FFF3DB" stroke="#C88B2B" stroke-width="1.5"/>
+  <circle cx="1503" cy="56" r="6" fill="#C88B2B"/>
+  <text x="1518" y="62" font-family="Arial" font-size="14" font-weight="bold" fill="#805619">PROPOSED · NOT TRAINED</text>
+
+  <!-- Image input -->
+  <rect x="40" y="185" width="196" height="565" rx="17" fill="#FFFFFF" stroke="#B8C9D5" stroke-width="2"/>
+  <text x="138" y="225" text-anchor="middle" font-family="Arial" font-size="21" font-weight="bold" fill="#17354D">RGB image</text>
+  <text x="138" y="250" text-anchor="middle" font-family="Arial" font-size="15" fill="#597185">640 × 640 base view</text>
+  <rect x="59" y="284" width="158" height="339" rx="11" fill="#215D45"/>
+  <path d="M69 321 C120 367 162 357 208 310 M68 484 C125 434 164 442 213 477 M67 574 C115 515 160 503 210 557" fill="none" stroke="#71A46D" stroke-width="12" stroke-linecap="round"/>
+  <ellipse cx="113" cy="352" rx="29" ry="17" transform="rotate(-28 113 352)" fill="#92BC76"/>
+  <ellipse cx="185" cy="455" rx="28" ry="16" transform="rotate(32 185 455)" fill="#78AE76"/>
+  <ellipse cx="100" cy="537" rx="25" ry="14" transform="rotate(25 100 537)" fill="#66A590"/>
+  <circle cx="122" cy="426" r="24" fill="#A0C566" stroke="#EDF5C0" stroke-width="2.5"/>
+  <circle cx="173" cy="545" r="12" fill="#A8C964" stroke="#F4F6C9" stroke-width="2"/>
+  <circle cx="99" cy="576" r="6" fill="#BDD874" stroke="#F4F6C9" stroke-width="1.5"/>
+  <text x="138" y="669" text-anchor="middle" font-family="Arial" font-size="16" fill="#38566B">tiny fruits + leaves</text>
+  <text x="138" y="695" text-anchor="middle" font-family="Arial" font-size="14" fill="#6C8090">visible masks only</text>
+
+  <!-- Stage 1: encoder -->
+  <rect x="274" y="185" width="331" height="565" rx="17" fill="#FFFFFF" stroke="#9FC1D6" stroke-width="2"/>
+  <rect x="274" y="185" width="331" height="65" rx="17" fill="#0072B2"/>
+  <rect x="274" y="231" width="331" height="19" fill="#0072B2"/>
+  <text x="295" y="226" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">01  Shared RGB encoder</text>
+  <text x="297" y="280" font-family="Arial" font-size="14" fill="#5A7183">One trunk, narrow persistent detail path</text>
+  <rect x="297" y="301" width="285" height="57" rx="9" fill="#F0F5F9" stroke="#BDD0DE" stroke-width="1.5"/>
+  <rect x="297" y="301" width="7" height="57" fill="#6C91AA"/>
+  <text x="318" y="325" font-family="Arial" font-size="17" font-weight="bold" fill="#163B54">Stem · stride 2</text>
+  <text x="318" y="346" font-family="Arial" font-size="13" fill="#5C7588">shared low-level RGB features</text>
+  <rect x="297" y="380" width="285" height="70" rx="9" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <rect x="297" y="380" width="7" height="70" fill="#009E73"/>
+  <text x="318" y="408" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">P2 · stride 4</text>
+  <text x="318" y="433" font-family="Arial" font-size="14" fill="#406D58">narrow high-resolution detail</text>
+  <rect x="297" y="470" width="285" height="69" rx="9" fill="#E8F3FA" stroke="#A3C5DA" stroke-width="1.5"/>
+  <rect x="297" y="470" width="7" height="69" fill="#0072B2"/>
+  <text x="318" y="498" font-family="Arial" font-size="18" font-weight="bold" fill="#174C70">P3 · stride 8</text>
+  <text x="318" y="521" font-family="Arial" font-size="14" fill="#507189">local semantic context</text>
+  <rect x="297" y="559" width="285" height="69" rx="9" fill="#E8F3FA" stroke="#A3C5DA" stroke-width="1.5"/>
+  <rect x="297" y="559" width="7" height="69" fill="#0072B2"/>
+  <text x="318" y="587" font-family="Arial" font-size="18" font-weight="bold" fill="#174C70">P4 · stride 16</text>
+  <text x="318" y="610" font-family="Arial" font-size="14" fill="#507189">fruit-level semantics</text>
+  <rect x="297" y="648" width="285" height="69" rx="9" fill="#E8F3FA" stroke="#A3C5DA" stroke-width="1.5"/>
+  <rect x="297" y="648" width="7" height="69" fill="#0072B2"/>
+  <text x="318" y="676" font-family="Arial" font-size="18" font-weight="bold" fill="#174C70">P5 · stride 32</text>
+  <text x="318" y="699" font-family="Arial" font-size="14" fill="#507189">global orchard context</text>
+  <path d="M439 358 V376 M439 450 V466 M439 539 V555 M439 628 V644" fill="none" stroke="#7793A5" stroke-width="2.4"/>
+  <path d="M433 374 L439 382 L445 374 M433 464 L439 472 L445 464 M433 553 L439 561 L445 553 M433 642 L439 650 L445 642" fill="#7793A5"/>
+
+  <!-- Stage 2: search -->
+  <rect x="642" y="185" width="326" height="565" rx="17" fill="#FFFFFF" stroke="#9CCAB4" stroke-width="2"/>
+  <rect x="642" y="185" width="326" height="65" rx="17" fill="#19775B"/>
+  <rect x="642" y="231" width="326" height="19" fill="#19775B"/>
+  <text x="663" y="226" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">02  Candidate search</text>
+  <text x="665" y="280" font-family="Arial" font-size="14" fill="#5A7183">High recall without a heavy dense P2 head</text>
+  <rect x="665" y="306" width="280" height="144" rx="10" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="684" y="334" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">P2 tiny-fruit scout</text>
+  <text x="684" y="358" font-family="Arial" font-size="14" fill="#406D58">center map + small descriptor</text>
+  <rect x="686" y="372" width="161" height="59" rx="5" fill="#F9FCFA" stroke="#B3CEC0" stroke-width="1"/>
+  <path d="M713 372V431 M740 372V431 M767 372V431 M794 372V431 M821 372V431 M686 392H847 M686 412H847" fill="none" stroke="#D5E2DA" stroke-width="1"/>
+  <circle cx="725" cy="392" r="11" fill="#F5D477"/><circle cx="725" cy="392" r="4" fill="#A36419"/>
+  <circle cx="806" cy="414" r="11" fill="#F5D477"/><circle cx="806" cy="414" r="4" fill="#A36419"/>
+  <text x="864" y="394" font-family="Arial" font-size="13" font-weight="bold" fill="#316F54">STRIDE 4</text>
+  <text x="864" y="417" font-family="Arial" font-size="12" fill="#547466">low width</text>
+  <rect x="665" y="478" width="280" height="96" rx="10" fill="#E8F3FA" stroke="#A3C5DA" stroke-width="1.5"/>
+  <text x="684" y="507" font-family="Arial" font-size="18" font-weight="bold" fill="#174C70">P3–P5 regular head</text>
+  <text x="684" y="532" font-family="Arial" font-size="14" fill="#507189">box · class · mask coefficients</text>
+  <text x="684" y="555" font-family="Arial" font-size="13" fill="#627D90">medium / large fruit proposals</text>
+  <rect x="665" y="608" width="280" height="103" rx="10" fill="#F1F7F3" stroke="#A9CCB6" stroke-width="1.5"/>
+  <text x="684" y="643" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">Merge + Top-K</text>
+  <text x="684" y="667" font-family="Arial" font-size="14" fill="#406D58">de-duplicate candidates</text>
+  <text x="684" y="690" font-family="Arial" font-size="13" fill="#5C7B69">P3 never hard-vetoes P2</text>
+  <path d="M806 450V474 M806 574V604" fill="none" stroke="#19775B" stroke-width="2.7"/>
+  <path d="M799 470L806 479L813 470 M799 600L806 609L813 600" fill="#19775B"/>
+
+  <!-- Stage 3: verify -->
+  <rect x="1005" y="185" width="345" height="565" rx="17" fill="#FFFFFF" stroke="#D8BE83" stroke-width="2"/>
+  <rect x="1005" y="185" width="345" height="65" rx="17" fill="#B7791E"/>
+  <rect x="1005" y="231" width="345" height="19" fill="#B7791E"/>
+  <text x="1026" y="226" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">03  Evidence verification</text>
+  <text x="1028" y="280" font-family="Arial" font-size="14" fill="#5A7183">Fruit against visually similar leaves</text>
+  <rect x="1028" y="308" width="143" height="116" rx="10" fill="#EBF6ED" stroke="#A9CDB0" stroke-width="1.5"/>
+  <circle cx="1100" cy="346" r="19" fill="#91BC66" stroke="#5C8E55" stroke-width="2"/>
+  <text x="1099" y="389" text-anchor="middle" font-family="Arial" font-size="17" font-weight="bold" fill="#245B42">Inner</text>
+  <text x="1099" y="409" text-anchor="middle" font-family="Arial" font-size="12" fill="#5C7865">candidate core</text>
+  <rect x="1184" y="308" width="143" height="116" rx="10" fill="#FFF5E3" stroke="#DFC48C" stroke-width="1.5"/>
+  <circle cx="1256" cy="346" r="18" fill="#FBFEFA" stroke="#A1BA96" stroke-width="2"/>
+  <circle cx="1256" cy="346" r="31" fill="none" stroke="#C38D3C" stroke-width="5" stroke-dasharray="10 7"/>
+  <text x="1255" y="389" text-anchor="middle" font-family="Arial" font-size="17" font-weight="bold" fill="#755119">Surround</text>
+  <text x="1255" y="409" text-anchor="middle" font-family="Arial" font-size="12" fill="#927449">local background</text>
+  <rect x="1028" y="452" width="299" height="89" rx="10" fill="#E8F3FA" stroke="#A3C5DA" stroke-width="1.5"/>
+  <text x="1048" y="483" font-family="Arial" font-size="18" font-weight="bold" fill="#174C70">Soft semantic support</text>
+  <text x="1048" y="510" font-family="Arial" font-size="14" fill="#507189">P3/P4 context; never a hard veto</text>
+  <rect x="1028" y="585" width="299" height="112" rx="10" fill="#FFF5E3" stroke="#DFC48C" stroke-width="1.5"/>
+  <text x="1048" y="618" font-family="Arial" font-size="18" font-weight="bold" fill="#755119">Relative-evidence test</text>
+  <text x="1048" y="644" font-family="Arial" font-size="14" fill="#927449">inner · surround · difference</text>
+  <text x="1048" y="669" font-family="Arial" font-size="14" fill="#927449">fruit score + mask quality</text>
+  <path d="M1100 424H1018V565H1093V582 M1256 424H1337V565H1262V582 M1178 541V582" fill="none" stroke="#B7791E" stroke-width="2.4"/>
+  <path d="M1087 576L1093 585L1099 576 M1256 576L1262 585L1268 576 M1172 576L1178 585L1184 576" fill="#B7791E"/>
+
+  <!-- Stage 4: refine -->
+  <rect x="1387" y="185" width="372" height="565" rx="17" fill="#FFFFFF" stroke="#C1B0D2" stroke-width="2"/>
+  <rect x="1387" y="185" width="372" height="65" rx="17" fill="#7C5D9E"/>
+  <rect x="1387" y="231" width="372" height="19" fill="#7C5D9E"/>
+  <text x="1408" y="226" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">04  Instance mask refinement</text>
+  <text x="1410" y="280" font-family="Arial" font-size="14" fill="#5A7183">Detail compute only where needed</text>
+  <rect x="1410" y="308" width="326" height="88" rx="10" fill="#F1ECF7" stroke="#CABBDD" stroke-width="1.5"/>
+  <text x="1430" y="339" font-family="Arial" font-size="18" font-weight="bold" fill="#59457B">Verified instances</text>
+  <text x="1430" y="365" font-family="Arial" font-size="14" fill="#806B99">quality score · box · coefficients</text>
+  <rect x="1410" y="424" width="326" height="86" rx="10" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="1430" y="455" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">Shared P2 mask prototype</text>
+  <text x="1430" y="480" font-family="Arial" font-size="14" fill="#406D58">high-resolution mask basis</text>
+  <rect x="1410" y="538" width="326" height="88" rx="10" fill="#F1ECF7" stroke="#CABBDD" stroke-width="1.5"/>
+  <text x="1430" y="570" font-family="Arial" font-size="18" font-weight="bold" fill="#59457B">Per-instance masks</text>
+  <text x="1430" y="596" font-family="Arial" font-size="14" fill="#806B99">optional local fine correction</text>
+  <rect x="1410" y="655" width="326" height="60" rx="10" fill="#EAF5EE" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="1573" y="683" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#245B42">Citrus instance masks</text>
+  <text x="1573" y="702" text-anchor="middle" font-family="Arial" font-size="12" fill="#607B68">evaluate tiny recall, FP, mask AP, latency</text>
+  <path d="M1573 396V420 M1573 510V534 M1573 626V651" fill="none" stroke="#7C5D9E" stroke-width="2.7"/>
+  <path d="M1566 417L1573 426L1580 417 M1566 531L1573 540L1580 531 M1566 648L1573 657L1580 648" fill="#7C5D9E"/>
+
+  <!-- Between-stage routes, manually drawn arrowheads for SVG renderer portability -->
+  <path d="M236 463H270" fill="none" stroke="#2E6182" stroke-width="3.5"/>
+  <path d="M267 455L278 463L267 471" fill="#2E6182"/>
+  <path d="M582 415H620V385H662" fill="none" stroke="#19775B" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M659 377L670 385L659 393" fill="#19775B"/>
+  <path d="M582 583H620V524H662" fill="none" stroke="#0072B2" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M659 516L670 524L659 532" fill="#0072B2"/>
+  <path d="M945 660H984V639H1024" fill="none" stroke="#19775B" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M1021 631L1032 639L1021 647" fill="#19775B"/>
+  <path d="M1327 640H1368V352H1406" fill="none" stroke="#B7791E" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M1403 344L1414 352L1403 360" fill="#B7791E"/>
+
+  <!-- Separate P2-to-prototype route -->
+  <path d="M582 422H612V779H1371V467H1406" fill="none" stroke="#009E73" stroke-width="2.7" stroke-linejoin="round"/>
+  <path d="M1403 459L1414 467L1403 475" fill="#009E73"/>
+  <rect x="798" y="761" width="322" height="28" rx="14" fill="#E8F4EB" stroke="#A6CAB1" stroke-width="1"/>
+  <text x="959" y="780" text-anchor="middle" font-family="Arial" font-size="13" fill="#2D6D50">shared P2 feature → mask prototype</text>
+
+  <!-- Optional recheck, not part of base model -->
+  <rect x="40" y="821" width="1719" height="119" rx="15" fill="#F8FAFC" stroke="#AAB7C1" stroke-width="2" stroke-dasharray="9 7"/>
+  <rect x="58" y="839" width="268" height="28" rx="14" fill="#E9EFF3"/>
+  <text x="73" y="858" font-family="Arial" font-size="13" font-weight="bold" fill="#526B7C">OPTIONAL SYSTEM-LEVEL PATH</text>
+  <text x="59" y="897" font-family="Arial" font-size="17" font-weight="bold" fill="#3D596E">Native-resolution ROI recheck</text>
+  <text x="59" y="923" font-family="Arial" font-size="13" fill="#657C8B">Only after measuring scout coverage; uniform slicing remains the recall/latency reference.</text>
+  <rect x="793" y="851" width="258" height="68" rx="9" fill="#FFFFFF" stroke="#BCC9D1" stroke-width="1.4"/>
+  <text x="922" y="880" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#3D596E">Budgeted native ROIs</text>
+  <text x="922" y="902" text-anchor="middle" font-family="Arial" font-size="13" fill="#657C8B">coverage tested, not assumed</text>
+  <rect x="1100" y="851" width="258" height="68" rx="9" fill="#FFFFFF" stroke="#BCC9D1" stroke-width="1.4"/>
+  <text x="1229" y="880" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#3D596E">Same verifier + mask</text>
+  <text x="1229" y="902" text-anchor="middle" font-family="Arial" font-size="13" fill="#657C8B">batched, bounded cost</text>
+  <rect x="1407" y="851" width="323" height="68" rx="9" fill="#FFFFFF" stroke="#BCC9D1" stroke-width="1.4"/>
+  <text x="1569" y="880" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#3D596E">Merge with global output</text>
+  <text x="1569" y="902" text-anchor="middle" font-family="Arial" font-size="13" fill="#657C8B">report end-to-end time and FP</text>
+  <path d="M1051 885H1097 M1358 885H1404" fill="none" stroke="#8799A6" stroke-width="2.7" stroke-dasharray="8 6"/>
+  <path d="M1094 877L1105 885L1094 893 M1401 877L1412 885L1401 893" fill="#8799A6"/>
+  <text x="46" y="974" font-family="Arial" font-size="13" fill="#61798B">Solid arrows = base network data flow</text>
+  <text x="1754" y="974" text-anchor="end" font-family="Arial" font-size="13" fill="#61798B">Concept figure · accuracy and efficiency are not yet established</text>
+</svg>

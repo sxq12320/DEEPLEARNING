@@ -156,6 +156,29 @@ def test_python38_and_runner_contracts():
     assert not entry.DRY_RUN and entry.EPOCHS == 300
 
 
+def test_mechanism_suite_has_intermediate_controls():
+    assert SUITES["mechanism"] == tuple(NAMES[i] for i in (0, 1, 2, 3, 4))
+    assert SUITES["feedback"] == SUITES["losses"] == (NAMES[4], NAMES[6])
+
+
+def test_zero_start_semantic_branch_opens_after_real_optimizer_step():
+    torch.manual_seed(42)
+    head = model(4).model[-1].train()
+    optimizer = torch.optim.SGD(head.parameters(), lr=0.01)
+    proto = torch.randn(2, 32, 16, 16)
+    detail = torch.randn(2, head.sync.detail.conv.in_channels, 8, 8)
+    p4 = torch.randn(2, head.semantic_proto.context.reduce.conv.in_channels, 4, 4)
+    head.synchronize(proto, p4, detail).square().mean().backward()
+    assert head.mix.grad.abs() > 0
+    assert head.semantic_proto.basis.weight.grad.abs().sum() == 0
+    optimizer.step()  # Do not manually force mix away from zero.
+    assert head.mix.detach().abs() > 0
+    optimizer.zero_grad(set_to_none=True)
+    head.synchronize(proto, p4, detail).square().mean().backward()
+    assert head.semantic_proto.basis.weight.grad.abs().sum() > 0
+    assert head.sync.gate.weight.grad.abs().sum() > 0
+
+
 def test_runner_provenance_sources_exist():
     file = ROOT / "20260920_citrus_i_v1_batch.py"
     tree = ast.parse(file.read_text(encoding="utf-8"))

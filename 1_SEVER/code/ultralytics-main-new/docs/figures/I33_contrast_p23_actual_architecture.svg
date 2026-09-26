@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1120" viewBox="0 0 1900 1120" role="img" aria-labelledby="figtitle figdesc">
+  <title id="figtitle">I33 Contrast P2/P3 Actual Network Architecture</title>
+  <desc id="figdesc">An architecture diagram transcribed from I33_contrast_p23.yaml and its actual modules. RGB and a two-channel luminance/local-contrast view are fused at P2 and P3. A persistent stride-four detail path is exchanged with P3 and P4 and injected into P4. P5, top-down P4 and P3 fusion, and a bottom-up P4 reconstruction feed a three-scale SegmentCitrusIV2 head. There is no P2 detection head or selective ROI inference.</desc>
+  <rect x="0" y="0" width="1900" height="1120" fill="#FFFFFF"/>
+  <rect x="42" y="35" width="7" height="65" rx="3" fill="#0072B2"/>
+  <text x="70" y="68" font-family="Arial" font-size="32" font-weight="bold" fill="#17354D">I33 · Contrast P2/P3</text>
+  <text x="71" y="98" font-family="Arial" font-size="17" fill="#5C7182">Actual model graph from I33_contrast_p23.yaml · RGB + luminance/local contrast · 3-scale instance segmentation</text>
+  <rect x="1535" y="35" width="318" height="41" rx="20" fill="#E9F5ED" stroke="#379567" stroke-width="1.5"/>
+  <circle cx="1558" cy="56" r="6" fill="#008A61"/>
+  <text x="1574" y="62" font-family="Arial" font-size="13" font-weight="bold" fill="#245B42">EXISTING YAML · BUILDS AND RUNS</text>
+
+  <!-- Input -->
+  <rect x="40" y="195" width="194" height="745" rx="15" fill="#FFFFFF" stroke="#B6C8D4" stroke-width="2"/>
+  <text x="137" y="232" text-anchor="middle" font-family="Arial" font-size="21" font-weight="bold" fill="#17354D">Input RGB</text>
+  <text x="137" y="260" text-anchor="middle" font-family="Arial" font-size="14" fill="#5B7384">640 × 640 × 3</text>
+  <rect x="60" y="300" width="154" height="335" rx="10" fill="#245E48"/>
+  <path d="M70 332 C116 371 163 360 205 318 M69 479 C116 440 170 450 208 487 M69 576 C122 520 157 504 207 565" fill="none" stroke="#74A871" stroke-width="12" stroke-linecap="round"/>
+  <ellipse cx="109" cy="363" rx="29" ry="17" transform="rotate(-25 109 363)" fill="#92BB77"/>
+  <ellipse cx="186" cy="460" rx="26" ry="15" transform="rotate(29 186 460)" fill="#7CAB78"/>
+  <circle cx="125" cy="431" r="24" fill="#9FC467" stroke="#EDF3BE" stroke-width="2"/>
+  <circle cx="177" cy="546" r="11" fill="#AAC965" stroke="#EEF3BD" stroke-width="2"/>
+  <circle cx="103" cy="584" r="6" fill="#B9D473" stroke="#F4F7CF" stroke-width="1.5"/>
+  <text x="137" y="688" text-anchor="middle" font-family="Arial" font-size="15" fill="#496677">single RGB modality</text>
+  <text x="137" y="716" text-anchor="middle" font-family="Arial" font-size="13" fill="#6C8290">no extra image files</text>
+  <rect x="63" y="763" width="148" height="101" rx="10" fill="#F0F5F8" stroke="#B9CAD4"/>
+  <text x="137" y="793" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold" fill="#31566D">IV3InputTwin</text>
+  <text x="137" y="818" text-anchor="middle" font-family="Arial" font-size="13" fill="#607888">mode 1 · layer [0]</text>
+  <text x="137" y="842" text-anchor="middle" font-family="Arial" font-size="13" fill="#607888">RGB + 2ch view</text>
+
+  <!-- P2 extraction -->
+  <rect x="271" y="195" width="348" height="429" rx="15" fill="#FFFFFF" stroke="#9CC7D7" stroke-width="2"/>
+  <rect x="271" y="195" width="348" height="62" rx="15" fill="#0072B2"/>
+  <rect x="271" y="239" width="348" height="18" fill="#0072B2"/>
+  <text x="290" y="234" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">01  P2 extraction + fusion</text>
+  <text x="291" y="286" font-family="Arial" font-size="14" fill="#5D7485">stride 4 · 160 × 160 feature grid</text>
+  <rect x="291" y="309" width="143" height="118" rx="9" fill="#E8F3FA" stroke="#9FC5DA" stroke-width="1.5"/>
+  <text x="305" y="340" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">RGB path</text>
+  <text x="305" y="365" font-family="Arial" font-size="14" fill="#507189">Conv ×2 → C3k2</text>
+  <text x="305" y="391" font-family="Arial" font-size="13" fill="#668299">layers [3–5]</text>
+  <rect x="453" y="309" width="143" height="118" rx="9" fill="#FFF5E3" stroke="#DFC48C" stroke-width="1.5"/>
+  <text x="466" y="340" font-family="Arial" font-size="17" font-weight="bold" fill="#81591E">Structure path</text>
+  <text x="466" y="365" font-family="Arial" font-size="13" fill="#927449">Y + local contrast</text>
+  <text x="466" y="389" font-family="Arial" font-size="13" fill="#927449">Conv ×2 [6–7]</text>
+  <text x="524" y="414" text-anchor="middle" font-family="Arial" font-size="12" fill="#9C7E53">derived from RGB</text>
+  <path d="M362 427V461H445 M525 427V461H445" fill="none" stroke="#5C879D" stroke-width="2.6"/>
+  <path d="M438 458L445 467L452 458" fill="#5C879D"/>
+  <rect x="291" y="471" width="305" height="107" rx="10" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="310" y="504" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">IV3AsymGrayFuse [8]</text>
+  <text x="310" y="530" font-family="Arial" font-size="14" fill="#406D58">bounded, spatially gated residual</text>
+  <text x="310" y="554" font-family="Arial" font-size="13" fill="#5E7969">RGB P2 + achromatic P2</text>
+
+  <!-- P3 extraction -->
+  <rect x="655" y="195" width="333" height="429" rx="15" fill="#FFFFFF" stroke="#9CC7D7" stroke-width="2"/>
+  <rect x="655" y="195" width="333" height="62" rx="15" fill="#0072B2"/>
+  <rect x="655" y="239" width="333" height="18" fill="#0072B2"/>
+  <text x="674" y="234" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">02  P3 extraction + fusion</text>
+  <text x="675" y="286" font-family="Arial" font-size="14" fill="#5D7485">stride 8 · 80 × 80 feature grid</text>
+  <rect x="675" y="309" width="137" height="118" rx="9" fill="#E8F3FA" stroke="#9FC5DA" stroke-width="1.5"/>
+  <text x="688" y="340" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">RGB P3</text>
+  <text x="688" y="365" font-family="Arial" font-size="14" fill="#507189">Conv → C3k2</text>
+  <text x="688" y="390" font-family="Arial" font-size="13" fill="#668299">layers [10–11]</text>
+  <rect x="831" y="309" width="136" height="118" rx="9" fill="#FFF5E3" stroke="#DFC48C" stroke-width="1.5"/>
+  <text x="844" y="340" font-family="Arial" font-size="17" font-weight="bold" fill="#81591E">Structure P3</text>
+  <text x="844" y="365" font-family="Arial" font-size="14" fill="#927449">Conv s2 [12]</text>
+  <text x="844" y="390" font-family="Arial" font-size="13" fill="#927449">from gray P2 [7]</text>
+  <path d="M744 427V461H821 M899 427V461H821" fill="none" stroke="#5C879D" stroke-width="2.6"/>
+  <path d="M814 458L821 467L828 458" fill="#5C879D"/>
+  <rect x="675" y="471" width="292" height="107" rx="10" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="694" y="504" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">IV3AsymGrayFuse [13]</text>
+  <text x="694" y="530" font-family="Arial" font-size="14" fill="#406D58">same bounded fusion at P3</text>
+  <text x="694" y="554" font-family="Arial" font-size="13" fill="#5E7969">input to deep trunk + neck skip</text>
+
+  <!-- P4/P5 -->
+  <rect x="1025" y="195" width="322" height="429" rx="15" fill="#FFFFFF" stroke="#9CC7D7" stroke-width="2"/>
+  <rect x="1025" y="195" width="322" height="62" rx="15" fill="#0072B2"/>
+  <rect x="1025" y="239" width="322" height="18" fill="#0072B2"/>
+  <text x="1044" y="234" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">03  Deep RGB trunk</text>
+  <text x="1045" y="286" font-family="Arial" font-size="14" fill="#5D7485">P4/16 → P5/32, with P2 detail injection</text>
+  <rect x="1045" y="308" width="282" height="74" rx="9" fill="#E8F3FA" stroke="#9FC5DA" stroke-width="1.5"/>
+  <text x="1063" y="337" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">Native P4 [15–16]</text>
+  <text x="1063" y="362" font-family="Arial" font-size="14" fill="#507189">Conv s2 → C3k2 · 40 × 40</text>
+  <rect x="1045" y="410" width="282" height="78" rx="9" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="1063" y="441" font-family="Arial" font-size="17" font-weight="bold" fill="#215A45">EV11DetailInject [18]</text>
+  <text x="1063" y="466" font-family="Arial" font-size="14" fill="#406D58">persistent P2 → P4 before P5</text>
+  <rect x="1045" y="516" width="282" height="81" rx="9" fill="#E8F3FA" stroke="#9FC5DA" stroke-width="1.5"/>
+  <text x="1063" y="545" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">Backbone P5 [19–22]</text>
+  <text x="1063" y="568" font-family="Arial" font-size="13" fill="#507189">Conv · EV3DeepStage · SPPF · C2PSA</text>
+  <text x="1063" y="587" font-family="Arial" font-size="12" fill="#668299">20 × 20; P5 goes directly to head</text>
+  <path d="M1186 382V406 M1186 488V512" fill="none" stroke="#5086A4" stroke-width="2.7"/>
+  <path d="M1179 404L1186 413L1193 404 M1179 509L1186 518L1193 509" fill="#5086A4"/>
+
+  <!-- Backbone horizontal links -->
+  <path d="M234 459H267" fill="none" stroke="#2C6485" stroke-width="3.5"/>
+  <path d="M264 451L276 459L264 467" fill="#2C6485"/>
+  <path d="M619 525H651" fill="none" stroke="#2B8E6B" stroke-width="3.5"/>
+  <path d="M648 517L660 525L648 533" fill="#2B8E6B"/>
+  <path d="M988 525H1021" fill="none" stroke="#2B8E6B" stroke-width="3.5"/>
+  <path d="M1018 517L1030 525L1018 533" fill="#2B8E6B"/>
+
+  <!-- Persistent P2 lane -->
+  <rect x="271" y="660" width="348" height="280" rx="15" fill="#FFFFFF" stroke="#92C5AA" stroke-width="2"/>
+  <rect x="271" y="660" width="348" height="56" rx="15" fill="#19775B"/>
+  <rect x="271" y="700" width="348" height="16" fill="#19775B"/>
+  <text x="290" y="697" font-family="Arial" font-size="19" font-weight="bold" fill="#FFFFFF">04  Persistent P2 detail</text>
+  <text x="291" y="745" font-family="Arial" font-size="14" fill="#597B68">16 channels · always stride 4</text>
+  <rect x="290" y="769" width="88" height="105" rx="8" fill="#E9F5ED" stroke="#A8CFB6"/>
+  <text x="334" y="802" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#245B42">Seed [9]</text>
+  <text x="334" y="825" text-anchor="middle" font-family="Arial" font-size="12" fill="#617D6B">P2 + stem</text>
+  <text x="334" y="844" text-anchor="middle" font-family="Arial" font-size="11" fill="#617D6B">pixel-unshuffle</text>
+  <rect x="398" y="769" width="96" height="105" rx="8" fill="#E9F5ED" stroke="#A8CFB6"/>
+  <text x="446" y="802" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#245B42">Exchange</text>
+  <text x="446" y="825" text-anchor="middle" font-family="Arial" font-size="12" fill="#617D6B">P3 [14]</text>
+  <text x="446" y="844" text-anchor="middle" font-family="Arial" font-size="11" fill="#617D6B">context</text>
+  <rect x="514" y="769" width="86" height="105" rx="8" fill="#E9F5ED" stroke="#A8CFB6"/>
+  <text x="557" y="802" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#245B42">Exchange</text>
+  <text x="557" y="825" text-anchor="middle" font-family="Arial" font-size="12" fill="#617D6B">P4 [17]</text>
+  <text x="557" y="844" text-anchor="middle" font-family="Arial" font-size="11" fill="#617D6B">context</text>
+  <path d="M378 821H394 M494 821H510" fill="none" stroke="#19775B" stroke-width="2.7"/>
+  <path d="M391 814L402 821L391 828 M507 814L518 821L507 828" fill="#19775B"/>
+  <text x="445" y="910" text-anchor="middle" font-family="Arial" font-size="13" fill="#587B67">updated P2 detail also enters segmentation prototype</text>
+  <path d="M445 578V656" fill="none" stroke="#19775B" stroke-width="2.7"/>
+  <path d="M438 652L445 662L452 652" fill="#19775B"/>
+
+  <!-- Neck -->
+  <rect x="655" y="660" width="692" height="280" rx="15" fill="#FFFFFF" stroke="#A6BFD7" stroke-width="2"/>
+  <rect x="655" y="660" width="692" height="56" rx="15" fill="#3D759D"/>
+  <rect x="655" y="700" width="692" height="16" fill="#3D759D"/>
+  <text x="675" y="697" font-family="Arial" font-size="19" font-weight="bold" fill="#FFFFFF">05  P5→P4→P3 fusion + P3→P4 reconstruction</text>
+  <text x="676" y="745" font-family="Arial" font-size="13" fill="#5B7488">Top-down P5/P4/P3; one bottom-up P4. P5 is not reconstructed in this YAML.</text>
+  <rect x="678" y="774" width="192" height="111" rx="9" fill="#E8F3FA" stroke="#A6C7DB" stroke-width="1.5"/>
+  <text x="694" y="805" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">N4 [23–25]</text>
+  <text x="694" y="832" font-family="Arial" font-size="13" fill="#507189">P5↑ + P4[18]</text>
+  <text x="694" y="855" font-family="Arial" font-size="12" fill="#668299">Concat → C3k2</text>
+  <rect x="905" y="774" width="192" height="111" rx="9" fill="#E8F3FA" stroke="#A6C7DB" stroke-width="1.5"/>
+  <text x="921" y="805" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">N3 [26–28]</text>
+  <text x="921" y="832" font-family="Arial" font-size="13" fill="#507189">N4↑ + P3[13]</text>
+  <text x="921" y="855" font-family="Arial" font-size="12" fill="#668299">Concat → C3k2</text>
+  <rect x="1132" y="774" width="192" height="111" rx="9" fill="#E8F3FA" stroke="#A6C7DB" stroke-width="1.5"/>
+  <text x="1148" y="805" font-family="Arial" font-size="17" font-weight="bold" fill="#174C70">O4 [29–31]</text>
+  <text x="1148" y="832" font-family="Arial" font-size="13" fill="#507189">N3↓ + N4</text>
+  <text x="1148" y="855" font-family="Arial" font-size="12" fill="#668299">Concat → C3k2</text>
+  <path d="M870 828H901 M1097 828H1128" fill="none" stroke="#3D759D" stroke-width="2.7"/>
+  <path d="M897 820L909 828L897 836 M1124 820L1136 828L1124 836" fill="#3D759D"/>
+  <text x="1001" y="914" text-anchor="middle" font-family="Arial" font-size="13" fill="#647B8B">Head inputs: N3[28] · O4[31] · backbone P5[22]</text>
+
+  <!-- Head -->
+  <rect x="1384" y="195" width="476" height="745" rx="15" fill="#FFFFFF" stroke="#BDAFD3" stroke-width="2"/>
+  <rect x="1384" y="195" width="476" height="62" rx="15" fill="#72589A"/>
+  <rect x="1384" y="239" width="476" height="18" fill="#72589A"/>
+  <text x="1405" y="234" font-family="Arial" font-size="20" font-weight="bold" fill="#FFFFFF">06  SegmentCitrusIV2 [35]</text>
+  <text x="1406" y="287" font-family="Arial" font-size="14" fill="#665C78">p2_head=False · three detection scales only</text>
+  <rect x="1407" y="311" width="430" height="86" rx="9" fill="#F1ECF7" stroke="#C9BBDD" stroke-width="1.5"/>
+  <text x="1426" y="342" font-family="Arial" font-size="18" font-weight="bold" fill="#574579">P3 / P4 / P5 candidates</text>
+  <text x="1426" y="369" font-family="Arial" font-size="14" fill="#806B99">N3[28] · O4[31] · P5[22] → 8,400 sites @ 640</text>
+  <rect x="1407" y="427" width="430" height="113" rx="9" fill="#F1ECF7" stroke="#C9BBDD" stroke-width="1.5"/>
+  <text x="1426" y="458" font-family="Arial" font-size="18" font-weight="bold" fill="#574579">Recognition route = 2</text>
+  <text x="1426" y="484" font-family="Arial" font-size="14" fill="#806B99">P3/P4 semantic correction before all towers</text>
+  <text x="1426" y="508" font-family="Arial" font-size="14" fill="#806B99">box · class · mask coefficients · quality</text>
+  <rect x="1407" y="574" width="430" height="130" rx="9" fill="#E9F5ED" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="1426" y="606" font-family="Arial" font-size="18" font-weight="bold" fill="#215A45">Mask-detail / prototype branch</text>
+  <text x="1426" y="633" font-family="Arial" font-size="14" fill="#406D58">fused P2[8] + persistent P2[17] + stem[3]</text>
+  <text x="1426" y="658" font-family="Arial" font-size="14" fill="#406D58">refiner → P3 relay + shared fine prototype</text>
+  <text x="1426" y="683" font-family="Arial" font-size="12" fill="#5E7969">P4[18] supplied for compatibility; transport disabled</text>
+  <rect x="1407" y="761" width="430" height="89" rx="9" fill="#EDF5EE" stroke="#9BCBAD" stroke-width="1.5"/>
+  <text x="1622" y="797" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="#245B42">Instance boxes + visible masks</text>
+  <text x="1622" y="825" text-anchor="middle" font-family="Arial" font-size="13" fill="#5F7968">mask coefficients × fine prototype</text>
+  <path d="M1622 397V422 M1622 540V570 M1622 704V757" fill="none" stroke="#72589A" stroke-width="2.7"/>
+  <path d="M1615 419L1622 429L1629 419 M1615 567L1622 577L1629 567 M1615 754L1622 764L1629 754" fill="#72589A"/>
+
+  <!-- Cross-panel routes. The bottom green route represents real detail input to the head. -->
+  <path d="M1169 597V638H774V770" fill="none" stroke="#4D84A0" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M767 767L774 777L781 767" fill="#4D84A0"/>
+  <path d="M821 578V638H997V770" fill="none" stroke="#4D84A0" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M990 767L997 777L1004 767" fill="#4D84A0"/>
+  <path d="M619 831H641V972H1365V638H1403" fill="none" stroke="#19775B" stroke-width="2.7" stroke-linejoin="round"/>
+  <path d="M1399 630L1411 638L1399 646" fill="#19775B"/>
+  <path d="M600 805H634V638H1008V449H1041" fill="none" stroke="#19775B" stroke-width="2.7" stroke-linejoin="round"/>
+  <path d="M1038 441L1050 449L1038 457" fill="#19775B"/>
+  <path d="M1347 829H1365V353H1403" fill="none" stroke="#72589A" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M1400 345L1412 353L1400 361" fill="#72589A"/>
+  <path d="M1327 558H1365V353" fill="none" stroke="#72589A" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Footer: actual configuration, including absent proposed features -->
+  <rect x="40" y="1000" width="1820" height="92" rx="13" fill="#F7FAFC" stroke="#C7D4DC" stroke-width="1.5"/>
+  <text x="63" y="1030" font-family="Arial" font-size="16" font-weight="bold" fill="#24475E">Configuration facts</text>
+  <text x="63" y="1055" font-family="Arial" font-size="13" fill="#5B7181">IV3InputTwin mode=1 (luminance + 5×5 local contrast); P2/P3 gated fusion; persistent 16ch P2; route=2; no P2 detection head; no slicing/ROI verification.</text>
+  <text x="63" y="1076" font-family="Arial" font-size="12" fill="#708492">Layer [32–34] are nn.Identity pass-throughs and are omitted visually. The graph groups ordinary Conv/C3k2 blocks and annotates P3/P4 context inputs to detail exchange.</text>
+</svg>

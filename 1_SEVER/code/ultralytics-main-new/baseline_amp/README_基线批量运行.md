@@ -1,7 +1,9 @@
 # 柑橘实例分割基线：按历史 78% 配方从头训练（2026-09-20 修订）
 
-入口：主代码目录的 `RUN_CITRUS_BASELINES_AMP.py`。默认最多300 epoch、seed=42、AMP=1，共7次训练，前台串行执行。
-`AMP_MODES=[1,0]` 保留此前要求的两种 AMP 配对实验，共14次。默认结果目录改为 `BASELINES_LEGACY78_SCRATCH_300EP`。
+入口：主代码目录的 `RUN_CITRUS_BASELINES_AMP.py`。2026-09-26 起默认 `SUITE="non_yolo"`：跳过已运行的三个 YOLO，运行 RTMDet-Ins-tiny、Mask R-CNN R50、SOLOv2-Light R18、RF-DETR Seg Nano。最多300 epoch、seed=42、`AMP_MODES=[1,0]`，共8次训练，前台串行执行。
+默认新结果目录为 `BASELINES_NONYOLO_MEMFIX_20260926`；保留 `SUITE="all"` 可运行原完整14次队列。最新 bug2(2) 验证显存修复见 `docs/BASELINE_VALIDATION_OOM_REPAIR_20260926.md`；此前掩膜padding和优化器修复仍保留。也可用 `--suite non_yolo --project 新目录` 覆盖旧入口设置，保留服务器自定义 DATA/PYTHONS。
+RTMDet-Ins和SOLOv2的原图掩膜恢复按实例分块，最终布尔掩膜存放CPU；不降低置信度精度、不减少候选数、不改变NMS或评估分辨率。MMDetection验证／测试batch固定1，训练batch不变。这个内存适配层必须同时用于训练中验证和最终共同评估；其耗时也应计入完整推理成本。
+MMDetection 开跑前增加三模型的混合长宽比掩膜对齐检查、AMP0/AMP1 合成批次损失/反向/优化器更新检查，以及 FP32 预测尺寸检查。检查只使用临时模型，不改变正式训练初始化；不是 GPU 占用保护。预处理维持等比缩放，图像与训练掩膜统一 padding 到当前批次最大尺寸的32倍数；验证掩膜保留原图坐标。
 本次范围是该入口下全部7种模型；没有修改历史训练结果、归档源码、独立 `4_baseline_choice` 工作台或创新系列。
 旧78%来源：`results/A_baselines/old_data_runs/001_3_yolo11-seg_adamw/args.yaml`。
 YOLO可对应参数逐项核对；显式 `pretrained=False` 实现旧脚本从 YAML 建模但没有实际加载 checkpoint 的行为，
@@ -20,7 +22,7 @@ YOLO可对应参数逐项核对；显式 `pretrained=False` 实现旧脚本从 Y
 | RTMDet-Ins-tiny | 非 YOLO 的轻量一阶段实例分割 | MMDetection 3.3.0 | 640 / 8 | FP16 混合精度 |
 | Mask R-CNN R50-FPN | 经典两阶段强对照 | MMDetection 3.3.0 | 640 / 2 | FP16 混合精度 |
 | SOLOv2-Light R18-FPN | 无框、位置式实例分割；补充不同技术路线 | MMDetection 3.3.0 | 640 / 2 | FP16 混合精度 |
-| RF-DETR Seg Nano | Transformer 分割对照，真实 Nano，不是 Preview | RF-DETR 1.4.0 | **624 / 2，累积 8 次** | **BF16 混合精度** |
+| RF-DETR Seg Nano | Transformer 分割对照，真实 Nano，不是 Preview | RF-DETR 1.4.0.post0 | **624 / 2，累积 8 次** | **BF16 混合精度** |
 
 所有 AMP=0 使用 FP32，并关闭 TF32；每个模型的 AMP=0/1 使用相同初始化、seed、batch、优化器、数据、输入和增强。
 启用两种 AMP 时，相邻 AMP 对交替先后顺序。单 seed 只能初筛，不据此声称统计显著。
@@ -55,8 +57,12 @@ RF-DETR 原锁定1.4.0已被官方撤回，修订为1.4.0.post0：
 已安装旧基线环境者，仅在没有任务使用该环境时执行：
 
 ```bash
-~/.conda/envs/citrus_baseline/bin/python -m pip install rfdetr==1.4.0.post0
+python REPAIR_CITRUS_MODERN_ENV.py
 ```
+
+该脚本会确认目标确为隔离的 Torch 2.5.1 / Ultralytics 8.4.60 环境，使用
+`--force-reinstall --no-deps` 将被撤回的 `rfdetr==1.4.0` 替换成 `1.4.0.post0`，随后执行
+`pip check` 和真实 YOLO/RF-DETR API 预检。它不会修改当前 `sxq`、`citrus_mmdet`、数据或结果。
 
 | 环境 | 固定核心版本 | 执行模型 |
 |---|---|---|
@@ -255,6 +261,11 @@ python RUN_CITRUS_BASELINES_AMP.py --summarize-only
 ```
 
 ## 7. 本地验证边界
+
+2026-09-21 `bug1` 修复：MMDetection/Torch2.1 的环境日志依赖旧 `pkg_resources.packaging`，
+已固定 setuptools==69.5.1，并补充真实 `collect_env` 预检。服务器可运行
+`python REPAIR_CITRUS_MMDET_ENV.py`；最小命令、旧项目恢复边界见
+`docs/BASELINE_BUG1_REPAIR_20260921.md`。31项baseline CPU检查通过，服务器CUDA仍待验证。
 
 2026-09-20 scratch修订已执行：26项CPU合约/配置测试通过（含历史YOLO参数逐项对照、三种MMDetection清除预训练、初始张量校验、AMP模式选择、YOLO/RF训练调用桩验证），以及语法检查、默认7任务dry-run。
 核对了 RF-DETR 1.4 源码的 BF16、类别编号、best-mask 检查点选择、test loader 和位置编码插值。

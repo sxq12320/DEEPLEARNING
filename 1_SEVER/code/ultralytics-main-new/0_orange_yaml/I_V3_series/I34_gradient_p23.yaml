@@ -1,0 +1,82 @@
+nc: 80
+scale: n
+scales:
+  n: [0.5, 0.25, 1024]
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, IV3InputTwin, [2]]
+  - [0, 1, Index, [3, 0]]
+  - [0, 1, Index, [2, 1]]
+  - [1, 1, Conv, [64, 3, 2]]
+  - [3, 1, Conv, [128, 3, 2]]
+  - [4, 2, C3k2, [256, false, 0.25]]
+  - [2, 1, Conv, [32, 3, 2]]
+  - [6, 1, Conv, [64, 3, 2]]
+  - [[5, 7], 1, IV3AsymGrayFuse, [1]]
+  - [[8, 3], 1, EV11DetailSeed, [16]]
+  - [8, 1, Conv, [256, 3, 2]]
+  - [10, 2, C3k2, [512, false, 0.25]]
+  - [7, 1, Conv, [96, 3, 2]]
+  - [[11, 12], 1, IV3AsymGrayFuse, [1]]
+  - [[9, 13], 1, EV11DetailExchange, []]
+  - [13, 1, Conv, [512, 3, 2]]
+  - [15, 2, C3k2, [512, true]]
+  - [[14, 16], 1, EV11DetailExchange, []]
+  - [[16, 17], 1, EV11DetailInject, []]
+  - [18, 1, Conv, [1024, 3, 2]]
+  - [19, 2, EV3DeepStage, [1024, true]]
+  - [20, 1, SPPF, [1024, 5]]
+  - [21, 2, C2PSA, [1024]]
+head:
+  # [from, repeats, module, args]
+  - [22, 1, nn.Upsample, [null, 2, nearest]]
+  - [[23, 18], 1, Concat, [1]]
+  - [24, 2, C3k2, [512, false]]
+  - [25, 1, nn.Upsample, [null, 2, nearest]]
+  - [[26, 13], 1, Concat, [1]]
+  - [27, 2, C3k2, [256, false]]
+  - [28, 1, Conv, [256, 3, 2]]
+  - [[29, 25], 1, Concat, [1]]
+  - [30, 2, C3k2, [512, false]]
+  - [31, 1, nn.Identity, []]
+  - [32, 1, nn.Identity, []]
+  - [33, 1, nn.Identity, []]
+  - [[28, 31, 22, 8, 3, 18, 17], 1, SegmentCitrusIV2, [nc, 32, 256, 16, true, false, false, 0.0, 0.0, 0.25, 0.5, 0.25, 2, true, false]]
+pretrained_map_family: I01_replay_shared
+pretrained_layer_map:
+  0: -1
+  1: -1
+  2: -1
+  3: 0
+  4: 1
+  5: 2
+  6: -1
+  7: -1
+  8: -1
+  9: -1
+  10: 3
+  11: 4
+  12: -1
+  13: -1
+  14: -1
+  15: 5
+  16: 6
+  17: -1
+  18: -1
+  19: 7
+  20: 8
+  21: 9
+  22: 10
+  23: 11
+  24: 12
+  25: 13
+  26: 14
+  27: 15
+  28: 16
+  29: 17
+  30: -1
+  31: 19
+  32: -1
+  33: -1
+  34: -1
+  35: 23

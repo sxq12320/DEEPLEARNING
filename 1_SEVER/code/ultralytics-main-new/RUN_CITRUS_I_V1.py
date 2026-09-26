@@ -5,6 +5,9 @@ from citrus_foreground import run_foreground
 DATA = "/data/sxq/datasets/orange_yolo/data.yaml"  # Your real server path; no confirmation/fingerprint gate.
 DEVICE = "1"
 SUITE = "priority"  # priority=00/01/04/05; all=10 arms; control=00/01; losses=04/06
+# Recommended diagnostic queue: "mechanism" = 00/01/02/03/04.
+# "feedback" = 04/06; historical "losses" is only an alias, not a loss ablation.
+# See docs/I_V1_REASSESSMENT_20260921.md before comparing to scratch/AMP1 baselines.
 EPOCHS = 300
 PROJECT = f"/data/sxq/results/I/I_V1/CITRUS_IV1_{SUITE.upper()}_{EPOCHS}EP"
 DRY_RUN = False  # True only builds/profiles; it does not train.

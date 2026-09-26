@@ -1,5 +1,8 @@
 torch==2.1.0
 torchvision==0.16.0
+# Torch 2.1 cpp_extension imports `from pkg_resources import packaging`.
+# setuptools 70 removes this export; recent releases remove pkg_resources itself.
+setuptools==69.5.1
 numpy==1.26.4
 mmengine==0.10.7
 mmdet==3.3.0

@@ -1,0 +1,8 @@
+# Adds image-driven visible-fruit candidate slots; 64 learned slots are replaced by evidence slots.
+nc: 1
+depth_multiple: 1.0
+width_multiple: 1.0
+backbone:
+  - [-1, 1, nn.Identity, []]
+head:
+  - [-1, 1, CitrusNativeSegment, [40, True, False, 0, False]]
