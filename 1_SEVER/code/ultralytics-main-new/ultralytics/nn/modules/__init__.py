@@ -615,6 +615,18 @@ from .citrus_i_v4 import SegmentCitrusIV4
 from .citrus_native_segment import CitrusNativeSegment
 
 __all__ += ("SegmentCitrusIV4", "CitrusNativeSegment")
+from .citrus_j import JContext, JDown, JFusion, JStage, JStem, SegmentCitrusJ
+
+__all__ += ("JContext", "JDown", "JFusion", "JStage", "JStem", "SegmentCitrusJ")
+from .citrus_j2 import SegmentCitrusJ2
+
+__all__ += ("SegmentCitrusJ2",)
+from .citrus_j2_structure import J2Contrast, J2RepMix, J2RepStage, J2ResidualFuse, SegmentCitrusJ2Structural
+
+__all__ += ("J2Contrast", "J2RepMix", "J2RepStage", "J2ResidualFuse", "SegmentCitrusJ2Structural")
+from .citrus_j2_refined import J2PhaseProto, SegmentCitrusJ2Expressive
+
+__all__ += ("J2PhaseProto", "SegmentCitrusJ2Expressive")
 from .citrus_e_v11 import (
     EV11ContextStage,
     EV11DetailExchange,

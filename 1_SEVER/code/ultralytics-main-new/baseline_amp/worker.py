@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 import importlib.metadata
 import json
-import subprocess
 import sys
+import time
 from pathlib import Path
 
 # -I suppresses PYTHONPATH and the repository root, preventing accidental use of custom historical modules.
@@ -15,6 +15,7 @@ sys.path.insert(0, str(HERE))
 
 from common import save_json, seed_everything, snapshot, state_sha256  # noqa: E402
 from registry import MODELS, YOLO_TRAIN  # noqa: E402
+from inference_runtime import install_inference_runtime, runtime_status  # noqa: E402
 
 
 def official_mmdet_root():
@@ -53,6 +54,8 @@ def preflight(families, cpu=False, model_name=None, training_smoke=True):
     import torch
     import pycocotools.mask  # noqa: F401
     import yaml  # noqa: F401
+
+    print("INFERENCE RUNTIME:", install_inference_runtime(), flush=True)
 
     if not cpu and not torch.cuda.is_available():
         raise RuntimeError("CUDA unavailable. Check interpreter, driver and CUDA_VISIBLE_DEVICES; AMP=1 needs CUDA.")
@@ -153,6 +156,13 @@ def train_yolo(job, prepared, run_dir):
         plots=True,
         save=True,
     )
+    trainer_type = None
+    if job.get("validation"):
+        from validation_adapters import make_yolo_trainer
+
+        options.update(patience=0, val=True, plots=False)
+        nc = len(json.loads((prepared / "summary.json").read_text(encoding="utf-8"))["names"])
+        trainer_type = make_yolo_trainer(job, prepared, run_dir, nc)
     save_json(run_dir / "effective_train.json", options)
 
     def verify_amp(trainer):
@@ -177,6 +187,9 @@ def train_yolo(job, prepared, run_dir):
         torch.backends.cudnn.allow_tf32 = False
 
     model.add_callback("on_pretrain_routine_end", verify_amp)
+    if trainer_type is not None:
+        model.train(trainer=trainer_type, **options)
+        return model.trainer.common_validation.checkpoint()
     model.train(**options)
     return Path(model.trainer.best)
 
@@ -219,7 +232,9 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
     val_pipeline = [
         dict(type="LoadImageFromFile"),
         dict(type="Resize", scale=(640, 640), keep_ratio=True),
-        dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
+        # CocoMetric already reads GT masks from ann_file. Decoding the same
+        # original-sized GT bitmaps in every validation worker is unnecessary.
+        dict(type="LoadAnnotations", with_bbox=True, with_mask=False),
         dict(type="PackDetInputs", meta_keys=("img_id", "img_path", "ori_shape", "img_shape", "scale_factor")),
     ]
     for name, pipeline in (
@@ -237,11 +252,16 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
     for mapping in _walk_mappings(cfg.model):
         if mapping.get("type") == "SyncBN":
             mapping["type"] = "BN"
-        # Low threshold for subsequent common AP evaluation; no architecture changes.
-        if "score_thr" in mapping:
+        # Legacy runs retain their saved behavior. New controlled runs adjust
+        # FINAL outputs only: never reduce Mask R-CNN's training/RPN proposals.
+        if not job.get("validation") and "score_thr" in mapping:
             mapping["score_thr"] = 0.001
-        if "max_per_img" in mapping:
+        if not job.get("validation") and "max_per_img" in mapping:
             mapping["max_per_img"] = 300
+    if job.get("validation"):
+        final_cfg = cfg.model.test_cfg.get("rcnn", cfg.model.test_cfg)
+        final_cfg.score_thr = job["validation"]["score_min"]
+        final_cfg.max_per_img = job["validation"]["max_dets"]
     epochs = job["epochs"]
     warmup = min(3, epochs)
     cfg.param_scheduler = [dict(type="LinearLR", start_factor=0.001, end_factor=1.0,
@@ -253,17 +273,48 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
     cfg.launcher = "none"
     cfg.default_hooks.logger.interval = 20
     cfg.visualizer.vis_backends = [dict(type="LocalVisBackend")]
+    from mmdet_common import configure_validation_io
+
+    configure_validation_io(cfg)
     return cfg
 
 
-def train_mmdet(job, prepared, run_dir):
+def train_mmdet(job, prepared, run_dir, resume=False):
     import torch
     from mmengine.runner import Runner
     from mmdet_memory import install_memory_safe_rtmdet
 
     save_json(run_dir / "inference_memory.json", install_memory_safe_rtmdet())
-    cfg = mmdet_config(job, prepared, run_dir, None)
-    cfg.dump(str(run_dir / "effective_config.py"))
+    if resume:
+        from mmengine.config import Config
+        from mmdet_common import configure_validation_io
+
+        cfg = Config.fromfile(str(run_dir / "effective_config.py"))
+        # Resume the saved optimizer/scheduler/epoch, not a freshly generated recipe.
+        configure_validation_io(cfg)
+        marker = run_dir / "train/last_checkpoint"
+        if not marker.is_file():
+            raise FileNotFoundError(f"No MMEngine last_checkpoint marker: {marker}")
+        checkpoint = Path(marker.read_text(encoding="utf-8").strip())
+        if not checkpoint.is_absolute():
+            checkpoint = (run_dir / "train" / checkpoint).resolve()
+        if not checkpoint.is_file():
+            raise FileNotFoundError(f"Resume checkpoint not found: {checkpoint}")
+        cfg.resume = True
+        cfg.load_from = str(checkpoint)
+        cfg.work_dir = str(run_dir / "train")
+        cfg.dump(str(run_dir / "resumed_effective_config.py"))
+        save_json(run_dir / "runtime_repair.json", dict(checkpoint=str(checkpoint),
+                  runtime=runtime_status(), training_hyperparameters_changed=False))
+    else:
+        cfg = mmdet_config(job, prepared, run_dir, None)
+        cfg.dump(str(run_dir / "effective_config.py"))
+    common_validation = None
+    if job.get("validation"):
+        from validation_adapters import install_mmdet_loop
+
+        common_validation = install_mmdet_loop(job, prepared, run_dir, cfg)
+        cfg.dump(str(run_dir / ("resumed_effective_config.py" if resume else "effective_config.py")))
     seed_everything(job["seed"])
     runner = Runner.from_cfg(cfg)
     # The wrapper is lazily built in train(); inspect via a hook after train initialization.
@@ -271,8 +322,10 @@ def train_mmdet(job, prepared, run_dir):
 
     class VerifyAMP(Hook):
         def __init__(self):
-            self.scale_decreases = 0
-            self.checked_iterations = 0
+            saved = run_dir / "amp_runtime.json"
+            previous = json.loads(saved.read_text(encoding="utf-8")) if resume and saved.is_file() else {}
+            self.scale_decreases = previous.get("scale_decreases", 0)
+            self.checked_iterations = previous.get("checked_iterations", 0)
 
         def before_train(self, runner):
             from mmengine.optim import AmpOptimWrapper
@@ -280,10 +333,11 @@ def train_mmdet(job, prepared, run_dir):
 
             actual = isinstance(runner.optim_wrapper, AmpOptimWrapper)
             save_json(run_dir / "optimizer_parameters.json", audit_optimizer_parameters(runner.model, runner.optim_wrapper))
-            save_json(run_dir / "initialization.json", dict(
-                mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(runner.model),
-                stage="after init_weights, before first optimizer step",
-            ))
+            if not resume:
+                save_json(run_dir / "initialization.json", dict(
+                    mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(runner.model),
+                    stage="after init_weights, before first optimizer step",
+                ))
             save_json(
                 run_dir / "amp_actual.json",
                 dict(
@@ -317,7 +371,13 @@ def train_mmdet(job, prepared, run_dir):
             ))
 
     runner.register_hook(VerifyAMP(), priority="VERY_HIGH")
+    from inference_runtime import make_validation_timing_hook
+
+    if common_validation is None:
+        runner.register_hook(make_validation_timing_hook(run_dir), priority="LOWEST")
     runner.train()
+    if common_validation is not None:
+        return common_validation.checkpoint()
     candidates = list((run_dir / "train").glob("best_coco_segm_mAP*.pth"))
     if len(candidates) != 1:
         raise RuntimeError(f"Expected one mask-mAP best checkpoint, found {candidates}")
@@ -380,7 +440,15 @@ def train_rfdetr(job, prepared, run_dir):
         wandb=False,
         eval_max_dets=100,
     )
+    if job.get("validation"):
+        options["early_stopping"] = False
     save_json(run_dir / "effective_train.json", dict(model=model.model_config.model_dump(), train=options))
+    if job.get("validation"):
+        from validation_adapters import rfdetr_validation
+
+        with rfdetr_validation(model, job, prepared, run_dir) as manager:
+            model.train(**options)
+        return manager.checkpoint()
     model.train(**options)
     best = run_dir / "train/checkpoint_best_total.pth"
     if not best.is_file():
@@ -388,14 +456,21 @@ def train_rfdetr(job, prepared, run_dir):
     return best
 
 
-def evaluate(job, prepared, run_dir, checkpoint):
+def evaluate(job, prepared, run_dir, checkpoint, profile_images=0, output_dir=None):
     """Re-evaluate selected checkpoint on ORIGINAL validation images, all in FP32 and common COCO metrics."""
     import numpy as np
     import torch
     from PIL import Image
     from coco_utils import evaluate_predictions, prediction_from_mask, save_predictions
 
+    if job.get("validation") and not profile_images:
+        from validation_adapters import evaluate_unified
+
+        return evaluate_unified(job, prepared, run_dir, checkpoint, output_dir or run_dir)
+
     seed_everything(job["seed"])
+    install_inference_runtime()
+    output_dir = Path(output_dir) if output_dir else run_dir
     family = job["recipe"]["family"]
     if family == "yolo":
         from ultralytics import YOLO
@@ -405,24 +480,27 @@ def evaluate(job, prepared, run_dir, checkpoint):
 
         def decode_chunked(protos, masks_in, bboxes, shape):
             """Bound the N x H x W FP32 peak of process_mask_native; per-detection math is unchanged."""
-            step = 16
-            if masks_in.shape[0] <= step:
-                return decode_full(protos, masks_in, bboxes, shape)
-            return torch.cat(
-                [
-                    decode_full(protos, masks_in[start : start + step], bboxes[start : start + step], shape)
-                    for start in range(0, masks_in.shape[0], step)
-                ]
-            )
+            from inference_runtime import decode_yolo_masks_bounded
+
+            # Retain only a bounded float chunk on CUDA; do not torch.cat all
+            # original-sized masks on the GPU while retaining every chunk.
+            return decode_yolo_masks_bounded(decode_full, protos, masks_in, bboxes, shape)
 
         ops.process_mask_native = decode_chunked
         model = YOLO(str(checkpoint))
     elif family == "mmdet":
-        from mmdet.apis import init_detector, inference_detector
+        from mmdet.apis import init_detector
         from mmdet_memory import install_memory_safe_rtmdet
+        from validation_adapters import mmdet_predictor
 
         install_memory_safe_rtmdet()
         model = init_detector(str(run_dir / "effective_config.py"), str(checkpoint), device="cuda:0")
+        mmdet_predict = mmdet_predictor(model, model.cfg)
+        # init_detector alone does not set Runner's strict deterministic flag.
+        # Mirror the saved training config so the speed probe tests the real
+        # validation condition rather than accidentally timing an easier path.
+        if model.cfg.get("randomness", {}).get("deterministic", False):
+            torch.use_deterministic_algorithms(True)
     else:
         from rfdetr import RFDETRSegNano
 
@@ -437,10 +515,17 @@ def evaluate(job, prepared, run_dir, checkpoint):
         )
     annotation = prepared / "coco/annotations/instances_val.json"
     records = json.loads(annotation.read_text(encoding="utf-8"))["images"]
+    if profile_images:
+        # Include the largest original photos instead of testing only small images.
+        records = sorted(records, key=lambda item: item["height"] * item["width"], reverse=True)[:profile_images]
     nc = len(json.loads((prepared / "summary.json").read_text(encoding="utf-8"))["names"])
     predictions = []
+    timings = []
+    native_before = runtime_status()["native_bilinear_calls"]
     with torch.inference_mode():
         for index, record in enumerate(records, 1):
+            torch.cuda.synchronize()
+            started = time.perf_counter()
             path = prepared / "coco/images/val" / record["file_name"]
             if family == "yolo":
                 result = model.predict(
@@ -455,22 +540,28 @@ def evaluate(job, prepared, run_dir, checkpoint):
                     verbose=False,
                 )[0]
                 if result.masks is None:
+                    torch.cuda.synchronize()
+                    timings.append(dict(image_id=record["id"], instances=0,
+                                        predict_seconds=time.perf_counter() - started, encode_seconds=0.0))
                     continue
-                masks = result.masks.data.cpu().numpy() > 0.5
+                masks = result.masks.data.cpu().numpy()
                 scores, labels = result.boxes.conf.cpu().numpy(), result.boxes.cls.cpu().numpy().astype(int) + 1
             elif family == "mmdet":
-                result = inference_detector(model, str(path)).pred_instances
-                masks = result.masks.cpu().numpy() > 0.5
-                scores, labels = result.scores.cpu().numpy(), result.labels.cpu().numpy() + 1
+                masks, scores, labels = mmdet_predict(path)
             else:
                 with Image.open(path) as image:
                     result = model.predict(image.convert("RGB"), threshold=0.001)
                 if result.mask is None:
+                    torch.cuda.synchronize()
+                    timings.append(dict(image_id=record["id"], instances=0,
+                                        predict_seconds=time.perf_counter() - started, encode_seconds=0.0))
                     continue
                 masks, scores, labels = result.mask, result.confidence, result.class_id
                 # post0 uses canonical foreground IDs 1..N; output 0 is unused, never remap it to fruit.
                 keep = labels != 0
                 masks, scores, labels = masks[keep], scores[keep], labels[keep]
+            torch.cuda.synchronize()
+            predicted_at = time.perf_counter()
             for mask, score, label in zip(masks, scores, labels):
                 if score < 0.001:
                     continue
@@ -478,11 +569,24 @@ def evaluate(job, prepared, run_dir, checkpoint):
                     raise RuntimeError(f"Unexpected category ID {label}; refusing silently incorrect evaluation")
                 if np.shape(mask) != (record["height"], record["width"]):
                     raise RuntimeError(f"Prediction mask is not in original-image coordinates: {np.shape(mask)}")
-                predictions.append(prediction_from_mask(record["id"], label, score, np.asarray(mask) > 0.5))
-            if index % 25 == 0:
+                predictions.append(prediction_from_mask(record["id"], label, score, mask))
+            timings.append(dict(image_id=record["id"], height=record["height"], width=record["width"],
+                                instances=len(masks), predict_seconds=predicted_at - started,
+                                encode_seconds=time.perf_counter() - predicted_at))
+            if profile_images or index % 25 == 0:
                 print(f"Common FP32 mask evaluation {index}/{len(records)}", flush=True)
-    save_predictions(run_dir / "val_predictions.coco.json", predictions)
-    metrics = evaluate_predictions(annotation, predictions, run_dir / "val_common.json", evaluate_bbox=False)
+                print("TIMING:", timings[-1], flush=True)
+    save_json(output_dir / "evaluation_timing.json", dict(
+        images=timings, runtime=runtime_status(),
+        native_bilinear_calls=runtime_status()["native_bilinear_calls"] - native_before,
+        profile_only=bool(profile_images), selection="largest original images" if profile_images else "all val images",
+        first_image_includes_warmup=True, evaluation="FP32 original-image masks; transfer and RLE included",
+    ))
+    if profile_images:
+        # A subset profile is not an AP result and must not mark a training job complete.
+        return None
+    save_predictions(output_dir / "val_predictions.coco.json", predictions)
+    metrics = evaluate_predictions(annotation, predictions, output_dir / "val_common.json", evaluate_bbox=False)
     metrics.update(
         evaluation="original-val / COCO mask AP maxDets=100 / FP32",
         checkpoint=str(checkpoint),
@@ -493,7 +597,7 @@ def evaluate(job, prepared, run_dir, checkpoint):
             ).parameters()
         ),
     )
-    save_json(run_dir / "val_common.json", metrics)
+    save_json(output_dir / "val_common.json", metrics)
     return metrics
 
 
@@ -504,6 +608,11 @@ def main():
     parser.add_argument("--prepare", type=Path)
     parser.add_argument("--prepared", type=Path)
     parser.add_argument("--job", type=Path)
+    parser.add_argument("--stage", choices=("train", "evaluate"), default="train")
+    parser.add_argument("--resume-train", action="store_true", help="Resume MMEngine last_checkpoint with saved config")
+    parser.add_argument("--checkpoint", type=Path, help="Existing checkpoint for profile/re-evaluation only")
+    parser.add_argument("--profile-images", type=int, default=0, help="Time N large photos; do not calculate partial AP")
+    parser.add_argument("--output-dir", type=Path, help="Separate profile/re-evaluation output; never overwrite old metrics")
     args = parser.parse_args()
     if args.check:
         preflight(args.check, cpu=args.cpu_check)
@@ -515,19 +624,46 @@ def main():
         return
     if not args.job:
         parser.error("Expected --check, --prepare or --job")
+    if args.resume_train and args.stage != "train":
+        parser.error("--resume-train requires --stage train")
+    if args.profile_images and args.output_dir is None:
+        parser.error("--profile-images requires a separate --output-dir")
     job = json.loads(args.job.read_text(encoding="utf-8"))
     # Full synthetic training was checked once at batch startup. Per-job checks
     # retain environment/config/padding checks without repeating all six steps.
     preflight([job["recipe"]["family"]], model_name=job["model"], training_smoke=False)
     run_dir = Path(job["run_dir"])
     trained = run_dir / "trained.json"
-    if trained.is_file() and not (run_dir / "complete.json").exists():
+    if args.stage == "evaluate":
         previous = json.loads((run_dir / "job.json").read_text(encoding="utf-8"))
         if previous != job:
             raise RuntimeError("Cannot resume evaluation with a changed job")
-        checkpoint = Path(json.loads(trained.read_text(encoding="utf-8"))["checkpoint"])
-        metrics = evaluate(job, Path(job["prepared"]), run_dir, checkpoint)
-        save_json(run_dir / "complete.json", dict(job=job, metrics=metrics))
+        if args.profile_images < 0:
+            parser.error("--profile-images must be nonnegative")
+        checkpoint = args.checkpoint or Path(json.loads(trained.read_text(encoding="utf-8"))["checkpoint"])
+        if not checkpoint.is_file():
+            raise FileNotFoundError(checkpoint)
+        if args.checkpoint and args.output_dir is None:
+            parser.error("--checkpoint requires a separate --output-dir to protect existing metrics")
+        if args.output_dir:
+            args.output_dir.mkdir(parents=True, exist_ok=False)
+        metrics = evaluate(job, Path(job["prepared"]), run_dir, checkpoint,
+                           profile_images=args.profile_images, output_dir=args.output_dir)
+        if metrics is not None and args.output_dir is None:
+            save_json(run_dir / "complete.json", dict(job=job, metrics=metrics))
+        return
+    if args.checkpoint or args.profile_images or args.output_dir:
+        parser.error("Evaluation/profile options require --stage evaluate")
+    if trained.is_file():
+        print("Training already finished; evaluation is a separate worker stage.", flush=True)
+        return
+    if args.resume_train:
+        if job["recipe"]["family"] != "mmdet" or (run_dir / "complete.json").is_file():
+            raise RuntimeError("Resume repair is only for incomplete MMDetection training jobs")
+        if json.loads((run_dir / "job.json").read_text(encoding="utf-8")) != job:
+            raise RuntimeError("Cannot resume training with a changed job")
+        checkpoint = train_mmdet(job, Path(job["prepared"]), run_dir, resume=True)
+        save_json(trained, dict(checkpoint=str(checkpoint)))
         return
     run_dir.mkdir(parents=True, exist_ok=False)
     save_json(run_dir / "job.json", job)
@@ -537,11 +673,9 @@ def main():
     functions = {"yolo": train_yolo, "mmdet": train_mmdet, "rfdetr": train_rfdetr}
     checkpoint = functions[job["recipe"]["family"]](job, prepared, run_dir)
     save_json(run_dir / "trained.json", dict(checkpoint=str(checkpoint)))
-    # Evaluate in a fresh interpreter: training leaves multi-GiB CUDA allocations reachable through
-    # trainer internals, and original-resolution mask decode needs nearly the whole card. The child
-    # hits the trained.json resume path above and writes complete.json itself.
-    code = subprocess.call([sys.executable, "-I", "-u", str(Path(__file__).resolve()), "--job", str(args.job)])
-    raise SystemExit(code)
+    # Exit first. The standard-library-only batch parent then launches evaluation.
+    # Spawning evaluation HERE while waiting would keep this CUDA context/cache alive.
+    print("TRAIN STAGE COMPLETE. This CUDA process exits before evaluation starts.", flush=True)
 
 
 if __name__ == "__main__":

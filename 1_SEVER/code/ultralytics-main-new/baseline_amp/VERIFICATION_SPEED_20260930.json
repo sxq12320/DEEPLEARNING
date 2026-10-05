@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-30",
+  "task": "Baseline validation performance repair",
+  "runtime": "Python 3.9.13 / torch 2.8.0+cpu; isolated MMEngine 0.10.7 and MMDetection 3.3.0 source/configs",
+  "pytest": {
+    "passed": 103,
+    "skipped": 1,
+    "skipped_reason": "CUDA native-versus-decomposition test requires the server GPU",
+    "files": [
+      "test_baseline_amp.py",
+      "test_mmdet_memory.py",
+      "test_mask_padding.py",
+      "test_optimizer_shared.py",
+      "test_environment_check.py",
+      "test_inference_runtime.py"
+    ]
+  },
+  "static_checks": {
+    "ruff_check": "passed for changed Python files",
+    "git_diff_check": "passed",
+    "batch_dry_run": "8 non-YOLO AMP-paired jobs, same scratch recipe, no execution",
+    "recovery_help": "passed",
+    "worker_help_isolated_python": "passed"
+  },
+  "verified_contracts": [
+    "Native bilinear size/scale/recompute/align_corners mapping matches stock CPU forward",
+    "Gradient-enabled interpolate dispatch and CPU gradients are unchanged",
+    "Native bypass is limited to no-grad CUDA non-antialiased bilinear with strict determinism enabled",
+    "RTMDet and SOLOv2 original selection/postprocessing match pinned official CPU methods",
+    "YOLO native mask chunks are transferred to CPU before the next chunk",
+    "RLE-derived boxes match binary mask boxes including empty/one-pixel masks",
+    "Official CocoMetric.process does not need sample GT masks when ann_file is supplied",
+    "Resume uses saved training recipe and leaves original effective_config and initialization hash intact",
+    "Training worker exits without spawning/waiting for evaluation",
+    "Profile selects large photos without marking completion or replacing old metrics"
+  ],
+  "server_validation_pending": [
+    "CUDA numerical error and high-resolution memory peak",
+    "Existing-weight profile of five large photos",
+    "Real checkpoint optimizer/scheduler/scaler restoration and next validation epoch",
+    "Full original-resolution FP32 COCO AP re-evaluation",
+    "Measured speedup; no acceleration factor claimed locally"
+  ]
+}

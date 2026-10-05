@@ -1,0 +1,53 @@
+{
+  "date": "2026-09-30",
+  "scope": "RUN_CITRUS_BASELINES_AMP.py: all seven registered baselines, paired AMP, common validation/selection",
+  "training_protocol": "legacy78_scratch_fixedbudget_commonval_v1_20260930",
+  "validation_protocol": "common_mask_coco_v1_20260930",
+  "regression": {
+    "passed": 125,
+    "skipped": 1,
+    "failed": 0,
+    "skip_reason": "CUDA interpolation regression requires a CUDA device; local Torch is CPU-only",
+    "files": [
+      "test_baseline_amp.py", "test_mmdet_memory.py", "test_mask_padding.py",
+      "test_optimizer_shared.py", "test_environment_check.py", "test_inference_runtime.py", "test_common_validation.py"
+    ]
+  },
+  "official_yolo_cpu_smoke": {
+    "passed": 3,
+    "failed": 0,
+    "models": ["yolo11n_seg", "yolov8n_seg", "yolo26n_seg"],
+    "epochs_each": 2,
+    "batch": 2,
+    "amp": false,
+    "source": "Untouched official ultralytics 8.4.60 PyPI wheel, extracted outside the research package",
+    "wheel_sha256": "4d2e2e95cfd87378e6dc02339b3e84d8ac36c24be1c438c5197d91c5ca30c578",
+    "artifacts": "E:/mastercode/_work/baseline_common_validation_20260930/cpu_smoke_04",
+    "verified": ["native optimizer/training loop", "quick/original validation", "FP32 best snapshot", "checkpoint reload AP matches selected AP"],
+    "local_environment": "Python 3.9.13, Torch 2.8 CPU; isolated numpy 1.26.4 fixture for official-wheel smoke",
+    "not_server_lockfile_environment": true
+  },
+  "additional_contracts": [
+    "all 14 jobs share validation protocol, each AMP pair differs only in AMP/name",
+    "three-seed queue contains 42 jobs",
+    "quick-grid geometry, image/instance/category IDs preserved; original annotation bytes unchanged",
+    "zero-area tiny masks retained and logged in quick view, not removed",
+    "same score/cap rules for common AP and fixed-threshold P/R",
+    "quick AP never selects best checkpoint; ties keep earlier epoch",
+    "Python/numpy/Torch RNG, module modes, gradients and deterministic flags restored after validation",
+    "MMDetection saved evaluated EMA state, not double-swapped regular state",
+    "Mask R-CNN official train/test RPN proposal budget preserved; only final detections capped",
+    "file-only inference removes GT annotation loaders but preserves resize/preprocessing",
+    "RF-DETR main validation replacement restores original functions after failure",
+    "RF-DETR bounded decoder matches untouched official PostProcess on CPU",
+    "legacy recovery/profile preserves original metrics and recipe"
+  ],
+  "static_checks": {"ruff": "passed", "git_diff_check": "passed", "all_dry_run": "14 jobs", "non_yolo_dry_run": "8 jobs"},
+  "limitations": [
+    "No server training or CUDA timing was run",
+    "MMDetection and RF-DETR full CUDA training loops need 1-3 epoch per-model/per-AMP smoke on the server",
+    "31 versus 300 original validation passes is a schedule reduction, not a measured wall-time speedup",
+    "Training resolution, batch/accumulation, augmentation, loss, EMA and AMP dtype remain declared cross-family differences",
+    "Completed historical runs were not changed, relabeled as controlled, or deleted"
+  ]
+}

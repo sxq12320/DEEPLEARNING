@@ -1,0 +1,8 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S01_TrainTypes.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S02_FixedAxis.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S03_InversionMethod.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S04_BigRatio.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S05_Differential.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S06_CompoundTrain.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S07_TrainFunctions.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L12/S08_Summary.mp4'

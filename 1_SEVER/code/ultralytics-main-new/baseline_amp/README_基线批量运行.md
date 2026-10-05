@@ -1,7 +1,8 @@
-# 柑橘实例分割基线：按历史 78% 配方从头训练（2026-09-20 修订）
+# 柑橘实例分割基线：统一验证/选模，历史 78% 配方从头训练（2026-09-30 修订）
 
-入口：主代码目录的 `RUN_CITRUS_BASELINES_AMP.py`。2026-09-26 起默认 `SUITE="non_yolo"`：跳过已运行的三个 YOLO，运行 RTMDet-Ins-tiny、Mask R-CNN R50、SOLOv2-Light R18、RF-DETR Seg Nano。最多300 epoch、seed=42、`AMP_MODES=[1,0]`，共8次训练，前台串行执行。
-默认新结果目录为 `BASELINES_NONYOLO_MEMFIX_20260926`；保留 `SUITE="all"` 可运行原完整14次队列。最新 bug2(2) 验证显存修复见 `docs/BASELINE_VALIDATION_OOM_REPAIR_20260926.md`；此前掩膜padding和优化器修复仍保留。也可用 `--suite non_yolo --project 新目录` 覆盖旧入口设置，保留服务器自定义 DATA/PYTHONS。
+入口：主代码目录的 `RUN_CITRUS_BASELINES_AMP.py`。最新默认 `SUITE="all"`、`EPOCHS=300`、seed=42、`AMP_MODES=[1,0]`，共14次训练，前台串行执行。新结果目录为 `BASELINES_CONTROLLED_20260930`。
+**统一规则**：每轮 quick640、首轮/每10轮/末轮原图 COCO验证，仅原图 Mask AP50–95 选最佳权重；所有验证 FP32，候选上限100，固定 P/R 阈值；全部关闭原生早停，固定预算。详细规则、运行说明和不能完全控制的变量见 `docs/BASELINE_CONTROLLED_PROTOCOL_20260930.md`。
+旧运行保留原协议，不能把旧YOLO峰值混入新受控表。临时只跑其他模型可用 `--suite non_yolo --project 新目录`，保留服务器自定义 DATA/PYTHONS。
 RTMDet-Ins和SOLOv2的原图掩膜恢复按实例分块，最终布尔掩膜存放CPU；不降低置信度精度、不减少候选数、不改变NMS或评估分辨率。MMDetection验证／测试batch固定1，训练batch不变。这个内存适配层必须同时用于训练中验证和最终共同评估；其耗时也应计入完整推理成本。
 MMDetection 开跑前增加三模型的混合长宽比掩膜对齐检查、AMP0/AMP1 合成批次损失/反向/优化器更新检查，以及 FP32 预测尺寸检查。检查只使用临时模型，不改变正式训练初始化；不是 GPU 占用保护。预处理维持等比缩放，图像与训练掩膜统一 padding 到当前批次最大尺寸的32倍数；验证掩膜保留原图坐标。
 本次范围是该入口下全部7种模型；没有修改历史训练结果、归档源码、独立 `4_baseline_choice` 工作台或创新系列。
@@ -137,10 +138,10 @@ YOLO 入口保留已绑定的 CUDA 可见设备，不让默认 `device=0` 改写
 
 ## 4. 固定的训练协议与比较边界
 
-共同项：同一个原始划分、随机初始化（不加载整网/主干预训练）、原图输入而非切片、最多300轮、seed=42、
-AdamW、基础学习率0.001、weight_decay=0.0005、warmup=3、patience=100。
-早停监控指标沿用各框架，实际轮数可能不同；300是上限，不伪称都完成300轮。
-不使用测试集选模，每轮验证。模型使用自己的官方损失，只有分类数改为数据集类别数。
+共同项：同一个原始划分、随机初始化（不加载整网/主干预训练）、原图输入而非切片、固定300轮、seed=42、
+AdamW、基础学习率0.001、weight_decay=0.0005、warmup=3。
+最新受控协议关闭全部原生早停，统一原图选模；旧运行的patience100仍由原记录保留。
+不使用测试集选模，每轮快验证及同频率原图验证。模型使用自己的官方损失，只有分类数改为数据集类别数。
 不能把原YOLO配方机械塞给其他框架：下表列明不可完全对齐之处，不能宣称严格同超参或官方最优配方。
 
 | 家族 | 优化与调度 | 输入增强/其他 |
@@ -162,8 +163,9 @@ MMDetection、RF-DETR 没有与 Ultralytics `cache=True` 等价的统一 API，�
 如果 OOM，请先停止，在入口 BATCHES 中修改该模型，让两种 AMP 一起改变，并换 PROJECT 重新跑这一对；
 不允许只给 AMP=0 降 batch、AMP=1 保持大 batch。
 
-YOLO/各框架训练时的原生验证精度与最佳检查点选择规则仍沿用框架实现；本套另外对最终选择的权重进行统一 FP32 验证。
-因此这是“原生 AMP 训练工作流”的成对比较，不等于证明每个梯度误差或每个 AMP 算子单独造成了性能变化。
+上表记录训练机制及旧配方早停参数；最新受控协议将 YOLO patience=0、MMDetection 删除 EarlyStoppingHook、RF-DETR early_stopping=False，其余训练参数不变。
+最佳检查点改用同频率原图 Mask AP50–95，训练后再使用同一预测/评估代码 FP32 重评。
+不把每个梯度误差或每个 AMP 算子单独解释为因果机制，跨框架增强、batch和调度差异仍需披露。
 
 ## 5. 数据适配与评估
 
@@ -204,7 +206,7 @@ BASELINES_AMP_300EP/
     amp_actual.json          实际 AMP 类型，非只有配置声明
     initialization.json      scratch声明、seed及真实初始张量校验值
     dataset.json             原始数据路径、图像/实例数
-    val_predictions.coco.json
+    validation_common/       quick/original分列，epochs.csv、best.json及逐轮指标
     val_common.json          统一评估指标
     complete.json            完整训练且评估成功才生成
   yolo11n_seg_amp1_seed42_300ep/
@@ -227,31 +229,19 @@ tail -f /data/sxq/results/BASELINES/BASELINES_AMP_300EP/logs/yolo11n_seg_amp0_se
 
 相同 PROJECT 不允许改变 batch、seed、epoch、环境路径或实现代码；防止中途换协议后仍混在同一个结果表里。
 
-**2026-09-20 评估 OOM 修复**：YOLO 家族共同评估曾以 retina_masks=True 在原图分辨率一次性解码全部检测，
-N x H x W 的 FP32 中间量超过 20 GiB 导致 OOM。现 worker.py 在评估时将 ops.process_mask_native
-按每 16 个检测分块解码（逐检测数学不变，输出逐位相同，见 	est_chunked_mask_decode_matches_full），
-且训练完成后评估改在**新解释器子进程**中运行（复用 trained.json 续跑路径），彻底释放训练显存残留。
-此处以下是旧版“仅评估OOM修复”的历史操作记录。**本次scratch训练协议改变，绝对不能通过刷新marker复用旧PROJECT**：
+**2026-09-30 验证速度修复（替代旧的评估进程处理说明）**：
+此前 YOLO 解码分块缓解了 OOM，但训练 worker 等待评估子进程时，自己的 CUDA context/cache
+不一定释放。现在由批量父进程依次启动 train/evaluate，训练进程必须先完全退出。
+YOLO 原图掩膜按像素预算分块并转 CPU，不再把全部大掩膜拼回 GPU。
 
-`ash
-/home/amax/sxq/bin/python - <<'PYEOF'
-import hashlib, json
-from pathlib import Path
-HERE = Path('/data/sxq/code/ultralytics-main-new/baseline_amp')
-marker = Path('/data/sxq/results/BASELINES/BASELINES_AMP_300EP/batch_protocol.json')
-protocol = json.loads(marker.read_text())
-digest = hashlib.sha256()
-for f in sorted(HERE.glob('*.py')) + sorted(HERE.glob('requirements*.txt')):
-    if f.name.startswith('test_'):
-        continue
-    digest.update(f.name.encode()); digest.update(f.read_bytes())
-protocol['implementation_sha256'] = digest.hexdigest()
-marker.write_text(json.dumps(protocol, indent=2, ensure_ascii=False) + chr(10))
-print('refreshed', digest.hexdigest()[:16])
-PYEOF
-`
+MMDetection 严格确定性 + Torch2.1 的 bilinear 会进入慢分解路径；现无梯度 CUDA 推理
+使用相同采样参数的原生 ATen forward，有梯度训练路径不改。val/test 不再重复解码未使用的 GT 位图。
+原生与分解实现可能有末位浮点差异，**不承诺 GPU 逐位一致或实测加速倍数**。
 
-仅当代码改动对结果逐位无影响时允许这样做；任何改变数值输出的改动都必须换新 PROJECT。
+已有权重测速、MMDet 断点续训和全部模型复评使用 RUN_BASELINE_RECOVERY.py。
+不要手工改 batch_protocol 指纹绕过一致性检查。新实验使用新 PROJECT；旧实验恢复另存运行时修复记录。
+具体操作、为什么 YOLO 快、日志证据和验证边界见
+[速度修复说明](../docs/BASELINE_VALIDATION_SPEED_REPAIR_20260930.md)。
 成对汇总检查初始权重及数据记录一致，差值统一定义为 `AMP1 - AMP0`，单位是百分点。
 
 只重新生成表格：

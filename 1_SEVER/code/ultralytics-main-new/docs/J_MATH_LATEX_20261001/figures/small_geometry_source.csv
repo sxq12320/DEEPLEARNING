@@ -1,0 +1,7 @@
+﻿split,range,count,instances
+train,lt8,233,4120
+train,8to16,601,4120
+train,ge16,3286,4120
+val,lt8,104,1181
+val,8to16,139,1181
+val,ge16,938,1181

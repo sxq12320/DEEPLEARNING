@@ -1,0 +1,12 @@
+{
+  "model": "J11_synthesis",
+  "yaml_sha256": "6e20d5c8162f37a7d23dc689154bebd27caad86e47b53b7819ddc229f6669ff5",
+  "module_sha256": "6d43c2b4ff56f836e929fd949c66bc57af53ea4a3791cdc4400ac125bb6b61f9",
+  "figure_role": "architecture only; no claim of measured optimum or performance gains",
+  "dimensions_mm": [
+    180,
+    115
+  ],
+  "png_dpi": 600,
+  "backend": "matplotlib; editable SVG/PDF text; simplified semantic-level diagram"
+}

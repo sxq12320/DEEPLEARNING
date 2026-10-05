@@ -1,0 +1,14 @@
+{
+  "torch": "2.8.0+cpu",
+  "device": "cpu",
+  "threads": 2,
+  "repeats": 9,
+  "input": [
+    1,
+    3,
+    640,
+    640
+  ],
+  "dtype": "FP32",
+  "scope": "Forward only. THOP excludes elementwise/pooling/interpolation; not training or end-to-end timing."
+}

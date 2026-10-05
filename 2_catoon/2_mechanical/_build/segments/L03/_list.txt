@@ -1,0 +1,8 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S01_Opening.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S02_InstantCenter.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S03_Kennedy.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S04_ICVelocity.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S05_RelativeVelocity.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S06_Coriolis.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S07_Analytical.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L03/S08_Summary.mp4'

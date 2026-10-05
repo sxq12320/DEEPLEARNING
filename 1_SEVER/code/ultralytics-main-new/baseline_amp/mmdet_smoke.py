@@ -114,14 +114,37 @@ def check_large_mask_decode():
     """Exercise original-photo-sized masks, which tiny forward checks cannot cover."""
     import torch
     from mmdet_memory import decode_masks_bounded
+    from inference_runtime import install_inference_runtime, runtime_status
 
+    install_inference_runtime()
+    # Match the real Runner setting, missed by the previous preflight.
+    deterministic = torch.are_deterministic_algorithms_enabled()
+    warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
+    torch.use_deterministic_algorithms(True)
     torch.cuda.reset_peak_memory_stats()
     before = torch.cuda.memory_allocated()
     logits = torch.zeros(16, 80, 80, device="cuda")
-    masks = decode_masks_bounded(logits, 8, True,
-                                dict(ori_shape=(3072, 4096), scale_factor=(640 / 4096, 640 / 4096)), 0.5)
+    try:
+        with torch.inference_mode():
+            # Native/decomposed implementations can differ in last FP32 bits.
+            # Check sampling conventions and record, not claim bitwise GPU equality.
+            import inference_runtime
+
+            probe = torch.randn(1, 3, 7, 9, device="cuda")
+            reference = inference_runtime._ORIGINAL_INTERPOLATE(probe, size=(81, 103),
+                                                                mode="bilinear", align_corners=False)
+            candidate = torch.nn.functional.interpolate(probe, size=(81, 103),
+                                                         mode="bilinear", align_corners=False)
+            torch.testing.assert_close(candidate, reference, atol=1e-5, rtol=1e-5)
+            forward_max_abs_diff = float((candidate - reference).abs().max())
+            masks = decode_masks_bounded(logits, 8, True,
+                                        dict(ori_shape=(3072, 4096), scale_factor=(640 / 4096, 640 / 4096)), 0.5)
+    finally:
+        torch.use_deterministic_algorithms(deterministic, warn_only=warn_only)
     assert tuple(masks.shape) == (16, 3072, 4096) and masks.device.type == "cpu"
     assert not masks.any()
     torch.cuda.synchronize()
     peak_mb = (torch.cuda.max_memory_allocated() - before) / 1024 ** 2
-    return dict(mask_count=16, original_shape=(3072, 4096), extra_cuda_peak_MiB=round(peak_mb, 2))
+    return dict(mask_count=16, original_shape=(3072, 4096), extra_cuda_peak_MiB=round(peak_mb, 2),
+                runtime=runtime_status(), deterministic_inference_tested=True,
+                small_probe_native_vs_decomposition_max_abs_diff=forward_max_abs_diff)

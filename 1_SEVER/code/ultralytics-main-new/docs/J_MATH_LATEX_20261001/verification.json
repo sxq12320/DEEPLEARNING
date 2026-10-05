@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "sympy_version": "1.14.0",
+    "fusion_gradient": "exact residual = 0",
+    "iou_one_pixel_xy": {
+      "4": "9/23",
+      "8": "49/79",
+      "16": "225/287"
+    },
+    "compression_kernel": [
+      1,
+      -1
+    ],
+    "gradient_budget_boundary": "exact residual = 0",
+    "scope": "Exact identities under stated assumptions; no AP or global convergence theorem."
+  },
+  "sources_sha256": {
+    "E:\\mastercode\\_work\\20261001_j_strict_review_v3\\audit.json": "6e5f578e0c7c85185978182a99528e75552d0c9772dd13c9076979d5a1d6fe4f",
+    "E:\\mastercode\\_work\\20261001_j\\evidence\\bounded_evidence.json": "9de3646e98b50c2ff32fb5ced829ed6fd3e41768aa1fab2bfae809dc04d4b333",
+    "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_SERIES_20261001\\paper_figures_readable_20261001\\J11_通俗版架构图.pdf": "9dbd8322ce38a20a425d537be7fe471b28afb24c2a4f15295de842a455e4f595",
+    "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\0_orange_yaml\\J_series\\J11_synthesis.yaml": "6e20d5c8162f37a7d23dc689154bebd27caad86e47b53b7819ddc229f6669ff5",
+    "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\ultralytics\\nn\\modules\\citrus_j.py": "6d43c2b4ff56f836e929fd949c66bc57af53ea4a3791cdc4400ac125bb6b61f9",
+    "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\ultralytics\\utils\\citrus_j_loss.py": "f188afce625e6dd25e9e276df853a57fbfe895554d65e0281284847aa990b3df"
+  },
+  "scope": "No training, no model changes, no dataset modifications; analytic examples labelled."
+}

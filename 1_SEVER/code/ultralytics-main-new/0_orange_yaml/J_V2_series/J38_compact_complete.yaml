@@ -1,0 +1,23 @@
+# J38_compact_complete: J36 narrowed backbone/neck channels; capacity/cost tradeoff arm
+# Experimental candidate, no accuracy claim.
+nc: 1
+scale: n
+scales:
+  n: [1.0, 1.0, 1024]
+backbone:
+  - [-1, 1, Conv, [24, 3, 2]]
+  - [-1, 1, J2Contrast, [5]]
+  - [-1, 1, Conv, [40, 3, 2]]
+  - [-1, 2, J2RepStage, [40, 2.0]]
+  - [-1, 1, Conv, [80, 3, 2]]
+  - [-1, 3, J2RepStage, [80, 2.0]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 4, J2RepStage, [128, 2.0]]
+  - [-1, 1, Conv, [192, 3, 2]]
+  - [-1, 2, J2RepStage, [192, 2.0]]
+  - [-1, 1, SPPF, [192, 5]]
+head:
+  - [[7, 10], 1, J2ResidualFuse, [80, 1]]
+  - [[5, 11], 1, J2ResidualFuse, [48, 1]]
+  - [[3, 12], 1, J2ResidualFuse, [32, 1]]
+  - [[13, 12, 11], 1, SegmentCitrusJ2Structural, [1, 32, 64, true, 0.1, false, 4, 32, true]]

@@ -6,6 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+from baseline_amp.registry import COMMON_VALIDATION  # noqa: E402 -- local foreground entry point
 
 # ===== Only edit this block. Keep each model's AMP0/AMP1 batch identical. =====
 SETTINGS = {
@@ -15,12 +16,13 @@ SETTINGS = {
         else "/data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml"
     ),
     "PROJECT": (
-        str(ROOT / "1_results/BASELINES_NONYOLO_MEMFIX_20260926")
+        str(ROOT / "1_results/BASELINES_CONTROLLED_20260930")
         if os.name == "nt"
-        else "/data/sxq/results/BASELINES/BASELINES_NONYOLO_MEMFIX_20260926"
+        else "/data/sxq/results/BASELINES/BASELINES_CONTROLLED_20260930"
     ),
     "DEVICE": 1,  # Physical GPU index. No occupancy guard; only this GPU is visible to children.
-    "SUITE": "non_yolo",  # non_yolo / all / yolo / mmdet / rfdetr / anchor
+    "SUITE": "all",  # all = 7 official families, each AMP1 + AMP0; non_yolo skips YOLO.
+    "VALIDATION": dict(COMMON_VALIDATION),  # Shared evaluator/grid/selection/frequency; do not tune per model.
     "EPOCHS": 300,  # First use 1-3 in a NEW PROJECT for smoke testing; then 300.
     "SEEDS": [42],  # Screening: [42]. Final paper repeats: [42, 43, 44].
     "AMP_MODES": [1, 0],  # Same legacy78 recipe in both modes, each model's batch unchanged.

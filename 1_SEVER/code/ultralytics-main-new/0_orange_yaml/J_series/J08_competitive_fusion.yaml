@@ -1,0 +1,24 @@
+# J08_competitive_fusion | task hypotheses, not a claim of measured improvement.
+# Channel counts are explicit. Candidate strides remain 8/16/32 (8400 @640).
+nc: 1
+depth_multiple: 1.0
+width_multiple: 1.0
+backbone:
+  # [from, repeats, module, args]
+  - [-1,1,"JStem",[16,1]]
+  - [-1,1,"JDown",[32,1]]
+  - [-1,2,"JStage",[32,5]]
+  - [-1,1,"JDown",[64,1]]
+  - [-1,2,"JStage",[64,5]]
+  - [-1,1,"JDown",[96,1]]
+  - [-1,3,"JStage",[96,5]]
+  - [-1,1,"JContext",[0,4,16]]
+  - [-1,1,"JDown",[160,1]]
+  - [-1,2,"JStage",[160,5]]
+  - [-1,1,"SPPF",[160,5]]
+head:
+  # P3/P4/P5 are read from backbone directly; no repeated top-down/bottom-up PAN.
+  - [[4,2,7],1,"JFusion",[64,0,1]]
+  - [[7,4,10],1,"JFusion",[96,0,1]]
+  - [[10,7],1,"JFusion",[128,0,1]]
+  - [[11,12,13,2,0],1,"SegmentCitrusJ",["nc",32,64,2,false,0,0,0.1]]

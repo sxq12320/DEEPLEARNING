@@ -1,0 +1,722 @@
+{
+  "fps": 30,
+  "totalFrames": 1297,
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "rate": "-5%",
+  "scenes": [
+    {
+      "index": 0,
+      "from": 0,
+      "frames": 165,
+      "preroll": 12,
+      "audio": "redesign/thermos/s0.mp3",
+      "audioSeconds": 4.488,
+      "cues": [
+        {
+          "text": "没插电的保温杯",
+          "from": 15,
+          "to": 60
+        },
+        {
+          "text": "为什么能让热水慢点变凉？",
+          "from": 67,
+          "to": 134
+        }
+      ],
+      "words": [
+        {
+          "text": "没",
+          "start": 0.102625,
+          "end": 0.313166,
+          "char_start": 0,
+          "char_end": 1
+        },
+        {
+          "text": "插电",
+          "start": 0.313166,
+          "end": 0.694749,
+          "char_start": 1,
+          "char_end": 3
+        },
+        {
+          "text": "的",
+          "start": 0.69475,
+          "end": 0.773708,
+          "char_start": 3,
+          "char_end": 4
+        },
+        {
+          "text": "保温杯",
+          "start": 0.786833,
+          "end": 1.431583,
+          "char_start": 4,
+          "char_end": 7
+        },
+        {
+          "text": "为什么",
+          "start": 1.826333,
+          "end": 2.234208,
+          "char_start": 7,
+          "char_end": 10
+        },
+        {
+          "text": "能",
+          "start": 2.247375,
+          "end": 2.365791,
+          "char_start": 10,
+          "char_end": 11
+        },
+        {
+          "text": "让",
+          "start": 2.365791,
+          "end": 2.510541,
+          "char_start": 11,
+          "char_end": 12
+        },
+        {
+          "text": "热水",
+          "start": 2.523666,
+          "end": 2.931541,
+          "char_start": 12,
+          "char_end": 14
+        },
+        {
+          "text": "慢",
+          "start": 2.957875,
+          "end": 3.15525,
+          "char_start": 14,
+          "char_end": 15
+        },
+        {
+          "text": "点",
+          "start": 3.15525,
+          "end": 3.326291,
+          "char_start": 15,
+          "char_end": 16
+        },
+        {
+          "text": "变",
+          "start": 3.339458,
+          "end": 3.549999,
+          "char_start": 16,
+          "char_end": 17
+        },
+        {
+          "text": "凉",
+          "start": 3.55,
+          "end": 3.878958,
+          "char_start": 17,
+          "char_end": 18
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "from": 165,
+      "frames": 177,
+      "preroll": 12,
+      "audio": "redesign/thermos/s1.mp3",
+      "audioSeconds": 4.872,
+      "cues": [
+        {
+          "text": "它不制造热量",
+          "from": 15,
+          "to": 58
+        },
+        {
+          "text": "答案，藏在双层杯壁里",
+          "from": 71,
+          "to": 146
+        }
+      ],
+      "words": [
+        {
+          "text": "它",
+          "start": 0.102625,
+          "end": 0.273666,
+          "char_start": 0,
+          "char_end": 1
+        },
+        {
+          "text": "不",
+          "start": 0.273666,
+          "end": 0.431541,
+          "char_start": 1,
+          "char_end": 2
+        },
+        {
+          "text": "制造",
+          "start": 0.44475,
+          "end": 0.826333,
+          "char_start": 2,
+          "char_end": 4
+        },
+        {
+          "text": "热量",
+          "start": 0.839458,
+          "end": 1.352624,
+          "char_start": 4,
+          "char_end": 6
+        },
+        {
+          "text": "答案",
+          "start": 1.960541,
+          "end": 2.460541,
+          "char_start": 6,
+          "char_end": 8
+        },
+        {
+          "text": "藏",
+          "start": 2.75,
+          "end": 2.973666,
+          "char_start": 8,
+          "char_end": 9
+        },
+        {
+          "text": "在",
+          "start": 2.973666,
+          "end": 3.118416,
+          "char_start": 9,
+          "char_end": 10
+        },
+        {
+          "text": "双层",
+          "start": 3.14475,
+          "end": 3.578958,
+          "char_start": 10,
+          "char_end": 12
+        },
+        {
+          "text": "杯",
+          "start": 3.592125,
+          "end": 3.789458,
+          "char_start": 12,
+          "char_end": 13
+        },
+        {
+          "text": "壁",
+          "start": 3.789458,
+          "end": 4.039458,
+          "char_start": 13,
+          "char_end": 14
+        },
+        {
+          "text": "里",
+          "start": 4.039458,
+          "end": 4.276291,
+          "char_start": 14,
+          "char_end": 15
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "from": 342,
+      "frames": 250,
+      "preroll": 12,
+      "audio": "redesign/thermos/s2.mp3",
+      "audioSeconds": 7.32,
+      "cues": [
+        {
+          "text": "中间接近真空",
+          "from": 15,
+          "to": 63
+        },
+        {
+          "text": "减少气体传导和对流",
+          "from": 66,
+          "to": 130
+        },
+        {
+          "text": "可热辐射仍能穿过真空",
+          "from": 143,
+          "to": 219
+        }
+      ],
+      "words": [
+        {
+          "text": "中间",
+          "start": 0.102625,
+          "end": 0.615791,
+          "char_start": 0,
+          "char_end": 2
+        },
+        {
+          "text": "接近",
+          "start": 0.642125,
+          "end": 0.98425,
+          "char_start": 2,
+          "char_end": 4
+        },
+        {
+          "text": "真空",
+          "start": 0.997375,
+          "end": 1.523708,
+          "char_start": 4,
+          "char_end": 6
+        },
+        {
+          "text": "减少",
+          "start": 1.8,
+          "end": 2.247375,
+          "char_start": 6,
+          "char_end": 8
+        },
+        {
+          "text": "气体",
+          "start": 2.273666,
+          "end": 2.589457,
+          "char_start": 8,
+          "char_end": 10
+        },
+        {
+          "text": "传导",
+          "start": 2.602625,
+          "end": 3.05,
+          "char_start": 10,
+          "char_end": 12
+        },
+        {
+          "text": "和",
+          "start": 3.076333,
+          "end": 3.207916,
+          "char_start": 12,
+          "char_end": 13
+        },
+        {
+          "text": "对流",
+          "start": 3.221041,
+          "end": 3.760499,
+          "char_start": 13,
+          "char_end": 15
+        },
+        {
+          "text": "可热",
+          "start": 4.35525,
+          "end": 4.763125,
+          "char_start": 15,
+          "char_end": 17
+        },
+        {
+          "text": "辐射",
+          "start": 4.776333,
+          "end": 5.342124,
+          "char_start": 17,
+          "char_end": 19
+        },
+        {
+          "text": "仍",
+          "start": 5.447375,
+          "end": 5.657875,
+          "char_start": 19,
+          "char_end": 20
+        },
+        {
+          "text": "能",
+          "start": 5.657875,
+          "end": 5.828916,
+          "char_start": 20,
+          "char_end": 21
+        },
+        {
+          "text": "穿过",
+          "start": 5.842125,
+          "end": 6.171083,
+          "char_start": 21,
+          "char_end": 23
+        },
+        {
+          "text": "真空",
+          "start": 6.184208,
+          "end": 6.710541,
+          "char_start": 23,
+          "char_end": 25
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "from": 592,
+      "frames": 173,
+      "preroll": 12,
+      "audio": "redesign/thermos/s3.mp3",
+      "audioSeconds": 4.752,
+      "cues": [
+        {
+          "text": "低辐射率的金属表面",
+          "from": 15,
+          "to": 75
+        },
+        {
+          "text": "进一步减少辐射换热",
+          "from": 79,
+          "to": 142
+        }
+      ],
+      "words": [
+        {
+          "text": "低",
+          "start": 0.102625,
+          "end": 0.326291,
+          "char_start": 0,
+          "char_end": 1
+        },
+        {
+          "text": "辐射",
+          "start": 0.326333,
+          "end": 0.721041,
+          "char_start": 1,
+          "char_end": 3
+        },
+        {
+          "text": "率",
+          "start": 0.721041,
+          "end": 0.865791,
+          "char_start": 3,
+          "char_end": 4
+        },
+        {
+          "text": "的",
+          "start": 0.865791,
+          "end": 0.997374,
+          "char_start": 4,
+          "char_end": 5
+        },
+        {
+          "text": "金属",
+          "start": 1.023666,
+          "end": 1.378916,
+          "char_start": 5,
+          "char_end": 7
+        },
+        {
+          "text": "表面",
+          "start": 1.392125,
+          "end": 1.931583,
+          "char_start": 7,
+          "char_end": 9
+        },
+        {
+          "text": "进一步",
+          "start": 2.234208,
+          "end": 2.642083,
+          "char_start": 9,
+          "char_end": 12
+        },
+        {
+          "text": "减少",
+          "start": 2.65525,
+          "end": 3.168416,
+          "char_start": 12,
+          "char_end": 14
+        },
+        {
+          "text": "辐射",
+          "start": 3.19475,
+          "end": 3.563166,
+          "char_start": 14,
+          "char_end": 16
+        },
+        {
+          "text": "换",
+          "start": 3.576333,
+          "end": 3.852624,
+          "char_start": 16,
+          "char_end": 17
+        },
+        {
+          "text": "热",
+          "start": 3.852625,
+          "end": 4.15525,
+          "char_start": 17,
+          "char_end": 18
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "from": 765,
+      "frames": 255,
+      "preroll": 12,
+      "audio": "redesign/thermos/s4.mp3",
+      "audioSeconds": 7.488,
+      "cues": [
+        {
+          "text": "杯口和杯盖仍会漏热",
+          "from": 15,
+          "to": 86
+        },
+        {
+          "text": "所以，保温是减慢传热",
+          "from": 98,
+          "to": 175
+        },
+        {
+          "text": "不是让传热停止",
+          "from": 176,
+          "to": 224
+        }
+      ],
+      "words": [
+        {
+          "text": "杯口",
+          "start": 0.102625,
+          "end": 0.523666,
+          "char_start": 0,
+          "char_end": 2
+        },
+        {
+          "text": "和",
+          "start": 0.55,
+          "end": 0.668416,
+          "char_start": 2,
+          "char_end": 3
+        },
+        {
+          "text": "杯",
+          "start": 0.681583,
+          "end": 0.905249,
+          "char_start": 3,
+          "char_end": 4
+        },
+        {
+          "text": "盖",
+          "start": 0.90525,
+          "end": 1.207875,
+          "char_start": 4,
+          "char_end": 5
+        },
+        {
+          "text": "仍",
+          "start": 1.313166,
+          "end": 1.549999,
+          "char_start": 5,
+          "char_end": 6
+        },
+        {
+          "text": "会",
+          "start": 1.55,
+          "end": 1.760541,
+          "char_start": 6,
+          "char_end": 7
+        },
+        {
+          "text": "漏热",
+          "start": 1.773666,
+          "end": 2.273666,
+          "char_start": 7,
+          "char_end": 9
+        },
+        {
+          "text": "所以",
+          "start": 2.881583,
+          "end": 3.407916,
+          "char_start": 9,
+          "char_end": 11
+        },
+        {
+          "text": "保温",
+          "start": 3.763166,
+          "end": 4.131582,
+          "char_start": 11,
+          "char_end": 13
+        },
+        {
+          "text": "是",
+          "start": 4.157875,
+          "end": 4.289458,
+          "char_start": 13,
+          "char_end": 14
+        },
+        {
+          "text": "减慢",
+          "start": 4.302625,
+          "end": 4.684208,
+          "char_start": 14,
+          "char_end": 16
+        },
+        {
+          "text": "传热",
+          "start": 4.697375,
+          "end": 5.236833,
+          "char_start": 16,
+          "char_end": 18
+        },
+        {
+          "text": "不是",
+          "start": 5.473666,
+          "end": 5.749999,
+          "char_start": 18,
+          "char_end": 20
+        },
+        {
+          "text": "让",
+          "start": 5.763166,
+          "end": 5.934207,
+          "char_start": 20,
+          "char_end": 21
+        },
+        {
+          "text": "传热",
+          "start": 5.960541,
+          "end": 6.302666,
+          "char_start": 21,
+          "char_end": 23
+        },
+        {
+          "text": "停止",
+          "start": 6.315791,
+          "end": 6.881582,
+          "char_start": 23,
+          "char_end": 25
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "from": 1020,
+      "frames": 277,
+      "preroll": 12,
+      "audio": "redesign/thermos/s5.mp3",
+      "audioSeconds": 7.752,
+      "cues": [
+        {
+          "text": "装冷水也是同一原理",
+          "from": 15,
+          "to": 79
+        },
+        {
+          "text": "只是热量从外面向里面传",
+          "from": 82,
+          "to": 156
+        },
+        {
+          "text": "换个方向，一样保冷",
+          "from": 168,
+          "to": 231
+        }
+      ],
+      "words": [
+        {
+          "text": "装",
+          "start": 0.102625,
+          "end": 0.326291,
+          "char_start": 0,
+          "char_end": 1
+        },
+        {
+          "text": "冷水",
+          "start": 0.326333,
+          "end": 0.852666,
+          "char_start": 1,
+          "char_end": 3
+        },
+        {
+          "text": "也是",
+          "start": 0.878958,
+          "end": 1.155291,
+          "char_start": 3,
+          "char_end": 5
+        },
+        {
+          "text": "同一",
+          "start": 1.168416,
+          "end": 1.563166,
+          "char_start": 5,
+          "char_end": 7
+        },
+        {
+          "text": "原理",
+          "start": 1.576333,
+          "end": 2.036874,
+          "char_start": 7,
+          "char_end": 9
+        },
+        {
+          "text": "只是",
+          "start": 2.326333,
+          "end": 2.602666,
+          "char_start": 9,
+          "char_end": 11
+        },
+        {
+          "text": "热量",
+          "start": 2.615791,
+          "end": 3.128957,
+          "char_start": 11,
+          "char_end": 13
+        },
+        {
+          "text": "从",
+          "start": 3.15525,
+          "end": 3.326291,
+          "char_start": 13,
+          "char_end": 14
+        },
+        {
+          "text": "外面",
+          "start": 3.326333,
+          "end": 3.694749,
+          "char_start": 14,
+          "char_end": 16
+        },
+        {
+          "text": "向",
+          "start": 3.721041,
+          "end": 3.892082,
+          "char_start": 16,
+          "char_end": 17
+        },
+        {
+          "text": "里面",
+          "start": 3.90525,
+          "end": 4.221041,
+          "char_start": 17,
+          "char_end": 19
+        },
+        {
+          "text": "传",
+          "start": 4.221041,
+          "end": 4.615791,
+          "char_start": 19,
+          "char_end": 20
+        },
+        {
+          "text": "换",
+          "start": 5.210541,
+          "end": 5.473666,
+          "char_start": 20,
+          "char_end": 21
+        },
+        {
+          "text": "个",
+          "start": 5.473666,
+          "end": 5.565791,
+          "char_start": 21,
+          "char_end": 22
+        },
+        {
+          "text": "方向",
+          "start": 5.578958,
+          "end": 6.078958,
+          "char_start": 22,
+          "char_end": 24
+        },
+        {
+          "text": "一样",
+          "start": 6.328958,
+          "end": 6.631583,
+          "char_start": 24,
+          "char_end": 26
+        },
+        {
+          "text": "保冷",
+          "start": 6.64475,
+          "end": 7.131583,
+          "char_start": 26,
+          "char_end": 28
+        }
+      ]
+    }
+  ]
+}

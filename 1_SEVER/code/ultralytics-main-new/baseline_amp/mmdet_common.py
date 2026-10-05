@@ -147,6 +147,29 @@ def configure_evaluator(evaluator_cfg: Any, annotation_path: Path) -> None:
             evaluator["format_only"] = False
 
 
+def prediction_pipeline(pipeline):
+    """File-only inference has no GT instances; retain preprocessing but never run annotation loaders."""
+    import copy
+
+    result = copy.deepcopy(pipeline)
+    return [stage for stage in result if str(stage.get("type", "")).split(".")[-1] not in (
+        "LoadAnnotations", "LoadPanopticAnnotations"
+    )]
+
+
+def configure_validation_io(cfg):
+    """Avoid unused GT rasterization; keep the original COCO annotation/evaluation unchanged."""
+    for name in ("val_evaluator", "test_evaluator"):
+        evaluators = cfg[name] if isinstance(cfg[name], list) else [cfg[name]]
+        if not all(item.get("type") == "CocoMetric" and item.get("ann_file") for item in evaluators):
+            raise ValueError("GT bitmap optimization requires CocoMetric with an explicit ann_file")
+    for name in ("val_dataloader", "test_dataloader"):
+        for mapping in _walk_mappings(cfg[name].dataset):
+            if mapping.get("type") == "LoadAnnotations":
+                mapping["with_mask"] = False
+        cfg[name]["pin_memory"] = True
+
+
 def scale_epoch_schedulers(cfg: Any, old_epochs: int, new_epochs: int) -> None:
     """Scale epoch-based scheduler boundaries when the official schedule length changes."""
     if old_epochs <= 0 or old_epochs == new_epochs:

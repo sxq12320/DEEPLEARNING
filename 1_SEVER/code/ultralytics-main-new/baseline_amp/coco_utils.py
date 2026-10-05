@@ -70,13 +70,17 @@ def prediction_from_mask(
     mask: np.ndarray,
 ) -> Dict[str, Any]:
     """Build one COCO instance prediction."""
-    binary = np.asarray(mask, dtype=bool)
+    array = np.asarray(mask)
+    binary = array if array.dtype == bool else array > 0.5
+    encoded = encode_binary_mask(binary)
+    mask_utils, _, _ = require_pycocotools()
     return {
         "image_id": int(image_id),
         "category_id": int(category_id),
         "score": float(score),
-        "bbox": mask_bbox(binary),
-        "segmentation": encode_binary_mask(binary),
+        # Reuse encoded RLE instead of allocating full np.nonzero coordinate arrays.
+        "bbox": mask_utils.toBbox(encoded).astype(float).tolist(),
+        "segmentation": encoded,
     }
 
 

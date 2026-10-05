@@ -230,8 +230,10 @@ def test_worker_eval_resumes_in_fresh_interpreter():
     """The train->eval OOM fix relies on evaluate() running in a clean CUDA context."""
     source = (HERE / "worker.py").read_text(encoding="utf-8")
     assert "ops.process_mask_native = decode_chunked" in source
-    assert 'sys.executable, "-I", "-u"' in source or 'sys.executable, "-I", "-u",' in source.replace("'", '"')
-    assert "subprocess.call(" in source
+    assert "subprocess.call(" not in source
+    batch = (HERE / "batch.py").read_text(encoding="utf-8")
+    assert 'for stage in ("train", "evaluate"):' in batch
+    assert '"--stage", stage' in batch
 
 
 def test_foreground_child_logs_and_failure(tmp_path):

@@ -452,6 +452,8 @@ def get_flops(model, imgsz=640):
     try:
         model = unwrap_model(model)
         p = next(model.parameters())
+        # Rearrangement stems can have 12/20-channel first weights but RGB public input.
+        input_channels = getattr(model, "yaml", {}).get("channels", p.shape[1])
         if not isinstance(imgsz, list):
             imgsz = [imgsz, imgsz]  # expand if int/float
         try:
@@ -460,12 +462,12 @@ def get_flops(model, imgsz=640):
             # Never profile data-dependent sampling with uninitialized memory.
             # Deterministic mode can fill empty() with NaNs, producing invalid
             # deformable offsets and even a native operator access violation.
-            im = torch.zeros((1, p.shape[1], stride, stride), device=p.device, dtype=p.dtype)
+            im = torch.zeros((1, input_channels, stride, stride), device=p.device, dtype=p.dtype)
             flops = thop.profile(deepcopy(model), inputs=[im], verbose=False)[0] / 1e9 * 2  # stride GFLOPs
             return flops * imgsz[0] / stride * imgsz[1] / stride  # imgsz GFLOPs
         except Exception:
             # Method 2: Use actual image size (required for RTDETR models)
-            im = torch.zeros((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)
+            im = torch.zeros((1, input_channels, *imgsz), device=p.device, dtype=p.dtype)
             return thop.profile(deepcopy(model), inputs=[im], verbose=False)[0] / 1e9 * 2  # imgsz GFLOPs
     except Exception:
         return 0.0
@@ -485,19 +487,20 @@ def get_flops_with_torch_profiler(model, imgsz=640):
         return 0.0
     model = unwrap_model(model)
     p = next(model.parameters())
+    input_channels = getattr(model, "yaml", {}).get("channels", p.shape[1])
     if not isinstance(imgsz, list):
         imgsz = [imgsz, imgsz]  # expand if int/float
     try:
         # Use stride size for input tensor
         stride = (max(int(model.stride.max()), 32) if hasattr(model, "stride") else 32) * 2  # max stride
-        im = torch.empty((1, p.shape[1], stride, stride), device=p.device, dtype=p.dtype)  # input image in BCHW
+        im = torch.zeros((1, input_channels, stride, stride), device=p.device, dtype=p.dtype)  # input image in BCHW
         with torch.profiler.profile(with_flops=True) as prof:
             model(im)
         flops = sum(x.flops for x in prof.key_averages()) / 1e9
         flops = flops * imgsz[0] / stride * imgsz[1] / stride  # 640x640 GFLOPs
     except Exception:
         # Use actual image size for input tensor (i.e. required for RTDETR models)
-        im = torch.empty((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)  # input image in BCHW format
+        im = torch.zeros((1, input_channels, *imgsz), device=p.device, dtype=p.dtype)  # input image in BCHW format
         with torch.profiler.profile(with_flops=True) as prof:
             model(im)
         flops = sum(x.flops for x in prof.key_averages()) / 1e9

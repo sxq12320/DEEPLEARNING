@@ -1,0 +1,7 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S01_ThreeStages.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S02_Equivalent.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S03_EnergyDiagram.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S04_Flywheel.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S05_Governor.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S06_FlywheelInLife.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L06/S07_Summary.mp4'

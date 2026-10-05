@@ -1,0 +1,27 @@
+{
+  "checked_at": "2026-10-01",
+  "production_mutations": false,
+  "dataset_mutations": false,
+  "official_training_started": false,
+  "script": "scripts/audit_j_research_assumptions.py",
+  "checks": {
+    "ruff_F_E9": "passed",
+    "ruff_format_check": "passed",
+    "math_constructed_counterexamples": "passed",
+    "auxiliary_descent_algebra_boundary": "zero residual; assumptions explicitly conditional",
+    "current_dataset_images": 965,
+    "current_dataset_instances": 5890,
+    "byte_identical_cross_split_images": 0,
+    "manifest_group_cross_split": 0,
+    "primary_source_matrix_rows": 34,
+    "saved_search_batches": 17
+  },
+  "audit_output": "E:/mastercode/_work/20261001_j_strict_review_v3/audit.json",
+  "excluded_claims": [
+    "No formal J AP measured",
+    "No GPU training or latency benchmark",
+    "No full reading of all 457 historical model implementations",
+    "No near-duplicate perceptual exhaustive search",
+    "No actual augmented-batch final TAL assignment coverage measured"
+  ]
+}

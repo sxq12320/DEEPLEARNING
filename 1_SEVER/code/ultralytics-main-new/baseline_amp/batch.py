@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from .common import save_json
-from .registry import PROTOCOL_ID, SUITES, make_queue
+from .registry import SUITES, make_queue
 
 HERE = Path(__file__).resolve().parent
 
@@ -91,6 +91,7 @@ def summarize(project):
                 epochs=job["epochs"],
                 batch=job["recipe"]["batch"],
                 imgsz=job["recipe"]["imgsz"],
+                validation_protocol=job.get("validation", {}).get("id", "legacy_native_selection"),
                 amp_dtype=actual.get("dtype"),
                 mask_AP50_95=metrics["mask_ap_50_95"],
                 mask_AP50=metrics["mask_ap_50"],
@@ -114,7 +115,9 @@ def summarize(project):
         pair = {row["amp"]: row for row in rows if (row["model"], row["seed"], row["epochs"]) == (model, seed, epochs)}
         if set(pair) != {0, 1}:
             continue
-        if any(pair[0][key] != pair[1][key] for key in ("batch", "imgsz", "protocol", "initialization")):
+        if any(pair[0][key] != pair[1][key] for key in (
+            "batch", "imgsz", "protocol", "initialization", "validation_protocol"
+        )):
             raise RuntimeError(f"Mismatched AMP pair: {model}")
         for filename, key in (("initialization.json", "sha256"), ("dataset.json", "signature")):
             records = [Path(pair[amp]["run"]) / filename for amp in (0, 1)]
@@ -158,6 +161,7 @@ def main(settings):
     queue = make_queue(
         settings["SUITE"], settings["SEEDS"], settings["EPOCHS"], settings["WORKERS"], settings["BATCHES"],
         settings.get("AMP_MODES", [1]),
+        validation=settings.get("VALIDATION"),
     )
     device = str(settings["DEVICE"])
     if not device.isdigit():
@@ -182,8 +186,15 @@ def main(settings):
         job.update(run_dir=str(project / job["name"]), prepared=str(prepared))
     print(f"FOREGROUND BASELINES | {len(queue)} jobs | GPU physical {device} -> logical cuda:0")
     print("Data:", settings["DATA"], "\nProject:", project)
-    print("Protocol:", PROTOCOL_ID, "| SCRATCH initialization | AdamW lr=0.001 | patience=100")
-    print("YOLO exactly maps legacy training knobs; cross-framework exceptions are documented in baseline_amp/README.")
+    protocol_id = queue[0]["protocol"]
+    print("Protocol:", protocol_id, "| SCRATCH initialization | AdamW lr=0.001")
+    if settings.get("VALIDATION"):
+        print("COMMON VALIDATION: FP32 / quick640 every epoch / original epoch1, every10, last / COCO maxDets100")
+        print("Selection: original Mask AP50-95 only; ties keep earlier epoch; fixed budget, no early stopping")
+    else:
+        print("LEGACY selection: native framework validation; patience=100")
+    print("Training uses legacy78 knobs; common validation changes selection/stopping, not native losses or assignment.")
+    print("Cross-framework batch/resize/AMP/EMA differences remain declared; see baseline_amp/README.")
     for i, job in enumerate(queue, 1):
         print(f"{i:02d}. {job['name']} | batch={job['recipe']['batch']} | size={job['recipe']['imgsz']}")
     if args.dry_run:
@@ -203,7 +214,8 @@ def main(settings):
     protocol = {
         key: settings[key] for key in ("DATA", "SUITE", "SEEDS", "EPOCHS", "WORKERS", "BATCHES", "DEVICE", "PYTHONS")
     }
-    protocol["protocol_id"] = PROTOCOL_ID
+    protocol["protocol_id"] = protocol_id
+    protocol["VALIDATION"] = settings.get("VALIDATION")
     protocol["AMP_MODES"] = settings.get("AMP_MODES", [1])
     digest = hashlib.sha256()
     for source_file in sorted(HERE.glob("*.py")) + sorted(HERE.glob("requirements*.txt")):
@@ -268,12 +280,14 @@ def main(settings):
         job_path = project / "jobs" / f"{job['name']}.json"
         save_json(job_path, job)
         begin = time.time()
-        run_visible(
-            [interpreters[job["recipe"]["environment"]], "-I", "-u", worker, "--job", job_path],
-            weights,
-            dict(env, PYTHONHASHSEED=str(job["seed"])),
-            project / "logs" / f"{job['name']}.log",
-        )
+        for stage in ("train", "evaluate"):
+            # Wait for the trainer process to exit before creating the evaluator's CUDA context.
+            run_visible(
+                [interpreters[job["recipe"]["environment"]], "-I", "-u", worker,
+                 "--job", job_path, "--stage", stage],
+                weights, dict(env, PYTHONHASHSEED=str(job["seed"])),
+                project / "logs" / f"{job['name']}.log",
+            )
         print(f"FINISHED {job['name']} ({(time.time() - begin) / 60:.1f} minutes)", flush=True)
         summarize(project)
     summarize(project)

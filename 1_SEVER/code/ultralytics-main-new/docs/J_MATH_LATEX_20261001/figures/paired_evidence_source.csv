@@ -1,0 +1,3 @@
+﻿name,global_n,fine_n,tiny_n,global_ms,fine_ms,source
+I20,25,84,161,137.70499313250184,417.47653810307384,E:\mastercode\1_SEVER\results\I\I_V2\I20_corrected_control_seed42\paired_fine_eval\paired_metrics.json
+V12_04,33,97,161,93.86026812717319,338.7159339617938,E:\mastercode\1_SEVER\results\E\E_V12\CITRUS_EV12_PRIORITY_300EP\V12_04_shared_route_control_seed42\paired_fine_eval\paired_metrics.json

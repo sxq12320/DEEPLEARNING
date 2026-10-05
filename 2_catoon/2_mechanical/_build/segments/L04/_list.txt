@@ -1,0 +1,8 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S01_Opening.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S02_FrictionCircle.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S03_ScrewIncline.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S04_Efficiency.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S05_SelfLock.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S06_DynamicStatic.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S07_UnitEfficiency.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L04/S08_Summary.mp4'

@@ -147,6 +147,18 @@ nul
 2_catoon/**/_smoke/
 
 # ------------------------------------------------------------------------------
+# 6.6 Node.js deps, JS build output & remaining scratch (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+node_modules/
+**/node_modules/
+2_catoon/**/out/
+.codex_tmp/
+_audit_tmp/
+/_tmp_*.txt
+/_proposal_file_inventory.txt
+*.exe
+
+# ------------------------------------------------------------------------------
 # 7. Exceptions (Explicitly keep documentation figures & icons)
 # ------------------------------------------------------------------------------
 !**/figures/*.png

@@ -1,0 +1,176 @@
+{
+  "pages": 21,
+  "render_scale": 1.55,
+  "source": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\J11_math_derivation.pdf",
+  "page_checks": [
+    {
+      "pdf_page": 1,
+      "text_characters": 482,
+      "smallest_span_pt": 6.8,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_01.png"
+    },
+    {
+      "pdf_page": 2,
+      "text_characters": 737,
+      "smallest_span_pt": 9.963,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_02.png"
+    },
+    {
+      "pdf_page": 3,
+      "text_characters": 459,
+      "smallest_span_pt": 9.963,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_03.png"
+    },
+    {
+      "pdf_page": 4,
+      "text_characters": 1060,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_04.png"
+    },
+    {
+      "pdf_page": 5,
+      "text_characters": 907,
+      "smallest_span_pt": 6.974,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_05.png"
+    },
+    {
+      "pdf_page": 6,
+      "text_characters": 880,
+      "smallest_span_pt": 5.978,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_06.png"
+    },
+    {
+      "pdf_page": 7,
+      "text_characters": 881,
+      "smallest_span_pt": 5.978,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_07.png"
+    },
+    {
+      "pdf_page": 8,
+      "text_characters": 921,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_08.png"
+    },
+    {
+      "pdf_page": 9,
+      "text_characters": 916,
+      "smallest_span_pt": 5.978,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_09.png"
+    },
+    {
+      "pdf_page": 10,
+      "text_characters": 721,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_10.png"
+    },
+    {
+      "pdf_page": 11,
+      "text_characters": 915,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_11.png"
+    },
+    {
+      "pdf_page": 12,
+      "text_characters": 820,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_12.png"
+    },
+    {
+      "pdf_page": 13,
+      "text_characters": 815,
+      "smallest_span_pt": 5.978,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_13.png"
+    },
+    {
+      "pdf_page": 14,
+      "text_characters": 976,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_14.png"
+    },
+    {
+      "pdf_page": 15,
+      "text_characters": 870,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_15.png"
+    },
+    {
+      "pdf_page": 16,
+      "text_characters": 1021,
+      "smallest_span_pt": 5.978,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_16.png"
+    },
+    {
+      "pdf_page": 17,
+      "text_characters": 883,
+      "smallest_span_pt": 7.2,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_17.png"
+    },
+    {
+      "pdf_page": 18,
+      "text_characters": 972,
+      "smallest_span_pt": 7.97,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_18.png"
+    },
+    {
+      "pdf_page": 19,
+      "text_characters": 1013,
+      "smallest_span_pt": 9.963,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_19.png"
+    },
+    {
+      "pdf_page": 20,
+      "text_characters": 1648,
+      "smallest_span_pt": 9.963,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_20.png"
+    },
+    {
+      "pdf_page": 21,
+      "text_characters": 1269,
+      "smallest_span_pt": 9.963,
+      "outside_page": [],
+      "replacement_character": false,
+      "preview": "E:\\mastercode\\1_SEVER\\code\\ultralytics-main-new\\docs\\J_MATH_LATEX_20261001\\qa\\pages\\page_21.png"
+    }
+  ],
+  "visual_review": "Requires manual review of every final page; contact sheets are navigation aids."
+}

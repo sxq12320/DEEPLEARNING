@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+import copy
+
 PROTOCOL_ID = "legacy78_scratch_v1_20260920"
+CONTROLLED_PROTOCOL_ID = "legacy78_scratch_fixedbudget_commonval_v1_20260930"
+COMMON_VALIDATION = dict(
+    id="common_mask_coco_v1_20260930", quick_size=640, original_interval=10,
+    first_and_last_original=True, dtype="float32", score_min=0.001, max_dets=100,
+    pr_score=0.25, pr_iou=0.5, selection="original_mask_ap_50_95_strict_greater", early_stopping=False,
+)
 MODELS = {
     "yolo11n_seg": dict(family="yolo", environment="modern", yaml="yolo11n-seg.yaml", batch=16, imgsz=640),
     "yolov8n_seg": dict(family="yolo", environment="modern", yaml="yolov8n-seg.yaml", batch=16, imgsz=640),
@@ -87,7 +95,7 @@ YOLO_TRAIN = dict(
 )
 
 
-def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0)):
+def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0), validation=None):
     """Keep pairs adjacent, alternate AMP order by model/seed to reduce order confounding."""
     if suite not in SUITES or not seeds or epochs < 1 or workers < 0:
         raise ValueError("Invalid suite, seeds, epochs or workers")
@@ -95,6 +103,8 @@ def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0)):
         raise ValueError("Seeds must be unique")
     if not amp_modes or len(set(amp_modes)) != len(amp_modes) or any(x not in (0, 1) for x in amp_modes):
         raise ValueError("AMP_MODES must be [1], [0], [1, 0] or [0, 1]")
+    if validation is not None and validation != COMMON_VALIDATION:
+        raise ValueError("Unsupported common validation protocol")
     batches = batches or {}
     unknown = set(batches) - set(MODELS)
     if unknown:
@@ -113,7 +123,7 @@ def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0)):
                 queue.append(
                     dict(
                         model=model,
-                        protocol=PROTOCOL_ID,
+                        protocol=CONTROLLED_PROTOCOL_ID if validation is not None else PROTOCOL_ID,
                         initialization="scratch",
                         seed=int(seed),
                         amp=bool(amp),
@@ -123,4 +133,6 @@ def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0)):
                         name=f"{model}_amp{amp}_seed{seed}_{epochs}ep",
                     )
                 )
+                if validation is not None:
+                    queue[-1]["validation"] = copy.deepcopy(validation)
     return queue

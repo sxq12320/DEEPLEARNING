@@ -1,0 +1,7 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S01_DesignTasks.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S02_PositionSynthesis.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S03_KDesign.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S04_GammaDesign.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S05_CouplerAtlas.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S06_Methods.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L08/S07_Summary.mp4'

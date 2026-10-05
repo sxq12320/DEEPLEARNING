@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-01",
+  "candidate": "J11_synthesis",
+  "evidence_status": "Untrained comprehensive candidate, not empirically proven strongest",
+  "pdf_pages": 21,
+  "propositions_with_proofs": 10,
+  "numbered_equations": 40,
+  "illustration_groups_including_cover": 9,
+  "compiler": "Installed MiKTeX XeLaTeX, no new TeX installation",
+  "native_editor": "Attempted open_in_codex, unavailable; editable tex preserved",
+  "symbolic_checks": "SymPy exact residual checks passed",
+  "python_source_check": "Ruff F/E9 and formatting passed",
+  "latex_final_warnings": 0,
+  "final_pdf_outside_page_spans": 0,
+  "final_pdf_replacement_characters": 0,
+  "final_pdf_minimum_text_span_pt": 5.978,
+  "all_21_final_pages_visually_inspected": true,
+  "figure_collision_failures": 0,
+  "figure_collision_warnings": 0,
+  "figure_minimum_font_pt": 7.2,
+  "comparable_panel_alignment": "Passed at 1.5 pt tolerance; single panels not applicable",
+  "source_validator_failures": 0,
+  "source_validator_warnings": [
+    "170 mm A4 figure width expressed programmatically; custom report width explicitly documented",
+    "PNG is preview, vector PDF is delivery; no TIFF submission raster required for this task"
+  ],
+  "model_changed": false,
+  "dataset_changed": false,
+  "training_performed": false,
+  "plots": "Actual historical paired data and analytic examples explicitly distinguished",
+  "scope": "Operator properties and conditional optimization, not an AP or global convergence guarantee"
+}

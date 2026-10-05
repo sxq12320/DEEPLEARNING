@@ -12,6 +12,19 @@ import torch.nn as nn
 
 from ultralytics.nn.autobackend import check_class_names
 from ultralytics.nn.modules import (
+    JContext,
+    JDown,
+    JFusion,
+    JStage,
+    JStem,
+    SegmentCitrusJ,
+    SegmentCitrusJ2,
+    J2Contrast,
+    J2RepMix,
+    J2RepStage,
+    J2ResidualFuse,
+    SegmentCitrusJ2Structural,
+    SegmentCitrusJ2Expressive,
     EV11RepStage,
     EV11ContextStage,
     EV11DetailSeed,
@@ -425,6 +438,9 @@ class BaseModel(torch.nn.Module):
         """
         if not self.is_fused():
             for m in self.model.modules():
+                if isinstance(m, J2RepMix):
+                    m.eval()
+                    m.switch_to_deploy()
                 if isinstance(m, (Conv, Conv2, DWConv)) and hasattr(m, "bn"):
                     if isinstance(m, Conv2):
                         m.fuse_convs()
@@ -807,6 +823,18 @@ class SegmentationModel(DetectionModel):
 
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusJ2Structural):
+            from ultralytics.utils.citrus_j2_structure_loss import J2StructuralLoss
+
+            return J2StructuralLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusJ):
+            from ultralytics.utils.citrus_j_loss import JSegmentationLoss
+
+            return JSegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusJ2):
+            from ultralytics.utils.citrus_j2_loss import J2SegmentationLoss
+
+            return J2SegmentationLoss(self)
         if isinstance(self.model[-1], CitrusNativeSegment):
             from ultralytics.utils.citrus_native_loss import CitrusNativeLoss
 
@@ -1944,6 +1972,10 @@ def parse_model(d, ch, verbose=True):
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     base_modules = frozenset(
         {
+            JStem,
+            JDown,
+            JStage,
+            J2RepStage,
             EV10ContrastStem,
             EV8ContextStage,
             EV3DeepStage,
@@ -2018,6 +2050,8 @@ def parse_model(d, ch, verbose=True):
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
         {
+            JStage,
+            J2RepStage,
             EV8ContextStage,
             EV3DeepStage,
             EV11RepStage,
@@ -2278,6 +2312,29 @@ def parse_model(d, ch, verbose=True):
                 raise ValueError("CitrusSAGEFuse requires C2/C3/C4/C5/PAN-P3 feature indices")
             c2 = ch[f[4]]
             args = [[ch[index] for index in f], *args]
+        elif m is JFusion:
+            if not isinstance(f, list) or len(f) < 2:
+                raise ValueError("JFusion needs at least two input feature indices")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[index] for index in f], c2, *args[1:]]
+        elif m is J2ResidualFuse:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("J2ResidualFuse requires [detail, semantic] inputs")
+            c2 = make_divisible(min(args[0], max_channels) * width, 8)
+            args = [[ch[index] for index in f], c2, *args[1:]]
+        elif m is J2Contrast:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m is JContext:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m is SegmentCitrusJ:
+            if not isinstance(f, list) or len(f) != 5:
+                raise ValueError("SegmentCitrusJ expects P3/P4/P5/P2/stem")
+            args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            args.extend([reg_max, end2end, [ch[index] for index in f]])
+            m.legacy = False
+            c2 = ch[f[0]]
         elif m is IV2P2Candidate:
             if not isinstance(f, list) or len(f) != 2:
                 raise ValueError("IV2P2Candidate needs [persistent_detail, P3] inputs")
@@ -2353,6 +2410,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
+                SegmentCitrusJ2,
+                SegmentCitrusJ2Structural,
+                SegmentCitrusJ2Expressive,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2400,6 +2460,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
+                SegmentCitrusJ2,
+                SegmentCitrusJ2Structural,
+                SegmentCitrusJ2Expressive,
                 SegmentCitrusSDR,
                 SegmentCitrusTopo,
                 SegmentP2Boundary,
@@ -2435,6 +2498,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
+                SegmentCitrusJ2,
+                SegmentCitrusJ2Structural,
+                SegmentCitrusJ2Expressive,
                 SegmentP2Boundary, SegmentP2CFS, SegmentP2DetectBoundary,
                 Segment26, YOLOESegment, YOLOESegment26,
                 Pose, Pose26, OBB, OBB26

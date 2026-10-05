@@ -1,0 +1,8 @@
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S01_CamFamily.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S02_MotionLaws.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S03_CombinedLaws.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S04_InversionDraw.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S05_RollerCam.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S06_PressureAngle.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S07_OtherCams.mp4'
+file 'E:/mastercode/2_catoon/2_mechanical/_build/segments/L09/S08_Summary.mp4'
