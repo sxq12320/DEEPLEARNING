@@ -1,0 +1,9 @@
+model,parameters,gflops_640,yaml
+J60_yolo_control,2842803,10.355763199999998,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J60_yolo_control.yaml
+J61_v12_replay,2283950,10.60128,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J61_v12_replay.yaml
+J62_no_pan_return,2160238,10.2027392,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J62_no_pan_return.yaml
+J63_projected_direct,2268046,10.59104,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J63_projected_direct.yaml
+J64_narrow_semantics,1838702,10.246336,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J64_narrow_semantics.yaml
+J65_shared_towers,1440350,9.3120256,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J65_shared_towers.yaml
+J66_without_auxiliary,1440350,9.3120256,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J66_without_auxiliary.yaml
+J67_thin_detail,1427770,9.1522304,E:\mastercode\1_SEVER\code\ultralytics-main-new\0_orange_yaml\J_V4_series\J67_thin_detail.yaml

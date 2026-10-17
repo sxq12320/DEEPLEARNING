@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Mapping, Sequence
+from numbers import Integral
 
 PROTOCOL_ID = "legacy78_scratch_v1_20260920"
 CONTROLLED_PROTOCOL_ID = "legacy78_scratch_fixedbudget_commonval_v1_20260930"
+TRANSFER_PROTOCOL_ID = "official_transfer_native_citrus_commonval_v1_20261009"
 COMMON_VALIDATION = dict(
     id="common_mask_coco_v1_20260930", quick_size=640, original_interval=10,
     first_and_last_original=True, dtype="float32", score_min=0.001, max_dets=100,
@@ -95,20 +98,54 @@ YOLO_TRAIN = dict(
 )
 
 
-def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0), validation=None):
-    """Keep pairs adjacent, alternate AMP order by model/seed to reduce order confounding."""
-    if suite not in SUITES or not seeds or epochs < 1 or workers < 0:
-        raise ValueError("Invalid suite, seeds, epochs or workers")
+def _integer(value, name, minimum, maximum=None):
+    """Validate without truncating floats, parsing strings, or accepting bool as int."""
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be an integer, not a boolean, float, or string")
+    value = int(value)
+    if value < minimum or (maximum is not None and value > maximum):
+        bounds = f"{minimum}..{maximum}" if maximum is not None else f">= {minimum}"
+        raise ValueError(f"{name} must be {bounds}")
+    return value
+
+
+def _ordered_values(values, name):
+    """Reject scalar/string/unordered input instead of silently changing run order."""
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence) or not values:
+        raise ValueError(f"{name} must be a nonempty ordered sequence")
+    return list(values)
+
+
+def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0), validation=None,
+               recipe_policy="legacy78_scratch"):
+    """Keep pairs adjacent; reject ambiguous parameters before constructing any jobs."""
+    if not isinstance(suite, str) or suite not in SUITES:
+        raise ValueError(f"Invalid suite: {suite!r}. Available: {', '.join(SUITES)}")
+    epochs = _integer(epochs, "epochs", 1)
+    workers = _integer(workers, "workers", 0)
+    seeds = [_integer(seed, "seed", 0, 2**32 - 1) for seed in _ordered_values(seeds, "seeds")]
     if len(set(seeds)) != len(seeds):
         raise ValueError("Seeds must be unique")
-    if not amp_modes or len(set(amp_modes)) != len(amp_modes) or any(x not in (0, 1) for x in amp_modes):
+    amp_modes = _ordered_values(amp_modes, "AMP_MODES")
+    if any(not isinstance(value, Integral) or value not in (0, 1) for value in amp_modes):
+        raise ValueError("AMP_MODES must be [1], [0], [1, 0] or [0, 1] (integer or boolean values only)")
+    amp_modes = [int(value) for value in amp_modes]
+    if len(set(amp_modes)) != len(amp_modes):
         raise ValueError("AMP_MODES must be [1], [0], [1, 0] or [0, 1]")
     if validation is not None and validation != COMMON_VALIDATION:
         raise ValueError("Unsupported common validation protocol")
-    batches = batches or {}
-    unknown = set(batches) - set(MODELS)
+    if recipe_policy not in ("legacy78_scratch", "official_transfer"):
+        raise ValueError("recipe_policy must be legacy78_scratch or official_transfer")
+    if recipe_policy == "official_transfer" and validation is None:
+        raise ValueError("The paper transfer track requires COMMON_VALIDATION")
+    if batches is None:
+        batches = {}
+    if not isinstance(batches, Mapping):
+        raise ValueError("batches must be a mapping of known model IDs to positive integer batch sizes")
+    unknown = [model for model in batches if not isinstance(model, str) or model not in MODELS]
     if unknown:
-        raise ValueError(f"Unknown batch override(s): {sorted(unknown)}")
+        raise ValueError(f"Unknown batch override(s): {unknown!r}")
+    batches = {model: _integer(batch, f"batch for {model}", 1) for model, batch in batches.items()}
     queue = []
     for seed_index, seed in enumerate(seeds):
         for model_index, model in enumerate(SUITES[suite]):
@@ -117,9 +154,7 @@ def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0), va
                 order = order[::-1]
             for amp in order:
                 recipe = dict(MODELS[model])
-                recipe["batch"] = int(batches.get(model, recipe["batch"]))
-                if recipe["batch"] < 1:
-                    raise ValueError("Batch must be a positive fixed integer; no AutoBatch")
+                recipe["batch"] = batches.get(model, recipe["batch"])
                 queue.append(
                     dict(
                         model=model,
@@ -135,4 +170,8 @@ def make_queue(suite, seeds, epochs, workers, batches=None, amp_modes=(1, 0), va
                 )
                 if validation is not None:
                     queue[-1]["validation"] = copy.deepcopy(validation)
+                if recipe_policy == "official_transfer":
+                    queue[-1].update(recipe_policy=recipe_policy, protocol=TRANSFER_PROTOCOL_ID,
+                                     initialization="official_coco_pretrained",
+                                     name="transfer_" + queue[-1]["name"])
     return queue

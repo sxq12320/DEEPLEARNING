@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-07",
+  "scope": "baseline_amp validation execution only; no I/J EV6, model, dataset or training recipe change",
+  "validation_engine": "prefetch_cached_coco_v2_20261007",
+  "evaluation_protocol": "common_mask_coco_v1_20260930",
+  "protocol_changed": false,
+  "local_environment": {
+    "python": "E:/AppInstallion/0_4_annaconda/python.exe",
+    "python_version": "3.9",
+    "torch": "2.8.0+cpu",
+    "cuda_available": false,
+    "dependencies_installed_for_this_task": false
+  },
+  "regression": {
+    "suite": "python -m pytest baseline_amp -q --tb=short",
+    "passed": 221,
+    "skipped": 22,
+    "failed": 0,
+    "seconds": 18.65,
+    "junit": "E:/mastercode/_work/baseline_val_perf_20261007/all_02.xml",
+    "extra_checks": [
+      "Ruff passed on all changed Python files",
+      "git diff --check passed on modified scope",
+      "RUN_CITRUS_BASELINES_AMP.py --dry-run --suite non_yolo passed; 8 paired jobs",
+      "RUN_BASELINE_RECOVERY.py --help passed",
+      "independent read-only protocol/resource review completed"
+    ]
+  },
+  "verified": [
+    "COCO AP and historical fixed-threshold P/R equal frozen legacy oracle on nonzero/crowd/tie/boundary/empty/multiclass/cap fixtures",
+    "Cached GT remains isolated from COCOeval mutations and source annotation bytes remain unchanged",
+    "Pre-encoding candidate cap equals previous post-encoding stable per-category cap",
+    "YOLO, RF-DETR and MMDet preparation/inference preserve synchronous input and output values on CPU fixtures",
+    "MMDet single-image path agrees with extracted official inference_detector and pseudo_collate source fixtures",
+    "Prefetch is bounded, ordered, inference stays in the caller thread, and error/early-close cleans threads",
+    "Direct blocking CPU mask copy preserves empty/dtype/chunk order and official CPU postprocessing",
+    "Common profile uses the same predictor and cap, does not rasterize unnecessary GT, and does not write subset AP/best/complete",
+    "Training RNG, module modes, gradients and deterministic flags remain preserved"
+  ],
+  "unverified": [
+    "Actual server CUDA validation speedup and peak GPU/host memory",
+    "CUDA direct-copy pixel equality checks skipped because local CUDA is unavailable",
+    "Full training and trained-model nonzero AP reproduction on the server",
+    "Official pinned-wheel three-model training smoke skipped in this CPU suite"
+  ],
+  "handoff": "Upload baseline_amp and updated foreground entry, preserving custom server DATA/DEVICE/PYTHONS; profile existing weights before resuming or starting new jobs.",
+  "server_speedup_claimed": false
+}

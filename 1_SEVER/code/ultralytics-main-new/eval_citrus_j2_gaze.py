@@ -66,7 +66,7 @@ def predict_view(model, image, window, eval_shape, device, imgsz=640, antialias=
             crop = cv2.resize(crop, size, interpolation=cv2.INTER_AREA)
     result = model.predict(crop, imgsz=imgsz, device=device, conf=conf, iou=iou, max_det=max_det, verbose=False,
                            save=False, retina_masks=False)[0]
-    if result.masks is None:
+    if result.masks is None or not len(result.masks.data):
         return []
     boxes = result.boxes.xyxy.cpu().numpy() * factor + [x0, y0, x0, y0]
     masks = scale_masks(result.masks.data[None].float(), (gy1 - gy0, gx1 - gx0))[0].gt(0.5).cpu().numpy()

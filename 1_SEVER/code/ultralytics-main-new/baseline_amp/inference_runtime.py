@@ -11,11 +11,30 @@ Source: https://github.com/pytorch/pytorch/blob/v2.1.0/torch/nn/functional.py
 
 from __future__ import annotations
 
+import contextlib
 import math
 import time
+from contextvars import ContextVar
 
 _ORIGINAL_INTERPOLATE = None
 _NATIVE_CALLS = 0
+_INFERENCE_SCOPE_DEPTH = ContextVar("baseline_inference_runtime_depth", default=0)
+
+
+@contextlib.contextmanager
+def inference_runtime_scope():
+    """Enable inference dispatch in this context only; restore it on every exit.
+
+    ``no_grad`` alone is not evidence of validation: training can also perform
+    gradient-free target/teacher computations. Callers must opt into this scope
+    around actual prediction, and gradients must still be disabled separately.
+    ContextVar keeps nested scopes and CPU preparation threads independent.
+    """
+    token = _INFERENCE_SCOPE_DEPTH.set(_INFERENCE_SCOPE_DEPTH.get() + 1)
+    try:
+        yield
+    finally:
+        _INFERENCE_SCOPE_DEPTH.reset(token)
 
 
 def _native_bilinear(input, size, scale_factor, align_corners, recompute_scale_factor):
@@ -63,7 +82,8 @@ def inference_interpolate(
 
     global _NATIVE_CALLS
     if (
-        not torch.is_grad_enabled()
+        _INFERENCE_SCOPE_DEPTH.get() > 0
+        and not torch.is_grad_enabled()
         and input.is_cuda
         and input.ndim == 4
         and mode == "bilinear"
@@ -104,21 +124,24 @@ def runtime_status():
     return dict(
         adapter="native_bilinear_inference_v1",
         native_bilinear_calls=_NATIVE_CALLS,
+        explicit_inference_scope_required=True,
         gradient_enabled_dispatch_changed=False,
         deterministic_flags_changed=False,
         threshold_or_resolution_changed=False,
+        mask_cpu_transfer="direct_blocking_copy_v2_20261007",
     )
 
 
 def decode_yolo_masks_bounded(decode, protos, coefficients, boxes, shape, pixel_budget=4_000_000):
-    """Keep official native mask decoding but release each CUDA chunk after CPU transfer."""
+    """Decode into final CPU storage without a second full-mask host copy."""
     import torch
 
     step = max(1, min(16, pixel_budget // (shape[0] * shape[1])))
     output = torch.empty((len(coefficients), *shape), dtype=torch.uint8, device="cpu")
     for start in range(0, len(coefficients), step):
         output[start : start + step].copy_(
-            decode(protos, coefficients[start : start + step], boxes[start : start + step], shape).cpu()
+            decode(protos, coefficients[start : start + step], boxes[start : start + step], shape),
+            non_blocking=False,
         )
     return output
 
@@ -130,36 +153,62 @@ def make_validation_timing_hook(run_dir):
     from common import save_json
 
     class ValidationTiming(Hook):
+        _inference_scope = None
+
+        @staticmethod
+        def _synchronize():
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+
+        def _close_inference_scope(self):
+            if self._inference_scope is not None:
+                scope, self._inference_scope = self._inference_scope, None
+                scope.__exit__(None, None, None)
+
         def before_val_epoch(self, runner):
-            torch.cuda.synchronize()
-            self.started = self.previous = time.perf_counter()
-            self.predict_seconds = self.input_wait_seconds = 0.0
-            self.batches = 0
-            self.native_before = _NATIVE_CALLS
+            if self._inference_scope is not None:
+                raise RuntimeError("Validation inference scope is already active")
+            self._inference_scope = inference_runtime_scope()
+            self._inference_scope.__enter__()
+            try:
+                self._synchronize()
+                self.started = self.previous = time.perf_counter()
+                self.predict_seconds = self.input_wait_seconds = 0.0
+                self.batches = 0
+                self.native_before = _NATIVE_CALLS
+            except BaseException:
+                self._close_inference_scope()
+                raise
 
         def before_val_iter(self, runner, batch_idx, data_batch=None):
             self.iter_started = time.perf_counter()
             self.input_wait_seconds += self.iter_started - self.previous
 
         def after_val_iter(self, runner, batch_idx, data_batch=None, outputs=None):
-            torch.cuda.synchronize()
+            self._synchronize()
             self.previous = time.perf_counter()
             self.predict_seconds += self.previous - self.iter_started
             self.batches += 1
 
         def after_val_epoch(self, runner, metrics=None):
-            torch.cuda.synchronize()
-            total = time.perf_counter() - self.started
-            record = dict(
-                epoch=runner.epoch,
-                batches=self.batches,
-                total_seconds=total,
-                input_wait_seconds=self.input_wait_seconds,
-                predict_transfer_rle_seconds=self.predict_seconds,
-                metrics_and_epoch_hooks_seconds=max(0.0, total - self.input_wait_seconds - self.predict_seconds),
-                native_bilinear_calls=_NATIVE_CALLS - self.native_before,
-            )
-            save_json(run_dir / "validation_timing.json", record)
-            runner.logger.info("VALIDATION TIMING: " + str(record))
+            try:
+                self._synchronize()
+                total = time.perf_counter() - self.started
+                record = dict(
+                    epoch=runner.epoch,
+                    batches=self.batches,
+                    total_seconds=total,
+                    input_wait_seconds=self.input_wait_seconds,
+                    predict_transfer_rle_seconds=self.predict_seconds,
+                    metrics_and_epoch_hooks_seconds=max(0.0, total - self.input_wait_seconds - self.predict_seconds),
+                    native_bilinear_calls=_NATIVE_CALLS - self.native_before,
+                )
+                save_json(run_dir / "validation_timing.json", record)
+                runner.logger.info("VALIDATION TIMING: " + str(record))
+            finally:
+                self._close_inference_scope()
+
+        def after_run(self, runner):
+            self._close_inference_scope()
 
     return ValidationTiming()

@@ -93,6 +93,27 @@ def materialize(source, destination):
         shutil.copy2(source, destination)
 
 
+def materialize_label(source, destination, content):
+    """Freeze the exact TXT bytes used for COCO conversion, never link a mutable label.
+
+    Images can share immutable storage, but an in-place label edit must not change
+    only YOLO's view after the COCO/RF-DETR annotations have already been written.
+    Existing legacy hard links are rejected, not silently unlinked or overwritten.
+    """
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        if destination.samefile(source):
+            raise ValueError(
+                f"Legacy prepared label is hard-linked to its source: {destination}. "
+                "Use a NEW PROJECT for new training; existing files were not replaced."
+            )
+        if destination.read_bytes() != content:
+            raise ValueError(f"Conflicting derived label snapshot: {destination}. Use a NEW PROJECT.")
+        return
+    with destination.open("xb") as handle:
+        handle.write(content)
+
+
 def prepare(data, output):
     from pycocotools import mask as mask_utils
 
@@ -105,7 +126,11 @@ def prepare(data, output):
         raise FileExistsError(f"Unrecognized prepared directory: {output}")
     save_json(marker, dict(data=str(data), signature=signature, note="provenance only; no confirmation prompt"))
     categories = [dict(id=i + 1, name=name, supercategory="citrus") for i, name in enumerate(names)]
-    summary = {"source": str(data), "signature": signature, "names": names, "splits": {}}
+    summary = {
+        "source": str(data), "signature": signature, "names": names, "splits": {},
+        "label_storage": "independent_txt_snapshot_v1_20261008",
+        "image_storage": "immutable_hardlink_or_copy",
+    }
     manifest = []
     for split, images in splits.items():
         coco = dict(
@@ -117,11 +142,12 @@ def prepare(data, output):
         )
         for image_id, image in enumerate(images, 1):
             label = label_for(image)
+            label_content = label.read_bytes()
             file_name = f"{image_id:07d}_{image.name}"
             with Image.open(image) as source_image:
                 width, height = source_image.size
             coco["images"].append(dict(id=image_id, file_name=file_name, width=width, height=height))
-            for line_number, line in enumerate(label.read_text(encoding="utf-8-sig").splitlines(), 1):
+            for line_number, line in enumerate(label_content.decode("utf-8-sig").splitlines(), 1):
                 if not line.strip():
                     continue
                 values = [float(v) for v in line.split()]
@@ -158,9 +184,14 @@ def prepare(data, output):
                 output / "rfdetr" / rf_split / file_name,
             ):
                 materialize(image, target)
-            materialize(label, output / "yolo" / split / "labels" / Path(file_name).with_suffix(".txt"))
+            materialize_label(
+                label, output / "yolo" / split / "labels" / Path(file_name).with_suffix(".txt"), label_content
+            )
             manifest.append(
-                dict(split=split, image_id=image_id, source=str(image), label=str(label), derived=file_name)
+                dict(
+                    split=split, image_id=image_id, source=str(image), label=str(label), derived=file_name,
+                    label_sha256=hashlib.sha256(label_content).hexdigest(),
+                )
             )
         save_json(output / "coco/annotations" / f"instances_{split}.json", coco)
         # Keep all derived COCO views 1-based; post0 reserves classifier output 0.
@@ -168,6 +199,8 @@ def prepare(data, output):
         # RF-DETR 1.4.0.post0 reserves output 0; foreground uses canonical COCO IDs 1..N.
         save_json(output / "rfdetr" / rf_split / "_annotations.coco.json", rf_coco)
         summary["splits"][split] = dict(images=len(coco["images"]), instances=len(coco["annotations"]))
+    if inspect_source(data)[3] != signature:
+        raise ValueError("Source data changed DURING preparation. Use a NEW PROJECT; training has not started.")
     yolo = dict(path=str(output / "yolo"), names=names)
     yolo.update({split: f"{split}/images" for split in splits})
     (output / "yolo/data.yaml").write_text(yaml.safe_dump(yolo, allow_unicode=True), encoding="utf-8")

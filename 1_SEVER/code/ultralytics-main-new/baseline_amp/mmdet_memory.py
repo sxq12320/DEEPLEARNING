@@ -34,7 +34,7 @@ def decode_masks_bounded(logits, stride, rescale, img_meta, threshold, chunk_lim
         if rescale:
             chunk = functional.interpolate(chunk, size=list(expanded), mode="bilinear", align_corners=False)
             chunk = chunk[..., :original[0], :original[1]]
-        output[start:start + step].copy_((chunk.sigmoid().squeeze(0) > threshold).cpu())
+        output[start:start + step].copy_(chunk.sigmoid().squeeze(0) > threshold, non_blocking=False)
         del chunk
     return output
 
@@ -60,7 +60,7 @@ def decode_solo_masks_bounded(probabilities, stride, img_meta, threshold):
         chunk = functional.interpolate(probabilities[start:start + step].unsqueeze(0), size=expanded,
                                        mode="bilinear", align_corners=False)[..., :height, :width]
         chunk = functional.interpolate(chunk, size=original, mode="bilinear", align_corners=False)
-        output[start:start + step].copy_((chunk.squeeze(0) > threshold).cpu())
+        output[start:start + step].copy_(chunk.squeeze(0) > threshold, non_blocking=False)
         del chunk
     return output
 

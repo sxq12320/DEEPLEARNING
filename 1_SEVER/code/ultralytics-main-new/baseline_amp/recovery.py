@@ -32,6 +32,7 @@ def find_checkpoint(run_dir):
 
 
 def main(settings):
+    """Keep the existing CLI while exposing run() to direct Python callers."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir")
     parser.add_argument("--mode", choices=("profile", "resume", "evaluate"))
@@ -39,18 +40,34 @@ def main(settings):
     parser.add_argument("--profile-images", type=int)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
-    run_value = args.run_dir or settings["RUN_DIR"]
-    if not run_value:
+    settings = dict(settings)
+    for key, value in (
+        ("RUN_DIR", args.run_dir),
+        ("MODE", args.mode),
+        ("CHECKPOINT", args.checkpoint),
+        ("PROFILE_IMAGES", args.profile_images),
+    ):
+        if value is not None:
+            settings[key] = value
+    if not settings["RUN_DIR"]:
         parser.error("Set SETTINGS['RUN_DIR'] to the existing MODEL run directory, not the batch PROJECT.")
+    return run(settings, dry_run=args.dry_run)
+
+
+def run(settings, *, dry_run=False):
+    """Run one saved job without reading or changing process command-line args."""
+    run_value = settings["RUN_DIR"]
+    if not run_value:
+        raise ValueError("Set RUN_DIR to the existing MODEL run directory, not the batch PROJECT.")
     run_dir = Path(run_value).expanduser().resolve()
     job_path = run_dir / "job.json"
     job = json.loads(job_path.read_text(encoding="utf-8"))
     if Path(job["run_dir"]).resolve() != run_dir:
         raise ValueError("Saved run_dir differs from RUN_DIR. Use the experiment's original location.")
-    mode = args.mode or settings["MODE"]
+    mode = settings["MODE"]
     if mode not in ("profile", "resume", "evaluate"):
         raise ValueError(f"Unknown MODE: {mode}")
-    count = args.profile_images if args.profile_images is not None else settings["PROFILE_IMAGES"]
+    count = settings["PROFILE_IMAGES"]
     if mode == "profile" and count < 1:
         raise ValueError("PROFILE_IMAGES must be positive")
     if mode == "resume" and job["recipe"]["family"] != "mmdet":
@@ -63,7 +80,7 @@ def main(settings):
     device = str(settings["DEVICE"])
     if not device.isdigit():
         raise ValueError("DEVICE must be one physical GPU index")
-    checkpoint_value = args.checkpoint or settings["CHECKPOINT"]
+    checkpoint_value = settings["CHECKPOINT"]
     if mode == "resume" and checkpoint_value:
         raise ValueError("Resume uses train/last_checkpoint including optimizer state; leave CHECKPOINT blank.")
     checkpoint = Path(checkpoint_value).expanduser().resolve() if checkpoint_value else find_checkpoint(run_dir)
@@ -94,10 +111,10 @@ def main(settings):
         flush=True,
     )
     print("Stop the old training process BEFORE using resume. No unrelated process is killed.", flush=True)
-    if args.dry_run:
+    if dry_run:
         for command in commands:
             print([str(value) for value in command])
-        return
+        return destination
     destination.mkdir(parents=True, exist_ok=False)
     save_json(
         destination / "request.json",
@@ -126,3 +143,4 @@ def main(settings):
     for command in commands:
         run_visible(command, run_dir, env, destination / "recovery.log")
     print("DONE:", destination, flush=True)
+    return destination

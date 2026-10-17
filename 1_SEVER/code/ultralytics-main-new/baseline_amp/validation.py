@@ -10,13 +10,14 @@ import json
 import math
 import random
 import time
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
 from common import save_json
-from coco_utils import evaluate_predictions, prediction_from_mask
+from coco_utils import PreparedCocoEvaluation, evaluate_predictions, prediction_from_mask
 from registry import COMMON_VALIDATION
 
 VALIDATION_PROTOCOL = COMMON_VALIDATION
@@ -115,6 +116,7 @@ def cap_predictions(predictions, limit=100, score_min=0.001):
 def validation_state(model):
     """Do not consume training RNG, alter per-module modes, or enable autocast during validation."""
     import torch
+    from inference_runtime import inference_runtime_scope
 
     modes = [(module, module.training) for module in model.modules()]
     device = next(model.parameters()).device
@@ -128,7 +130,7 @@ def validation_state(model):
     try:
         torch.use_deterministic_algorithms(True, warn_only=False)
         model.eval()
-        with torch.inference_mode(), torch.autocast(device_type=device.type, enabled=False):
+        with inference_runtime_scope(), torch.inference_mode(), torch.autocast(device_type=device.type, enabled=False):
             yield
     finally:
         for module, training in modes:
@@ -141,36 +143,121 @@ def validation_state(model):
         torch.use_deterministic_algorithms(deterministic, warn_only=warn_only)
 
 
-def collect_metrics(annotation, image_root, predictor, protocol):
-    """All frameworks supply only masks/scores/1-based IDs; this evaluator owns matching/AP."""
-    records = json.loads(Path(annotation).read_text(encoding="utf-8"))
-    categories = {r["id"] for r in records["categories"]}
-    predictions = []
+@lru_cache(maxsize=2)
+def _cached_evaluator(annotation_path, modified_ns, size):
+    """Keep only quick/original GT metadata and RLE, never images or predicted masks."""
+    return PreparedCocoEvaluation(Path(annotation_path))
+
+
+def prepared_evaluator(annotation):
+    """Invalidate cached annotations on ordinary file replacement or modification."""
+    path = Path(annotation).resolve()
+    stat = path.stat()
+    return _cached_evaluator(str(path), stat.st_mtime_ns, stat.st_size)
+
+
+def _selected_masks(record, masks, scores, labels, categories, protocol):
+    """Apply the existing stable per-category cap BEFORE expensive RLE encoding."""
+    if not (len(masks) == len(scores) == len(labels)):
+        raise ValueError("Masks/scores/category IDs have mismatched lengths")
+    groups = {}
+    for index, (mask, score, label) in enumerate(zip(masks, scores, labels)):
+        score = float(score)
+        if not math.isfinite(score):
+            raise ValueError("Non-finite prediction score")
+        if score < protocol["score_min"]:
+            continue
+        label = int(label)
+        # Validate even candidates outside the cap, as the previous implementation did.
+        if label not in categories or np.shape(mask) != (record["height"], record["width"]):
+            raise ValueError("Mask coordinates or category ID violate the common validation contract")
+        groups.setdefault(label, []).append((index, score))
+    for label, values in groups.items():
+        for index, score in sorted(values, key=lambda value: -value[1])[:protocol["max_dets"]]:
+            yield prediction_from_mask(record["id"], label, score, masks[index])
+
+
+def collect_metrics(annotation, image_root, predictor, protocol, profile_images=0):
+    """Preserve common matching/AP while prefetching CPU input and reusing immutable GT.
+
+    A positive profile_images times only the largest original images, with exactly
+    the same predictor, score floor, cap and encoding. It never reports subset AP.
+    Timings are wall times; input preparation can overlap inference and must not
+    be added to the total a second time.
+    """
+    if not isinstance(profile_images, int) or profile_images < 0:
+        raise ValueError("profile_images must be a nonnegative integer")
     begin = time.perf_counter()
-    for index, record in enumerate(records["images"], 1):
-        masks, scores, labels = predictor(Path(image_root) / record["file_name"])
-        if not (len(masks) == len(scores) == len(labels)):
-            raise ValueError("Masks/scores/category IDs have mismatched lengths")
-        for mask, score, label in zip(masks, scores, labels):
-            if float(score) < protocol["score_min"]:
-                continue
-            if int(label) not in categories or np.shape(mask) != (record["height"], record["width"]):
-                raise ValueError("Mask coordinates or category ID violate the common validation contract")
-            predictions.append(prediction_from_mask(record["id"], int(label), float(score), mask))
-        if index % 50 == 0:
-            print(f"COMMON VAL {index}/{len(records['images'])}", flush=True)
-    predictions = cap_predictions(predictions, protocol["max_dets"], protocol["score_min"])
-    metrics = evaluate_predictions(
-        Path(annotation),
-        predictions,
-        evaluate_bbox=False,
-        pr_iou_threshold=protocol["pr_iou"],
-        pr_score_threshold=protocol["pr_score"],
-    )
-    metrics.update(images=len(records["images"]),
-                   seconds=time.perf_counter() - begin,
-                   evaluation_protocol=protocol["id"],
-                   pr_max_dets_per_image_category=protocol["max_dets"])
+    if profile_images:
+        # A speed-only probe needs image metadata, not a full-val GT rasterization.
+        metadata = json.loads(Path(annotation).read_text(encoding="utf-8"))
+        records = metadata["images"]
+        categories = {item["id"] for item in metadata["categories"]}
+        evaluator = None
+        records = sorted(records, key=lambda item: item["height"] * item["width"], reverse=True)[:profile_images]
+    else:
+        evaluator = prepared_evaluator(annotation)
+        records, categories = list(evaluator.images), evaluator.category_ids
+    setup_seconds = time.perf_counter() - begin
+    paths = [Path(image_root) / record["file_name"] for record in records]
+    results = iter(predictor.iter_predictions(paths)) if hasattr(predictor, "iter_predictions") else (
+        predictor(path) for path in paths)
+    predictions, per_image = [], []
+    scope = "quick640" if "validation_quick640" in Path(annotation).parts else "original"
+    print(f"COMMON VAL START scope={scope} images={len(records)} profile_only={bool(profile_images)}", flush=True)
+    try:
+        for index, record in enumerate(records, 1):
+            started = time.perf_counter()
+            try:
+                masks, scores, labels = next(results)
+            except StopIteration as exc:
+                raise ValueError("Predictor returned fewer images than requested") from exc
+            predict_seconds = time.perf_counter() - started
+            started = time.perf_counter()
+            encoded = list(_selected_masks(record, masks, scores, labels, categories, protocol))
+            predictions.extend(encoded)
+            encode_seconds = time.perf_counter() - started
+            detail = dict(image_id=record["id"], height=record["height"], width=record["width"],
+                          prediction_count=len(encoded), predict_seconds=predict_seconds, encode_seconds=encode_seconds)
+            detail.update(getattr(predictor, "last_timing", {}))
+            per_image.append(detail)
+            # Do not keep the previous image's huge dense masks while requesting the next.
+            del masks, scores, labels, encoded
+            if profile_images or index == 1 or index % 25 == 0 or index == len(records):
+                print(f"COMMON VAL {scope} {index}/{len(records)} "
+                      f"predict={predict_seconds:.3f}s encode={encode_seconds:.3f}s", flush=True)
+        try:
+            next(results)
+        except StopIteration:
+            pass
+        else:
+            raise ValueError("Predictor returned more images than requested")
+    finally:
+        close = getattr(results, "close", None)
+        if close is not None:
+            close()
+    started = time.perf_counter()
+    if profile_images:
+        metrics = dict(prediction_count=len(predictions), profile_only=True,
+                       selection="largest original images; no AP/checkpoint selection")
+    else:
+        metrics = evaluate_predictions(
+            Path(annotation), predictions, evaluate_bbox=False,
+            pr_iou_threshold=protocol["pr_iou"], pr_score_threshold=protocol["pr_score"],
+            prepared_evaluator=evaluator)
+    evaluation_seconds = time.perf_counter() - started
+    timing = dict(setup_seconds=setup_seconds,
+                  predict_seconds=sum(item["predict_seconds"] for item in per_image),
+                  encode_seconds=sum(item["encode_seconds"] for item in per_image),
+                  evaluation_seconds=evaluation_seconds,
+                  input_wait_seconds=sum(item.get("input_wait_seconds", 0.0) for item in per_image),
+                  note="Predict includes input wait, H2D, inference, decoding and D2H; preparation overlaps it.")
+    metrics.update(images=len(records), seconds=time.perf_counter() - begin, timing=timing, per_image_timing=per_image,
+                   evaluation_protocol=protocol["id"], pr_max_dets_per_image_category=protocol["max_dets"],
+                   validation_engine="prefetch_cached_coco_v2_20261007")
+    print(f"COMMON VAL DONE {scope} total={metrics['seconds']:.3f}s "
+          f"predict={timing['predict_seconds']:.3f}s encode={timing['encode_seconds']:.3f}s "
+          f"COCO={evaluation_seconds:.3f}s", flush=True)
     return metrics
 
 

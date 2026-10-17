@@ -7,13 +7,33 @@ import json
 import os
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 
 def save_json(path, value):
+    """Atomically publish a complete JSON record; interrupted writes keep the previous record."""
+    content = json.dumps(value, ensure_ascii=False, indent=2, default=str, allow_nan=False) + "\n"
+    save_text(path, content)
+
+
+def save_text(path, content):
+    """Atomically replace a UTF-8 controller artifact on the same filesystem."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", suffix=".tmp", delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def resolve_path(value, base=None):

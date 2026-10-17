@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -47,7 +48,7 @@ def resize_binary_mask(mask: np.ndarray, height: int, width: int) -> np.ndarray:
 def encode_binary_mask(mask: np.ndarray) -> Dict[str, Any]:
     """Encode one binary mask as JSON-compatible COCO RLE."""
     mask_utils, _, _ = require_pycocotools()
-    encoded = mask_utils.encode(np.asfortranarray(np.asarray(mask, dtype=np.uint8)))
+    encoded = mask_utils.encode(np.asarray(mask, dtype=np.uint8, order="F"))
     if isinstance(encoded["counts"], bytes):
         encoded["counts"] = encoded["counts"].decode("ascii")
     return encoded
@@ -107,11 +108,17 @@ def _empty_metrics(prefix: str) -> Dict[str, float]:
     return {f"{prefix}_{name}": 0.0 for name in names}
 
 
-def _run_coco_eval(coco_gt: Any, coco_dt: Any, iou_type: str, prefix: str) -> Dict[str, float]:
+def _run_coco_eval(coco_gt: Any, coco_dt: Any, iou_type: str, prefix: str, iou_cache=None) -> Dict[str, float]:
     """Run one pycocotools evaluator and name its summary statistics."""
     _, _, COCOeval = require_pycocotools()
     evaluator = COCOeval(coco_gt, coco_dt, iou_type)
     evaluator.evaluate()
+    if iou_cache is not None:
+        for key, ious in evaluator.ious.items():
+            # computeIoU uses stable score order and the original per-category GT order.
+            # evaluateImg's crowd/ignore sorting must not replace that order for fixed P/R.
+            if all(np.isfinite(float(ann["score"])) for ann in evaluator._dts[key]):
+                iou_cache[key] = ([ann["id"] for ann in evaluator._gts[key]], np.asarray(ious))
     evaluator.accumulate()
     evaluator.summarize()
     names = (
@@ -138,13 +145,13 @@ def mask_prf(
     score_threshold: float = 0.25,
 ) -> Dict[str, float]:
     """Compute greedy mask precision, recall, and F1 at fixed thresholds."""
-    mask_utils, COCO, _ = require_pycocotools()
-    coco_gt = COCO(str(annotation_path))
-    ground_truth: MutableMapping[Tuple[int, int], List[Dict[str, Any]]] = defaultdict(list)
-    predicted: MutableMapping[Tuple[int, int], List[Mapping[str, Any]]] = defaultdict(list)
+    return PreparedCocoEvaluation(annotation_path).mask_prf(predictions, iou_threshold, score_threshold)
 
-    for annotation in coco_gt.dataset.get("annotations", []):
-        ground_truth[(int(annotation["image_id"]), int(annotation["category_id"]))].append(annotation)
+
+def _mask_prf(ground_truth, predictions, iou_threshold, score_threshold, iou_cache=None):
+    """Keep the historical fixed-threshold matcher, independently of COCO AP matching."""
+    mask_utils, _, _ = require_pycocotools()
+    predicted: MutableMapping[Tuple[int, int], List[Mapping[str, Any]]] = defaultdict(list)
     for prediction in predictions:
         if float(prediction["score"]) >= score_threshold:
             predicted[(int(prediction["image_id"]), int(prediction["category_id"]))].append(prediction)
@@ -160,12 +167,19 @@ def mask_prf(
             false_negative += len(gt_annotations)
             continue
 
-        gt_rles = [coco_gt.annToRLE(annotation) for annotation in gt_annotations]
-        dt_rles = [dict(annotation["segmentation"]) for annotation in dt_annotations]
-        for rle in dt_rles:
-            if isinstance(rle["counts"], str):
-                rle["counts"] = rle["counts"].encode("ascii")
-        ious = mask_utils.iou(dt_rles, gt_rles, [int(annotation.get("iscrowd", 0)) for annotation in gt_annotations])
+        cached = iou_cache.get(key) if iou_cache is not None else None
+        gt_ids = [annotation["id"] for annotation in gt_annotations]
+        if (cached is not None and cached[0] == gt_ids and cached[1].ndim == 2
+                and cached[1].shape[0] >= len(dt_annotations) and cached[1].shape[1] == len(gt_annotations)):
+            # Score filtering retains a prefix of COCO's stable descending score order.
+            ious = cached[1][:len(dt_annotations)]
+        else:
+            gt_rles = [annotation["segmentation"] for annotation in gt_annotations]
+            dt_rles = [dict(annotation["segmentation"]) for annotation in dt_annotations]
+            for rle in dt_rles:
+                if isinstance(rle["counts"], str):
+                    rle["counts"] = rle["counts"].encode("ascii")
+            ious = mask_utils.iou(dt_rles, gt_rles, [int(annotation.get("iscrowd", 0)) for annotation in gt_annotations])
         matched_gt = set()
         for row in ious:
             candidates = np.argsort(row)[::-1]
@@ -195,6 +209,53 @@ def mask_prf(
     }
 
 
+class PreparedCocoEvaluation:
+    """Reuse one annotation snapshot and its RLEs without exposing COCOeval's GT mutations.
+
+    Construct once per immutable validation annotation file. Every evaluate call gets
+    an isolated copy of the prepared GT; source polygons, cached areas, and previous
+    evaluator state therefore cannot be changed by COCOeval's in-place preparation.
+    """
+
+    def __init__(self, annotation_path: Path):
+        _, COCO, _ = require_pycocotools()
+        self.annotation_path = Path(annotation_path)
+        coco_gt = COCO(str(self.annotation_path))
+        self._dataset = copy.deepcopy(coco_gt.dataset)
+        self.images = tuple(copy.deepcopy(self._dataset.get("images", [])))
+        self.category_ids = frozenset(record["id"] for record in self._dataset.get("categories", []))
+        self._ground_truth: MutableMapping[Tuple[int, int], List[Dict[str, Any]]] = defaultdict(list)
+        for annotation in self._dataset.get("annotations", []):
+            annotation["segmentation"] = copy.deepcopy(coco_gt.annToRLE(annotation))
+            key = (int(annotation["image_id"]), int(annotation["category_id"]))
+            self._ground_truth[key].append(annotation)
+
+    def mask_prf(self, predictions, iou_threshold=0.5, score_threshold=0.25, iou_cache=None):
+        """Compute the unchanged one-to-one fixed P/R, including its crowd/tie behavior."""
+        return _mask_prf(self._ground_truth, predictions, iou_threshold, score_threshold, iou_cache)
+
+    def evaluate(self, predictions, evaluate_bbox=True, pr_iou_threshold=0.5, pr_score_threshold=0.25):
+        """Evaluate one prediction snapshot with official COCO AP and historical fixed P/R."""
+        _, COCO, _ = require_pycocotools()
+        coco_gt = COCO()
+        coco_gt.dataset = copy.deepcopy(self._dataset)
+        coco_gt.createIndex()
+        metrics: Dict[str, Any] = {"prediction_count": len(predictions)}
+        iou_cache = {}
+        if predictions:
+            coco_dt = coco_gt.loadRes([{k: v for k, v in p.items() if k != "bbox"} for p in predictions])
+            metrics.update(_run_coco_eval(coco_gt, coco_dt, "segm", "mask", iou_cache))
+            if evaluate_bbox:
+                box_dt = coco_gt.loadRes(list(predictions))
+                metrics.update(_run_coco_eval(coco_gt, box_dt, "bbox", "box"))
+        else:
+            metrics.update(_empty_metrics("mask"))
+            if evaluate_bbox:
+                metrics.update(_empty_metrics("box"))
+        metrics.update(self.mask_prf(predictions, pr_iou_threshold, pr_score_threshold, iou_cache))
+        return metrics
+
+
 def evaluate_predictions(
     annotation_path: Path,
     predictions: Sequence[Mapping[str, Any]],
@@ -202,22 +263,13 @@ def evaluate_predictions(
     evaluate_bbox: bool = True,
     pr_iou_threshold: float = 0.5,
     pr_score_threshold: float = 0.25,
+    prepared_evaluator: PreparedCocoEvaluation | None = None,
 ) -> Dict[str, Any]:
     """Evaluate COCO predictions with a common protocol."""
-    _, COCO, _ = require_pycocotools()
-    coco_gt = COCO(str(annotation_path))
-    metrics: Dict[str, Any] = {"prediction_count": len(predictions)}
-    if predictions:
-        coco_dt = coco_gt.loadRes([{k: v for k, v in p.items() if k != "bbox"} for p in predictions])
-        metrics.update(_run_coco_eval(coco_gt, coco_dt, "segm", "mask"))
-        if evaluate_bbox:
-            box_dt = coco_gt.loadRes(list(predictions))
-            metrics.update(_run_coco_eval(coco_gt, box_dt, "bbox", "box"))
-    else:
-        metrics.update(_empty_metrics("mask"))
-        if evaluate_bbox:
-            metrics.update(_empty_metrics("box"))
-    metrics.update(mask_prf(annotation_path, predictions, pr_iou_threshold, pr_score_threshold))
+    evaluator = prepared_evaluator if prepared_evaluator is not None else PreparedCocoEvaluation(annotation_path)
+    if evaluator.annotation_path.resolve() != Path(annotation_path).resolve():
+        raise ValueError("Prepared COCO evaluator belongs to a different annotation file")
+    metrics = evaluator.evaluate(predictions, evaluate_bbox, pr_iou_threshold, pr_score_threshold)
     if output_path:
         save_json(output_path, metrics)
     return metrics

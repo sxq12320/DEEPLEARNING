@@ -1212,8 +1212,14 @@ class BaseTrainer:
             self.args.warmup_bias_lr = 0.0  # no higher than 0.01 for Adam
 
         use_muon = name == "MuSGD"
+        seen_parameters = set()
         for module_name, module in unwrap_model(model).named_modules():
             for param_name, param in module.named_parameters(recurse=False):
+                # Distinct operators may intentionally tie one Parameter (e.g. J4
+                # scale-shared towers). Register it once, not once per alias.
+                if id(param) in seen_parameters:
+                    continue
+                seen_parameters.add(id(param))
                 fullname = f"{module_name}.{param_name}" if module_name else param_name
                 if param.ndim >= 2 and use_muon:
                     g[3][fullname] = param  # muon params

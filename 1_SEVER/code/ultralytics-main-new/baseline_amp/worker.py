@@ -1,13 +1,16 @@
-"""One isolated foreground job. Run via RUN_CITRUS_BASELINES_AMP.py, not an editable Ultralytics install."""
+"""One isolated foreground job. Run via RUN_PAPER_BASELINES.py, not an editable Ultralytics install."""
 
 from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 # -I suppresses PYTHONPATH and the repository root, preventing accidental use of custom historical modules.
 HERE = Path(__file__).resolve().parent
@@ -15,7 +18,8 @@ sys.path.insert(0, str(HERE))
 
 from common import save_json, seed_everything, snapshot, state_sha256  # noqa: E402
 from registry import MODELS, YOLO_TRAIN  # noqa: E402
-from inference_runtime import install_inference_runtime, runtime_status  # noqa: E402
+from native_recipe import is_native, mmdet_apply_native, rfdetr_options, yolo_checkpoint, yolo_options  # noqa: E402
+from inference_runtime import inference_runtime_scope, install_inference_runtime, runtime_status  # noqa: E402
 
 
 def official_mmdet_root():
@@ -36,6 +40,42 @@ def model_zoo_weight(root, config):
     if not match or not match.get("Weights"):
         raise RuntimeError(f"No official COCO checkpoint for {config}; will NOT silently train from scratch")
     return match["Weights"]
+
+
+def official_checkpoint(url, directory):
+    """Download declared OpenMMLab weights atomically; never fall back to scratch."""
+    from torch.hub import download_url_to_file
+
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname != "download.openmmlab.com" or parsed.username:
+        raise ValueError(f"Unexpected official checkpoint host: {parsed.hostname}")
+    filename = Path(parsed.path).name
+    if not filename.endswith((".pth", ".pt")):
+        raise ValueError("Official checkpoint metadata must name a .pth or .pt file")
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    target = directory / filename
+    if target.is_file() and target.stat().st_size > 0:
+        return target
+    temporary = directory / f".{filename}.{os.getpid()}.download"
+    try:
+        download_url_to_file(url, str(temporary), progress=True)
+        if not temporary.is_file() or not temporary.stat().st_size:
+            raise RuntimeError("Official checkpoint download is empty")
+        os.replace(temporary, target)
+    finally:
+        if temporary.is_file():
+            temporary.unlink()
+    return target
+
+
+def weight_sha256(path):
+    """Hash a checkpoint without retaining a second full copy in memory."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def require_version(package, version):
@@ -140,8 +180,9 @@ def train_yolo(job, prepared, run_dir):
     import torch
     from ultralytics import YOLO
     seed_everything(job["seed"])
-    model = YOLO(job["recipe"]["yaml"], task="segment")
-    options = dict(YOLO_TRAIN)
+    source = yolo_checkpoint(job["recipe"]) if is_native(job) else job["recipe"]["yaml"]
+    model = YOLO(source, task="segment")
+    options = yolo_options(YOLO_TRAIN) if is_native(job) else dict(YOLO_TRAIN)
     options.update(
         data=str(prepared / "yolo/data.yaml"),
         epochs=job["epochs"],
@@ -166,8 +207,11 @@ def train_yolo(job, prepared, run_dir):
     save_json(run_dir / "effective_train.json", options)
 
     def verify_amp(trainer):
+        initial_checkpoint = Path(model.ckpt_path) if is_native(job) else None
         save_json(run_dir / "initialization.json", dict(
-            mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(trainer.model),
+            mode=job["initialization"], weights=source if is_native(job) else None,
+            **(dict(checkpoint_sha256=weight_sha256(initial_checkpoint)) if initial_checkpoint is not None else {}),
+            seed=job["seed"], sha256=state_sha256(trainer.model),
             stage="after trainer initialization, before first optimizer step",
         ))
         actual = bool(trainer.amp)
@@ -213,9 +257,13 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
     )
     from mmdet_common import configure_mask_preprocessor, make_optim_wrapper_config, remove_pretraining
 
-    remove_pretraining(cfg.model)
-    cfg.load_from = None
-    cfg.optim_wrapper = make_optim_wrapper_config(job["amp"])
+    if is_native(job):
+        provenance = mmdet_apply_native(cfg, job, checkpoint)
+        save_json(run_dir / "native_recipe.json", provenance)
+    else:
+        remove_pretraining(cfg.model)
+        cfg.load_from = None
+        cfg.optim_wrapper = make_optim_wrapper_config(job["amp"])
     configure_mask_preprocessor(cfg.model)
     # Full-resolution instance masks can be large even after float decoding is
     # chunked. Do not hold five high-resolution images' masks simultaneously.
@@ -264,11 +312,12 @@ def mmdet_config(job, prepared, run_dir, checkpoint):
         final_cfg.max_per_img = job["validation"]["max_dets"]
     epochs = job["epochs"]
     warmup = min(3, epochs)
-    cfg.param_scheduler = [dict(type="LinearLR", start_factor=0.001, end_factor=1.0,
-                               begin=0, end=warmup, by_epoch=True, convert_to_iter_based=True)]
-    if epochs > warmup:
-        cfg.param_scheduler.append(dict(type="LinearLR", start_factor=1.0, end_factor=0.01,
-                                        begin=warmup, end=epochs, by_epoch=True))
+    if not is_native(job):
+        cfg.param_scheduler = [dict(type="LinearLR", start_factor=0.001, end_factor=1.0,
+                                   begin=0, end=warmup, by_epoch=True, convert_to_iter_based=True)]
+        if epochs > warmup:
+            cfg.param_scheduler.append(dict(type="LinearLR", start_factor=1.0, end_factor=0.01,
+                                            begin=warmup, end=epochs, by_epoch=True))
     cfg.env_cfg.cudnn_benchmark = False
     cfg.launcher = "none"
     cfg.default_hooks.logger.interval = 20
@@ -307,7 +356,13 @@ def train_mmdet(job, prepared, run_dir, resume=False):
         save_json(run_dir / "runtime_repair.json", dict(checkpoint=str(checkpoint),
                   runtime=runtime_status(), training_hyperparameters_changed=False))
     else:
-        cfg = mmdet_config(job, prepared, run_dir, None)
+        initial_checkpoint = None
+        if is_native(job):
+            url = model_zoo_weight(official_mmdet_root(), job["recipe"]["config"])
+            initial_checkpoint = official_checkpoint(url, Path(job["run_dir"]).parent / "_pretrained")
+            if not Path(initial_checkpoint).is_file():
+                raise FileNotFoundError(f"Official checkpoint download did not complete: {initial_checkpoint}")
+        cfg = mmdet_config(job, prepared, run_dir, initial_checkpoint)
         cfg.dump(str(run_dir / "effective_config.py"))
     common_validation = None
     if job.get("validation"):
@@ -335,7 +390,9 @@ def train_mmdet(job, prepared, run_dir, resume=False):
             save_json(run_dir / "optimizer_parameters.json", audit_optimizer_parameters(runner.model, runner.optim_wrapper))
             if not resume:
                 save_json(run_dir / "initialization.json", dict(
-                    mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(runner.model),
+                    mode=job["initialization"], weights=cfg.load_from if is_native(job) else None,
+                    **(dict(checkpoint_sha256=weight_sha256(cfg.load_from)) if is_native(job) else {}),
+                    seed=job["seed"], sha256=state_sha256(runner.model),
                     stage="after init_weights, before first optimizer step",
                 ))
             save_json(
@@ -373,9 +430,17 @@ def train_mmdet(job, prepared, run_dir, resume=False):
     runner.register_hook(VerifyAMP(), priority="VERY_HIGH")
     from inference_runtime import make_validation_timing_hook
 
+    timing_hook = None
     if common_validation is None:
-        runner.register_hook(make_validation_timing_hook(run_dir), priority="LOWEST")
-    runner.train()
+        timing_hook = make_validation_timing_hook(run_dir)
+        runner.register_hook(timing_hook, priority="LOWEST")
+    try:
+        runner.train()
+    finally:
+        # MMEngine may not call after_val_epoch/after_run after a prediction failure.
+        # Clear the inference-only scope even if callers catch that exception.
+        if timing_hook is not None:
+            timing_hook.after_run(runner)
     if common_validation is not None:
         return common_validation.checkpoint()
     candidates = list((run_dir / "train").glob("best_coco_segm_mAP*.pth"))
@@ -389,17 +454,43 @@ def train_rfdetr(job, prepared, run_dir):
 
     seed_everything(job["seed"])
     nc = len(json.loads((prepared / "summary.json").read_text(encoding="utf-8"))["names"])
-    model = RFDETRSegNano(pretrain_weights=None, num_classes=nc, resolution=job["recipe"]["imgsz"],
-                         positional_encoding_size=26, device="cuda", amp=job["amp"])
+    model_kwargs = dict(num_classes=nc, resolution=job["recipe"]["imgsz"],
+                        positional_encoding_size=26, device="cuda", amp=job["amp"])
+    if not is_native(job):
+        model_kwargs["pretrain_weights"] = None
+    model = RFDETRSegNano(**model_kwargs)
     # Pinned 1.4.0.post0: patch_size=12 disables DINOv2 weight loading in DinoV2.__init__.
     # force_no_pretrain is NOT forwarded by that version's build_backbone, so do not rely on it.
-    if model.model_config.pretrain_weights is not None or model.model_config.patch_size != 12:
+    if not is_native(job) and (model.model_config.pretrain_weights is not None or model.model_config.patch_size != 12):
         raise RuntimeError("RF-DETR scratch contract requires no checkpoint and the verified Nano patch_size=12 path")
-    save_json(run_dir / "initialization.json", dict(
-        mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(model.model.model),
-        stage="random Nano with dataset class count; train head resize preserves existing entries",
-        encoder="patch_size=12 disables DINOv2 pretrained loading in pinned package",
-    ))
+    if is_native(job):
+        initial_weights = Path(model.model_config.pretrain_weights).resolve()
+        if not initial_weights.is_file():
+            raise FileNotFoundError(f"RF-DETR did not load its official COCO checkpoint: {initial_weights}")
+        recorded = [False]
+
+        def record_transfer_start(callback):
+            # post0 adapts the COCO class head inside train_from_config, not in
+            # the constructor. Record the model AFTER that change, before update 1.
+            if recorded[0]:
+                return
+            if "model" not in callback:
+                raise RuntimeError("Pinned RF-DETR startup callback did not expose the training model")
+            save_json(run_dir / "initialization.json", dict(
+                mode=job["initialization"], weights=str(initial_weights),
+                checkpoint_sha256=weight_sha256(initial_weights), seed=job["seed"],
+                sha256=state_sha256(callback["model"]),
+                stage="first train batch, after class-head adaptation, before first forward/update",
+            ))
+            recorded[0] = True
+
+        model.callbacks["on_train_batch_start"].append(record_transfer_start)
+    else:
+        save_json(run_dir / "initialization.json", dict(
+            mode="scratch", weights=None, seed=job["seed"], sha256=state_sha256(model.model.model),
+            stage="random Nano with dataset class count; train head resize preserves existing entries",
+            encoder="patch_size=12 disables DINOv2 pretrained loading in pinned package",
+        ))
     seed_everything(job["seed"])
     actual = bool(model.model_config.amp)
     if actual != job["amp"]:
@@ -440,6 +531,8 @@ def train_rfdetr(job, prepared, run_dir):
         wandb=False,
         eval_max_dets=100,
     )
+    if is_native(job):
+        options = rfdetr_options(options)
     if job.get("validation"):
         options["early_stopping"] = False
     save_json(run_dir / "effective_train.json", dict(model=model.model_config.model_dump(), train=options))
@@ -458,15 +551,19 @@ def train_rfdetr(job, prepared, run_dir):
 
 def evaluate(job, prepared, run_dir, checkpoint, profile_images=0, output_dir=None):
     """Re-evaluate selected checkpoint on ORIGINAL validation images, all in FP32 and common COCO metrics."""
+    if profile_images and (output_dir is None or Path(output_dir).resolve() == Path(run_dir).resolve()):
+        raise ValueError("A speed profile requires a separate output directory to protect existing results")
     import numpy as np
     import torch
     from PIL import Image
     from coco_utils import evaluate_predictions, prediction_from_mask, save_predictions
 
-    if job.get("validation") and not profile_images:
+    if job.get("validation"):
         from validation_adapters import evaluate_unified
 
-        return evaluate_unified(job, prepared, run_dir, checkpoint, output_dir or run_dir)
+        # A speed probe must exercise the SAME cap/decoder/precision as common validation.
+        return evaluate_unified(job, prepared, run_dir, checkpoint, output_dir or run_dir,
+                                profile_images=profile_images)
 
     seed_everything(job["seed"])
     install_inference_runtime()
@@ -522,7 +619,7 @@ def evaluate(job, prepared, run_dir, checkpoint, profile_images=0, output_dir=No
     predictions = []
     timings = []
     native_before = runtime_status()["native_bilinear_calls"]
-    with torch.inference_mode():
+    with inference_runtime_scope(), torch.inference_mode():
         for index, record in enumerate(records, 1):
             torch.cuda.synchronize()
             started = time.perf_counter()

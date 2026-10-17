@@ -366,6 +366,26 @@ class Model(torch.nn.Module):
             >>> model.load(Path("path/to/weights.pt"))
         """
         self._check_is_pytorch_model()
+        target_j6 = [module for module in self.model.modules() if type(module).__name__ == "SegmentCitrusJ6"]
+        if target_j6:
+            # State-dict transfer preserves the NEW class instance's attributes.
+            # Equal shapes must not launder old scout semantics into fresh v2 markers.
+            from citrus_j6_inference import assert_j6_scout_geometry
+
+            source_path = weights if isinstance(weights, (str, Path)) else None
+            source, checkpoint = load_checkpoint(weights) if source_path is not None else (weights, None)
+            source_model = source["model"] if isinstance(source, dict) else source
+            if isinstance(source_model, torch.nn.Module):
+                for module in source_model.modules():
+                    if type(module).__name__ == "SegmentCitrusJ6":
+                        assert_j6_scout_geometry(module, "YOLO.load/J6 source checkpoint")
+            for module in target_j6:
+                assert_j6_scout_geometry(module, "YOLO.load/J6 target model")
+            self.model.load(source)
+            if source_path is not None:
+                self.overrides["pretrained"] = source_path
+                self.ckpt = checkpoint
+            return self
         if isinstance(weights, (str, Path)):
             self.overrides["pretrained"] = weights  # remember the weights for DDP training
             weights, self.ckpt = load_checkpoint(weights)

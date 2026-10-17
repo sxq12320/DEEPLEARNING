@@ -1,9 +1,0 @@
-{
-  "sympy_version": "1.14.0",
-  "fusion_derivative_residual": "0",
-  "dice_derivative_residual": "0",
-  "softmax_shift_residual": "0",
-  "fusion_derivative_latex": "\\frac{\\left(v_{0} - \\frac{v_{0} e^{s_{0}}}{e^{s_{0}} + e^{s_{1}} + e^{s_{2}}} - \\frac{v_{1} e^{s_{1}}}{e^{s_{0}} + e^{s_{1}} + e^{s_{2}}} - \\frac{v_{2} e^{s_{2}}}{e^{s_{0}} + e^{s_{1}} + e^{s_{2}}}\\right) e^{s_{0}}}{e^{s_{0}} + e^{s_{1}} + e^{s_{2}}}",
-  "dice_derivative_latex": "\\frac{\\epsilon + 2 intersection + 2 p t - 2 t \\left(\\epsilon + p + remainder\\right)}{\\left(\\epsilon + p + remainder\\right)^{2}}",
-  "note": "Exact algebra only; does not prove recognition, generalization or a training gain."
-}

@@ -180,13 +180,20 @@ def scale_epoch_schedulers(cfg: Any, old_epochs: int, new_epochs: int) -> None:
         if not isinstance(scheduler, MutableMapping) or scheduler.get("by_epoch", True) is False:
             continue
         if isinstance(scheduler.get("milestones"), (list, tuple)):
-            scheduler["milestones"] = [
-                max(1, min(new_epochs - 1, round(float(value) * ratio))) for value in scheduler["milestones"]
-            ]
+            scheduler["milestones"] = sorted(set(
+                max(1, round(float(value) * ratio)) for value in scheduler["milestones"]
+                if max(1, round(float(value) * ratio)) < new_epochs
+            ))
         for key in ("begin", "end", "T_max"):
             value = scheduler.get(key)
             if isinstance(value, (int, float)) and value > 0:
                 scheduler[key] = max(1, round(float(value) * ratio))
+        # A 300->1 epoch smoke previously produced Cosine begin=end=1.
+        # MMEngine requires a nonempty scheduler interval even for smoke runs.
+        if "begin" in scheduler:
+            scheduler["begin"] = min(new_epochs - 1, max(0, scheduler["begin"]))
+        if "end" in scheduler:
+            scheduler["end"] = max(scheduler.get("begin", 0) + 1, min(new_epochs, scheduler["end"]))
 
 
 def build_training_config(

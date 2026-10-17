@@ -114,7 +114,7 @@ def check_large_mask_decode():
     """Exercise original-photo-sized masks, which tiny forward checks cannot cover."""
     import torch
     from mmdet_memory import decode_masks_bounded
-    from inference_runtime import install_inference_runtime, runtime_status
+    from inference_runtime import inference_runtime_scope, install_inference_runtime, runtime_status
 
     install_inference_runtime()
     # Match the real Runner setting, missed by the previous preflight.
@@ -125,7 +125,7 @@ def check_large_mask_decode():
     before = torch.cuda.memory_allocated()
     logits = torch.zeros(16, 80, 80, device="cuda")
     try:
-        with torch.inference_mode():
+        with inference_runtime_scope(), torch.inference_mode():
             # Native/decomposed implementations can differ in last FP32 bits.
             # Check sampling conventions and record, not claim bitwise GPU equality.
             import inference_runtime

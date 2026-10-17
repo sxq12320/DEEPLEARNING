@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from inference_input import OrderedInputPredictor
 from validation import CommonValidation
 
 
@@ -18,7 +19,7 @@ def cpu_state(model):
     return {name: tensor.detach().cpu().clone() for name, tensor in model.state_dict().items()}
 
 
-def yolo_predictor(model, nc, protocol):
+def yolo_predictor(model, nc, protocol, prefetch_workers=2):
     """Native LetterBox/NMS/prototype decoder, without fusing or mutating the live training model."""
     import torch
     from ultralytics.data.augment import LetterBox
@@ -28,12 +29,16 @@ def yolo_predictor(model, nc, protocol):
     letterbox = LetterBox(new_shape=(640, 640), auto=False, stride=32)
     device = next(model.parameters()).device
 
-    def predict(path):
+    def prepare(path):
         with Image.open(path) as image:
             rgb = np.asarray(image.convert("RGB"))
         bgr = np.ascontiguousarray(rgb[:, :, ::-1])
         resized = letterbox(image=bgr)
         tensor = torch.from_numpy(np.ascontiguousarray(resized[:, :, ::-1].transpose(2, 0, 1)))
+        return tensor, rgb.shape
+
+    def infer(prepared):
+        tensor, shape = prepared
         tensor = tensor.to(device).float().unsqueeze(0) / 255.0
         outputs = model(tensor)
         # Ultralytics 8.4.60 segmentation exports and non-export models use these two layouts.
@@ -49,32 +54,49 @@ def yolo_predictor(model, nc, protocol):
         if not len(detections):
             return [], [], []
         detections = detections[detections[:, 4].argsort(descending=True)[:protocol["max_dets"]]]
-        ops.scale_boxes(tensor.shape[2:], detections[:, :4], rgb.shape)
+        ops.scale_boxes(tensor.shape[2:], detections[:, :4], shape)
         masks = decode_yolo_masks_bounded(ops.process_mask_native, protos[0], detections[:, 6:], detections[:, :4],
-                                          rgb.shape[:2])
+                                          shape[:2])
         masks = masks.cpu().numpy()
         keep = masks.any(axis=(-2, -1))
-        return masks[keep], detections[:, 4].cpu().numpy()[keep], detections[:, 5].cpu().numpy()[keep].astype(int) + 1
+        # Boolean indexing copies the whole dense original-image mask tensor.
+        # The common all-nonempty case can safely retain the existing CPU array.
+        selected_masks = masks if keep.all() else masks[keep]
+        return selected_masks, detections[:, 4].cpu().numpy()[keep], detections[:, 5].cpu().numpy()[keep].astype(int) + 1
 
-    return predict
+    return OrderedInputPredictor(prepare, infer, prefetch_workers)
 
 
-def mmdet_predictor(model, cfg):
-    from mmdet.apis import inference_detector
+def mmdet_predictor(model, cfg, prefetch_workers=2):
+    import torch
+    from mmcv.ops import RoIPool
     from mmdet.utils import get_test_pipeline_cfg
-    from mmengine.dataset import Compose
+    from mmengine.dataset import Compose, pseudo_collate
     from mmdet_common import prediction_pipeline
 
+    # Official inference_detector requires model.cfg even with an explicit
+    # pipeline, and rejects unsupported CPU RoIPool before reading any images.
+    if not hasattr(model, "cfg"):
+        raise AttributeError("MMDetection inference requires model.cfg")
+    if model.data_preprocessor.device.type == "cpu":
+        for module in model.modules():
+            assert not isinstance(module, RoIPool), "CPU inference with RoIPool is not supported currently."
     pipeline = Compose(prediction_pipeline(get_test_pipeline_cfg(cfg)))
 
-    def predict(path):
-        result = inference_detector(model, str(path), test_pipeline=pipeline).pred_instances
+    def prepare(path):
+        return pipeline(dict(img_path=str(path), img_id=0))
+
+    def infer(data):
+        # Equivalent to the official single-image inputs/data_samples lists;
+        # a list passed to inference_detector itself still runs sequentially.
+        with torch.no_grad():
+            result = model.test_step(pseudo_collate([data]))[0].pred_instances
         return result.masks.cpu().numpy(), result.scores.cpu().numpy(), result.labels.cpu().numpy().astype(int) + 1
 
-    return predict
+    return OrderedInputPredictor(prepare, infer, prefetch_workers)
 
 
-def rfdetr_predictor(model, resolution, num_select, protocol):
+def rfdetr_predictor(model, resolution, num_select, protocol, prefetch_workers=2):
     """Pinned Nano normalization/top-K/logit-mask threshold, with bounded full-resolution decoding."""
     import torch
     from torch.nn import functional as F
@@ -82,11 +104,16 @@ def rfdetr_predictor(model, resolution, num_select, protocol):
 
     device = next(model.parameters()).device
 
-    def predict(path):
+    def prepare(path):
         with Image.open(path) as image:
             rgb = image.convert("RGB")
             width, height = rgb.size
-            tensor = TF.to_tensor(rgb).to(device)
+            tensor = TF.to_tensor(rgb)
+        return tensor, width, height
+
+    def infer(prepared):
+        tensor, width, height = prepared
+        tensor = tensor.to(device)
         tensor = TF.normalize(tensor, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         tensor = TF.resize(tensor, (resolution, resolution)).unsqueeze(0)
         outputs = model(tensor)
@@ -108,7 +135,7 @@ def rfdetr_predictor(model, resolution, num_select, protocol):
             masks.extend((expanded[:, 0] > 0.0).cpu().numpy())
         return masks, scores.cpu().numpy(), labels.cpu().numpy().astype(int)
 
-    return predict
+    return OrderedInputPredictor(prepare, infer, prefetch_workers, max_prefetch=2)
 
 
 def make_yolo_trainer(job, prepared, run_dir, nc):
@@ -137,7 +164,8 @@ def make_yolo_trainer(job, prepared, run_dir, nc):
                          validation_protocol=manager.protocol), path)
                 return path
 
-            report = manager.run(trainer.epoch + 1, candidate, yolo_predictor(candidate, nc, manager.protocol),
+            report = manager.run(trainer.epoch + 1, candidate,
+                                 yolo_predictor(candidate, nc, manager.protocol, job.get("workers", 2)),
                                  save_best, "ema" if trainer.ema else "regular")
             quick = report["quick"]
             # Official native CSV keys remain fixed. These are labeled quick-grid MASK metrics, not bbox AP.
@@ -202,7 +230,8 @@ def install_mmdet_loop(job, prepared, run_dir, cfg):
             candidate.cfg = cfg
             metrics = {}
             try:
-                report = manager.run(runner.epoch, candidate, mmdet_predictor(candidate, cfg), save_best,
+                report = manager.run(runner.epoch, candidate, mmdet_predictor(candidate, cfg, job.get("workers", 2)),
+                                     save_best,
                                      "ema" if has_ema else "regular")
                 metrics = {
                     f"quick/{key}": value for key, value in report["quick"].items() if isinstance(value, (int, float))
@@ -278,7 +307,8 @@ def rfdetr_validation(owner, job, prepared, run_dir):
 
         report = manager.run(current_epoch,
                              model,
-                             rfdetr_predictor(model, job["recipe"]["imgsz"], postprocess.num_select, manager.protocol),
+                             rfdetr_predictor(model, job["recipe"]["imgsz"], postprocess.num_select, manager.protocol,
+                                              job.get("workers", 2)),
                              save_best,
                              "ema" if is_ema else "regular",
                              eligible=eligible)
@@ -291,7 +321,7 @@ def rfdetr_validation(owner, job, prepared, run_dir):
         main_module.train_one_epoch, main_module.evaluate = original_train, original_eval
 
 
-def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir):
+def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir, profile_images=0):
     """Final worker uses the SAME predictor and evaluator as original-image checkpoint selection."""
     from common import save_json, seed_everything
     from inference_runtime import install_inference_runtime, runtime_status
@@ -301,6 +331,17 @@ def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir):
     install_inference_runtime()
     protocol = checked_protocol(job["validation"])
     prepared, run_dir, output_dir = Path(prepared), Path(run_dir), Path(output_dir)
+    if profile_images and output_dir.resolve() == run_dir.resolve():
+        raise ValueError("A speed profile requires a separate output directory to protect existing results")
+    selection = None
+    is_selected_checkpoint = False
+    if not profile_images:
+        selection_path = run_dir / "validation_common/best.json"
+        if selection_path.is_file():
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            is_selected_checkpoint = Path(selection["checkpoint"]).resolve() == Path(checkpoint).resolve()
+        if not is_selected_checkpoint and output_dir.resolve() == run_dir.resolve():
+            raise ValueError("A custom checkpoint requires a separate output directory to protect existing results")
     nc = len(json.loads((prepared / "summary.json").read_text(encoding="utf-8"))["names"])
     family = job["recipe"]["family"]
     if family == "yolo":
@@ -309,7 +350,7 @@ def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir):
         owner = YOLO(str(checkpoint), task="segment")
         model = owner.model.float().eval()
         model.to("cuda:0")
-        predictor = yolo_predictor(model, nc, protocol)
+        predictor = yolo_predictor(model, nc, protocol, job.get("workers", 2))
     elif family == "mmdet":
         from mmdet.apis import init_detector
         from mmdet_memory import install_memory_safe_rtmdet
@@ -317,7 +358,7 @@ def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir):
         install_memory_safe_rtmdet()
         model = init_detector(str(run_dir / "effective_config.py"), str(checkpoint), device="cuda:0")
         model.float().eval()
-        predictor = mmdet_predictor(model, model.cfg)
+        predictor = mmdet_predictor(model, model.cfg, job.get("workers", 2))
     else:
         from rfdetr import RFDETRSegNano
 
@@ -328,22 +369,30 @@ def evaluate_unified(job, prepared, run_dir, checkpoint, output_dir):
                               device="cuda",
                               amp=False)
         model = owner.model.model.float().eval()
-        predictor = rfdetr_predictor(model, job["recipe"]["imgsz"], owner.model.postprocess.num_select, protocol)
+        predictor = rfdetr_predictor(model, job["recipe"]["imgsz"], owner.model.postprocess.num_select, protocol,
+                                     job.get("workers", 2))
     with validation_state(model):
         metrics = collect_metrics(prepared / "coco/annotations/instances_val.json", prepared / "coco/images/val",
-                                  predictor, protocol)
-    selection = json.loads((run_dir / "validation_common/best.json").read_text(encoding="utf-8"))
-    if Path(selection["checkpoint"]).resolve() == Path(checkpoint).resolve():
+                                  predictor, protocol, profile_images=profile_images)
+    if profile_images:
+        save_json(output_dir / "evaluation_timing.json",
+                  dict(metrics, runtime=runtime_status(), protocol=protocol, first_image_includes_warmup=True))
+        return metrics
+    if is_selected_checkpoint:
         # CPU FP32 checkpoint must reproduce the selected model; fail visibly rather than report a different best.
         if abs(metrics["mask_ap_50_95"] - selection["mask_ap_50_95"]) > 1e-5:
             raise RuntimeError("Saved best weights do not reproduce selection AP (tolerance 1e-5); job not completed")
     metrics.update(checkpoint=str(checkpoint),
                    params=sum(p.numel() for p in model.parameters()),
-                   selected_epoch=selection["epoch"],
-                   weight_policy=selection["weight_policy"],
+                   is_selected_checkpoint=is_selected_checkpoint,
+                   checkpoint_role="selected" if is_selected_checkpoint else "custom",
+                   selected_epoch=selection["epoch"] if is_selected_checkpoint else None,
+                   weight_policy=selection["weight_policy"] if is_selected_checkpoint else None,
                    evaluation="original-val / common COCO mask AP maxDets100 / FP32 / same training predictor")
     save_json(
         output_dir / "evaluation_timing.json",
-        dict(total_seconds=metrics["seconds"], images=metrics["images"], runtime=runtime_status(), protocol=protocol))
+        dict(total_seconds=metrics["seconds"], images=metrics["images"], timing=metrics["timing"],
+             per_image_timing=metrics["per_image_timing"], validation_engine=metrics["validation_engine"],
+             runtime=runtime_status(), protocol=protocol, first_image_includes_warmup=True))
     save_json(output_dir / "val_common.json", metrics)
     return metrics

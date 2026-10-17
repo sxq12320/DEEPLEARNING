@@ -12,11 +12,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 
-from baseline_amp.batch import summarize
-from baseline_amp.batch import run_visible
-from prepare import inspect_source, prepare, split_files
-from registry import MODELS, make_queue
-from coco_utils import evaluate_predictions, prediction_from_mask
+from baseline_amp.batch import run_visible, summarize  # noqa: E402 -- explicit standalone test path bootstrap
+from prepare import inspect_source, prepare, split_files  # noqa: E402
+from registry import MODELS, make_queue  # noqa: E402
+from coco_utils import evaluate_predictions, prediction_from_mask  # noqa: E402
 
 
 def make_source(tmp_path):
@@ -232,7 +231,8 @@ def test_worker_eval_resumes_in_fresh_interpreter():
     assert "ops.process_mask_native = decode_chunked" in source
     assert "subprocess.call(" not in source
     batch = (HERE / "batch.py").read_text(encoding="utf-8")
-    assert 'for stage in ("train", "evaluate"):' in batch
+    assert 'stages = ("train", "evaluate") if state == "train" else ("evaluate",)' in batch
+    assert "for stage in stages:" in batch
     assert '"--stage", stage' in batch
 
 

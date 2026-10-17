@@ -696,8 +696,15 @@ class ModelEMA:
             d = self.decay(self.updates)
 
             msd = unwrap_model(model).state_dict()  # model state_dict
+            updated = set()
             for k, v in self.ema.state_dict().items():
                 if v.dtype.is_floating_point:  # true for FP16 and FP32
+                    # Tied Parameters have multiple state_dict names for the same storage.
+                    # Updating each alias would silently change the decay from d to d**N.
+                    storage_key = (v.device, v.data_ptr(), v.storage_offset(), v.shape, v.stride())
+                    if storage_key in updated:
+                        continue
+                    updated.add(storage_key)
                     v *= d
                     v += (1 - d) * msd[k].detach()
                     # assert v.dtype == msd[k].dtype == torch.float32, f'{k}: EMA {v.dtype},  model {msd[k].dtype}'

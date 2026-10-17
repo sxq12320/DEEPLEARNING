@@ -2,6 +2,7 @@
 
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -66,13 +67,108 @@ def test_bypass_only_no_grad_cuda_deterministic_bilinear(installed, monkeypatch)
     monkeypatch.setattr(runtime, "_ORIGINAL_INTERPOLATE", lambda *args, **kwargs: "original")
     torch.use_deterministic_algorithms(True, warn_only=True)
     assert functional.interpolate(fake, size=(5, 7), mode="bilinear") == "original"
-    with torch.no_grad():
+    with torch.no_grad(), runtime.inference_runtime_scope():
         assert functional.interpolate(fake, size=(5, 7), mode="bilinear") == "native"
         assert functional.interpolate(fake, size=(5, 7), mode="nearest") == "original"
         assert functional.interpolate(fake, size=(5, 7), mode="bilinear", antialias=True) == "original"
         torch.use_deterministic_algorithms(False)
         assert functional.interpolate(fake, size=(5, 7), mode="bilinear") == "original"
     assert len(called) == 1
+
+
+@pytest.fixture
+def fake_cuda_dispatch(installed, monkeypatch):
+    fake = SimpleNamespace(is_cuda=True, ndim=4)
+    monkeypatch.setattr(runtime, "_native_bilinear", lambda *args: "native")
+    monkeypatch.setattr(runtime, "_ORIGINAL_INTERPOLATE", lambda *args, **kwargs: "original")
+    torch.use_deterministic_algorithms(True)
+    return lambda: functional.interpolate(fake, size=(5, 7), mode="bilinear")
+
+
+def test_training_no_grad_without_explicit_scope_keeps_original_dispatch(fake_cuda_dispatch):
+    with torch.no_grad():
+        assert fake_cuda_dispatch() == "original"
+    assert runtime.runtime_status()["explicit_inference_scope_required"] is True
+
+
+def test_explicit_scope_does_not_override_enabled_gradients(fake_cuda_dispatch):
+    with torch.enable_grad(), runtime.inference_runtime_scope():
+        assert fake_cuda_dispatch() == "original"
+    with torch.no_grad(), runtime.inference_runtime_scope():
+        assert fake_cuda_dispatch() == "native"
+
+
+def test_inference_scope_nests_and_restores_after_exceptions(fake_cuda_dispatch):
+    with torch.no_grad():
+        assert fake_cuda_dispatch() == "original"
+        with pytest.raises(RuntimeError, match="outer failure"):
+            with runtime.inference_runtime_scope():
+                assert fake_cuda_dispatch() == "native"
+                with pytest.raises(ValueError, match="inner failure"):
+                    with runtime.inference_runtime_scope():
+                        assert fake_cuda_dispatch() == "native"
+                        raise ValueError("inner failure")
+                assert fake_cuda_dispatch() == "native"
+                raise RuntimeError("outer failure")
+        assert fake_cuda_dispatch() == "original"
+        with runtime.inference_runtime_scope():
+            assert fake_cuda_dispatch() == "native"
+        assert fake_cuda_dispatch() == "original"
+
+
+def test_inference_scope_does_not_leak_to_input_threads(fake_cuda_dispatch):
+    def prepare_in_worker():
+        with torch.no_grad():
+            before = fake_cuda_dispatch()
+            with runtime.inference_runtime_scope():
+                inside = fake_cuda_dispatch()
+            return before, inside, fake_cuda_dispatch()
+
+    with torch.no_grad(), runtime.inference_runtime_scope():
+        assert fake_cuda_dispatch() == "native"
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            assert executor.submit(prepare_in_worker).result() == ("original", "native", "original")
+        assert fake_cuda_dispatch() == "native"
+    with torch.no_grad():
+        assert fake_cuda_dispatch() == "original"
+
+
+@pytest.mark.parametrize("failure", ["none", "before_sync", "save"])
+def test_legacy_validation_hook_closes_scope_and_supports_cpu(tmp_path, monkeypatch, failure):
+    pytest.importorskip("mmengine")
+    import common
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    def unexpected_sync():
+        pytest.fail("CPU validation must not synchronize CUDA")
+
+    monkeypatch.setattr(torch.cuda, "synchronize", unexpected_sync)
+    if failure == "save":
+        def fail_save(*args):
+            raise RuntimeError("save failed")
+
+        monkeypatch.setattr(common, "save_json", fail_save)
+    hook = runtime.make_validation_timing_hook(tmp_path)
+    runner = SimpleNamespace(epoch=3, logger=SimpleNamespace(info=lambda message: None))
+    if failure == "before_sync":
+        monkeypatch.setattr(hook, "_synchronize", lambda: (_ for _ in ()).throw(RuntimeError("sync failed")))
+        with pytest.raises(RuntimeError, match="sync failed"):
+            hook.before_val_epoch(runner)
+    else:
+        hook.before_val_epoch(runner)
+        assert runtime._INFERENCE_SCOPE_DEPTH.get() == 1
+        hook.before_val_iter(runner, 0)
+        hook.after_val_iter(runner, 0)
+        if failure == "save":
+            with pytest.raises(RuntimeError, match="save failed"):
+                hook.after_val_epoch(runner)
+        else:
+            hook.after_val_epoch(runner)
+            assert (tmp_path / "validation_timing.json").is_file()
+        hook.after_run(runner)
+    assert hook._inference_scope is None
+    assert runtime._INFERENCE_SCOPE_DEPTH.get() == 0
 
 
 def test_invalid_arguments_delegate_to_stock_errors(installed):
@@ -101,7 +197,8 @@ def test_cuda_native_vs_deterministic_decomposition(installed):
     value = torch.randn(1, 4, 7, 9, device="cuda")
     with torch.no_grad():
         expected = installed(value, size=(81, 103), mode="bilinear", align_corners=False)
-        actual = functional.interpolate(value, size=(81, 103), mode="bilinear", align_corners=False)
+        with runtime.inference_runtime_scope():
+            actual = functional.interpolate(value, size=(81, 103), mode="bilinear", align_corners=False)
     torch.testing.assert_close(actual, expected, atol=1e-5, rtol=1e-5)
     assert runtime.runtime_status()["native_bilinear_calls"] > 0
     assert torch.are_deterministic_algorithms_enabled()
@@ -221,6 +318,35 @@ def test_yolo_original_masks_bounded_on_cpu():
     assert runtime.decode_yolo_masks_bounded(
         ops.process_mask_native, value, coefficients[:0], boxes[:0], (36, 40)
     ).shape == (0, 36, 40)
+
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="Server CUDA required; local runtime is CPU-only"))])
+@pytest.mark.parametrize("dtype", [torch.bool, torch.uint8])
+@pytest.mark.parametrize("count", [0, 1, 7])
+def test_yolo_mask_transfer_preserves_empty_dtype_and_chunk_order(monkeypatch, device, dtype, count):
+    shape = (7, 11)
+    # A transposed mask also exercises a strided copy directly into final CPU storage.
+    masks = (torch.arange(count * 77, device=device).reshape(count, 11, 7) % 3 == 0).transpose(1, 2).to(dtype)
+    expected = masks.to(device="cpu", dtype=torch.uint8)
+    coefficients = torch.arange(count, device=device).reshape(count, 1)
+    boxes = torch.zeros(count, 4, device=device)
+    chunks = []
+
+    def decode(protos, selected, selected_boxes, output_shape):
+        assert output_shape == shape and len(selected_boxes) == len(selected)
+        chunks.append(len(selected))
+        return masks[selected[:, 0]]
+
+    def forbidden_cpu(*args, **kwargs):
+        pytest.fail("Decoded masks must copy directly into final CPU storage without a CPU temporary")
+
+    monkeypatch.setattr(torch.Tensor, "cpu", forbidden_cpu)
+    actual = runtime.decode_yolo_masks_bounded(decode, None, coefficients, boxes, shape, pixel_budget=77 * 2)
+    assert actual.device.type == "cpu" and actual.dtype == torch.uint8
+    assert not actual.is_pinned() and actual.shape == (count, *shape)
+    assert torch.equal(actual, expected)
+    assert chunks == ([2, 2, 2, 1] if count == 7 else [1] if count == 1 else [])
 
 
 def test_recovery_latest_checkpoint_marker(tmp_path):

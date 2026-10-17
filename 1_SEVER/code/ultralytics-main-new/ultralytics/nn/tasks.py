@@ -33,6 +33,9 @@ from ultralytics.nn.modules import (
     EV11NativeFusion,
     SegmentCitrusEV11,
     SegmentCitrusEV12,
+    SegmentCitrusPaperAblation,
+    SegmentCitrusJ4,
+    SegmentCitrusJ6,
     SegmentCitrusIV1,
     IV2LargeSmallStage,
     IV2P2Candidate,
@@ -821,8 +824,18 @@ class SegmentationModel(DetectionModel):
         """
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
+    def loss(self, batch, preds=None):
+        """Bind one paired original-pixel view only for the J6 auxiliary head."""
+        if isinstance(self.model[-1], SegmentCitrusJ6) and preds is None:
+            self.model[-1].bind_high_view(batch.get("high_img"))
+        return super().loss(batch, preds)
+
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
+        if isinstance(self.model[-1], SegmentCitrusJ6):
+            from ultralytics.utils.citrus_j6_loss import J6Loss
+
+            return J6Loss(self)
         if isinstance(self.model[-1], SegmentCitrusJ2Structural):
             from ultralytics.utils.citrus_j2_structure_loss import J2StructuralLoss
 
@@ -2335,6 +2348,15 @@ def parse_model(d, ch, verbose=True):
             args.extend([reg_max, end2end, [ch[index] for index in f]])
             m.legacy = False
             c2 = ch[f[0]]
+        elif m is SegmentCitrusJ6:
+            if not isinstance(f, list) or len(f) != 4 or ch[f[-1]] != 3 or n != 1:
+                raise ValueError("SegmentCitrusJ6 requires one head with [P3, P4, P5, raw RGB] inputs")
+            # Only the first three inputs are detection levels. The raw RGB skip is
+            # consumed by the shared detail/scout branch inside this head, not TAL.
+            args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            args.extend([reg_max, end2end, [ch[index] for index in f]])
+            m.legacy = False
+            c2 = ch[f[0]]
         elif m is IV2P2Candidate:
             if not isinstance(f, list) or len(f) != 2:
                 raise ValueError("IV2P2Candidate needs [persistent_detail, P3] inputs")
@@ -2407,6 +2429,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV10,
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
+                SegmentCitrusPaperAblation,
+                SegmentCitrusJ4,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
@@ -2457,6 +2481,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV10,
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
+                SegmentCitrusPaperAblation,
+                SegmentCitrusJ4,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
@@ -2495,6 +2521,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV10,
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
+                SegmentCitrusPaperAblation,
+                SegmentCitrusJ4,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,

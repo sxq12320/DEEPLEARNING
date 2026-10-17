@@ -82,7 +82,7 @@ def main():
             if not args.dry_run:
                 subprocess.run(command, check=True)
         print(f"PYTHONS['{environment}'] = {str(prefix / 'bin/python')!r}")
-    print("Install only; no models were trained. Next edit RUN_CITRUS_BASELINES_AMP.py and run --preflight-only.")
+    print("Install only; no models were trained. Next edit RUN_PAPER_BASELINES.py and run --preflight-only.")
 
 
 if __name__ == "__main__":

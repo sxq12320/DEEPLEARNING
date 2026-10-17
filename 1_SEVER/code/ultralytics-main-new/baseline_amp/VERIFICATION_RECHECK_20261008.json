@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-08",
+  "scope": "baseline label snapshots, checkpoint provenance and explicit inference scope",
+  "evaluation_protocol": "common_mask_coco_v1_20260930",
+  "protocol_changed": false,
+  "training_hyperparameters_changed": false,
+  "original_data_or_completed_results_modified": false,
+  "regression": {
+    "command": "python -m pytest baseline_amp -q --tb=short --color=no -o addopts=''",
+    "passed": 242,
+    "skipped": 22,
+    "failed": 0,
+    "seconds": 16.22,
+    "junit": "E:/mastercode/_work/baseline_review_20261008/after_full.xml",
+    "ruff": "passed",
+    "scoped_git_diff_check": "passed"
+  },
+  "verified": [
+    "COCO polygon parsing and prepared YOLO TXT use the same independently snapshotted bytes",
+    "In-place source TXT edits do not alter the prepared YOLO copy",
+    "Conflicting derived TXT and legacy hardlinks are rejected without replacing them",
+    "Source edits during preparation cannot produce a successful summary",
+    "Custom checkpoints do not inherit best epoch or EMA provenance or overwrite original outputs",
+    "Selected checkpoint retains the existing AP reproduction guard",
+    "Native bilinear bypass requires explicit inference scope, no gradients and the original CUDA conditions",
+    "Nested, exceptional and thread-local scope cleanup and CPU-safe legacy timing hook",
+    "Existing common AP, P/R, candidate, geometry, initialization and AMP contract tests"
+  ],
+  "local_environment": {
+    "python": "E:/AppInstallion/0_4_annaconda/python.exe",
+    "torch": "2.8.0+cpu",
+    "cuda_available": false,
+    "dependencies_installed_for_this_task": false
+  },
+  "limitations": [
+    "Prepared images can still use hardlinks and must remain immutable",
+    "No evidence that historical completed experiments encountered the label editing risk",
+    "No current server log, CUDA speed measurement or full formal training available",
+    "Native CUDA pixel-equivalence and actual speed remain server preflight/profile checks"
+  ],
+  "server_speedup_claimed": false,
+  "handoff": "Upload baseline_amp preserving custom paths; profile existing weights before resuming or starting new jobs"
+}

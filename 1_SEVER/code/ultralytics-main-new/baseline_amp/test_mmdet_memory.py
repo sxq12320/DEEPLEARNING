@@ -49,6 +49,52 @@ def test_every_interpolation_is_bounded(monkeypatch):
     assert max(calls) == 2 and len(result) == 23 and not result.any()
 
 
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="Server CUDA required; local runtime is CPU-only"))])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+@pytest.mark.parametrize("count", [0, 1, 17])
+@pytest.mark.parametrize("decoder", ["rtmdet", "solo"])
+def test_mask_storage_preserves_dtype_empty_and_multichunk(monkeypatch, device, dtype, count, decoder):
+    source = torch.randn(count, 7, 9, dtype=dtype, generator=torch.Generator().manual_seed(42)).to(device)
+    meta = dict(scale_factor=(0.5, 0.5), img_shape=(25, 33), ori_shape=(49, 65))
+    threshold = 0.5
+    if count:
+        if decoder == "rtmdet":
+            full = functional.interpolate(source.unsqueeze(0), scale_factor=4, mode="bilinear")
+            full = functional.interpolate(full, size=(56, 72), mode="bilinear", align_corners=False)[..., :49, :65]
+            expected = (full.sigmoid().squeeze(0) > threshold).to(device="cpu")
+        else:
+            source = source.sigmoid()
+            full = functional.interpolate(source.unsqueeze(0), size=(28, 36), mode="bilinear", align_corners=False)
+            full = functional.interpolate(full[..., :25, :33], size=(49, 65), mode="bilinear", align_corners=False)
+            expected = (full.squeeze(0) > threshold).to(device="cpu")
+    else:
+        expected = torch.empty((0, 49, 65), dtype=torch.bool)
+
+    calls = []
+    original = functional.interpolate
+
+    def recorded(tensor, *args, **kwargs):
+        calls.append(tensor.shape[1])
+        return original(tensor, *args, **kwargs)
+
+    def forbidden_cpu(*args, **kwargs):
+        pytest.fail("Decoded masks must copy directly into final CPU storage without a CPU temporary")
+
+    monkeypatch.setattr(functional, "interpolate", recorded)
+    monkeypatch.setattr(torch.Tensor, "cpu", forbidden_cpu)
+    if decoder == "rtmdet":
+        actual = mmdet_memory.decode_masks_bounded(source, 4, True, meta, threshold, chunk_limit=3)
+    else:
+        actual = mmdet_memory.decode_solo_masks_bounded(source, 4, meta, threshold)
+    assert actual.device.type == "cpu" and actual.dtype == torch.bool and not actual.is_pinned()
+    assert actual.shape == expected.shape and torch.equal(actual, expected)
+    if count == 17:
+        assert max(calls) == (3 if decoder == "rtmdet" else 8)
+    elif count == 0:
+        assert not calls
+
+
 @pytest.mark.parametrize("rescale", [False, True])
 @pytest.mark.parametrize("empty", [False, True])
 def test_official_postprocess_equivalence(monkeypatch, rescale, empty):

@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-08",
+  "scope": "Unified foreground Python calls; original official baseline backends retained",
+  "model_architectures_changed": false,
+  "native_losses_changed": false,
+  "validation_protocol_changed": false,
+  "existing_results_overwritten": false,
+  "entry": "RUN_BASELINE_OTHER_MODELS.py",
+  "api": "baseline_amp.OfficialBaseline",
+  "default_models": [
+    "rtmdet_ins_tiny",
+    "mask_rcnn_r50",
+    "solov2_light_r18",
+    "rfdetr_seg_nano"
+  ],
+  "default_jobs": 8,
+  "regression": {
+    "command": "python -m pytest baseline_amp -q --tb=short --color=no -o addopts='' --junitxml=E:/mastercode/_work/baseline_unified_entry_20261008/regression.xml",
+    "passed": 285,
+    "skipped": 22,
+    "failed": 0,
+    "pytest_seconds": 17.21,
+    "environment": "Local Python 3.9 / Torch 2.8 CPU, with existing extracted pinned backend dependencies",
+    "junit": "E:/mastercode/_work/baseline_unified_entry_20261008/regression.xml"
+  },
+  "static_checks": {
+    "ruff_scoped": "passed",
+    "git_diff_check_scoped": "passed"
+  },
+  "execution_checks": [
+    "New entry non_yolo dry run: eight paired-AMP jobs, no YOLO",
+    "New entry suite overrides mmdet/rfdetr: six/two jobs",
+    "Existing entry model filter: RTMDet pair, unchanged recipe and protocol",
+    "Existing recovery CLI --help compatible",
+    "Import/API dry run blocks framework imports and creates no project",
+    "Mock native val/profile retain isolated interpreter, saved job, checkpoint and GPU binding"
+  ],
+  "limitations": [
+    "This is not a network-graph port into Ultralytics and does not remove MMDetection or RF-DETR dependencies",
+    "No CUDA training, real-checkpoint re-evaluation or GPU timing was executed for this change",
+    "No speedup factor or numerical equivalence of a rewritten model is claimed",
+    "Server native-backend 1-3 epoch smoke runs remain required before new formal training"
+  ]
+}

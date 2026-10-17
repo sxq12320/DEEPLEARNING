@@ -286,6 +286,8 @@ __all__ = (
     "EV11NativeFusion",
     "SegmentCitrusEV11",
     "SegmentCitrusEV12",
+    "SegmentCitrusPaperAblation",
+    "SegmentCitrusJ4",
     "EV12RecognitionCorrection",
     "IV1AnchorContext",
     "IV1ProtoSync",
@@ -600,6 +602,8 @@ from .citrus_e_v6 import EV6FineDetail, SegmentCitrusEV6
 from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7
 
 from .citrus_e_v12 import EV12RecognitionCorrection, SegmentCitrusEV12
+from .citrus_paper_ablation import SegmentCitrusPaperAblation
+from .citrus_j4 import SegmentCitrusJ4
 from .citrus_i_v1 import (
     IV1AnchorContext,
     IV1ProtoSync,
@@ -627,6 +631,9 @@ __all__ += ("J2Contrast", "J2RepMix", "J2RepStage", "J2ResidualFuse", "SegmentCi
 from .citrus_j2_refined import J2PhaseProto, SegmentCitrusJ2Expressive
 
 __all__ += ("J2PhaseProto", "SegmentCitrusJ2Expressive")
+from .citrus_j6 import SegmentCitrusJ6
+
+__all__ += ("SegmentCitrusJ6",)
 from .citrus_e_v11 import (
     EV11ContextStage,
     EV11DetailExchange,

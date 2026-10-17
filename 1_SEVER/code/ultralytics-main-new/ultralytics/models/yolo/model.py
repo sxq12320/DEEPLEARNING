@@ -83,6 +83,18 @@ class YOLO(Model):
                 self.__class__ = type(new_instance)
                 self.__dict__ = new_instance.__dict__
 
+    def _smart_load(self, key: str):
+        """Dispatch J6 native APIs without changing the other YOLO series."""
+        if key in {"trainer", "validator", "predictor"} and self.__dict__.get("task") == "segment":
+            model = self.__dict__.get("model", self._modules.get("model"))
+            if isinstance(model, torch.nn.Module) and any(
+                type(module).__name__ == "SegmentCitrusJ6" for module in model.modules()
+            ):
+                from citrus_j6_training import J6Predictor, J6Trainer, J6Validator
+
+                return {"trainer": J6Trainer, "validator": J6Validator, "predictor": J6Predictor}[key]
+        return super()._smart_load(key)
+
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
         """Map head to model, trainer, validator, and predictor classes."""

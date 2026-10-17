@@ -1,0 +1,44 @@
+# J92_neighbor: J91 plus actual neighboring-instance evidence; no gain routing or set selection.
+# UNTRAINED controlled hypothesis. Train with RUN_CITRUS_J6.py or explicit J6Trainer.
+# J6Trainer preserves registered global/detail views from each original RGB sample.
+# Head args: nc,nm,npr,enabled,neighbor,selection,shuffle,use_d2,gt_balanced,gain_route,
+#            detail_channels,scout_channels,roi_side,max_rois.
+nc: 1
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+citrus_j6:
+  enabled: true
+  neighbor: true
+  selection: false
+  shuffle: false
+  use_d2: true
+  gt_balanced: false
+  gain_route: false
+backbone:
+  - [-1, 1, "nn.Identity", []]                    # 0: RGB skip, not another detection scale
+  - [-1, 1, "Conv", [64, 3, 2]]                  # 1: stride 2
+  - [-1, 1, "Conv", [128, 3, 2]]                 # 2: stride 4
+  - [-1, 2, "C3k2", [256, false, 0.25]]          # 3
+  - [-1, 1, "Conv", [256, 3, 2]]                 # 4: stride 8
+  - [-1, 2, "C3k2", [512, false, 0.25]]          # 5
+  - [-1, 1, "Conv", [512, 3, 2]]                 # 6: stride 16
+  - [-1, 2, "C3k2", [512, true]]                 # 7
+  - [-1, 1, "Conv", [1024, 3, 2]]                # 8: stride 32
+  - [-1, 2, "C3k2", [1024, true]]                # 9
+  - [-1, 1, "SPPF", [1024, 5]]                  # 10
+  - [-1, 2, "C2PSA", [1024]]                    # 11
+head:
+  - [-1, 1, "nn.Upsample", ["None", 2, "nearest"]] # 12
+  - [[-1, 7], 1, "Concat", [1]]                 # 13
+  - [-1, 2, "C3k2", [512, false]]               # 14
+  - [-1, 1, "nn.Upsample", ["None", 2, "nearest"]] # 15
+  - [[-1, 5], 1, "Concat", [1]]                 # 16
+  - [-1, 2, "C3k2", [256, false]]               # 17: P3
+  - [-1, 1, "Conv", [256, 3, 2]]                # 18
+  - [[-1, 14], 1, "Concat", [1]]                # 19
+  - [-1, 2, "C3k2", [512, false]]               # 20: P4
+  - [-1, 1, "Conv", [512, 3, 2]]                # 21
+  - [[-1, 11], 1, "Concat", [1]]                # 22
+  - [-1, 2, "C3k2", [1024, true]]               # 23: P5
+  - [[17, 20, 23, 0], 1, "SegmentCitrusJ6", [nc, 32, 256, true, true, false, false, true, false, false, 8, 16, 16, 32]]

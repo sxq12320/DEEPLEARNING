@@ -1,118 +1,45 @@
-# 服务器开始入口（CitrusB v2，2026-08-27）
+# 服务器上传与运行入口（2026-10-11）
 
-上传整个 `1_SEVER/code` 后进入真正的项目根目录：
-
-```bash
-cd /你的服务器路径/code/ultralytics-main-new
-```
-
-外层 `ultralytics-main-new/` 是项目，内层 `ultralytics/` 是 Python 包，并不是两套重复代码。B v2 不
-依赖 Mamba、MMCV 或自定义 CUDA 算子。
-
-## 1. 环境自检
+上传本目录后，真正的主项目在 `ultralytics-main-new/`。进入：
 
 ```bash
-python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
-pip install -e .
-python -m pytest -q tests/test_citrus_b.py tests/test_citrus_b_report.py
+cd /data/sxq/code/ultralytics-main-new
 ```
 
-`torch.cuda.is_available()` 必须为 `True`。若需要新建环境：
+外层 `ultralytics-main-new` 是项目，内层 `ultralytics` 是 Python 包，二者不是重复副本，不能删除内层。
+
+## 最新 baseline
+
+唯一批量入口：`RUN_PAPER_BASELINES.py`。
+设置真实清洗数据的 DATA、DEVICE 和两个 baseline 环境的 PYTHONS，然后直接运行：
 
 ```bash
-conda env create -f environment_citrus_b.yml
-conda activate citrus-b
-pip install -e .
+python RUN_PAPER_BASELINES.py
 ```
 
-## 2. 数据路径
+也可在 VSCode 选择 Python 解释器，点击右上角运行三角形。
+默认 7 个原版实例分割模型 × AMP=1/0，共 14 项，每项 300 轮，前台顺序运行。
+默认新结果目录 `PAPER_BASELINES_TRANSFER_300EP_20261011`，不覆盖之前 50 轮结果。
+这是官方预训练配方，不是历史“78版”随机初始化配方。
 
-训练命令的 `--data` 必须指向服务器上的清洗数据，例如：
+安装说明和完整运行设置见
+[baseline 操作说明](ultralytics-main-new/baseline_amp/README_基线批量运行.md)。
+依赖未安装时用 `INSTALL_CITRUS_BASELINE_ENVS.py` 创建隔离环境；已有环境直接复用。
+不要在官方 baseline 环境安装改进分支的 `pip install -e .`。
 
-```text
-/data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml
-```
+## 改进模型
 
-批处理脚本会生成服务器安全的运行时 YAML，不改变已有 train/val/test 成员。先确认路径：
+当前 J4 入口：`RUN_CITRUS_J4.py`；按该文件设置运行参数。
+改进模型使用自己的项目环境和 EV6 验证，不把 baseline 的共同 COCO 验证器替换进去。
+其余历史模型、YAML、模块及复现工具仍保留。旧系列文档是历史记录，不代表当前默认入口。
+外层 `baseline_choice/` 是独有历史工作台，不是新版 baseline 的第二个入口。
 
-```bash
-python -c "from pathlib import Path; p=Path('/data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml'); print(p.resolve(), p.is_file())"
-```
+## 本目录已瘦身
 
-## 3. 现在先做：B02-B09 三 epoch 冒烟
+约 234.22 MiB → 20.45 MiB，主要移出审计图片、重复权重与可再生成缓存。
+标签审计页面、CSV 和推理记录完整保存在
+`E:/mastercode/1_SEVER/archives/code_cleanup_20261011/LABEL_AUDIT_20261005/`，不需要上传训练服务器。
+完整清理与恢复记录在该归档目录的 `README_清理记录.md`。
+模型源码、YAML、训练代码、现有结果和数据未删除；训练的 `cache=True` 设置未改变。
 
-S00 和 S04 已在完全相同协议下分别覆盖 B00、B01。先只运行八个新结构，检查数据加载、前向、反向、
-验证和权重保存：
-
-```bash
-python 20260826_citrus_b_batch.py \
-  --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
-  --suite smoke --epochs 3 --batch 4 --workers 4 --device 0 \
-  --project 1_results/CITRUS_B_V2_SMOKE
-```
-
-先预览而不训练可加 `--dry-run`。冒烟指标不用于比较精度。
-
-## 4. 冒烟正常后：含同周期基线的 50 epoch 结构筛选
-
-```bash
-nohup python 20260826_citrus_b_batch.py \
-  --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
-  --suite screening --epochs 50 --batch 16 --workers 4 --device 0 \
-  --project 1_results/CITRUS_B_V2_SCREEN_50EP \
- > citrus_b_v2_screen_50ep.log 2>&1 &
-```
-
-这里会运行 B00-B09。不能拿 50-epoch 的新模型直接对比已经训练 300 epoch 的 S00/S04；因此 B00、
-B01 必须在 50-epoch 筛选中同周期重跑，作为公平参考。
-
-```bash
-tail -f citrus_b_v2_screen_50ep.log
-```
-
-完成后汇总：
-
-```bash
-python report_citrus_b_results.py --project 1_results/CITRUS_B_V2_SCREEN_50EP
-python benchmark_citrus_b_latency.py --device 0 --warmup 30 --iterations 200
-```
-
-筛选时同时看 Mask AP50-95、Mask AP50、recall 和同机 GPU latency。B08 偏严格 AP，B09 偏召回/
-速度；名称不预设最终胜者。
-
-## 5. 何时跑 300 epoch
-
-只把 50-epoch 中满足以下条件的 1-2 个模型扩展到 300 epoch：
-
-- 在 50-epoch 同周期比较中明显超过 B01，并在 300-epoch 后再与 S04 的 0.6150 比较；
-- Mask AP50 和 recall 没有出现 S09 式明显回退；
-- 服务器实测延迟和显存可接受。
-
-示例（把名称替换成真实入选模型）：
-
-```bash
-nohup python 20260826_citrus_b_batch.py \
-  --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
-  --suite architectures --epochs 300 --batch 16 --workers 4 --device 0 \
-  --only B02_context_lite,B09_recall_balanced \
-  --project 1_results/CITRUS_B_V2_FINAL_300EP \
-  > citrus_b_v2_final_300ep.log 2>&1 &
-```
-
-最终入选模型与 B00 基线再使用 `--seeds 42,43,44` 做三次重复。不要在结构尚未筛出之前运行
-`--suite losses`；损失套件是第二阶段实验。
-
-## 6. 单独训练 B09
-
-标准 YAML 入口仍然可用，但必须显式传入已选定的 B/Q 损失：
-
-```bash
-python train_citrus_yaml.py \
-  --model 0_orange_yaml/B_series/09_b09_recall_balanced_final.yaml \
-  --data /data/sxq/datasets/orange_yolo_grouped_dedup_20260820/data.yaml \
-  --name B09_single --epochs 300 --batch 16 --device 0 \
-  --citrus-boundary 0.25 --citrus-query 0.05
-```
-
-完整 S 结果、B v2 取舍和资源表见
-`ultralytics-main-new/20260826_CITRUS_B_EVIDENCE_AND_DESIGN.md`。
+本地移动不会自动清理服务器旧副本。上传时只上传当前 code，不要把 archives 一起传上去。

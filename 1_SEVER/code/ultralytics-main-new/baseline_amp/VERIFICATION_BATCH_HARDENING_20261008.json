@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-08",
+  "scope": "Foreground baseline batch controller and artifact safety",
+  "entry": "RUN_BASELINE_OTHER_MODELS.py",
+  "default_project_name": "BASELINES_OTHER_SAFE_20261008",
+  "model_architectures_changed": false,
+  "native_losses_changed": false,
+  "training_hyperparameters_changed": false,
+  "validation_protocol_changed": false,
+  "gpu_occupancy_guard_added": false,
+  "protections": [
+    "Strict epochs/workers/seeds/batch validation without implicit truncation",
+    "START_FROM and SKIP_RUNS validation before any side effects",
+    "Whole requested queue artifact and checkpoint verification before GPU preflight",
+    "Original train/evaluate sequential subprocess isolation retained",
+    "Zero exit code alone cannot mark a model complete",
+    "Valid trained-only runs execute evaluate without retraining",
+    "Same-project nonblocking filesystem writer lock, not a GPU lock",
+    "Atomic JSON and CSV replacement",
+    "Metric ranges, checkpoint provenance, paired initialization/dataset checks",
+    "Persistent batch_status with current stage, completed, skipped and failure fields",
+    "Bounded output tee and cleanup of owned process trees on signals and IO errors"
+  ],
+  "tests": {
+    "command": "python -m pytest baseline_amp -q --tb=short --color=no -o addopts='' --junitxml=E:/mastercode/_work/baseline_batch_hardening_20261008/regression_final.xml",
+    "passed": 459,
+    "skipped": 22,
+    "failed": 0,
+    "pytest_seconds": 20.09,
+    "environment": "Local Python 3.9 / Windows / Torch 2.8 CPU with existing extracted backend dependencies",
+    "junit": "E:/mastercode/_work/baseline_batch_hardening_20261008/regression_final.xml",
+    "real_windows_process_tree_cleanup": "passed: controller interrupt and root-exit-with-surviving-grandchild",
+    "real_cross_process_project_lock": "passed",
+    "linux_signal_path": "mock tests passed; no real Linux server test",
+    "queue_compatibility": "48 normal suite/AMP/protocol combinations unchanged"
+  },
+  "checks": {
+    "ruff_scoped": "passed",
+    "git_diff_check_scoped": "passed",
+    "new_entry_dry_run": "passed",
+    "existing_entry_cli_dry_run": "passed"
+  },
+  "limitations": [
+    "No CUDA model training or GPU speed measurement was performed",
+    "Server native-backend 1-3 epoch smoke run remains required",
+    "Power loss and Linux SIGKILL cannot guarantee Python cleanup or final status publication",
+    "Filesystem must support reliable locking and same-filesystem atomic replace",
+    "Use a new PROJECT when the saved implementation/protocol differs; never remove old provenance to bypass it"
+  ]
+}
