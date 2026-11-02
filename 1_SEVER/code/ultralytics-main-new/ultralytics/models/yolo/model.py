@@ -84,9 +84,28 @@ class YOLO(Model):
                 self.__dict__ = new_instance.__dict__
 
     def _smart_load(self, key: str):
-        """Dispatch J6 native APIs without changing the other YOLO series."""
+        """Dispatch explicit-input citrus APIs without changing ordinary YOLO models."""
         if key in {"trainer", "validator", "predictor"} and self.__dict__.get("task") == "segment":
             model = self.__dict__.get("model", self._modules.get("model"))
+            packed_protocol = (getattr(model, "yaml", {}) or {}).get("citrus_input_protocol")
+            packed_native = isinstance(model, torch.nn.Module) and packed_protocol == "packed_rgb_hr_2x_v1"
+            if isinstance(model, torch.nn.Module) and (packed_native or any(
+                type(module).__name__ == "SegmentCitrusJ7R" for module in model.modules()
+            )):
+                from citrus_j7r_data import j7r_model_spec
+                from citrus_j7r_predict import J7RPredictor
+                from citrus_j7r_training import J7RTrainer, J7RValidator
+
+                j7r_model_spec(model)  # validate protocol; do not reinterpret arbitrary 15ch models
+                head_name = type(model.model[-1]).__name__
+                if head_name not in {"SegmentCitrusJ7R", "Segment"}:
+                    raise ValueError("Unsupported J7R head schema: {}".format(head_name))
+                if head_name == "Segment" and (
+                    model.yaml.get("citrus_native_initialization") != "semantic_yolo11n_seed_v1"
+                    or len(model.yaml.get("citrus_native_layer_map", ())) != 24
+                ):
+                    raise ValueError("Native J7R Segment requires the explicit semantic YOLO11n initialization map")
+                return {"trainer": J7RTrainer, "validator": J7RValidator, "predictor": J7RPredictor}[key]
             if isinstance(model, torch.nn.Module) and any(
                 type(module).__name__ == "SegmentCitrusJ6" for module in model.modules()
             ):
@@ -94,6 +113,12 @@ class YOLO(Model):
 
                 return {"trainer": J6Trainer, "validator": J6Validator, "predictor": J6Predictor}[key]
         return super()._smart_load(key)
+
+    def export(self, **kwargs):
+        """Do not silently export a packed research graph without its paired-image preprocessing."""
+        if (getattr(self.model, "yaml", {}) or {}).get("citrus_input_protocol") == "packed_rgb_hr_2x_v1":
+            raise ValueError("J7R export is not verified; use native PyTorch with explicit paired preprocessing")
+        return super().export(**kwargs)
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:

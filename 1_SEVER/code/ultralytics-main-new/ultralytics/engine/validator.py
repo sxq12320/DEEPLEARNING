@@ -139,6 +139,10 @@ class BaseValidator:
         self.plots = {}
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
 
+    def get_warmup_shape(self, model, batch_size, imgsz):
+        """Return the dummy input shape; specialized input adapters may override it."""
+        return (batch_size, self.data["channels"], imgsz, imgsz)
+
     @smart_inference_mode()
     def __call__(self, trainer=None, model=None):
         """Execute validation process, running inference on dataloader and computing performance metrics.
@@ -203,12 +207,13 @@ class BaseValidator:
             if not (pt or (getattr(model, "dynamic", False) and fmt != "imx")):
                 self.args.rect = False
             self.stride = model.stride  # used in get_dataloader() for padding
+            warmup_shape = self.get_warmup_shape(model, 1 if pt else self.args.batch, imgsz)
             self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)
 
             model.eval()
             if self.args.compile:
                 model = attempt_compile(model, device=self.device)
-            model.warmup(imgsz=(1 if pt else self.args.batch, self.data["channels"], imgsz, imgsz))  # warmup
+            model.warmup(imgsz=warmup_shape)  # warmup
 
         self.run_callbacks("on_val_start")
         dt = (

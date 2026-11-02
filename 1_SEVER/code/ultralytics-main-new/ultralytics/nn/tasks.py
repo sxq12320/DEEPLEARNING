@@ -35,6 +35,14 @@ from ultralytics.nn.modules import (
     SegmentCitrusEV12,
     SegmentCitrusPaperAblation,
     SegmentCitrusJ4,
+    J7DeepStage,
+    J7ScaleHub,
+    SegmentCitrusJ7,
+    J7RPackedInput,
+    J7RHighEvidence,
+    J7RStemEvidence,
+    J7REvidenceRead,
+    SegmentCitrusJ7R,
     SegmentCitrusJ6,
     SegmentCitrusIV1,
     IV2LargeSmallStage,
@@ -856,6 +864,13 @@ class SegmentationModel(DetectionModel):
             from ultralytics.utils.citrus_i_v4_loss import IV4SegmentationLoss
 
             return IV4SegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusJ7):
+            head = self.model[-1]
+            if any((head.tiny_dice_gain, head.boundary_gain, head.neighbor_gain)):
+                from ultralytics.utils.citrus_j7_loss import J7SegmentationLoss
+
+                return J7SegmentationLoss(self)
+            return v8SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusEV11):
             from ultralytics.utils.citrus_e_v11_loss import EV11SegmentationLoss
 
@@ -1989,6 +2004,7 @@ def parse_model(d, ch, verbose=True):
             JDown,
             JStage,
             J2RepStage,
+            J7DeepStage,
             EV10ContrastStem,
             EV8ContextStage,
             EV3DeepStage,
@@ -2065,6 +2081,7 @@ def parse_model(d, ch, verbose=True):
         {
             JStage,
             J2RepStage,
+            J7DeepStage,
             EV8ContextStage,
             EV3DeepStage,
             EV11RepStage,
@@ -2431,6 +2448,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
                 SegmentCitrusJ4,
+                SegmentCitrusJ7,
+                SegmentCitrusJ7R,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
@@ -2483,6 +2502,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
                 SegmentCitrusJ4,
+                SegmentCitrusJ7,
+                SegmentCitrusJ7R,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
@@ -2523,6 +2544,8 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
                 SegmentCitrusJ4,
+                SegmentCitrusJ7,
+                SegmentCitrusJ7R,
                 SegmentCitrusIV1,
                 SegmentCitrusIV2,
                 SegmentCitrusIV4,
@@ -2534,6 +2557,30 @@ def parse_model(d, ch, verbose=True):
                 Pose, Pose26, OBB, OBB26
             }:
                 m.legacy = legacy
+        elif m is J7RPackedInput:
+            if n != 1 or not isinstance(f, int) or ch[f] != 15 or args:
+                raise ValueError("J7RPackedInput needs one packed15 input and no arguments/repeats")
+            c2 = [3, 12]
+        elif m is J7RHighEvidence:
+            if n != 1 or not isinstance(f, int) or ch[f] != 12 or len(args) != 1:
+                raise ValueError("J7RHighEvidence needs one packed12 input, one width, and no repeats")
+            c2 = [int(args[0])] * 3  # explicit evidence width, not width-scaled
+            args = [ch[f], *args]
+        elif m is J7RStemEvidence:
+            if n != 1 or not isinstance(f, int) or ch[f] != 12 or len(args) != 2:
+                raise ValueError("J7RStemEvidence needs packed12, width, phase_center and no repeats")
+            c2 = args[0]  # explicit evidence width, not compound-width scaled
+            args = [ch[f], *args]
+        elif m is J7REvidenceRead:
+            if n != 1 or not isinstance(f, list) or len(f) != 2:
+                raise ValueError("J7REvidenceRead needs [native,evidence] and no repeats")
+            c2 = ch[f[0]]
+            args = [[ch[index] for index in f], *args]
+        elif m is J7ScaleHub:
+            if not isinstance(f, list) or len(f) != 3 or n != 1 or len(args[0]) != 3:
+                raise ValueError("J7ScaleHub needs three input indices, three output widths, and one hub")
+            c2 = [make_divisible(min(c, max_channels) * width, 8) for c in args[0]]
+            args = [[ch[x] for x in f], c2, *args[1:]]
         elif m is EV11DetailSeed:
             c2 = int(args[0])
             args = [[ch[x] for x in f], *args]

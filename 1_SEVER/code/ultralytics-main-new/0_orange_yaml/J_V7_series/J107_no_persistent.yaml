@@ -1,0 +1,28 @@
+# J107_no_persistent: vs J104: remove persistent P2 seed/exchanges/injection; head C2 refiner remains
+# Untrained hypothesis. Common protocol: RUN_CITRUS_J7.py; no claimed AP/latency gain.
+nc: 1
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]                         # 0 stem /2, 16ch
+  - [-1, 1, Conv, [128, 3, 2]]                        # 1 /4
+  - [-1, 2, C3k2, [256, false, 0.25]]                 # 2 C2, 64ch
+  - [2, 1, nn.Identity, []]                          # 3 unused placeholder; no persistent stream
+  - [2, 1, Conv, [256, 3, 2]]                         # 4 /8
+  - [-1, 2, C3k2, [512, false, 0.25]]                 # 5 C3, 128ch
+  - [5, 1, nn.Identity, []]                          # 6 unused placeholder
+  - [5, 1, Conv, [512, 3, 2]]                         # 7 /16
+  - [-1, 2, J7DeepStage, [512, 2.0]]                   # 8 C4, 128ch
+  - [8, 1, nn.Identity, []]                          # 9 unused placeholder
+  - [8, 1, nn.Identity, []]                          # 10 no detail injection
+  - [10, 1, Conv, [1024, 3, 2]]                       # 11 /32
+  - [-1, 2, J7DeepStage, [1024, 2.0]]                  # 12 C5, 256ch
+  - [-1, 1, SPPF, [1024, 5]]                         # 13
+  - [-1, 2, C2PSA, [1024]]                           # 14
+head:
+  - [[5, 10, 14], 1, J7ScaleHub, [[256, 512, 1024], 24, true]]  # 15
+  - [15, 1, Index, [64, 0]]                          # 16 N3 /8
+  - [15, 1, Index, [128, 1]]                         # 17 N4 /16
+  - [15, 1, Index, [256, 2]]                         # 18 N5 /32
+  - [[16, 17, 18, 2, 0, 10], 1, SegmentCitrusJ7, [nc, 32, 256, 16, false, false, 48, true, 0.00, 0.00, 0.0]]

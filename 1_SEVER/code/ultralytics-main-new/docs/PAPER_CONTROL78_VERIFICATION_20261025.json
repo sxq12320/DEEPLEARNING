@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-25",
+  "entry": "RUN_PAPER_CONTROL78.py",
+  "unit_tests_passed": 16,
+  "python_38_syntax": "passed",
+  "recipe_reference": "results/A_baselines/old_data_runs/001_3_yolo11-seg_adamw/args.yaml",
+  "initialization": "explicit scratch; pretrained=False rather than ambiguous saved YAML-run pretrained=True",
+  "training_sampling": "whole-image native YOLODataset, no mixed-view preprocessing",
+  "training_validation": "EV6 input/2 for both; training mask_ratio=4",
+  "cpu_integration": {
+    "status": "passed",
+    "torch": "2.8.0+cpu",
+    "epochs_per_model": 1,
+    "train_images": 2,
+    "val_images": 2,
+    "imgsz": 640,
+    "batch": 2,
+    "workers": 0,
+    "models": ["YOLO11n-seg", "V12_04"],
+    "paired_modes": ["global", "fixed_box", "crossmask", "trustedmask"],
+    "completed_rerun": "checkpoint modification times unchanged",
+    "artifact": "E:/mastercode/_work/20261025_control78/run_20261025_142739/verification.json"
+  },
+  "resume_test": {
+    "status": "passed",
+    "interrupted_after_saved_epoch": 1,
+    "resumed_final_epoch": 2,
+    "artifact": "E:/mastercode/_work/20261025_control78/resume_20261025_142901/resume_verification.json"
+  },
+  "shared_bugfix": "Empty instance mask tensor returns zero candidates before interpolation.",
+  "not_verified": ["GPU AMP", "server Python3.8/Torch1.13 runtime", "300-epoch accuracy", "formal test performance"],
+  "original_models_data_results_preserved": true
+}

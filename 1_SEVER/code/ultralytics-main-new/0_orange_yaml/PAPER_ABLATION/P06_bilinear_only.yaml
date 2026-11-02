@@ -172,6 +172,7 @@ head:
     - 2
     - true
     - false
+    - true
 pretrained_map_family: P06_bilinear_only
 pretrained_layer_map:
   3: -1
@@ -199,4 +200,3 @@ pretrained_layer_map:
   25: -1
   26: -1
   27: 23
-

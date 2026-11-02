@@ -40,7 +40,7 @@ def predict_view(model, image, window, eval_shape, device, imgsz=640, conf=0.001
     gy0, gy1 = round(y0 * eh / h), round(y1 * eh / h)
     result = model.predict(image[y0:y1, x0:x1], imgsz=imgsz, device=device, conf=conf, iou=iou,
                            max_det=max_det, verbose=False, save=False, retina_masks=False)[0]
-    if result.masks is None:
+    if result.masks is None or result.masks.data.shape[0] == 0:
         return []
     boxes = result.boxes.xyxy.cpu().numpy() + [x0, y0, x0, y0]
     # Strip the crop's letterbox, then map to the same full-image evaluation grid.

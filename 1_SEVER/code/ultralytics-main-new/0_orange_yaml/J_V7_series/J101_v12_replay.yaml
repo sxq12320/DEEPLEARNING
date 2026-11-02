@@ -1,0 +1,33 @@
+# J101_v12_replay: historical J61 graph with legacy route/quality/loss; NOT a one-factor control
+# Untrained hypothesis. Common protocol: RUN_CITRUS_J7.py; no claimed AP/latency gain.
+nc: 1
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]                         # 0 stem /2, 16ch
+  - [-1, 1, Conv, [128, 3, 2]]                        # 1 /4
+  - [-1, 2, C3k2, [256, false, 0.25]]                 # 2 C2, 64ch
+  - [[2, 0], 1, EV11DetailSeed, [16]]                 # 3 persistent P2
+  - [2, 1, Conv, [256, 3, 2]]                         # 4 /8
+  - [-1, 2, C3k2, [512, false, 0.25]]                 # 5 C3, 128ch
+  - [[3, 5], 1, EV11DetailExchange, []]               # 6
+  - [5, 1, Conv, [512, 3, 2]]                         # 7 /16
+  - [-1, 2, C3k2, [512, true]]                       # 8 C4, 128ch
+  - [[6, 8], 1, EV11DetailExchange, []]               # 9
+  - [[8, 9], 1, EV11DetailInject, []]                 # 10 C4 detail injection
+  - [10, 1, Conv, [1024, 3, 2]]                       # 11 /32
+  - [-1, 2, EV3DeepStage, [1024, true]]             # 12 C5, 256ch
+  - [-1, 1, SPPF, [1024, 5]]                         # 13
+  - [-1, 2, C2PSA, [1024]]                           # 14
+head:
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]          # 15
+  - [[-1, 10], 1, Concat, [1]]                       # 16
+  - [-1, 2, C3k2, [512, false]]                      # 17
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]          # 18
+  - [[-1, 5], 1, Concat, [1]]                        # 19
+  - [-1, 2, C3k2, [256, false]]                      # 20 P3
+  - [-1, 1, Conv, [256, 3, 2]]                       # 21
+  - [[-1, 17], 1, Concat, [1]]                       # 22
+  - [-1, 2, C3k2, [512, false]]                      # 23 P4; C5 direct as in historical V12
+  - [[20, 23, 14, 2, 0, 10, 9], 1, SegmentCitrusEV12, [nc, 32, 256, 16, true, false, false, 0.0, 0.0, 0.25, 0.5, 0.25, 2, true]]

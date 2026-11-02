@@ -35,6 +35,7 @@ def parse_args(argv=None):
     parser.add_argument("--pretrained", type=Path, default=ROOT / "yolo11n-seg.pt")
     parser.add_argument("--device", default="1")
     parser.add_argument("--suite", choices=("core", "paper"), default="paper")
+    parser.add_argument("--only", default="", help="Comma-separated model names from the selected suite")
     parser.add_argument("--epochs", type=int, default=300)
     parser.add_argument("--seeds", default="42,43,44")
     parser.add_argument("--batch", type=int, default=16)
@@ -45,6 +46,7 @@ def parse_args(argv=None):
     parser.add_argument("--coco-secondary", action="store_true")
     parser.add_argument("--resume-partial", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--smoke", action="store_true", help="Separate _SMOKE project, one epoch, two eval images")
     return parser.parse_args(argv)
 
 
@@ -57,7 +59,7 @@ def effective_training(args):
     result.update(
         batch=args.batch, workers=args.workers, cache=args.cache == "true", imgsz=640,
         epochs=args.epochs, mask_ratio=2, copy_paste=0.3, cos_lr=False,
-        patience=max(args.epochs, 300), amp=False, pretrained=False,
+        patience=max(args.epochs, 300), amp=False, pretrained=str(args.pretrained.resolve()),
     )
     for key in (
         "citrus_boundary", "citrus_concavity", "citrus_query", "citrus_contrast",
@@ -112,6 +114,8 @@ def summarize(project, queue):
                     "amp": job["amp"], "split": split, "mode": mode,
                     "diagnostic_mask_ap50": metric.get("metrics/mAP50(M)"),
                     "diagnostic_mask_ap5095": metric.get("metrics/mAP50-95(M)"),
+                    "diagnostic_mask_precision": metric.get("metrics/precision(M)"),
+                    "diagnostic_mask_recall": metric.get("metrics/recall(M)"),
                     "tiny_matched": metric.get("tiny_matched"), "tiny_n": metric.get("tiny_n"),
                     "r_at_p90": (metric.get("operating_p90") or {}).get("recall"),
                     "median_ms": metric.get("median_ms"), "coco_ap5095": coco.get("AP"),
@@ -125,10 +129,25 @@ def summarize(project, queue):
     return rows
 
 
+def selected_queue(args):
+    seeds = tuple(int(v) for v in args.seeds.split(",") if v.strip())
+    if not seeds or min(seeds) < 0 or len(set(seeds)) != len(seeds):
+        raise ValueError("Seeds must be distinct nonnegative integers")
+    queue = jobs(args.suite, seeds, args.amp_audit)
+    if args.only:
+        names = set(args.only.split(","))
+        if not names.issubset({job["model"] for job in queue}):
+            raise ValueError("--only contains names outside the selected suite: %s" % args.only)
+        queue = [job for job in queue if job["model"] in names]
+    return seeds, queue
+
+
 def main(argv=None):
     args = parse_args(argv)
-    seeds = tuple(int(v) for v in args.seeds.split(",") if v.strip())
-    queue = jobs(args.suite, seeds, args.amp_audit)
+    seeds, queue = selected_queue(args)
+    if args.smoke:
+        args.project = args.project.with_name(args.project.name + "_SMOKE")
+        args.epochs = 1
     if args.epochs < 1 or args.batch < 1 or args.workers < 0:
         raise ValueError("epochs/batch must be positive and workers nonnegative")
     if args.device != "cpu" and not args.device.isdigit():
@@ -143,18 +162,28 @@ def main(argv=None):
     if args.dry_run:
         print("PLAN ONLY: no dataset preparation, CUDA, training or output writes.", flush=True)
         return queue
+    from citrus_control78_batch import project_lock
+    args.project.mkdir(parents=True, exist_ok=True)
+    with project_lock(args.project):
+        return run_queue(args, queue)
+
+
+def run_queue(args, queue):
     # Visibility is fixed BEFORE importing Torch. Ultralytics receives the same
     # physical ID, not an incorrect hard-coded logical zero.
     if args.device != "cpu":
+        if "torch" in sys.modules and sys.modules["torch"].cuda.is_initialized():
+            raise RuntimeError("CUDA already initialized; run this file in a fresh Python process")
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
-    import numpy as np
     import torch
+    import numpy as np
+    import matplotlib.pyplot  # noqa: F401 -- fail before training on incompatible plotting packages
     from ultralytics import YOLO
-    from citrus_e_v5_slicing import prepare_multiscale_views
     from citrus_e_v6_training import EV6TrainingTrainer
     from citrus_slicing import source_files
     from citrus_paper_eval import evaluate
+    from citrus_control78_batch import assert_resumable, prepare_training_views
 
     helpers = importlib.import_module("20260918_citrus_e_v12_batch")
     data, pretrained, project = args.data.resolve(), args.pretrained.resolve(), args.project.resolve()
@@ -172,8 +201,13 @@ def main(argv=None):
         "queue": queue, "training": training, "data": str(data), "initialization": str(pretrained),
         "epochs": args.epochs, "evaluate_test": args.evaluate_test, "coco_secondary": args.coco_secondary,
         "data_yaml": data.read_text(encoding="utf-8"), "validation": "EV6 input/2 throughout training",
-        "posthoc": "public640 diagnostics plus separately labelled native-GT COCO",
+        "posthoc": ("public640 diagnostics plus separately labelled native-GT COCO" if args.coco_secondary
+                    else "paired public640 diagnostics; no COCO evaluator"),
         "test_rule": "only P00/P01 main roles, fixed BEFORE outcomes; never ablation/AMP model selection",
+        "smoke": args.smoke,
+        "pretrained_sha256": hashlib.sha256(pretrained.read_bytes()).hexdigest(),
+        "yaml_sha256": {job["model"]: hashlib.sha256(
+            (YAML_DIR / (job["model"] + ".yaml")).read_bytes()).hexdigest() for job in queue},
     }
     project.mkdir(parents=True, exist_ok=True)
     frozen = project / "paper_protocol.json"
@@ -186,7 +220,7 @@ def main(argv=None):
         "pretrained_sha256": hashlib.sha256(pretrained.read_bytes()).hexdigest(),
     }
     save_json(project / "runtime_latest.json", provenance)
-    prepared = prepare_multiscale_views(data, project / "_prepared_multiscale", 640)
+    prepared = prepare_training_views(data, project / "_prepared_multiscale")
     for job in queue:
         name = "%s_seed%d_amp%d" % (job["model"], job["seed"], job["amp"])
         directory = project / name
@@ -202,7 +236,9 @@ def main(argv=None):
                 resume = directory.exists()
                 model = YOLO(str(checkpoint) if resume else str(YAML_DIR / (job["model"] + ".yaml")),
                              task="segment")
-                if not resume:
+                if resume:
+                    assert_resumable(model, directory)
+                else:
                     model.load(str(pretrained))
                 model.add_callback("on_model_save", helpers.save_best_mask)
                 model.add_callback("on_pretrain_routine_end", restore_mask_selection)
@@ -232,6 +268,7 @@ def main(argv=None):
                 evaluate(
                     directory / "weights/best_mask.pt", data, output, device=args.device, split=split,
                     mechanisms=(split == "val"), coco_secondary=args.coco_secondary,
+                    limit=2 if args.smoke else 0,
                 )
             save_json(directory / "paper_completed.json", dict(job, epochs=args.epochs))
             summarize(project, queue)

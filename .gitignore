@@ -166,3 +166,25 @@ _audit_tmp/
 !**/figures/*.svg
 !**/figures/*.pdf
 !docs/assets/
+
+# ------------------------------------------------------------------------------
+# 8. Selective GitHub sync: local tools, downloads and private working documents
+# ------------------------------------------------------------------------------
+/.claude/
+/.aris/
+/github/
+/科研/
+/科研语料精读总索引_*.md
+/柑橘套袋相关的重要资料/
+/3_研究生/robot_orange/
+/3_研究生/参考论文_柑橘套袋_20261013/
+/3_研究生/*.docx
+# Frozen desktop app bundles; keep Python sources outside these directories.
+/tools/柑橘实验智能总结工作台/
+*.dll
+*.pyd
+*.key
+*.pem
+*.p12
+*.pfx
+.ruff_cache/

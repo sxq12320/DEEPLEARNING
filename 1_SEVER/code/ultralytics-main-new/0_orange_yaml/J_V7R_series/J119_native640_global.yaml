@@ -1,0 +1,39 @@
+# J119: exact native640 augmentation control; unchanged YOLO11n model through packed15 adapter.
+nc: 1
+channels: 15
+citrus_input_protocol: packed_rgb_hr_2x_v1
+citrus_observation: global
+citrus_data_policy: native640
+citrus_native_initialization: semantic_yolo11n_seed_v1
+citrus_native_layer_map: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, J7RPackedInput, []]
+  - [0, 1, Index, [3, 0]]
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, false, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2, [512, false, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2, [512, true]]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, C3k2, [1024, true]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[-1, 8], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[-1, 6], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, false]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 15], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 12], 1, Concat, [1]]
+  - [-1, 2, C3k2, [1024, true]]
+  - [[18, 21, 24], 1, Segment, [nc, 32, 256]]

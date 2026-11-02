@@ -1,0 +1,44 @@
+# J114_raw_c3_and_proto: experimental, NOT a trained improvement.
+# Single RGB sensor. Explicit packed15 input requires J7RTrainer/J7RValidator.
+# No shared towers, compressed hub, shallow scout, quality reweight, or new losses.
+nc: 1
+channels: 15
+citrus_input_protocol: packed_rgb_hr_2x_v1
+citrus_observation: raw
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, J7RPackedInput, []]  # 0 canonical input: global RGB + packed high phases
+  - [0, 1, Index, [3, 0]]  # 1 sensor RGB unchanged
+  - [-1, 1, Conv, [64, 3, 2]]  # 2 global /2, 16ch
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, false, 0.25]]  # 4 global /4, 64ch
+  - [[4, 2], 1, EV11DetailSeed, [16]]  # 5 inherited persistent detail
+  - [4, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2, [512, false, 0.25]]  # 7 global /8, 128ch
+  - [0, 1, Index, [12, 1]]
+  - [8, 1, J7RHighEvidence, [16]]  # 9 raw phase encoder; lossy task projection
+  - [9, 1, Index, [16, 2]]
+  - [[7, 10], 1, J7REvidenceRead, [16]]  # 11 early evidence BEFORE C4/C5, no feedback cycle
+  - [[5, 11], 1, EV11DetailExchange, []]
+  - [11, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2, [512, true]]
+  - [[12, 14], 1, EV11DetailExchange, []]
+  - [[14, 15], 1, EV11DetailInject, []]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, EV3DeepStage, [1024, true]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[21, 16], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[24, 11], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, false]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[27, 23], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]  # 29 mature P4 spatial return retained
+  - [9, 1, Index, [16, 0]]
+  - [[26, 29, 20, 4, 2, 16, 15, 30], 1, SegmentCitrusJ7R, [nc, 32, 256, 16, true, true]]  # 31 one score source, 8400 candidates@640

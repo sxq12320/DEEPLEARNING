@@ -288,6 +288,14 @@ __all__ = (
     "SegmentCitrusEV12",
     "SegmentCitrusPaperAblation",
     "SegmentCitrusJ4",
+    "J7DeepStage",
+    "J7ScaleHub",
+    "SegmentCitrusJ7",
+    "J7RPackedInput",
+    "J7RHighEvidence",
+    "J7RStemEvidence",
+    "J7REvidenceRead",
+    "SegmentCitrusJ7R",
     "EV12RecognitionCorrection",
     "IV1AnchorContext",
     "IV1ProtoSync",
@@ -604,6 +612,8 @@ from .citrus_e_v7 import EV7DeformBlock, EV7PMCE, SegmentCitrusEV7
 from .citrus_e_v12 import EV12RecognitionCorrection, SegmentCitrusEV12
 from .citrus_paper_ablation import SegmentCitrusPaperAblation
 from .citrus_j4 import SegmentCitrusJ4
+from .citrus_j7 import J7DeepStage, J7ScaleHub, SegmentCitrusJ7
+from .citrus_j7r import J7RPackedInput, J7RHighEvidence, J7RStemEvidence, J7REvidenceRead, SegmentCitrusJ7R
 from .citrus_i_v1 import (
     IV1AnchorContext,
     IV1ProtoSync,

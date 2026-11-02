@@ -1,0 +1,39 @@
+# J110_paired_global_control: experimental, NOT a trained improvement.
+# Single RGB sensor. Explicit packed15 input requires J7RTrainer/J7RValidator.
+# No shared towers, compressed hub, shallow scout, quality reweight, or new losses.
+nc: 1
+channels: 15
+citrus_input_protocol: packed_rgb_hr_2x_v1
+citrus_observation: global
+scale: n
+scales:
+  n: [0.50, 0.25, 1024]
+backbone:
+  - [-1, 1, J7RPackedInput, []]  # 0 canonical input: global RGB + packed high phases
+  - [0, 1, Index, [3, 0]]  # 1 sensor RGB unchanged
+  - [-1, 1, Conv, [64, 3, 2]]  # 2 global /2, 16ch
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 2, C3k2, [256, false, 0.25]]  # 4 global /4, 64ch
+  - [[4, 2], 1, EV11DetailSeed, [16]]  # 5 inherited persistent detail
+  - [4, 1, Conv, [256, 3, 2]]
+  - [-1, 2, C3k2, [512, false, 0.25]]  # 7 global /8, 128ch
+  - [[5, 7], 1, EV11DetailExchange, []]
+  - [7, 1, Conv, [512, 3, 2]]
+  - [-1, 2, C3k2, [512, true]]
+  - [[8, 10], 1, EV11DetailExchange, []]
+  - [[10, 11], 1, EV11DetailInject, []]
+  - [-1, 1, Conv, [1024, 3, 2]]
+  - [-1, 2, EV3DeepStage, [1024, true]]
+  - [-1, 1, SPPF, [1024, 5]]
+  - [-1, 2, C2PSA, [1024]]
+head:
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[17, 12], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]
+  - [-1, 1, nn.Upsample, [null, 2, nearest]]
+  - [[20, 7], 1, Concat, [1]]
+  - [-1, 2, C3k2, [256, false]]
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[23, 19], 1, Concat, [1]]
+  - [-1, 2, C3k2, [512, false]]  # 25 mature P4 spatial return retained
+  - [[22, 25, 16, 4, 2, 12, 11], 1, SegmentCitrusJ7R, [nc, 32, 256, 16, true, false]]  # 26 one score source, 8400 candidates@640
