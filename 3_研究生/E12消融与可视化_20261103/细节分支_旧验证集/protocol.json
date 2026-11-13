@@ -1,0 +1,27 @@
+{
+  "split": "val",
+  "data": "E:\\mastercode\\data\\orange_yolo\\data.yaml",
+  "full": "E:\\mastercode\\1_SEVER\\results\\E\\E_V12\\CITRUS_EV12_PRIORITY_300EP\\V12_04_shared_route_control_seed42\\weights\\best_mask.pt",
+  "control": "E:\\mastercode\\1_SEVER\\results\\E\\E_V12\\CITRUS_EV12_PRIORITY_300EP\\V12_04_shared_route_control_seed42\\weights\\best_mask.pt",
+  "control_type": "frozen",
+  "mechanism": "detail",
+  "full_sha256": "b5853ee578acf68e5c752d652623db77e670522393fadec74ca6ac2f6838e9a3",
+  "control_sha256": "b5853ee578acf68e5c752d652623db77e670522393fadec74ca6ac2f6838e9a3",
+  "source_images": 193,
+  "imgsz": 640,
+  "views": "one whole image",
+  "conf_prefilter": 0.001,
+  "conf_operating": 0.25,
+  "mask_iou": 0.5,
+  "boundary_band_radius_px": 2,
+  "gain_before": {
+    "C4_injection": 0.08463767170906067,
+    "head_persistent_blend": 0.18758036196231842
+  },
+  "evaluation": "public640, one-to-one IoU-greedy, two-sided contour band on common matches",
+  "bootstrap": "2000 paired image draws, fixed weights; no training-seed or acquisition-group interval",
+  "software": {
+    "torch": "2.8.0+cpu",
+    "device": "cpu"
+  }
+}

@@ -34,6 +34,13 @@ from ultralytics.nn.modules import (
     SegmentCitrusEV11,
     SegmentCitrusEV12,
     SegmentCitrusPaperAblation,
+    SegmentCitrusE12Simple,
+    SegmentCitrusMinimal,
+    CitrusChromaStripStem,
+    SPPF_WaveLSKA,
+    CitrusFreqAlignedFusion,
+    C2PhaseBridge,
+    SegmentCitrusBSD,
     SegmentCitrusJ4,
     J7DeepStage,
     J7ScaleHub,
@@ -903,6 +910,12 @@ class SegmentationModel(DetectionModel):
             from ultralytics.utils.sage_v4r_loss import SAGEV4RSegmentationLoss
 
             return SAGEV4RSegmentationLoss(self)
+        if isinstance(self.model[-1], SegmentCitrusBSD):
+            if getattr(self.model[-1], "use_quality_calib", False):
+                from ultralytics.utils.citrus_apex_loss import CitrusBSDLoss
+
+                return CitrusBSDLoss(self)
+            return E2ELoss(self, v8SegmentationLoss) if getattr(self, "end2end", False) else v8SegmentationLoss(self)
         if isinstance(self.model[-1], SegmentCitrusSAGEV4):
             from ultralytics.utils.sage_v4_loss import SAGEV4SegmentationLoss
 
@@ -2066,6 +2079,8 @@ def parse_model(d, ch, verbose=True):
             CitrusLightStage,
             SPPFLSKAResidual,
             SPPF_LSKA,
+            SPPF_WaveLSKA,
+            CitrusChromaStripStem,
             SPPFRepContext,
             LiteHRDetailBlock,
             RFB,
@@ -2204,6 +2219,16 @@ def parse_model(d, ch, verbose=True):
                 raise ValueError("CitrusFrequencyAlignedConcat requires exactly two feature indices")
             c2 = sum(ch[x] for x in f)
             args = [[ch[x] for x in f], *args]
+        elif m is CitrusFreqAlignedFusion:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("CitrusFreqAlignedFusion requires exactly two feature indices")
+            c2 = ch[f[0]] + ch[f[1]]
+            args = [ch[f[0]], ch[f[1]], *args]
+        elif m is C2PhaseBridge:
+            if not isinstance(f, list) or len(f) != 2:
+                raise ValueError("C2PhaseBridge requires [P3, C2] feature indices")
+            c2 = ch[f[0]]
+            args = [ch[f[0]], ch[f[1]], *args]
         elif m in {EMA, SimAM, CoordAtt, ELA, CAA, CBAM, LIAM, DFEM, FarFormer, LumiFormer, TDAM, MWCA,
                    HCO, HyperACE, PCFA, HyperRes}:
             c2 = ch[f]
@@ -2447,6 +2472,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
+                SegmentCitrusE12Simple,
+                SegmentCitrusMinimal,
+                SegmentCitrusBSD,
                 SegmentCitrusJ4,
                 SegmentCitrusJ7,
                 SegmentCitrusJ7R,
@@ -2501,6 +2529,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
+                SegmentCitrusE12Simple,
+                SegmentCitrusMinimal,
+                SegmentCitrusBSD,
                 SegmentCitrusJ4,
                 SegmentCitrusJ7,
                 SegmentCitrusJ7R,
@@ -2543,6 +2574,9 @@ def parse_model(d, ch, verbose=True):
                 SegmentCitrusEV11,
                 SegmentCitrusEV12,
                 SegmentCitrusPaperAblation,
+                SegmentCitrusE12Simple,
+                SegmentCitrusMinimal,
+                SegmentCitrusBSD,
                 SegmentCitrusJ4,
                 SegmentCitrusJ7,
                 SegmentCitrusJ7R,

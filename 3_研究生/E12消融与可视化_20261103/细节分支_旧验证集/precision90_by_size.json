@@ -1,0 +1,49 @@
+{
+  "thresholds": {
+    "full": 0.46553531289100647,
+    "control": 0.3602442443370819
+  },
+  "groups": {
+    "all": {
+      "n": 1049,
+      "full": 800,
+      "control": 801,
+      "gained": 13,
+      "lost": 14,
+      "delta_pp": -0.09532888465204957
+    },
+    "tiny": {
+      "n": 161,
+      "full": 18,
+      "control": 21,
+      "gained": 1,
+      "lost": 4,
+      "delta_pp": -1.8633540372670807
+    },
+    "small": {
+      "n": 286,
+      "full": 200,
+      "control": 195,
+      "gained": 10,
+      "lost": 5,
+      "delta_pp": 1.7482517482517483
+    },
+    "medium": {
+      "n": 419,
+      "full": 399,
+      "control": 402,
+      "gained": 2,
+      "lost": 5,
+      "delta_pp": -0.7159904534606205
+    },
+    "large": {
+      "n": 183,
+      "full": 183,
+      "control": 183,
+      "gained": 0,
+      "lost": 0,
+      "delta_pp": 0.0
+    }
+  },
+  "method": "Confidence chosen on PR sweep, then one-to-one mask matching repeated at that threshold."
+}

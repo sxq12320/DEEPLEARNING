@@ -1,0 +1,71 @@
+[
+  {
+    "image": "val/images/IMG_0100.jpg",
+    "gt_index": 3,
+    "area640": 147,
+    "full_hit": 1,
+    "control_hit": 0,
+    "full_band": 0.2811594202898551,
+    "control_band": null,
+    "category": "Recovered",
+    "full_shown_iou": 0.5088967680931091,
+    "control_shown_iou": 0.4863945543766022,
+    "crop_xywh": [
+      12,
+      0,
+      56,
+      56
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_01.npz"
+  },
+  {
+    "image": "val/images/IMG_0451.jpg",
+    "gt_index": 1,
+    "area640": 17447,
+    "full_hit": 1,
+    "control_hit": 1,
+    "full_band": 0.6915544675642595,
+    "control_band": 0.6085697741748697,
+    "category": "Contour gain",
+    "full_shown_iou": 0.9856616854667664,
+    "control_shown_iou": 0.9809352159500122,
+    "crop_xywh": [
+      72,
+      0,
+      466,
+      466
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_02.npz"
+  },
+  {
+    "image": "val/images/IMG_0511.jpg",
+    "gt_index": 4,
+    "area640": 144,
+    "full_hit": 0,
+    "control_hit": 1,
+    "full_band": null,
+    "control_band": 0.7125,
+    "category": "Lost",
+    "full_shown_iou": 0.0,
+    "control_shown_iou": 0.8553459048271179,
+    "crop_xywh": [
+      584,
+      411,
+      56,
+      56
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_03.npz"
+  }
+]

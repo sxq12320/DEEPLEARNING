@@ -15,12 +15,21 @@ import timeline205 from './timeline_205.json';
 import {COMPS} from './episodes/all';
 import {DURATIONS} from './durations';
 import {ThermosExplainer, THERMOS_DURATION} from './redesign/ThermosExplainer';
+import {BuGaiMV, BUGAI_DURATION_FRAMES, BUGAI_FPS} from './mv-bugai/BuGaiMV';
 
 const FPS = 30;
 
 export const Root = () => {
   return (
     <>
+      <Composition
+        id="BuGaiMV"
+        component={BuGaiMV}
+        durationInFrames={BUGAI_DURATION_FRAMES}
+        fps={BUGAI_FPS}
+        width={1920}
+        height={1080}
+      />
       <Composition
         id="ThermosRedesign"
         component={ThermosExplainer}

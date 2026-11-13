@@ -74,7 +74,7 @@ def configurations():
     return result
 
 
-def jobs(suite="paper", seeds=(42, 43, 44), amp_audit=False):
+def jobs(suite="paper", seeds=(42, 43, 44), amp_audit=False, repeat_ablations=False):
     """Block by seed, randomize arm order and separate AMP sensitivity."""
     if suite not in {"core", "paper"}:
         raise ValueError("suite must be core or paper")
@@ -82,7 +82,8 @@ def jobs(suite="paper", seeds=(42, 43, 44), amp_audit=False):
         raise ValueError("seeds must be nonempty and distinct")
     queue = []
     for seed in seeds:
-        names = list(NAMES[:2] if suite == "core" or seed != seeds[0] else NAMES)
+        include_ablations = suite == "paper" and (seed == seeds[0] or repeat_ablations)
+        names = list(NAMES if include_ablations else NAMES[:2])
         random.Random(20261014 + seed).shuffle(names)
         queue.extend(
             dict(model=n, seed=int(seed), amp=False, role="main" if n in NAMES[:2] else "ablation")

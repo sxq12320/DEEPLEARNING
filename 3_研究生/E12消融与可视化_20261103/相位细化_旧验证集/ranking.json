@@ -1,0 +1,18 @@
+{
+  "full": {
+    "mask_ap50": 0.8421646068494133,
+    "mask_ap5095": 0.6858956843379918,
+    "rmax": 0.9084842707340324,
+    "r_at_precision90": 0.7626310772163966,
+    "confidence_at_precision90": 0.46553531289100647,
+    "precision_at_selected_threshold": 0.9029345372460497
+  },
+  "control": {
+    "mask_ap50": 0.8411955081250948,
+    "mask_ap5095": 0.6804628533679861,
+    "rmax": 0.9084842707340324,
+    "r_at_precision90": 0.7626310772163966,
+    "confidence_at_precision90": 0.46553531289100647,
+    "precision_at_selected_threshold": 0.9029345372460497
+  }
+}

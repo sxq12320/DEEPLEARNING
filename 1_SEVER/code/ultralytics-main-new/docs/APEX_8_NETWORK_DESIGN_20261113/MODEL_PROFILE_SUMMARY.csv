@@ -1,0 +1,14 @@
+﻿name,yaml,layers,params_M,params_raw,gflops_640,transferred_tensors,total_tensors,tensor_transfer_pct,elem_transfer_pct,head_type
+APEX00_baseline,0_orange_yaml/APEX_series/APEX00_baseline.yaml,24,2.843,2842803,9.36,510,561,90.91,98.42,Segment
+APEX01_bsd_flagship,0_orange_yaml/APEX_series/APEX01_bsd_flagship.yaml,22,2.493,2493317,11.173,450,891,50.51,90.9,SegmentCitrusBSD
+APEX02_g10_ultra_light,0_orange_yaml/APEX_series/APEX02_g10_ultra_light.yaml,25,2.912,2912087,11.384,421,931,45.22,88.06,SegmentCitrusBSD
+APEX03_full_pan_bsd,0_orange_yaml/APEX_series/APEX03_full_pan_bsd.yaml,25,3.034,3034039,11.603,510,992,51.41,92.03,SegmentCitrusBSD
+APEX04_g10_asym_bsd,0_orange_yaml/APEX_series/APEX04_g10_asym_bsd.yaml,22,2.371,2371365,10.955,361,830,43.49,85.98,SegmentCitrusBSD
+APEX05_pds_fullrank_bsd,0_orange_yaml/APEX_series/APEX05_pds_fullrank_bsd.yaml,26,2.535,2534649,11.519,450,958,46.97,89.41,SegmentCitrusBSD
+APEX06_m3_bsd_only,0_orange_yaml/APEX_series/APEX06_m3_bsd_only.yaml,24,2.893,2892503,10.881,510,726,70.25,96.66,SegmentCitrusBSD
+APEX07_m2_m3_bifreq_bsd,0_orange_yaml/APEX_series/APEX07_m2_m3_bifreq_bsd.yaml,25,2.956,2956351,11.335,510,917,55.62,94.48,SegmentCitrusBSD
+APEX08_ultimate_max_capacity,0_orange_yaml/APEX_series/APEX08_ultimate_max_capacity.yaml,29,3.075,3075371,11.949,510,1059,48.16,90.78,SegmentCitrusBSD
+REF_G10,0_orange_yaml/G_series/10_yolo11n-seg-hybrid-lska-carafe-bifpn-p2b.yaml,24,3.214,3214412,13.513,421,554,75.99,80.0,SegmentP2Boundary
+REF_SAGE42,0_orange_yaml/SAGE_series/SAGE42_asym_semantic_detail.yaml,24,2.319,2319092,9.042,450,523,86.04,97.94,SegmentCitrusSAGEV4R
+REF_V12_06,0_orange_yaml/E_V12_series/V12_06_recognition_contrast.yaml,28,2.284,2284142,9.592,408,662,61.63,91.47,SegmentCitrusEV12
+REF_RE07,0_orange_yaml/R_EVIDENCE_series/RE07_full.yaml,24,2.331,2330549,9.03,450,565,79.65,97.45,SegmentCitrusE12Simple

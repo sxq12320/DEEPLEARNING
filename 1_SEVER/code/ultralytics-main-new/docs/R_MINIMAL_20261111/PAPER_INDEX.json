@@ -1,0 +1,116 @@
+[
+  {
+    "topic": "FreqFusion",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\频域+特征融合\\FreqFusion\\2408.12879v1.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\FreqFusion.txt",
+    "pages": 18,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.25",
+      "creationDate": "D:20240826002139Z",
+      "modDate": "D:20240826002139Z",
+      "trapped": "",
+      "encryption": null
+    }
+  },
+  {
+    "topic": "Lite-HRNet Plus",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\多尺度特征提取\\Lite-HRNet Plus\\2308.12133v1.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\Lite-HRNet_Plus.txt",
+    "pages": 5,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.25",
+      "creationDate": "D:20230824010720Z",
+      "modDate": "D:20230824010720Z",
+      "trapped": "",
+      "encryption": null
+    }
+  },
+  {
+    "topic": "Edge-guided and Cross-scale",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\多尺度特征融合\\Edge-guided and Cross-scale\\2407.05307v2.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\Edge-guided_and_Cross-scale.txt",
+    "pages": 11,
+    "metadata": {
+      "format": "PDF 1.6",
+      "title": "",
+      "author": "杨志远",
+      "subject": "",
+      "keywords": "",
+      "creator": "Acrobat PDFMaker 21 Word 版",
+      "producer": "Adobe PDF Library 21.1.170",
+      "creationDate": "D:20240823093800+08'00'",
+      "modDate": "D:20240823093812+08'00'",
+      "trapped": "",
+      "encryption": null
+    }
+  },
+  {
+    "topic": "WaveDH",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\频域+特征融合\\WaveDH\\2404.01604v2.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\WaveDH.txt",
+    "pages": 13,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.25",
+      "creationDate": "D:20240925003212Z",
+      "modDate": "D:20240925003212Z",
+      "trapped": "",
+      "encryption": null
+    }
+  },
+  {
+    "topic": "Efficient Deformable ConvNets",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\可变形卷积+注意力机制\\Efficient Deformable ConvNets\\2401.06197v1.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\Efficient_Deformable_ConvNets.txt",
+    "pages": 14,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.25",
+      "creationDate": "D:20240115015132Z",
+      "modDate": "D:20240115015132Z",
+      "trapped": "",
+      "encryption": null
+    }
+  },
+  {
+    "topic": "DCDR-UNet",
+    "path": "E:\\mastercode\\科研\\深度学习最新论文合集\\UNet改进方案\\DCDR-UNet\\Kim_DCDR-UNet_Deformable_Convolution_Based_Detail_Restoration_via_U-shape_Network_for_CVPRW_2024_paper.pdf",
+    "text": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\papers\\DCDR-UNet.txt",
+    "pages": 10,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "DCDR-UNet: Deformable Convolution Based Detail Restoration via U-shape Network for Single Image HDR Reconstruction",
+      "author": "Joonsoo Kim; Zhe Zhu; Tien Bau; Chenguang Liu",
+      "subject": "IEEE Conference on Computer Vision and Pattern Recognition Workshops",
+      "keywords": "",
+      "creator": "",
+      "producer": "pikepdf 9.0.0",
+      "creationDate": "",
+      "modDate": "",
+      "trapped": "",
+      "encryption": null
+    }
+  }
+]

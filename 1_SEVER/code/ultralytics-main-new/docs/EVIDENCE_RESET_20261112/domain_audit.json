@@ -1,0 +1,73 @@
+{
+  "domain_counts": [
+    {
+      "split": "train",
+      "cohort": "ai_generated",
+      "images": 3,
+      "instances": 87,
+      "short_lt8": 11,
+      "short_lt16": 36,
+      "short_lt32": 64
+    },
+    {
+      "split": "train",
+      "cohort": "camera_2026",
+      "images": 565,
+      "instances": 2368,
+      "short_lt8": 141,
+      "short_lt16": 382,
+      "short_lt32": 897
+    },
+    {
+      "split": "val",
+      "cohort": "camera_2026",
+      "images": 168,
+      "instances": 794,
+      "short_lt8": 97,
+      "short_lt16": 194,
+      "short_lt32": 394
+    },
+    {
+      "split": "test",
+      "cohort": "camera_2026",
+      "images": 84
+    },
+    {
+      "split": "train",
+      "cohort": "video",
+      "images": 29,
+      "instances": 428,
+      "short_lt8": 35,
+      "short_lt16": 209,
+      "short_lt32": 347
+    },
+    {
+      "split": "val",
+      "cohort": "camera_2023",
+      "images": 25,
+      "instances": 387,
+      "short_lt8": 7,
+      "short_lt16": 49,
+      "short_lt32": 161
+    },
+    {
+      "split": "test",
+      "cohort": "camera_2023",
+      "images": 12
+    },
+    {
+      "split": "train",
+      "cohort": "camera_2023",
+      "images": 79,
+      "instances": 1237,
+      "short_lt8": 48,
+      "short_lt16": 207,
+      "short_lt32": 712
+    }
+  ],
+  "groups": 303,
+  "old_cross_split_groups": 123,
+  "new_cross_split_groups": 0,
+  "original_member_paths_missing": [],
+  "caveat": "cohort is existing manifest metadata, not an independent image-authenticity judgement; no test image analysis"
+}

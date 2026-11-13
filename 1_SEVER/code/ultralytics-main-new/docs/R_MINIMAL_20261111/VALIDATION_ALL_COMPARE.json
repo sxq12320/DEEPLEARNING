@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "queue": [
+    "R00_baseline",
+    "S42_sage42",
+    "V06_v12",
+    "C01_sage42_contrast",
+    "R01_asym",
+    "R02_relay",
+    "R03_asym_relay"
+  ],
+  "shared_baseline_exactly_matches_original": true,
+  "all_configs_match_previously_validated_models": true,
+  "models_built_and_forwarded_at_640": 7,
+  "pretrained_transfer_checked": true,
+  "formal_training_started": false,
+  "new_training_smoke_run": false,
+  "note": "Queue-only addition; previous per-model training smoke evidence retained. Config comparison normalizes JSON object keys.",
+  "previous_smoke_evidence": [
+    "E:/mastercode/_work/whole_pretrain_runner_check/validation_final.json",
+    "E:/mastercode/_work/citrus_baseline_rebuild_20261111/VALIDATION.json"
+  ],
+  "costs": [
+    {
+      "model": "R00_baseline",
+      "parameters": 2842803,
+      "gflops_640": 10.355763199999998,
+      "equal_fraction": 0.9845100064971086
+    },
+    {
+      "model": "S42_sage42",
+      "parameters": 2319092,
+      "gflops_640": 10.041600000000003,
+      "equal_fraction": 0.9797696684736957
+    },
+    {
+      "model": "V06_v12",
+      "parameters": 2284142,
+      "gflops_640": 10.6438784,
+      "equal_fraction": 0.9154106881270955
+    },
+    {
+      "model": "C01_sage42_contrast",
+      "parameters": 2319284,
+      "gflops_640": 10.0841984,
+      "equal_fraction": 0.9796885590552946
+    },
+    {
+      "model": "R01_asym",
+      "parameters": 2316211,
+      "gflops_640": 9.9326464,
+      "equal_fraction": 0.9809883469165805
+    },
+    {
+      "model": "R02_relay",
+      "parameters": 2846012,
+      "gflops_640": 10.417305599999999,
+      "equal_fraction": 0.9833999294451323
+    },
+    {
+      "model": "R03_asym_relay",
+      "parameters": 2319420,
+      "gflops_640": 9.994188800000002,
+      "equal_fraction": 0.9796311146752206
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "train": {
+    "images": 676,
+    "instances": 4120,
+    "short_side_lt8": 234,
+    "short_side_lt16": 836,
+    "short_side_lt32": 2020,
+    "short_side_quantiles": [
+      10.416641116142273,
+      18.593759536743164,
+      32.91679382324219,
+      55.66400185227394,
+      81.16332745552063
+    ],
+    "solidity_lt08": 281,
+    "solidity_lt09": 959,
+    "cnr_median": 0.6072329164064996,
+    "cnr_lt1": 2949,
+    "cnr_n": 4120,
+    "neighboring_instances_2px": 1329,
+    "images_scale_ratio_gt4": 238
+  },
+  "val": {
+    "images": 193,
+    "instances": 1181,
+    "short_side_lt8": 104,
+    "short_side_lt16": 243,
+    "short_side_lt32": 555,
+    "short_side_quantiles": [
+      8.702859878540039,
+      18.41533660888672,
+      34.1663932800293,
+      56.66688919067383,
+      85.62496185302734
+    ],
+    "solidity_lt08": 117,
+    "solidity_lt09": 302,
+    "cnr_median": 0.5914088942742435,
+    "cnr_lt1": 849,
+    "cnr_n": 1181,
+    "neighboring_instances_2px": 387,
+    "images_scale_ratio_gt4": 69
+  },
+  "definitions": {
+    "cnr": "absolute mean gray difference / ring gray std, RGB resized with INTER_AREA to long side640; ring dilation radius3 excludes every labelled instance",
+    "solidity": "polygon area / convex hull area; shape proxy, not verified occlusion label",
+    "neighbor": "another labelled mask pixel within square Chebyshev radius2 of this mask; proxy, not split/merge error",
+    "scope": "train and val only; no test image/shape analysis; existing labels not manually certified complete"
+  }
+}

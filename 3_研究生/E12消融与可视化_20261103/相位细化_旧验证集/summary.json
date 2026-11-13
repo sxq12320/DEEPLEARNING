@@ -1,0 +1,112 @@
+{
+  "all": {
+    "n": 1049,
+    "full_hits": 842,
+    "control_hits": 841,
+    "gained": 1,
+    "lost": 0,
+    "both": 841,
+    "neither": 207,
+    "delta_recall_pp": 0.09532888465204957,
+    "delta_recall_image_bootstrap_ci95_pp": [
+      0.0,
+      0.31886092278665856
+    ],
+    "common_boundary_n": 841,
+    "full_common_band": 0.63199911229472,
+    "control_common_band": 0.624664264845849,
+    "delta_common_band_pp": 0.7334847448870937,
+    "delta_common_band_image_bootstrap_ci95_pp": [
+      0.6330374923664456,
+      0.8404336495027644
+    ]
+  },
+  "tiny": {
+    "n": 161,
+    "full_hits": 33,
+    "control_hits": 32,
+    "gained": 1,
+    "lost": 0,
+    "both": 32,
+    "neither": 128,
+    "delta_recall_pp": 0.6211180124223602,
+    "delta_recall_image_bootstrap_ci95_pp": [
+      0.0,
+      2.2222222222222223
+    ],
+    "common_boundary_n": 32,
+    "full_common_band": 0.5814746878388346,
+    "control_common_band": 0.5700821050420175,
+    "delta_common_band_pp": 1.1392582796817143,
+    "delta_common_band_image_bootstrap_ci95_pp": [
+      0.3376854163078375,
+      2.1807419702284236
+    ]
+  },
+  "small": {
+    "n": 286,
+    "full_hits": 219,
+    "control_hits": 219,
+    "gained": 0,
+    "lost": 0,
+    "both": 219,
+    "neither": 67,
+    "delta_recall_pp": 0.0,
+    "delta_recall_image_bootstrap_ci95_pp": [
+      0.0,
+      0.0
+    ],
+    "common_boundary_n": 219,
+    "full_common_band": 0.6130538724146398,
+    "control_common_band": 0.6028173876281309,
+    "delta_common_band_pp": 1.023648478650897,
+    "delta_common_band_image_bootstrap_ci95_pp": [
+      0.7808674924011276,
+      1.2765282897807766
+    ]
+  },
+  "medium": {
+    "n": 419,
+    "full_hits": 407,
+    "control_hits": 407,
+    "gained": 0,
+    "lost": 0,
+    "both": 407,
+    "neither": 12,
+    "delta_recall_pp": 0.0,
+    "delta_recall_image_bootstrap_ci95_pp": [
+      0.0,
+      0.0
+    ],
+    "common_boundary_n": 407,
+    "full_common_band": 0.63721518845122,
+    "control_common_band": 0.6299186634620901,
+    "delta_common_band_pp": 0.7296524989129746,
+    "delta_common_band_image_bootstrap_ci95_pp": [
+      0.6174341118202112,
+      0.844942517178411
+    ]
+  },
+  "large": {
+    "n": 183,
+    "full_hits": 183,
+    "control_hits": 183,
+    "gained": 0,
+    "lost": 0,
+    "both": 183,
+    "neither": 0,
+    "delta_recall_pp": 0.0,
+    "delta_recall_image_bootstrap_ci95_pp": [
+      0.0,
+      0.0
+    ],
+    "common_boundary_n": 183,
+    "full_common_band": 0.6519053752489845,
+    "control_common_band": 0.6486672975649351,
+    "delta_common_band_pp": 0.32380776840493936,
+    "delta_common_band_image_bootstrap_ci95_pp": [
+      0.18671794312956988,
+      0.45746218891996937
+    ]
+  }
+}

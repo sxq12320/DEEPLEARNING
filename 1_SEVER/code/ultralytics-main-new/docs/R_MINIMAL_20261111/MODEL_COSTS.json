@@ -1,0 +1,26 @@
+[
+  {
+    "model": "R00_baseline",
+    "parameters": 2842803,
+    "gflops_640": 10.355763199999998,
+    "equal_fraction": 0.9845100064971086
+  },
+  {
+    "model": "R01_asym",
+    "parameters": 2316211,
+    "gflops_640": 9.9326464,
+    "equal_fraction": 0.9809883469165805
+  },
+  {
+    "model": "R02_relay",
+    "parameters": 2846012,
+    "gflops_640": 10.417305599999999,
+    "equal_fraction": 0.9833999294451323
+  },
+  {
+    "model": "R03_asym_relay",
+    "parameters": 2319420,
+    "gflops_640": 9.994188800000002,
+    "equal_fraction": 0.9796311146752206
+  }
+]

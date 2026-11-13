@@ -1,0 +1,71 @@
+[
+  {
+    "image": "val/images/IMG_0100.jpg",
+    "gt_index": 3,
+    "area640": 147,
+    "full_hit": 1,
+    "control_hit": 0,
+    "full_band": 0.2811594202898551,
+    "control_band": null,
+    "category": "Recovered",
+    "full_shown_iou": 0.5088967680931091,
+    "control_shown_iou": 0.4965277910232544,
+    "crop_xywh": [
+      12,
+      0,
+      56,
+      56
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_01.npz"
+  },
+  {
+    "image": "val/images/IMG_0040.jpg",
+    "gt_index": 5,
+    "area640": 555,
+    "full_hit": 1,
+    "control_hit": 1,
+    "full_band": 0.6413223140495867,
+    "control_band": 0.5812101910828026,
+    "category": "Contour gain",
+    "full_shown_iou": 0.8318042755126953,
+    "control_shown_iou": 0.804444432258606,
+    "crop_xywh": [
+      526,
+      271,
+      110,
+      110
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_02.npz"
+  },
+  {
+    "image": "val/images/IMG_0280.jpg",
+    "gt_index": 3,
+    "area640": 172,
+    "full_hit": 0,
+    "control_hit": 0,
+    "full_band": null,
+    "control_band": null,
+    "category": "Both miss",
+    "full_shown_iou": 0.0,
+    "control_shown_iou": 0.0,
+    "crop_xywh": [
+      293,
+      353,
+      56,
+      56
+    ],
+    "raster_hw": [
+      640,
+      640
+    ],
+    "file": "case_03.npz"
+  }
+]

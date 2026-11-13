@@ -287,6 +287,7 @@ __all__ = (
     "SegmentCitrusEV11",
     "SegmentCitrusEV12",
     "SegmentCitrusPaperAblation",
+    "SegmentCitrusE12Simple",
     "SegmentCitrusJ4",
     "J7DeepStage",
     "J7ScaleHub",
@@ -652,4 +653,26 @@ from .citrus_e_v11 import (
     EV11NativeFusion,
     EV11RepStage,
     SegmentCitrusEV11,
+)
+
+from .citrus_e12_simple import SegmentCitrusE12Simple
+
+from .citrus_minimal_relay import SegmentCitrusMinimal
+
+__all__ += ("SegmentCitrusMinimal",)
+
+from .citrus_apex import (
+    C2PhaseBridge,
+    CitrusChromaStripStem,
+    CitrusFreqAlignedFusion,
+    SPPF_WaveLSKA,
+    SegmentCitrusBSD,
+)
+
+__all__ += (
+    "CitrusChromaStripStem",
+    "SPPF_WaveLSKA",
+    "CitrusFreqAlignedFusion",
+    "C2PhaseBridge",
+    "SegmentCitrusBSD",
 )

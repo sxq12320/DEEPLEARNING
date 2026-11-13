@@ -1,0 +1,190 @@
+{
+  "timestamp": "2026-11-11T20:52:28.781519",
+  "tests": {
+    "passed": 16,
+    "log": "E:\\mastercode\\_work\\citrus_baseline_rebuild_20261111\\pytest.log"
+  },
+  "engineering_only": true,
+  "formal_training_started": false,
+  "accuracy_gain_verified": false,
+  "gpu_latency_verified": false,
+  "preflight": [
+    {
+      "model": "R00_baseline",
+      "parameters": 2842803,
+      "gflops_640": 10.355763199999998,
+      "equal_fraction": 0.9845100064971086
+    },
+    {
+      "model": "R01_asym",
+      "parameters": 2316211,
+      "gflops_640": 9.9326464,
+      "equal_fraction": 0.9809883469165805
+    },
+    {
+      "model": "R02_relay",
+      "parameters": 2846012,
+      "gflops_640": 10.417305599999999,
+      "equal_fraction": 0.9833999294451323
+    },
+    {
+      "model": "R03_asym_relay",
+      "parameters": 2319420,
+      "gflops_640": 9.994188800000002,
+      "equal_fraction": 0.9796311146752206
+    }
+  ],
+  "verified": [
+    "native original baseline graph",
+    "exact two-factor YAML differences",
+    "8400 candidates at 640",
+    "32 stride4 native prototypes",
+    "standard v8SegmentationLoss for all four arms",
+    "native segmentation loss forward and backward",
+    "zero-start output equality in paired arms",
+    "active relay Conv-BN fuse parity",
+    "three-step staged gradient startup",
+    "global rejection capacity of spatial sigmoid",
+    "actual pretrained parameter equality >=97.9%",
+    "four real-image one-epoch train/val/reload/end-to-end predict smokes"
+  ],
+  "smoke": [
+    {
+      "model": "R00_baseline",
+      "completed_epoch": 1,
+      "best_epoch": 1,
+      "runtime": {
+        "actual": {
+          "train": {
+            "images": 4,
+            "targets": 94
+          },
+          "val": {
+            "images": 4,
+            "targets": 4
+          }
+        },
+        "dataset": "YOLODataset",
+        "tiles": false,
+        "label_policy": "all",
+        "best_selection": "all",
+        "train_mask_ratio": 2,
+        "val_mask_ratio": 2,
+        "rect": false,
+        "amp": false,
+        "initialization": "official pretrained",
+        "device": "cpu",
+        "python": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+        "torch": "2.5.0+cu118",
+        "cuda": "11.8",
+        "hardware": "CPU"
+      },
+      "saved_checkpoint_reload": true,
+      "standalone_val": true,
+      "batch1_predict": true
+    },
+    {
+      "model": "R01_asym",
+      "completed_epoch": 1,
+      "best_epoch": 1,
+      "runtime": {
+        "actual": {
+          "train": {
+            "images": 4,
+            "targets": 94
+          },
+          "val": {
+            "images": 4,
+            "targets": 4
+          }
+        },
+        "dataset": "YOLODataset",
+        "tiles": false,
+        "label_policy": "all",
+        "best_selection": "all",
+        "train_mask_ratio": 2,
+        "val_mask_ratio": 2,
+        "rect": false,
+        "amp": false,
+        "initialization": "official pretrained",
+        "device": "cpu",
+        "python": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+        "torch": "2.5.0+cu118",
+        "cuda": "11.8",
+        "hardware": "CPU"
+      },
+      "saved_checkpoint_reload": true,
+      "standalone_val": true,
+      "batch1_predict": true
+    },
+    {
+      "model": "R02_relay",
+      "completed_epoch": 1,
+      "best_epoch": 1,
+      "runtime": {
+        "actual": {
+          "train": {
+            "images": 4,
+            "targets": 94
+          },
+          "val": {
+            "images": 4,
+            "targets": 4
+          }
+        },
+        "dataset": "YOLODataset",
+        "tiles": false,
+        "label_policy": "all",
+        "best_selection": "all",
+        "train_mask_ratio": 2,
+        "val_mask_ratio": 2,
+        "rect": false,
+        "amp": false,
+        "initialization": "official pretrained",
+        "device": "cpu",
+        "python": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+        "torch": "2.5.0+cu118",
+        "cuda": "11.8",
+        "hardware": "CPU"
+      },
+      "saved_checkpoint_reload": true,
+      "standalone_val": true,
+      "batch1_predict": true
+    },
+    {
+      "model": "R03_asym_relay",
+      "completed_epoch": 1,
+      "best_epoch": 1,
+      "runtime": {
+        "actual": {
+          "train": {
+            "images": 4,
+            "targets": 94
+          },
+          "val": {
+            "images": 4,
+            "targets": 4
+          }
+        },
+        "dataset": "YOLODataset",
+        "tiles": false,
+        "label_policy": "all",
+        "best_selection": "all",
+        "train_mask_ratio": 2,
+        "val_mask_ratio": 2,
+        "rect": false,
+        "amp": false,
+        "initialization": "official pretrained",
+        "device": "cpu",
+        "python": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+        "torch": "2.5.0+cu118",
+        "cuda": "11.8",
+        "hardware": "CPU"
+      },
+      "saved_checkpoint_reload": true,
+      "standalone_val": true,
+      "batch1_predict": true
+    }
+  ],
+  "source_hashes_match": true
+}

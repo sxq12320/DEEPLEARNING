@@ -1,0 +1,44 @@
+[
+  {
+    "run": "V12_00_contrast_anchor_seed42",
+    "epoch": "281",
+    "mask_ap50": 84.527,
+    "mask_ap5095": 72.04899999999999,
+    "mask_recall": 74.071
+  },
+  {
+    "run": "V12_01_detail_anchor_seed42",
+    "epoch": "288",
+    "mask_ap50": 84.839,
+    "mask_ap5095": 71.84700000000001,
+    "mask_recall": 77.121
+  },
+  {
+    "run": "V12_02_persistent_anchor_seed42",
+    "epoch": "272",
+    "mask_ap50": 84.234,
+    "mask_ap5095": 71.63199999999999,
+    "mask_recall": 76.644
+  },
+  {
+    "run": "V12_03_recognition_route_seed42",
+    "epoch": "287",
+    "mask_ap50": 84.94,
+    "mask_ap5095": 72.126,
+    "mask_recall": 75.554
+  },
+  {
+    "run": "V12_04_shared_route_control_seed42",
+    "epoch": "267",
+    "mask_ap50": 84.809,
+    "mask_ap5095": 72.073,
+    "mask_recall": 77.216
+  },
+  {
+    "run": "V12_05_recognition_lite_box_seed42",
+    "epoch": "267",
+    "mask_ap50": 84.36200000000001,
+    "mask_ap5095": 71.541,
+    "mask_recall": 75.596
+  }
+]

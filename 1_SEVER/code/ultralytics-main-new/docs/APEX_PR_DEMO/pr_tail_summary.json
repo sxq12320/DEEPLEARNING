@@ -1,0 +1,22 @@
+{
+  "Baseline-Style": {
+    "num_gt": 1049,
+    "matched_gt": 915,
+    "unmatched_gt": 134,
+    "total_fp": 14500,
+    "low_conf_fp_below_005": 10181,
+    "r_max": 0.872259,
+    "p_end": 0.059358,
+    "ap50_coco": 0.849151
+  },
+  "APEX-Target-Style": {
+    "num_gt": 1049,
+    "matched_gt": 981,
+    "unmatched_gt": 68,
+    "total_fp": 3800,
+    "low_conf_fp_below_005": 2668,
+    "r_max": 0.935176,
+    "p_end": 0.205187,
+    "ap50_coco": 0.927513
+  }
+}
